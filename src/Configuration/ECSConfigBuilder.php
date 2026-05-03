@@ -28,6 +28,7 @@ use Symplify\EasyCodingStandard\Configuration\EditorConfig\QuoteType;
 use Symplify\EasyCodingStandard\Configuration\Levels\LevelRulesResolver;
 use Symplify\EasyCodingStandard\Exception\Configuration\InitializationException;
 use Symplify\EasyCodingStandard\Exception\Configuration\SuperfluousConfigurationException;
+use Symplify\EasyCodingStandard\Exception\DeprecatedException;
 use Symplify\EasyCodingStandard\ValueObject\Option;
 use Symplify\EasyCodingStandard\ValueObject\Set\SetList;
 
@@ -250,9 +251,15 @@ final class ECSConfigBuilder
         bool $namespaces = false,
         /** @see SetList::CONTROL_STRUCTURES */
         bool $controlStructures = false,
-        /** @see SetList::PHPUNIT */
+        /**
+         * @deprecated as never worked, used different rules. Use Rector instead.
+         * @see SetList::PHPUNIT
+         */
         bool $phpunit = false,
-        /** @see SetList::STRICT */
+        /**
+         * @deprecated as dangerous without context. Use Rector instead.
+         * @see SetList::STRICT
+         */
         bool $strict = false,
         /** @see SetList::CLEAN_CODE */
         bool $cleanCode = false,
@@ -277,7 +284,6 @@ final class ECSConfigBuilder
                 'namespaces' => $namespaces,
                 'docblocks' => $docblocks,
                 'controlStructures' => $controlStructures,
-                'phpunit' => $phpunit,
                 'comments' => $comments,
             ]))) !== []) {
                 throw new SuperfluousConfigurationException(
@@ -309,7 +315,9 @@ final class ECSConfigBuilder
             }
 
             if ($phpunit) {
-                $this->sets[] = SetList::PHPUNIT;
+                throw new DeprecatedException(
+                    'The "phpunit" set is deprecated as it is dangerous to run without proper context. Please use Rector instead.'
+                );
             }
 
             if ($comments) {
@@ -318,7 +326,10 @@ final class ECSConfigBuilder
         }
 
         if ($strict) {
-            $this->sets[] = SetList::STRICT;
+            // throw exception, as deprecated
+            throw new DeprecatedException(
+                'The "strict" set is deprecated as it is dangerous without context. Use Rector instead to make sure you are not breaking your code'
+            );
         }
 
         if ($cleanCode) {
@@ -646,6 +657,21 @@ final class ECSConfigBuilder
      */
     public function withSets(array $sets): self
     {
+        // report deprecated STRICT set
+        foreach ($sets as $set) {
+            if ($set === SetList::STRICT) {
+                throw new DeprecatedException(
+                    'The "strict" set is deprecated as it is dangerous without context. Use Rector instead to make sure you are not breaking your code'
+                );
+            }
+
+            if ($set === SetList::PHPUNIT) {
+                throw new DeprecatedException(
+                    'The "phpunit" set is deprecated as it is dangerous to run without proper context. Please use Rector instead.'
+                );
+            }
+        }
+
         $this->sets = [...$this->sets, ...$sets];
 
         return $this;
