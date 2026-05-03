@@ -84,6 +84,7 @@ jobs:
 
             # setup git user
             -
+                working-directory: remote-repository
                 run: |
                     git config user.email "action@github.com"
                     git config user.name "GitHub Action"
