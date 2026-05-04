@@ -1,4 +1,4 @@
-name: Downgraded Release
+name: Build Release
 
 on:
     push:
@@ -10,7 +10,7 @@ on:
             - '*'
 
 jobs:
-    downgrade_release:
+    build_release:
         runs-on: ubuntu-latest
 
         steps:
