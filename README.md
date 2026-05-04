@@ -56,13 +56,17 @@ use Symplify\EasyCodingStandard\Config\ECSConfig;
 
 return ECSConfig::configure()
     ->withPaths([__DIR__ . '/src', __DIR__ . '/tests'])
+
+    // start slow with sole rules
+    ->withRules([
+        ListSyntaxFixer::class,
+    ])
     ->withConfiguredRule(
         ArraySyntaxFixer::class,
         ['syntax' => 'long']
     )
-    ->withRules([
-        ListSyntaxFixer::class,
-    ])
+
+    // apply full set
     ->withPreparedSets(psr12: true);
 ```
 

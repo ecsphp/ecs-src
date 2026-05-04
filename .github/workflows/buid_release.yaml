@@ -55,7 +55,12 @@ jobs:
             # clear the dev files
             -   run: rm -rf tests ecs.php phpstan.neon phpunit.xml .gitignore .editorconfig
 
-            # prefix and scope
+            # required by scoper
+            -   uses: "shivammathur/setup-php@v2"
+                with:
+                    php-version: 8.2
+                    coverage: none
+
             -   run: sh prefix-code.sh
 
             # 6. clone remote repository, so we can push it
