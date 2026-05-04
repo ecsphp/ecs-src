@@ -173,28 +173,6 @@ Mentioned values are default ones.
 
 <br>
 
-Do you use ECS across variety of project? Do you want to run them always the same way in each of those project? Let's make use of [Composer scripts](https://blog.martinhujer.cz/have-you-tried-composer-scripts/)
-
-This command adds 2 handy scripts to your `composer.json`:
-
-```bash
-vendor/bin/ecs scripts
-```
-
-Run them always the same way - to check the code:
-
-```bash
-composer check-cs
-```
-
-To apply fixes, run:
-
-```bash
-composer fix-cs
-```
-
-<br>
-
 ### Controlling Output Format
 
 You may want to use ECS to generate reports for third-party tooling.
@@ -259,8 +237,7 @@ settings for:
 These settings will take precedence over similar rules configured through sets
 like PSR12, to avoid conflicting with other tooling using your `.editorconfig`.
 
-Unfortunately, not all settings are currently respected, but PRs are always
-welcome!
+<br>
 
 ## How to Migrate from another coding standard tool?
 
