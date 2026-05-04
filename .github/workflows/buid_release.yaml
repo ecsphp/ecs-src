@@ -104,6 +104,7 @@ jobs:
                 env:
                     INPUT_LOG: ${{ steps.git-log.outputs.log }}
                 run: |
+                    git remote show origin
                     git add --all
                     git commit -m "Updated ECS to commit ${{ github.event.after }}" -m "$INPUT_LOG"
                     git push --quiet origin main
