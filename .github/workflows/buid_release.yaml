@@ -77,8 +77,8 @@ jobs:
                 uses: "actions/checkout@v4"
                 with:
                     # temporary testing
-                    # repository: easy-coding-standard/ecs
-                    repository: easy-coding-standard/ecs-deployed
+                    repository: easy-coding-standard/ecs
+                    # repository: easy-coding-standard/ecs-deployed
                     path: remote-repository
                     token: ${{ secrets.ACCESS_TOKEN }}
 
