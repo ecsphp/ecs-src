@@ -54,10 +54,6 @@ Memory limit for PHPStan and Rector is `1G` (already set in composer scripts).
 
 `illuminate/container` is patched via `patches/illuminate-container-container-php.patch` (cweagans/composer-patches). Don't update the package without re-checking the patch.
 
-## Vendor prefixing / release build
-
-`scoper.php` and `prefix-code.sh` / `full_ecs_build.sh` produce the prefixed distribution. Don't edit `scoper.php` casually; it's excluded from PHPStan.
-
 ## Don't
 
 - Don't bypass `phpstan`, `rector`, or `check-cs` with skip comments unless the user asks for it.

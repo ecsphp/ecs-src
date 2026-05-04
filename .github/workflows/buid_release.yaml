@@ -60,11 +60,11 @@ jobs:
                     coverage: none
 
             -   run: composer global require php-parallel-lint/php-parallel-lint --ansi
-            -   run: /home/runner/.composer/vendor/bin/parallel-lint src vendor --exclude vendor/symfony/dependency-injection/Attribute/Autowire.php --exclude vendor/symfony/config/Definition/Dumper/XmlReferenceDumper.php --exclude vendor/symfony/console/Debug/CliRequest.php --exclude vendor/squizlabs/php_codesniffer/tests --exclude vendor/friendsofphp/php-cs-fixer/src/Runner/Runner.php --exclude vendor/friendsofphp/php-cs-fixer/src/Console/Command
+            -   run: /home/runner/.composer/vendor/bin/parallel-lint ecs-prefixed-downgraded --exclude ecs-prefixed-downgraded/vendor/symfony/dependency-injection/Attribute/Autowire.php --exclude ecs-prefixed-downgraded/vendor/symfony/config/Definition/Dumper/XmlReferenceDumper.php --exclude ecs-prefixed-downgraded/vendor/symfony/console/Debug/CliRequest.php --exclude ecs-prefixed-downgraded/vendor/squizlabs/php_codesniffer/tests --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Runner/Runner.php --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Console/Command
 
-            # copy PHP 7.2 composer + workflows
+            # 5. copy repository metafiles, composer.json with PHP 7.2, Github Workflows
             -   run: |
-                    cp -r build/target-repository/. ecs-prefixed-downgraded
+                    cp -R build/target-repository/. ecs-prefixed-downgraded
                     cp -R templates rector-prefixed-downgraded/
 
             # 6. clone remote repository, so we can push it
@@ -77,9 +77,10 @@ jobs:
                     path: remote-repository
                     token: ${{ secrets.ACCESS_TOKEN }}
 
-            # clear the dev files
-            - run: rm -rf build build-ecs-scoped.sh full_ecs_build.sh scoper.php rector.php
+            # remove remote files, to avoid piling up dead code in remote repository
+            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/src remote-repository/vendor
 
+            # clear the dev files
             - run: cp -a ecs-prefixed-downgraded/. remote-repository
 
             # setup git user
