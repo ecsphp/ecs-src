@@ -122,15 +122,15 @@ return [
             // real namespace
             $content = Strings::replace(
                 $content,
-                '#' . $prefix . '\\\\phpunit\\\\framework#',
-                'phpunit\framework'
+                '#' . $prefix . '\\\\PHPUnit\\\\Framework#',
+                'PHPUnit\Framework'
             );
 
             // lower case namespace
             $content = Strings::replace(
                 $content,
-                '#' . $prefix . '\\\\PHPUnit\\\\Framework#',
-                'PHPUnit\Framework'
+                '#' . $prefix . '\\\\phpunit\\\\framework#',
+                'phpunit\framework'
             );
 
             return $content;
