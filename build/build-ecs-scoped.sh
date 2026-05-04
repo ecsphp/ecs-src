@@ -27,7 +27,6 @@ note "Downloading php-scoper 0.18.10"
 # released 2023-12
 wget https://github.com/humbug/php-scoper/releases/download/0.18.10/php-scoper.phar -N --no-verbose
 
-
 note "Running php-scoper"
 
 # Work around possible PHP memory limits

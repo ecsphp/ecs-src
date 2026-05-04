@@ -220,7 +220,7 @@ vendor/bin/ecs list-checkers --output-format json
 
 ### Can I Use My [`.editorconfig`](https://editorconfig.org/)?
 
-Mostly! By using `withEditorConfig()`, ECS will automatically discover
+Mostly! By using `->withEditorConfig()` in `ecs.php`, ECS will automatically discover
 the `.editorconfig` file in the project's root directory. It will use any
 rules under `[*]` or `[*.php]` (the latter taking priority) and respect the
 settings for:
