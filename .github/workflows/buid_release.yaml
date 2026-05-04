@@ -66,7 +66,7 @@ jobs:
             # 5. copy repository metafiles, composer.json with PHP 7.2, Github Workflows
             -   run: |
                     cp -R build/target-repository/. ecs-prefixed-downgraded
-                    cp -R templates rector-prefixed-downgraded/
+                    cp -R templates ecs-prefixed-downgraded/
 
             # 6. clone remote repository, so we can push it
             -
