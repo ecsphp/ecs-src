@@ -11,8 +11,6 @@ if (StaticVersionResolver::PACKAGE_VERSION !== '@package_version@') {
     $cacheDirectory .= '_' . StaticVersionResolver::PACKAGE_VERSION;
 }
 
-// $ecsConfig->parallel();
-
 // make cache individual per project
 $cacheNamespace = str_replace(DIRECTORY_SEPARATOR, '_', getcwd());
 
@@ -23,5 +21,4 @@ return ECSConfig::configure()
     ->withFileExtensions(['php'])
     ->withSkip([])
     ->withPaths([])
-    ->withRealPathReporting(false)
-;
+    ->withRealPathReporting(false);

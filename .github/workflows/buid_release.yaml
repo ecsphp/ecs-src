@@ -1,3 +1,4 @@
+# inspired by https://github.com/rectorphp/rector-src/blob/main/.github/workflows/build_scoped_rector.yaml
 name: Build Release
 
 on:
@@ -5,8 +6,6 @@ on:
         branches:
             - main
         tags:
-            # avoid infinite looping, skip tags that ends with ".72"
-            # see https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-including-and-excluding-branches
             - '*'
 
 jobs:
@@ -35,12 +34,19 @@ jobs:
                     rm -rf vendor/phpcsstandards/php_codesniffer/tests/
                     rm -rf vendor/phpcsstandards/php_codesniffer/src/Standards/*/Tests/
 
+            # 1. copy files to $NESTED_DIRECTORY directory Exclude the scoped/nested directories to prevent rsync from copying in a loop
+            -   run: rsync --exclude ecs-build -av * ecs-build --quiet
+
             # get rector to "rector-local" directory, to avoid downgrading itself in the /vendor
+            # downgrade to PHP 7.2
             -   run: mkdir rector-local
             -   run: composer require rector/rector --working-dir rector-local
+            -   run: rector-local/vendor/bin/rector process ecs-build/bin ecs-build/config/config.php ecs-build/src ecs-build/vendor --config build/rector-downgrade-php-72.php --ansi --no-diffs
 
-            # downgrade to PHP 7.2
-            -   run: rector-local/vendor/bin/rector process bin config/config.php src vendor --config build/rector-downgrade-php-72.php --ansi
+            -   run: sh build/build-ecs-scoped.sh ecs-build ecs-prefixed-downgraded
+
+            # clear the dev files
+            -   run: rm -rf tests ecs-prefixed-downgraded/ecs.php ecs-prefixed-downgraded/phpstan.neon ecs-prefixed-downgraded/phpunit.xml ecs-prefixed-downgraded/.gitignore ecs-prefixed-downgraded/.editorconfig
 
             # verify PHP 7.2 compat
             -
@@ -52,16 +58,10 @@ jobs:
             -   run: composer global require php-parallel-lint/php-parallel-lint --ansi
             -   run: /home/runner/.composer/vendor/bin/parallel-lint src vendor --exclude vendor/symfony/dependency-injection/Attribute/Autowire.php --exclude vendor/symfony/config/Definition/Dumper/XmlReferenceDumper.php --exclude vendor/symfony/console/Debug/CliRequest.php --exclude vendor/squizlabs/php_codesniffer/tests --exclude vendor/friendsofphp/php-cs-fixer/src/Runner/Runner.php --exclude vendor/friendsofphp/php-cs-fixer/src/Console/Command
 
-            # clear the dev files
-            -   run: rm -rf tests ecs.php phpstan.neon phpunit.xml .gitignore .editorconfig
-
-            # required by scoper
-            -   uses: "shivammathur/setup-php@v2"
-                with:
-                    php-version: 8.2
-                    coverage: none
-
-            -   run: sh prefix-code.sh
+            # copy PHP 7.2 composer + workflows
+            -   run: |
+                    cp -r build/target-repository/. ecs-prefixed-downgraded
+                    cp -R templates rector-prefixed-downgraded/
 
             # 6. clone remote repository, so we can push it
             -
@@ -73,15 +73,13 @@ jobs:
                     path: remote-repository
                     token: ${{ secrets.ACCESS_TOKEN }}
 
-            # copy PHP 7.2 composer + workflows
-            -   run: cp -r build/target-repository/. .
-
             # clear the dev files
-            -   run: rm -rf build prefix-code.sh monorepo-builder.php full_ecs_build.sh scoper.php rector.php
+            - run: rm -rf build build-ecs-scoped.sh full_ecs_build.sh scoper.php rector.php
+
+            - run: cp -a ecs-prefixed-downgraded/. remote-repository
 
             # setup git user
             -
-
                 working-directory: remote-repository
                 run: |
                     git config user.email "tomas.vot@gmail.com"
