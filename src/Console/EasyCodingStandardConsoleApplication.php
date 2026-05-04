@@ -16,7 +16,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symplify\EasyCodingStandard\Application\Version\StaticVersionResolver;
 use Symplify\EasyCodingStandard\Console\Command\CheckCommand;
 use Symplify\EasyCodingStandard\Console\Command\ListCheckersCommand;
-use Symplify\EasyCodingStandard\Console\Command\ScriptsCommand;
 use Symplify\EasyCodingStandard\Console\Command\WorkerCommand;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 use Symplify\EasyCodingStandard\ValueObject\Option;
@@ -26,7 +25,6 @@ final class EasyCodingStandardConsoleApplication extends Application
     public function __construct(
         CheckCommand $checkCommand,
         WorkerCommand $workerCommand,
-        ScriptsCommand $scriptsCommand,
         ListCheckersCommand $listCheckersCommand
     ) {
         parent::__construct('EasyCodingStandard', StaticVersionResolver::PACKAGE_VERSION);
@@ -36,7 +34,6 @@ final class EasyCodingStandardConsoleApplication extends Application
 
         $this->add($checkCommand);
         $this->add($workerCommand);
-        $this->add($scriptsCommand);
         $this->add($listCheckersCommand);
 
         $this->get('completion')

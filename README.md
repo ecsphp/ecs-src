@@ -237,8 +237,7 @@ settings for:
 These settings will take precedence over similar rules configured through sets
 like PSR12, to avoid conflicting with other tooling using your `.editorconfig`.
 
-Unfortunately, not all settings are currently respected, but PRs are always
-welcome!
+<br>
 
 ## How to Migrate from another coding standard tool?
 
