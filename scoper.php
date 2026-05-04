@@ -47,6 +47,7 @@ return [
         '#^PhpCsFixer#',
         '#^PHP_CodeSniffer#',
         '#^Symfony\\\\Polyfill#',
+        '#^PHPUnit\\\\Framework#',
     ],
     'exclude-constants' => [
         // Symfony global constants
@@ -108,19 +109,31 @@ return [
         },
 
         // fixes https://github.com/symplify/symplify/issues/3205
+        // fixes https://github.com/easy-coding-standard/ecs-src/issues/4
         function (string $filePath, string $prefix, string $content): string {
             if (
                 ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractCheckerTestCase.php') &&
+                ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractTestCase.php') &&
                 ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractTestCase.php')
             ) {
                 return $content;
             }
 
-            return Strings::replace(
+            // real namespace
+            $content = Strings::replace(
                 $content,
-                '#' . $prefix . '\\\\PHPUnit\\\\Framework\\\\TestCase#',
-                'PHPUnit\Framework\TestCase'
+                '#' . $prefix . '\\\\PHPUnit\\\\Framework#',
+                'PHPUnit\Framework'
             );
+
+            // lower case namespace
+            $content = Strings::replace(
+                $content,
+                '#' . $prefix . '\\\\PHPUnit\\\\Framework#',
+                'PHPUnit\Framework'
+            );
+
+            return $content;
         },
 
         // add static versions constant values
