@@ -1,5 +1,5 @@
 <?php
 
-namespace tests-released\Fixture-released\Fixture-released\Fixture-repository\tests-released\Fixture-repository\tests-released\Fixture;
+namespace Fixture;
 
 class SomeClass {}
