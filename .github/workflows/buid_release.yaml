@@ -102,6 +102,10 @@ jobs:
                     INPUT_LOG: ${{ steps.git-log.outputs.log }}
                 run: |
                     git add --all
+                    if git diff --cached --quiet; then
+                        echo "No changes to commit"
+                        exit 0
+                    fi
                     git commit -m "Updated ECS to commit ${{ github.event.after }}" -m "$INPUT_LOG"
                     git push --quiet origin main
 
@@ -114,7 +118,7 @@ jobs:
                     INPUT_LOG: ${{ steps.git-log.outputs.log }}
                 run: |
                     git add --all
-                    git commit -m "ECS ${GITHUB_REF#refs/tags/}" -m "$INPUT_LOG"
+                    git commit --allow-empty -m "ECS ${GITHUB_REF#refs/tags/}" -m "$INPUT_LOG"
                     git push --quiet origin main
                     git tag ${GITHUB_REF#refs/tags/} -m "${GITHUB_REF#refs/tags/}"
                     git push --quiet origin ${GITHUB_REF#refs/tags/}
