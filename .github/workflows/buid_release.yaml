@@ -45,15 +45,13 @@ jobs:
             # downgrade to PHP 7.2
             -   run: mkdir rector-local
             -   run: composer require rector/rector --working-dir rector-local
-            -   run: rector-local/vendor/bin/rector process ecs-build/bin ecs-build/config/config.php ecs-build/src ecs-build/vendor --config build/config/config-downgrade.php --ansi --no-diffs
-
-            # early downgrade individual functions
-            -   run: rector-local/vendor/bin/rector process ecs-build/vendor/symfony/string/Resources/functions.php -c build/config/config-downgrade.php --ansi
-
-            -   run: sh build/build-ecs-scoped.sh ecs-build ecs-prefixed-downgraded
 
             # clear the dev files
             -   run: rm -rf tests ecs-prefixed-downgraded/ecs.php ecs-prefixed-downgraded/phpstan.neon ecs-prefixed-downgraded/phpunit.xml ecs-prefixed-downgraded/.gitignore ecs-prefixed-downgraded/.editorconfig
+
+            -   run: rector-local/vendor/bin/rector process ecs-build/bin ecs-build/config/config.php ecs-build/src ecs-build/vendor --config build/config/config-downgrade.php --ansi --no-diffs
+
+            -   run: sh build/build-ecs-scoped.sh ecs-build ecs-prefixed-downgraded
 
             # verify PHP 7.2 compat
             -
