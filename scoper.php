@@ -114,7 +114,7 @@ return [
             if (
                 ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractCheckerTestCase.php') &&
                 ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractTestCase.php') &&
-                ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractTestCase.php')
+                ! str_ends_with($filePath, 'src/Fixer/PhpUnit/PhpUnitTestClassRequiresCoversFixer.php')
             ) {
                 return $content;
             }
