@@ -48,6 +48,8 @@ return [
         '#^PHP_CodeSniffer#',
         '#^Symfony\\\\Polyfill#',
         '#^PHPUnit\\\\Framework#',
+        '#^PHPUnit\\\\Runner#',
+        '#^PHPUnit\\\\Util#',
     ],
     'exclude-constants' => [
         // Symfony global constants
@@ -121,9 +123,13 @@ return [
 
             // real namespace
             $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\\Framework#', 'PHPUnit\Framework');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\\Runner#', 'PHPUnit\Runner');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\\Util#', 'PHPUnit\Util');
 
             // lower case namespace
             $content = Strings::replace($content, '#' . $prefix . '\\\\phpunit\\\\framework#', 'phpunit\framework');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\phpunit\\\\runner#', 'phpunit\runner');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\phpunit\\\\util#', 'phpunit\util');
 
             return $content;
         },
