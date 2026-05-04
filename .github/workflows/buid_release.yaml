@@ -47,19 +47,20 @@ jobs:
             -   run: composer require rector/rector --working-dir rector-local
 
             # clear the dev files
-            -   run: rm -rf tests ecs-prefixed-downgraded/ecs.php ecs-prefixed-downgraded/phpstan.neon ecs-prefixed-downgraded/phpunit.xml ecs-prefixed-downgraded/.gitignore ecs-prefixed-downgraded/.editorconfig
+            -   run: rm -rf tests ecs-build/ecs.php ecs-build/phpstan.neon ecs-build/phpunit.xml ecs-build/.gitignore ecs-build/.editorconfig
 
+            # 2. downgrade via Rector
             -   run: rector-local/vendor/bin/rector process ecs-build/bin ecs-build/config/config.php ecs-build/src ecs-build/vendor --config build/config/config-downgrade.php --ansi --no-diffs
 
+            # 3. prefix classes
             -   run: sh build/build-ecs-scoped.sh ecs-build ecs-prefixed-downgraded
 
-            # verify PHP 7.2 compat
+            # 4. lint the code for PHP 7.4 - this must happen here, as setup-php allows only one PHP version switch: https://github.com/shivammathur/setup-php/issues/434
             -
                 uses: "shivammathur/setup-php@v2"
                 with:
                     php-version: 7.2
                     coverage: none
-
             -   run: composer global require php-parallel-lint/php-parallel-lint --ansi
             -   run: /home/runner/.composer/vendor/bin/parallel-lint ecs-prefixed-downgraded --exclude ecs-prefixed-downgraded/vendor/symfony/dependency-injection/Attribute/Autowire.php --exclude ecs-prefixed-downgraded/vendor/symfony/config/Definition/Dumper/XmlReferenceDumper.php --exclude ecs-prefixed-downgraded/vendor/symfony/console/Debug/CliRequest.php --exclude ecs-prefixed-downgraded/vendor/squizlabs/php_codesniffer/tests --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Runner/Runner.php --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Console/Command
 
@@ -84,7 +85,7 @@ jobs:
             # clear the dev files
             - run: cp -a ecs-prefixed-downgraded/. remote-repository
 
-            # setup git user
+            # 7, setup git user
             -
                 working-directory: remote-repository
                 run: |
