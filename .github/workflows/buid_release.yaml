@@ -62,7 +62,7 @@ jobs:
                     php-version: 7.2
                     coverage: none
             -   run: composer global require php-parallel-lint/php-parallel-lint --ansi
-            -   run: /home/runner/.composer/vendor/bin/parallel-lint ecs-prefixed-downgraded --exclude ecs-prefixed-downgraded/vendor/symfony/dependency-injection/Attribute/Autowire.php --exclude ecs-prefixed-downgraded/vendor/symfony/config/Definition/Dumper/XmlReferenceDumper.php --exclude ecs-prefixed-downgraded/vendor/symfony/console/Debug/CliRequest.php --exclude ecs-prefixed-downgraded/vendor/squizlabs/php_codesniffer/tests --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Runner/Runner.php --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Console/Command --exclude ecs-prefixed-downgraded/vendor/symfony/string/Resources/functions.php
+            -   run: /home/runner/.composer/vendor/bin/parallel-lint ecs-prefixed-downgraded --exclude ecs-prefixed-downgraded/vendor/symfony/dependency-injection/Attribute/Autowire.php --exclude ecs-prefixed-downgraded/vendor/symfony/config/Definition/Dumper/XmlReferenceDumper.php --exclude ecs-prefixed-downgraded/vendor/symfony/console/Debug/CliRequest.php --exclude ecs-prefixed-downgraded/vendor/squizlabs/php_codesniffer/tests --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Runner/Runner.php --exclude ecs-prefixed-downgraded/vendor/friendsofphp/php-cs-fixer/src/Console/Command
 
             # 5. copy repository metafiles, composer.json with PHP 7.2, Github Workflows
             -   run: |
