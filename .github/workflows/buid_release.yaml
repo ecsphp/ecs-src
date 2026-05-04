@@ -45,7 +45,7 @@ jobs:
             # downgrade to PHP 7.2
             -   run: mkdir rector-local
             -   run: composer require rector/rector --working-dir rector-local
-            -   run: rector-local/vendor/bin/rector process ecs-build/bin ecs-build/config/config.php ecs-build/src ecs-build/vendor --config build/config/rector-downgrade-php-72.php --ansi --no-diffs
+            -   run: rector-local/vendor/bin/rector process ecs-build/bin ecs-build/config/config.php ecs-build/src ecs-build/vendor --config build/config/config-downgrade.php --ansi --no-diffs
 
             # early downgrade individual functions
             -   run: rector-local/vendor/bin/rector process ecs-build/vendor/symfony/string/Resources/functions.php -c build/config/config-downgrade.php --ansi
