@@ -68,8 +68,8 @@ final class EditorConfigFactoryTest extends AbstractTestCase
                 INI
             ),
             new EditorConfig(
-                indentStyle: IndentStyle::Tab,
-                endOfLine: EndOfLine::Posix,
+                indentStyle: IndentStyle::TAB,
+                endOfLine: EndOfLine::POSIX,
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
                 maxLineLength: 100,
@@ -103,7 +103,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
                 INI
             ),
             new EditorConfig(
-                indentStyle: IndentStyle::Space,
+                indentStyle: IndentStyle::SPACE,
                 endOfLine: null,
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
@@ -123,7 +123,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
                 INI
             ),
             new EditorConfig(
-                indentStyle: IndentStyle::Tab,
+                indentStyle: IndentStyle::TAB,
                 endOfLine: null,
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
@@ -144,7 +144,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
             ),
             new EditorConfig(
                 indentStyle: null,
-                endOfLine: EndOfLine::Posix,
+                endOfLine: EndOfLine::POSIX,
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
                 maxLineLength: null,
@@ -164,7 +164,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
             ),
             new EditorConfig(
                 indentStyle: null,
-                endOfLine: EndOfLine::Legacy,
+                endOfLine: EndOfLine::LEGACY,
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
                 maxLineLength: null,
@@ -184,7 +184,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
             ),
             new EditorConfig(
                 indentStyle: null,
-                endOfLine: EndOfLine::Windows,
+                endOfLine: EndOfLine::WINDOWS,
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
                 maxLineLength: null,
@@ -308,7 +308,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
                 maxLineLength: null,
-                quoteType: QuoteType::Auto
+                quoteType: QuoteType::AUTO
             )
         );
     }
@@ -328,7 +328,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
                 maxLineLength: null,
-                quoteType: QuoteType::Single
+                quoteType: QuoteType::SINGLE
             )
         );
     }
@@ -348,7 +348,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
                 trimTrailingWhitespace: null,
                 insertFinalNewline: null,
                 maxLineLength: null,
-                quoteType: QuoteType::Double
+                quoteType: QuoteType::DOUBLE
             )
         );
     }
