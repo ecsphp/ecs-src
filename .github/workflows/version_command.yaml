@@ -1,0 +1,40 @@
+name: Version Command
+
+# verifies https://github.com/easy-coding-standard/ecs-src/issues/8
+# the published, scoped + downgraded package must keep a working "ecs --version",
+# which prints the bundled PHP-CS-Fixer version
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+        tags:
+            - '*'
+    schedule:
+        # weekly, to catch a broken published release even without a new tag
+        -   cron: '0 6 * * 1'
+
+jobs:
+    version_command:
+        runs-on: ubuntu-latest
+
+        steps:
+            -
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 8.3
+                    coverage: none
+
+            -   run: mkdir nested-dir
+
+            -   run: composer require symplify/easy-coding-standard --ansi
+                working-directory: nested-dir
+
+            -
+                name: "ecs --version must print the PHP-CS-Fixer line"
+                working-directory: nested-dir
+                run: |
+                    OUTPUT="$(vendor/bin/ecs --version --ansi)"
+                    echo "$OUTPUT"
+                    echo "$OUTPUT" | grep -q 'PHP-CS-Fixer'
