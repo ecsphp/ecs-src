@@ -6,9 +6,9 @@ namespace Symplify\EasyCodingStandard\Configuration\EditorConfig;
 
 final class EndOfLine
 {
-    public const string Posix = 'lf';
+    public const string POSIX = 'lf';
 
-    public const string Legacy = 'cr';
+    public const string LEGACY = 'cr';
 
-    public const string Windows = 'crlf';
+    public const string WINDOWS = 'crlf';
 }

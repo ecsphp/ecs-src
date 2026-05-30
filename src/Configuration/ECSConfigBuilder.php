@@ -891,17 +891,17 @@ final class ECSConfigBuilder
 
         if ($editorConfig->indentStyle !== null) {
             $this->indentation = match ($editorConfig->indentStyle) {
-                IndentStyle::Space => Option::INDENTATION_SPACES,
-                IndentStyle::Tab => Option::INDENTATION_TAB,
+                IndentStyle::SPACE => Option::INDENTATION_SPACES,
+                IndentStyle::TAB => Option::INDENTATION_TAB,
                 default => Option::INDENTATION_SPACES,
             };
         }
 
         if ($editorConfig->endOfLine !== null) {
             $this->lineEnding = match ($editorConfig->endOfLine) {
-                EndOfLine::Posix => "\n",
-                EndOfLine::Legacy => "\r",
-                EndOfLine::Windows => "\r\n",
+                EndOfLine::POSIX => "\n",
+                EndOfLine::LEGACY => "\r",
+                EndOfLine::WINDOWS => "\r\n",
                 default => "\n",
             };
         }
@@ -930,13 +930,13 @@ final class ECSConfigBuilder
             ];
         }
 
-        if ($editorConfig->quoteType === QuoteType::Auto) {
+        if ($editorConfig->quoteType === QuoteType::AUTO) {
             $this->rules[] = SingleQuoteFixer::class;
-        } elseif ($editorConfig->quoteType === QuoteType::Single) {
+        } elseif ($editorConfig->quoteType === QuoteType::SINGLE) {
             $this->rulesWithConfiguration[SingleQuoteFixer::class] = [
                 'strings_containing_single_quote_chars' => true,
             ];
-        } elseif ($editorConfig->quoteType === QuoteType::Double) {
+        } elseif ($editorConfig->quoteType === QuoteType::DOUBLE) {
             $this->skip = [...$this->skip, SingleQuoteFixer::class, DoubleQuoteUsageSniff::class];
         }
     }

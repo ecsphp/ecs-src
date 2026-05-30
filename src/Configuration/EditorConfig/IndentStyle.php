@@ -6,7 +6,7 @@ namespace Symplify\EasyCodingStandard\Configuration\EditorConfig;
 
 final class IndentStyle
 {
-    public const string Space = 'space';
+    public const string SPACE = 'space';
 
-    public const string Tab = 'tab';
+    public const string TAB = 'tab';
 }

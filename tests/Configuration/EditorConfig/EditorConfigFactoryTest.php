@@ -22,8 +22,8 @@ final class EditorConfigFactoryTest extends AbstractTestCase
         $editorConfig = $editorConfigFactory->load();
 
         $this->assertEquals($editorConfig, new EditorConfig(
-            indentStyle: IndentStyle::Space,
-            endOfLine: EndOfLine::Posix,
+            indentStyle: IndentStyle::SPACE,
+            endOfLine: EndOfLine::POSIX,
             trimTrailingWhitespace: true,
             insertFinalNewline: true,
             maxLineLength: null,
