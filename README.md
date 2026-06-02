@@ -2,6 +2,11 @@
 
 [![Downloads total](https://img.shields.io/packagist/dt/symplify/easy-coding-standard.svg?style=flat-square)](https://packagist.org/packages/symplify/easy-coding-standard/stats)
 
+> [!IMPORTANT]
+> This is the **development repository** only. The code here is scoped, downgraded and deployed to the [easy-coding-standard/ecs](https://github.com/easy-coding-standard/ecs) repository, which is what `composer require symplify/easy-coding-standard` actually installs.
+>
+> Use this repository to **report issues and send pull requests**. Do not require it directly.
+
 <br>
 
 ## Killer Features
