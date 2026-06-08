@@ -15,9 +15,8 @@
         "php": ">=8.4",
         "composer/pcre": "^3.3.2",
         "composer/xdebug-handler": "^3.0.5",
-        "entropy/entropy": "^0.3",
+        "entropy/entropy": "^0.4",
         "friendsofphp/php-cs-fixer": "^3.95.5",
-        "illuminate/container": "12.39.*",
         "nette/utils": "^4.1",
         "sebastian/diff": "^9.0",
         "squizlabs/php_codesniffer": "^4.0.1",
@@ -38,7 +37,7 @@
         "rector/type-perfect": "^2.1",
         "symplify/phpstan-rules": "^14.11",
         "symplify/vendor-patches": "^11.5",
-        "tomasvotruba/class-leak": "^2.1.6",
+        "tomasvotruba/class-leak": "^2.1.7",
         "tomasvotruba/type-coverage": "^2.1",
         "tomasvotruba/unused-public": "^2.2",
         "tracy/tracy": "^2.12"
@@ -56,6 +55,12 @@
             "tests/functions.php"
         ]
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/TomasVotruba/entropy.git"
+        }
+    ],
     "config": {
         "sort-packages": true,
         "platform-check": false,
@@ -85,12 +90,5 @@
         "symfony/event-dispatcher": "7.*",
         "symfony/process": "7.*",
         "symfony/stopwatch": "7.*"
-    },
-    "extra": {
-        "patches": {
-            "illuminate/container": [
-                "patches/illuminate-container-container-php.patch"
-            ]
-        }
     }
 }
