@@ -56,6 +56,12 @@
             "tests/functions.php"
         ]
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/TomasVotruba/entropy.git"
+        }
+    ],
     "config": {
         "sort-packages": true,
         "platform-check": false,
@@ -85,12 +91,5 @@
         "symfony/event-dispatcher": "7.*",
         "symfony/process": "7.*",
         "symfony/stopwatch": "7.*"
-    },
-    "extra": {
-        "patches": {
-            "illuminate/container": [
-                "patches/illuminate-container-container-php.patch"
-            ]
-        }
     }
 }

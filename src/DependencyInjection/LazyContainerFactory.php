@@ -4,42 +4,41 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\DependencyInjection;
 
-use Illuminate\Container\Container;
-use PHP_CodeSniffer\Fixer;
-use PHP_CodeSniffer\Sniffs\Sniff;
+use Entropy\Container\Container;
 use PHP_CodeSniffer\Util\Tokens;
 use PhpCsFixer\Differ\DifferInterface;
 use PhpCsFixer\Differ\UnifiedDiffer;
-use PhpCsFixer\Fixer\FixerInterface;
 use PhpCsFixer\WhitespacesFixerConfig;
-use SebastianBergmann\Diff\Parser as DiffParser;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symplify\EasyCodingStandard\Application\SingleFileProcessor;
 use Symplify\EasyCodingStandard\Caching\Cache;
 use Symplify\EasyCodingStandard\Caching\CacheFactory;
-use Symplify\EasyCodingStandard\Caching\ChangedFilesDetector;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 use Symplify\EasyCodingStandard\Console\Output\CheckstyleOutputFormatter;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 use Symplify\EasyCodingStandard\Console\Output\GitlabOutputFormatter;
 use Symplify\EasyCodingStandard\Console\Output\JsonOutputFormatter;
 use Symplify\EasyCodingStandard\Console\Output\JUnitOutputFormatter;
-use Symplify\EasyCodingStandard\Console\Output\OutputFormatterCollector;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyleFactory;
 use Symplify\EasyCodingStandard\Console\Style\SymfonyStyleFactory;
-use Symplify\EasyCodingStandard\Contract\Console\Output\OutputFormatterInterface;
-use Symplify\EasyCodingStandard\FixerRunner\Application\FixerFileProcessor;
 use Symplify\EasyCodingStandard\FixerRunner\WhitespacesFixerConfigFactory;
-use Symplify\EasyCodingStandard\Parallel\Application\ParallelFileProcessor;
-use Symplify\EasyCodingStandard\Skipper\Skipper\Skipper;
-use Symplify\EasyCodingStandard\Skipper\Skipper\SkipSkipper;
-use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
-use Symplify\EasyCodingStandard\SniffRunner\DataCollector\SniffMetadataCollector;
 use Webmozart\Assert\Assert;
 
 final class LazyContainerFactory
 {
+    /**
+     * Output formatters are registered explicitly, so they can be collected by contract.
+     *
+     * @var array<class-string>
+     */
+    private const array OUTPUT_FORMATTER_CLASSES = [
+        GitlabOutputFormatter::class,
+        CheckstyleOutputFormatter::class,
+        ConsoleOutputFormatter::class,
+        JsonOutputFormatter::class,
+        JUnitOutputFormatter::class,
+    ];
+
     /**
      * @param string[] $configFiles
      */
@@ -49,16 +48,8 @@ final class LazyContainerFactory
 
         $ecsConfig = new ECSConfig();
 
-        // make sure these services have shared instance created just once, as use setters throughout the project
-        $ecsConfig->singleton(ChangedFilesDetector::class);
-        $ecsConfig->singleton(SniffMetadataCollector::class);
-        $ecsConfig->singleton(SingleFileProcessor::class);
-        $ecsConfig->singleton(ParallelFileProcessor::class);
-        $ecsConfig->singleton(Skipper::class);
-        $ecsConfig->singleton(SkipSkipper::class);
-
         // console
-        $ecsConfig->singleton(
+        $ecsConfig->service(
             EasyCodingStandardStyle::class,
             static function (Container $container): EasyCodingStandardStyle {
                 /** @var EasyCodingStandardStyleFactory $easyCodingStandardStyleFactory */
@@ -67,50 +58,31 @@ final class LazyContainerFactory
             }
         );
 
-        $ecsConfig->singleton(SymfonyStyle::class, SymfonyStyleFactory::create(...));
-
-        $ecsConfig->singleton(Fixer::class);
+        $ecsConfig->service(SymfonyStyle::class, static fn (): SymfonyStyle => SymfonyStyleFactory::create());
 
         // whitespace
-        $ecsConfig->singleton(WhitespacesFixerConfig::class, static function (): WhitespacesFixerConfig {
+        $ecsConfig->service(WhitespacesFixerConfig::class, static function (): WhitespacesFixerConfig {
             $whitespacesFixerConfigFactory = new WhitespacesFixerConfigFactory();
             return $whitespacesFixerConfigFactory->create();
         });
 
         // caching
-        $ecsConfig->singleton(Cache::class, static function (Container $container): Cache {
+        $ecsConfig->service(Cache::class, static function (Container $container): Cache {
             /** @var CacheFactory $cacheFactory */
             $cacheFactory = $container->make(CacheFactory::class);
             return $cacheFactory->create();
         });
 
         // diffing
-        $ecsConfig->singleton(DiffParser::class);
+        $ecsConfig->service(DifferInterface::class, static fn (): DifferInterface => new UnifiedDiffer());
 
-        // output
-        $ecsConfig->singleton(GitlabOutputFormatter::class);
-        $ecsConfig->singleton(CheckstyleOutputFormatter::class);
-        $ecsConfig->singleton(ConsoleOutputFormatter::class);
-        $ecsConfig->singleton(JsonOutputFormatter::class);
-        $ecsConfig->singleton(JUnitOutputFormatter::class);
-        $ecsConfig->singleton(OutputFormatterCollector::class);
-
-        $ecsConfig->when(OutputFormatterCollector::class)
-            ->needs('$outputFormatters')
-            ->giveTagged(OutputFormatterInterface::class);
-
-        $ecsConfig->singleton(DifferInterface::class, static fn (): DifferInterface => new UnifiedDiffer());
-
-        // @see https://gist.github.com/pionl/01c40225ceeed8b136306fdd96b5dabd
-        $ecsConfig->singleton(FixerFileProcessor::class);
-        $ecsConfig->when(FixerFileProcessor::class)
-            ->needs('$fixers')
-            ->giveTagged(FixerInterface::class);
-
-        $ecsConfig->singleton(SniffFileProcessor::class);
-        $ecsConfig->when(SniffFileProcessor::class)
-            ->needs('$sniffs')
-            ->giveTagged(Sniff::class);
+        // output formatters - autowired, registered so OutputFormatterCollector can find them by contract
+        foreach (self::OUTPUT_FORMATTER_CLASSES as $outputFormatterClass) {
+            $ecsConfig->service(
+                $outputFormatterClass,
+                static fn (Container $container): object => $container->build($outputFormatterClass)
+            );
+        }
 
         // load default config first
         $configFiles = [__DIR__ . '/../../config/config.php', ...$configFiles];

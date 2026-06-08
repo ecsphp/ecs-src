@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\DependencyInjection\CompilerPass;
 
-use Illuminate\Container\Container;
 use PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNewlineSniff as GenericEndFileNewlineSniff;
 use PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNoNewlineSniff;
 use PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\LowerCaseConstantSniff;
@@ -20,6 +19,7 @@ use PhpCsFixer\Fixer\Phpdoc\NoBlankLinesAfterPhpdocFixer;
 use PhpCsFixer\Fixer\PhpTag\BlankLineAfterOpeningTagFixer;
 use Symplify\CodingStandard\Fixer\Spacing\StandaloneLineConstructorParamFixer;
 use Symplify\CodingStandard\Fixer\Spacing\StandaloneLinePromotedPropertyFixer;
+use Symplify\EasyCodingStandard\Config\ECSConfig;
 use Symplify\EasyCodingStandard\Exception\Configuration\ConflictingCheckersLoadedException;
 
 final class ConflictingCheckersCompilerPass
@@ -42,9 +42,9 @@ final class ConflictingCheckersCompilerPass
         [DisallowTabIndentSniff::class, DisallowSpaceIndentSniff::class],
     ];
 
-    public function process(Container $container): void
+    public function process(ECSConfig $ecsConfig): void
     {
-        $checkerTypes = CompilerPassHelper::resolveCheckerClasses($container);
+        $checkerTypes = CompilerPassHelper::resolveCheckerClasses($ecsConfig);
         if ($checkerTypes === []) {
             return;
         }

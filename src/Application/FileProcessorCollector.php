@@ -18,8 +18,10 @@ final class FileProcessorCollector
     /**
      * orders matters, so Fixer can cleanup after Sniffer
      */
-    public function __construct(SniffFileProcessor $sniffFileProcessor, FixerFileProcessor $fixerFileProcessor)
-    {
+    public function __construct(
+        SniffFileProcessor $sniffFileProcessor,
+        FixerFileProcessor $fixerFileProcessor
+    ) {
         $this->fileProcessors[] = $sniffFileProcessor;
         $this->fileProcessors[] = $fixerFileProcessor;
     }
