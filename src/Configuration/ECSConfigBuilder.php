@@ -216,7 +216,8 @@ final class ECSConfigBuilder
      */
     public function withRootFiles(): self
     {
-        $rootPhpFilesFinder = (new Finder())->files()
+        $rootPhpFilesFinder = new Finder()
+            ->files()
             ->in(getcwd())
             ->depth(0)
             ->name('*.php');
@@ -887,7 +888,8 @@ final class ECSConfigBuilder
          *
          * @see \Symplify\EasyCodingStandard\DependencyInjection\CompilerPass\RemoveMutualCheckersCompilerPass
          */
-        $editorConfig = (new EditorConfigFactory())->load();
+        $editorConfig = new EditorConfigFactory()
+            ->load();
 
         if ($editorConfig->indentStyle !== null) {
             $this->indentation = match ($editorConfig->indentStyle) {

@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 **Symplify EasyCodingStandard (ECS)** — a unified runner for PHP-CS-Fixer and PHP_CodeSniffer. Users configure rules through a fluent PHP API (`ECSConfig::configure()->with...()`) instead of dealing with each tool's native config format.
 
-- PHP `>=8.3`
+- PHP `>=8.4`
 - Entry binary: `bin/ecs`
 - PSR-4: `Symplify\EasyCodingStandard\` → `src/`
 - Tests PSR-4: `Symplify\EasyCodingStandard\Tests\` → `tests/`

@@ -6,6 +6,9 @@ parameters:
     # requires exact closure types
     checkMissingCallableSignature: true
 
+    # symplify - see https://github.com/symplify/phpstan-rules#usage
+    pathStrings: true
+
     paths:
         - src
         - tests

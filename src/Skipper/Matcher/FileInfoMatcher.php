@@ -23,13 +23,10 @@ final readonly class FileInfoMatcher
      */
     public function doesFileInfoMatchPatterns(SplFileInfo | string $fileInfo, array $filePatterns): bool
     {
-        foreach ($filePatterns as $filePattern) {
-            if ($this->doesFileInfoMatchPattern($fileInfo, $filePattern)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $filePatterns,
+            fn (string $filePattern): bool => $this->doesFileInfoMatchPattern($fileInfo, $filePattern)
+        );
     }
 
     /**
