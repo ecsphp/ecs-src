@@ -21,13 +21,7 @@ final readonly class ConfigInitializer
     public function areSomeCheckersRegistered(): bool
     {
         $fileProcessors = $this->fileProcessorCollector->getFileProcessors();
-        foreach ($fileProcessors as $fileProcessor) {
-            if ($fileProcessor->getCheckers()) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($fileProcessors, fn ($fileProcessor) => $fileProcessor->getCheckers());
     }
 
     public function createConfig(string $projectDirectory): void

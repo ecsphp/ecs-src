@@ -56,8 +56,9 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testLoadsExpectedSections(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(
+                    <<<INI
                 [*]
                 indent_style = space
                 max_line_length = 100
@@ -66,7 +67,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
                 indent_style = tab
                 end_of_line = lf
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: IndentStyle::Tab,
                 endOfLine: EndOfLine::Posix,
@@ -81,7 +82,8 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testEmpty(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(''),
+            new EditorConfigFactory()
+                ->parse(''),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -96,12 +98,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testIndentStyleSpaces(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 indent_style = space
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: IndentStyle::Space,
                 endOfLine: null,
@@ -116,12 +118,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testIndentStyleTabs(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 indent_style = tab
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: IndentStyle::Tab,
                 endOfLine: null,
@@ -136,12 +138,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testEndOfLinePosix(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 end_of_line = lf
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: EndOfLine::Posix,
@@ -156,12 +158,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testEndOfLineLegacy(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 end_of_line = cr
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: EndOfLine::Legacy,
@@ -176,12 +178,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testEndOfLineWindows(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 end_of_line = crlf
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: EndOfLine::Windows,
@@ -196,12 +198,13 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testTrimTrailingWhitespaceEnabled(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(
+                    <<<INI
                 [*]
                 trim_trailing_whitespace = true
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -216,12 +219,13 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testTrimTrailingWhitespaceDisabled(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(
+                    <<<INI
                 [*]
                 trim_trailing_whitespace = false
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -236,12 +240,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testInsertFinalNewlineEnabled(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 insert_final_newline = true
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -256,12 +260,13 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testInsertFinalNewlineDisabled(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(
+                    <<<INI
                 [*]
                 insert_final_newline = false
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -276,12 +281,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function testMaxLineLength(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 max_line_length = 63
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -296,12 +301,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function quoteTypeAuto(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 quote_type = auto
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -316,12 +321,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function quoteTypeSingle(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 quote_type = single
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,
@@ -336,12 +341,12 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     public function quoteTypeDouble(): void
     {
         $this->assertEquals(
-            (new EditorConfigFactory())->parse(
-                <<<INI
+            new EditorConfigFactory()
+                ->parse(<<<INI
                 [*]
                 quote_type = double
                 INI
-            ),
+                ),
             new EditorConfig(
                 indentStyle: null,
                 endOfLine: null,

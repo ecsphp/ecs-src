@@ -28,4 +28,10 @@ return RectorConfig::configure()
 
         // conditional checks
         RemovePhpVersionIdCheckRector::class,
+
+        \Rector\Php84\Rector\Class_\DeprecatedAnnotationToDeprecatedAttributeRector::class => [
+            // avoid runtime reporting in output, only for the user
+            __DIR__ . '/src/ValueObject/Option.php',
+            __DIR__ . '/src/ValueObject/Set/SetList.php',
+        ],
     ]);
