@@ -22,7 +22,6 @@
         "squizlabs/php_codesniffer": "^4.0.1",
         "symfony/console": "^6.4.24",
         "symfony/finder": "^7.4",
-        "symplify/coding-standard": "^13.1",
         "symplify/easy-parallel": "^11.2",
         "webmozart/assert": "^2.4"
     },
@@ -44,12 +43,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Symplify\\EasyCodingStandard\\": "src"
+            "Symplify\\EasyCodingStandard\\": "src",
+            "Symplify\\CodingStandard\\": "packages/coding-standard/src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Symplify\\EasyCodingStandard\\Tests\\": "tests"
+            "Symplify\\EasyCodingStandard\\Tests\\": "tests",
+            "Symplify\\CodingStandard\\Tests\\": "packages/coding-standard/tests"
         },
         "files": [
             "tests/functions.php"
