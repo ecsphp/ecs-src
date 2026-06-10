@@ -16,7 +16,6 @@ use Symplify\EasyCodingStandard\Config\ECSConfig;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyleFactory;
 use Symplify\EasyCodingStandard\Console\Style\SymfonyStyleFactory;
-use Symplify\EasyCodingStandard\Contract\Console\Output\OutputFormatterInterface;
 use Symplify\EasyCodingStandard\FixerRunner\WhitespacesFixerConfigFactory;
 use Webmozart\Assert\Assert;
 
@@ -60,8 +59,7 @@ final class ServiceContainerFactory
         $ecsConfig->service(DifferInterface::class, static fn (): DifferInterface => new UnifiedDiffer());
 
         // output formatters - autodiscovered, then collected by contract for OutputFormatterCollector
-        $ecsConfig->autodiscover(__DIR__ . '/..');
-        $ecsConfig->findByContract(OutputFormatterInterface::class);
+        $ecsConfig->autodiscover(__DIR__ . '/../Console/Output');
 
         // load default config first
         $configFiles = [__DIR__ . '/../../config/config.php', ...$configFiles];
