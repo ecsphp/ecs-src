@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\DependencyInjection\CompilerPass;
 
-use Illuminate\Container\Container;
 use PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\DisallowLongArraySyntaxSniff;
 use PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\DisallowShortArraySyntaxSniff;
 use PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis\AssignmentInConditionSniff;
@@ -57,6 +56,7 @@ use PhpCsFixer\Fixer\Whitespace\NoExtraBlankLinesFixer;
 use PhpCsFixer\Fixer\Whitespace\NoTrailingWhitespaceFixer;
 use PhpCsFixer\Fixer\Whitespace\SingleBlankLineAtEofFixer;
 use Symplify\CodingStandard\Fixer\LineLength\LineLengthFixer;
+use Symplify\EasyCodingStandard\Config\ECSConfig;
 
 final class RemoveMutualCheckersCompilerPass
 {
@@ -120,9 +120,9 @@ final class RemoveMutualCheckersCompilerPass
         [LineLengthFixer::class, LineLengthSniff::class],
     ];
 
-    public function process(Container $container): void
+    public function process(ECSConfig $ecsConfig): void
     {
-        $checkerTypes = CompilerPassHelper::resolveCheckerClasses($container);
+        $checkerTypes = CompilerPassHelper::resolveCheckerClasses($ecsConfig);
         if ($checkerTypes === []) {
             return;
         }
@@ -132,12 +132,12 @@ final class RemoveMutualCheckersCompilerPass
             return;
         }
 
-        foreach (array_keys($container->getBindings()) as $type) {
+        foreach ($ecsConfig->getCheckerClasses() as $type) {
             if (! in_array($type, $checkersToRemove, true)) {
                 continue;
             }
 
-            CompilerPassHelper::removeCheckerFromContainer($container, $type);
+            CompilerPassHelper::removeCheckerFromContainer($ecsConfig, $type);
         }
     }
 

@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Testing\PHPUnit;
 
-use Illuminate\Container\Container;
 use PHPUnit\Framework\TestCase;
+use Symplify\EasyCodingStandard\Config\ECSConfig;
 use Symplify\EasyCodingStandard\DependencyInjection\LazyContainerFactory;
 use Webmozart\Assert\Assert;
 
 abstract class AbstractTestCase extends TestCase
 {
-    private ?Container $container = null;
+    private ?ECSConfig $ecsConfig = null;
 
     protected function setUp(): void
     {
         $lazyContainerFactory = new LazyContainerFactory();
 
-        $this->container = $lazyContainerFactory->create();
-        $this->container->boot();
+        $this->ecsConfig = $lazyContainerFactory->create();
+        $this->ecsConfig->boot();
     }
 
     /**
@@ -30,9 +30,9 @@ abstract class AbstractTestCase extends TestCase
         Assert::allFile($configs);
 
         $lazyContainerFactory = new LazyContainerFactory();
-        $this->container = $lazyContainerFactory->create($configs);
+        $this->ecsConfig = $lazyContainerFactory->create($configs);
 
-        $this->container->boot();
+        $this->ecsConfig->boot();
     }
 
     /**
@@ -43,8 +43,8 @@ abstract class AbstractTestCase extends TestCase
      */
     protected function make(string $class): object
     {
-        Assert::notNull($this->container);
+        Assert::notNull($this->ecsConfig);
 
-        return $this->container->make($class);
+        return $this->ecsConfig->make($class);
     }
 }
