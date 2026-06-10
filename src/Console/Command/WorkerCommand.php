@@ -14,9 +14,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symplify\EasyCodingStandard\Configuration\ConfigurationFactory;
 use Symplify\EasyCodingStandard\MemoryLimitter;
+use Symplify\EasyCodingStandard\Parallel\Enum\Action;
+use Symplify\EasyCodingStandard\Parallel\Enum\ReactCommand;
 use Symplify\EasyCodingStandard\Parallel\WorkerRunner;
-use Symplify\EasyParallel\Enum\Action;
-use Symplify\EasyParallel\Enum\ReactCommand;
 
 /**
  * Inspired at: https://github.com/phpstan/phpstan-src/commit/9124c66dcc55a222e21b1717ba5f60771f7dda92

@@ -1,6 +1,6 @@
 {
     "name": "symplify/easy-coding-standard",
-    "description": "Use Coding Standard with 0-knowledge of PHP-CS-Fixer and PHP_CodeSniffer.",
+    "description": "The easiest way to use coding standard in a PHP project, runs on PHP 7.2+, prepared sets out of box, step-bystep levels, no-brainer",
     "license": "MIT",
     "keywords": [
         "static analysis",
@@ -13,18 +13,22 @@
     ],
     "require": {
         "php": ">=8.4",
+        "clue/ndjson-react": "^1.3",
         "composer/pcre": "^3.3.2",
         "composer/xdebug-handler": "^3.0.5",
         "entropy/entropy": "^0.3",
+        "fidry/cpu-core-counter": "^1.3",
         "friendsofphp/php-cs-fixer": "^3.95.5",
         "illuminate/container": "12.39.*",
         "nette/utils": "^4.1",
+        "react/child-process": "^0.6.7",
+        "react/event-loop": "^1.6",
+        "react/socket": "^1.17",
         "sebastian/diff": "^9.0",
         "squizlabs/php_codesniffer": "^4.0.1",
         "symfony/console": "^6.4.24",
         "symfony/finder": "^7.4",
         "symplify/coding-standard": "^13.1",
-        "symplify/easy-parallel": "^11.2",
         "webmozart/assert": "^2.4"
     },
     "require-dev": {
