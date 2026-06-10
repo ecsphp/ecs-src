@@ -19,7 +19,7 @@ final class ScheduleFactory
      */
     public function create(int $cpuCores, int $jobSize, int $maxNumberOfProcesses, array $files): Schedule
     {
-        $jobs = array_chunk($files, $jobSize);
+        $jobs = array_chunk($files, max(1, $jobSize));
         $numberOfProcesses = min(count($jobs), $cpuCores);
 
         $numberOfProcesses = min($maxNumberOfProcesses, $numberOfProcesses);

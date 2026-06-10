@@ -42,7 +42,7 @@ parameters:
         # set above
         -
             path: src/Parallel/Application/ParallelFileProcessor.php
-            message: '#Cannot call method (.*?)\(\) on Symplify\\EasyParallel\\ValueObject\\ProcessPool\|null#'
+            message: '#Cannot call method (.*?)\(\) on Symplify\\EasyCodingStandard\\Parallel\\ValueObject\\ProcessPool\|null#'
 
         - '#Method Symplify\\EasyCodingStandard\\Console\\Command\\ListCheckersCommand\:\:getObjectClasses\(\) should return (.*?)#'
 

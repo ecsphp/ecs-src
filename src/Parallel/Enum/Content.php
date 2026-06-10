@@ -5,17 +5,11 @@ declare(strict_types=1);
 namespace Symplify\EasyCodingStandard\Parallel\Enum;
 
 /**
- * @api
+ * @enum
  */
 final class Content
 {
-    /**
-     * @var string
-     */
-    public const RESULT = 'result';
+    public const string RESULT = 'result';
 
-    /**
-     * @var string
-     */
-    public const FILES = 'files';
+    public const string FILES = 'files';
 }

@@ -14,17 +14,14 @@ use Symplify\EasyCodingStandard\Parallel\Reflection\CommandFromReflectionFactory
  */
 final class WorkerCommandLineFactory
 {
-    /**
-     * @var string
-     */
-    private const OPTION_DASHES = '--';
+    private const string OPTION_DASHES = '--';
 
     /**
      * These options are not relevant for nested worker command line.
      *
      * @var string[]
      */
-    private const EXCLUDED_OPTION_NAMES = ['output-format'];
+    private const array EXCLUDED_OPTION_NAMES = ['output-format'];
 
     private readonly CommandFromReflectionFactory $commandFromReflectionFactory;
 

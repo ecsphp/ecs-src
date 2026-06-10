@@ -76,25 +76,20 @@ guidance away from dangerous sets.
       ->withDocblockLevel(1);
   ```
 
-  Each level applies the same number of rules to your code, safest first:
+  Example from the array set (`tests/Set/Array/Fixture/nested_array.php.inc`):
 
   ```diff
-  -$values = array(1, 2, 3,);
-  +$values = [1, 2, 3];
+  -$test = ['key' => ['keyA' => 'valueA']];
+  +$test = [
+  +    'key' => [
+  +        'keyA' => 'valueA',
+  +    ],
+  +];
   ```
 
 ### Changed
 - Reconfigure `OrderedImportsFixer` to sort imports by `class`, `function`, then `const`,
   avoiding a mixed import order (#321)
-
-  ```diff
-   use App\Service\SomeService;
-  -use const PHP_EOL;
-   use App\Service\AnotherService;
-  -use function strlen;
-  +use function strlen;
-  +use const PHP_EOL;
-  ```
 
   ```php
   // config/set/clean-code.php
