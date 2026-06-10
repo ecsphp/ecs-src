@@ -20,7 +20,7 @@ use Symplify\EasyCodingStandard\Contract\Console\Output\OutputFormatterInterface
 use Symplify\EasyCodingStandard\FixerRunner\WhitespacesFixerConfigFactory;
 use Webmozart\Assert\Assert;
 
-final class LazyContainerFactory
+final class ServiceContainerFactory
 {
     /**
      * @param string[] $configFiles

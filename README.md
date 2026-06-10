@@ -203,11 +203,15 @@ For information on how each of these behave, refer to their respective
 
 ## FAQ
 
+<br>
+
 ### How do I clear cache?
 
 ```bash
 vendor/bin/ecs --clear-cache
 ```
+
+<br>
 
 ### How can I see all used rules?
 
