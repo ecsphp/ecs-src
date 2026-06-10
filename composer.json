@@ -1,6 +1,6 @@
 {
     "name": "symplify/easy-coding-standard",
-    "description": "Use Coding Standard with 0-knowledge of PHP-CS-Fixer and PHP_CodeSniffer.",
+    "description": "ECS runs PHP-CS-Fixer and PHP_CodeSniffer as a single, parallel, fast tool, zero dependencies, requiring only PHP 7.2+. Configure with prepared sets, gradual levels via, plug-in and keep it running for years with zero maintenance",
     "license": "MIT",
     "keywords": [
         "static analysis",

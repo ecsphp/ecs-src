@@ -89,20 +89,6 @@ return ECSConfig::configure()
 
 <br>
 
-Do you want to include one of sets from [php-cs-fixer](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/doc/ruleSets/index.rst)?
-
-You can:
-
-```php
-use Symplify\EasyCodingStandard\Config\ECSConfig;
-
-return ECSConfig::configure()
-    ->withPaths([__DIR__ . '/src', __DIR__ . '/tests'])
-    ->withPhpCsFixerSets(perCS20: true, doctrineAnnotation: true);
-```
-
-<br>
-
 ### Gradual Adoption with Levels
 
 Want to adopt a coding standard step by step instead of all at once? Use `with*Level()` methods to start from the safest rules and raise the level as your codebase catches up:
@@ -119,6 +105,20 @@ return ECSConfig::configure()
 ```
 
 Each level enables the first N+1 rules from a curated list, ordered from safest to most invasive. Bump the number once your codebase is clean on the current level.
+
+<br>
+
+Do you want to include one of sets from [php-cs-fixer](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/doc/ruleSets/index.rst)?
+
+You can:
+
+```php
+use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+return ECSConfig::configure()
+    ->withPaths([__DIR__ . '/src', __DIR__ . '/tests'])
+    ->withPhpCsFixerSets(perCS20: true, doctrineAnnotation: true);
+```
 
 <br>
 
@@ -203,11 +203,15 @@ For information on how each of these behave, refer to their respective
 
 ## FAQ
 
+<br>
+
 ### How do I clear cache?
 
 ```bash
 vendor/bin/ecs --clear-cache
 ```
+
+<br>
 
 ### How can I see all used rules?
 

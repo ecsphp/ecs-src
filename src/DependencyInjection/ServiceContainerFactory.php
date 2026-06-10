@@ -13,32 +13,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symplify\EasyCodingStandard\Caching\Cache;
 use Symplify\EasyCodingStandard\Caching\CacheFactory;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
-use Symplify\EasyCodingStandard\Console\Output\CheckstyleOutputFormatter;
-use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
-use Symplify\EasyCodingStandard\Console\Output\GitlabOutputFormatter;
-use Symplify\EasyCodingStandard\Console\Output\JsonOutputFormatter;
-use Symplify\EasyCodingStandard\Console\Output\JUnitOutputFormatter;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyleFactory;
 use Symplify\EasyCodingStandard\Console\Style\SymfonyStyleFactory;
+use Symplify\EasyCodingStandard\Contract\Console\Output\OutputFormatterInterface;
 use Symplify\EasyCodingStandard\FixerRunner\WhitespacesFixerConfigFactory;
 use Webmozart\Assert\Assert;
 
-final class LazyContainerFactory
+final class ServiceContainerFactory
 {
-    /**
-     * Output formatters are registered explicitly, so they can be collected by contract.
-     *
-     * @var array<class-string>
-     */
-    private const array OUTPUT_FORMATTER_CLASSES = [
-        GitlabOutputFormatter::class,
-        CheckstyleOutputFormatter::class,
-        ConsoleOutputFormatter::class,
-        JsonOutputFormatter::class,
-        JUnitOutputFormatter::class,
-    ];
-
     /**
      * @param string[] $configFiles
      */
@@ -76,10 +59,9 @@ final class LazyContainerFactory
         // diffing
         $ecsConfig->service(DifferInterface::class, static fn (): DifferInterface => new UnifiedDiffer());
 
-        // output formatters - autowired eagerly so OutputFormatterCollector can find them by contract
-        foreach (self::OUTPUT_FORMATTER_CLASSES as $outputFormatterClass) {
-            $ecsConfig->make($outputFormatterClass);
-        }
+        // output formatters - autodiscovered, then collected by contract for OutputFormatterCollector
+        $ecsConfig->autodiscover(__DIR__ . '/..');
+        $ecsConfig->findByContract(OutputFormatterInterface::class);
 
         // load default config first
         $configFiles = [__DIR__ . '/../../config/config.php', ...$configFiles];

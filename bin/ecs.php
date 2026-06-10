@@ -9,7 +9,7 @@ use Symfony\Component\Console\Input\ArgvInput;
 use Symplify\EasyCodingStandard\Console\EasyCodingStandardConsoleApplication;
 use Symplify\EasyCodingStandard\Console\Style\SymfonyStyleFactory;
 use Symplify\EasyCodingStandard\DependencyInjection\EasyCodingStandardContainerFactory;
-use Symplify\EasyCodingStandard\DependencyInjection\LazyContainerFactory;
+use Symplify\EasyCodingStandard\DependencyInjection\ServiceContainerFactory;
 
 // performance boost
 gc_disable();
@@ -64,7 +64,7 @@ final class ECSAutoloadIncluder
     public function includeDependencyOrRepositoryVendorAutoloadIfExists(): void
     {
         // ECS' vendor is already loaded
-        if (class_exists(LazyContainerFactory::class)) {
+        if (class_exists(ServiceContainerFactory::class)) {
             return;
         }
 
