@@ -76,12 +76,9 @@ final class LazyContainerFactory
         // diffing
         $ecsConfig->service(DifferInterface::class, static fn (): DifferInterface => new UnifiedDiffer());
 
-        // output formatters - autowired, registered so OutputFormatterCollector can find them by contract
+        // output formatters - autowired eagerly so OutputFormatterCollector can find them by contract
         foreach (self::OUTPUT_FORMATTER_CLASSES as $outputFormatterClass) {
-            $ecsConfig->service(
-                $outputFormatterClass,
-                static fn (Container $container): object => $container->build($outputFormatterClass)
-            );
+            $ecsConfig->make($outputFormatterClass);
         }
 
         // load default config first

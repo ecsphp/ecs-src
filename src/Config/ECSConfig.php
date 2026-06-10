@@ -42,12 +42,12 @@ final class ECSConfig extends Container
     private array $removedCheckers = [];
 
     /**
-     * Checkers already registered as a container service (registered exactly once,
-     * even when a class is declared in both a set and explicitly).
+     * Configured checker instances, built exactly once and shared, even when a
+     * class is declared in both a set and explicitly.
      *
-     * @var array<class-string<Sniff|FixerInterface>, true>
+     * @var array<class-string<Sniff|FixerInterface>, Sniff|FixerInterface>
      */
-    private array $checkerServiceRegistered = [];
+    private array $builtCheckers = [];
 
     /**
      * Registration order, with duplicates preserved: a checker declared both in a
@@ -247,6 +247,30 @@ final class ECSConfig extends Container
     }
 
     /**
+     * Checkers are returned fully configured; every other class is built by the parent container.
+     *
+     * @template TType as object
+     *
+     * @param class-string<TType> $class
+     * @return TType
+     */
+    #[Override]
+    public function make(string $class): object
+    {
+        if (isset($this->checkerConfiguration[$class])) {
+            // a configured-checker key is always a Sniff|FixerInterface class-string
+            /** @var class-string<Sniff|FixerInterface> $checkerClass */
+            $checkerClass = $class;
+
+            /** @var TType $checker */
+            $checker = $this->buildConfiguredChecker($checkerClass);
+            return $checker;
+        }
+
+        return parent::make($class);
+    }
+
+    /**
      * Checkers are returned in registration order with duplicates preserved (a class
      * declared both in a set and explicitly appears twice, sharing one instance);
      * every other service is resolved by the parent container.
@@ -282,7 +306,7 @@ final class ECSConfig extends Container
                 continue;
             }
 
-            $checkerInstances[] = $this->make($checkerClass);
+            $checkerInstances[] = $this->buildConfiguredChecker($checkerClass);
         }
 
         $matchingCheckers = array_filter(
@@ -343,15 +367,6 @@ final class ECSConfig extends Container
         $this->checkerConfiguration[$checkerClass] = $configuration;
         $this->checkerRegistrationOrder[] = $checkerClass;
         unset($this->removedCheckers[$checkerClass]);
-
-        // register the checker as a service exactly once; the factory reads the
-        // (possibly updated) configuration lazily at build time
-        if (isset($this->checkerServiceRegistered[$checkerClass])) {
-            return;
-        }
-
-        $this->checkerServiceRegistered[$checkerClass] = true;
-        $this->service($checkerClass, fn (): object => $this->buildConfiguredChecker($checkerClass));
     }
 
     /**
@@ -359,7 +374,12 @@ final class ECSConfig extends Container
      */
     private function buildConfiguredChecker(string $checkerClass): object
     {
-        $checker = $this->build($checkerClass);
+        if (isset($this->builtCheckers[$checkerClass])) {
+            return $this->builtCheckers[$checkerClass];
+        }
+
+        // parent::make() autowires the raw checker by reflection; this class' make() override would recurse here
+        $checker = parent::make($checkerClass);
 
         if ($checker instanceof WhitespacesAwareFixerInterface) {
             $checker->setWhitespacesConfig($this->make(WhitespacesFixerConfig::class));
@@ -375,6 +395,8 @@ final class ECSConfig extends Container
                 $checker->{$propertyName} = $value;
             }
         }
+
+        $this->builtCheckers[$checkerClass] = $checker;
 
         return $checker;
     }
