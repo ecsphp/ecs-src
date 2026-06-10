@@ -6,7 +6,5 @@ use Symplify\CodingStandard\Fixer\Annotation\RemoveMethodNameDuplicateDescriptio
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 
 return static function (ECSConfig $ecsConfig): void {
-    $ecsConfig->rules([
-        RemoveMethodNameDuplicateDescriptionFixer::class,
-    ]);
+    $ecsConfig->rules([RemoveMethodNameDuplicateDescriptionFixer::class]);
 };

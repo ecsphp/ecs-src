@@ -19,9 +19,6 @@ use Symplify\CodingStandard\Fixer\Strict\BlankLineAfterStrictTypesFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 
 return static function (ECSConfig $ecsConfig): void {
-    // split @param/@return/@var malform rules
-    $ecsConfig->sets([__DIR__ . '/sets/docblock.php']);
-
     $ecsConfig->rules([
         // docblocks and comments
         RemovePHPStormAnnotationFixer::class,

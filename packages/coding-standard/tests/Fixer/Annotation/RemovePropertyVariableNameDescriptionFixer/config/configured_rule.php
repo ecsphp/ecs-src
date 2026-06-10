@@ -6,7 +6,5 @@ use Symplify\CodingStandard\Fixer\Annotation\RemovePropertyVariableNameDescripti
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 
 return static function (ECSConfig $ecsConfig): void {
-    $ecsConfig->rules([
-        RemovePropertyVariableNameDescriptionFixer::class,
-    ]);
+    $ecsConfig->rules([RemovePropertyVariableNameDescriptionFixer::class]);
 };

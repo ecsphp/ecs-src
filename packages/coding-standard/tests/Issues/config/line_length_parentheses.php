@@ -7,9 +7,7 @@ use Symplify\CodingStandard\Fixer\LineLength\LineLengthFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 
 return static function (ECSConfig $ecsConfig): void {
-    $ecsConfig->rules([
-        LineLengthFixer::class,
-    ]);
+    $ecsConfig->rules([LineLengthFixer::class]);
 
     $ecsConfig->ruleWithConfiguration(NewWithParenthesesFixer::class, [
         'anonymous_class' => false,

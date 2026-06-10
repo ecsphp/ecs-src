@@ -33,6 +33,9 @@ final class Regex
         return $matches;
     }
 
+    /**
+     * @param string|callable(array<int|string, mixed>): string $replacement
+     */
     public static function replace(string $subject, string $pattern, string|callable $replacement = ''): string
     {
         if (is_callable($replacement)) {

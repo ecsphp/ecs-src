@@ -13,8 +13,8 @@ use SplFileInfo;
 use Symplify\CodingStandard\Fixer\AbstractSymplifyFixer;
 
 /**
- * @deprecated This rule was split into single-task rules registered in config/sets/docblock.php.
- *             Use the docblock set or the dedicated rules instead.
+ * @deprecated This rule was split into single-task rules collected in DocblockLevel.
+ *             Use DocblockLevel or the dedicated rules instead.
  */
 final class ParamReturnAndVarTagMalformsFixer extends AbstractSymplifyFixer implements DeprecatedFixerInterface
 {

@@ -57,7 +57,9 @@ final readonly class TokenSkipper
     {
         /** @var Token $token */
         $token = $tokens[$position];
-        if (! $token->isGivenKind(CT::T_ARRAY_SQUARE_BRACE_CLOSE) && ! $token->equals(')') && ! $token->isGivenKind(CT::T_ATTRIBUTE_CLOSE)) {
+        if (! $token->isGivenKind(CT::T_ARRAY_SQUARE_BRACE_CLOSE) && ! $token->equals(')') && ! $token->isGivenKind(
+            CT::T_ATTRIBUTE_CLOSE
+        )) {
             return $position;
         }
 
@@ -91,7 +93,9 @@ final readonly class TokenSkipper
             }
 
             // If we hit another ] or reach a statement boundary, stop searching
-            if ($currentToken->equals(']') || $currentToken->equals(';') || $currentToken->equals('{') || $currentToken->equals('}')) {
+            if ($currentToken->equals(']') || $currentToken->equals(';') || $currentToken->equals(
+                '{'
+            ) || $currentToken->equals('}')) {
                 break;
             }
         }

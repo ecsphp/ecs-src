@@ -111,8 +111,12 @@ final class FixParamNameTypoFixer extends AbstractDocBlockFixer
      * @param string[] $missArgumentNames
      * @param string[] $paramNames
      */
-    private function fixTypos(array $argumentNames, array $missArgumentNames, array $paramNames, string $docContent): string
-    {
+    private function fixTypos(
+        array $argumentNames,
+        array $missArgumentNames,
+        array $paramNames,
+        string $docContent
+    ): string {
         // A table of permuted params. initialized by $argumentName instead of $paramNames is correct
         $replacedParams = array_fill_keys($argumentNames, false);
 
@@ -125,7 +129,10 @@ final class FixParamNameTypoFixer extends AbstractDocBlockFixer
             $typoName = $paramNames[$key];
             $replacePattern = '#@param(.*?)(' . preg_quote($typoName, '#') . '\b)#';
 
-            $docContent = Regex::replace($docContent, $replacePattern, static function (array $matched) use ($argumentName, &$replacedParams) {
+            $docContent = Regex::replace($docContent, $replacePattern, static function (array $matched) use (
+                $argumentName,
+                &$replacedParams
+            ) {
                 $paramName = $matched[2];
 
                 // 2. If the PHPDoc $paramName is one of the existing $argumentNames and has not already been replaced, it will be deferred

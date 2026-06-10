@@ -17,7 +17,17 @@ use PhpCsFixer\Fixer\Phpdoc\PhpdocTrimConsecutiveBlankLineSeparationFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocTrimFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocTypesFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocVarWithoutNameFixer;
+use Symplify\CodingStandard\Fixer\Commenting\AddMissingParamNameFixer;
+use Symplify\CodingStandard\Fixer\Commenting\AddMissingVarNameFixer;
+use Symplify\CodingStandard\Fixer\Commenting\DoubleAsteriskInlineVarFixer;
+use Symplify\CodingStandard\Fixer\Commenting\FixParamNameTypoFixer;
+use Symplify\CodingStandard\Fixer\Commenting\RemoveDeadParamFixer;
+use Symplify\CodingStandard\Fixer\Commenting\RemoveParamNameReferenceFixer;
+use Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousReturnNameFixer;
+use Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousVarNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveUselessDefaultCommentFixer;
+use Symplify\CodingStandard\Fixer\Commenting\SingleLineInlineVarDocBlockFixer;
+use Symplify\CodingStandard\Fixer\Commenting\SwitchedTypeAndNameFixer;
 
 /**
  * Key 0 = level 0
@@ -32,6 +42,24 @@ final class DocblockLevel
      * @var array<class-string<Sniff|FixerInterface>>
      */
     public const array RULES = [
+        // inline @var
+        DoubleAsteriskInlineVarFixer::class,
+        SingleLineInlineVarDocBlockFixer::class,
+        AddMissingVarNameFixer::class,
+
+        // @param
+        AddMissingParamNameFixer::class,
+        FixParamNameTypoFixer::class,
+        RemoveParamNameReferenceFixer::class,
+        RemoveDeadParamFixer::class,
+
+        // superfluous names
+        RemoveSuperfluousReturnNameFixer::class,
+        RemoveSuperfluousVarNameFixer::class,
+
+        // switched type/name order
+        SwitchedTypeAndNameFixer::class,
+
         // pure whitespace cleanup
         NoTrailingWhitespaceInCommentFixer::class,
         PhpdocTrimFixer::class,
