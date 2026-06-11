@@ -53,7 +53,26 @@ jobs:
             -   run: rector-local/vendor/bin/rector process ecs-build/bin ecs-build/config/config.php ecs-build/packages ecs-build/src ecs-build/vendor --config build/config/config-downgrade.php --ansi --no-diffs
 
             # 3. prefix classes
-            -   run: sh build/build-ecs-scoped.sh ecs-build ecs-prefixed-downgraded
+            -   run: |
+                    # inspired from https://github.com/rectorphp/rector/blob/main/build/build-rector-scoped.sh
+
+                    # download php-scoper
+                    wget https://github.com/humbug/php-scoper/releases/download/0.18.17/php-scoper.phar -N --no-verbose
+
+                    # scope /bin, /config, /packages, /src, /vendor and composer.json
+                    php -d memory_limit=-1 php-scoper.phar add-prefix bin config packages/coding-standard/config packages/coding-standard/src src vendor composer.json --output-dir ../ecs-prefixed-downgraded --config scoper.php --force --ansi --working-dir ecs-build
+
+                    # dump composer autoload
+                    composer dump-autoload --working-dir ecs-prefixed-downgraded --ansi --classmap-authoritative --no-dev
+
+                    rm -rf ecs-build
+
+                    # metafiles like composer.json are copied later for release
+                    rm -f ecs-prefixed-downgraded/composer.json
+
+                    # make bin files runnable without "php"
+                    chmod 777 ecs-prefixed-downgraded/bin/ecs
+                    chmod 777 ecs-prefixed-downgraded/bin/ecs.php
 
             # 4. lint the code for PHP 7.4 - this must happen here, as setup-php allows only one PHP version switch: https://github.com/shivammathur/setup-php/issues/434
             -
