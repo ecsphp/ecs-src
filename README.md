@@ -204,6 +204,8 @@ For information on how each of these behave, refer to their respective
 vendor/bin/ecs --clear-cache
 ```
 
+<br>
+
 ### How can I see all used rules?
 
 ```bash
