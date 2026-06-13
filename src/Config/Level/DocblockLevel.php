@@ -22,6 +22,7 @@ use Symplify\CodingStandard\Fixer\Commenting\AddMissingVarNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\DoubleAsteriskInlineVarFixer;
 use Symplify\CodingStandard\Fixer\Commenting\FixParamNameTypoFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveDeadParamFixer;
+use Symplify\CodingStandard\Fixer\Commenting\RemoveDeadVarThisFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveParamNameReferenceFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousReturnNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousVarNameFixer;
@@ -44,7 +45,9 @@ final class DocblockLevel
     public const array RULES = [
         // inline @var
         DoubleAsteriskInlineVarFixer::class,
+        RemoveDeadVarThisFixer::class,
         SingleLineInlineVarDocBlockFixer::class,
+
         AddMissingVarNameFixer::class,
 
         // @param
