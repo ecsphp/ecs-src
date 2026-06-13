@@ -20,7 +20,7 @@ final class AddMissingVarNameFixer extends AbstractDocBlockFixer
     /**
      * @see https://regex101.com/r/s1UkZs/1
      */
-    private const string VAR_WITHOUT_NAME_REGEX = '#^(?<open>\/\*\* @(?:psalm-|phpstan-)?var )(?<type>[\\\\\w\|-|]+)(?<close>\s+\*\/)$#';
+    private const string VAR_WITHOUT_NAME_REGEX = '#^(?<open>\/\*\* @(?:psalm-|phpstan-)?var )(?<type>[\\\\\w\|\[\]-]+)(?<close>\s+\*\/)$#';
 
     public function getDefinition(): FixerDefinitionInterface
     {
