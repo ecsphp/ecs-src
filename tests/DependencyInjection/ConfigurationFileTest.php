@@ -31,4 +31,13 @@ final class ConfigurationFileTest extends AbstractTestCase
         $sniffFileProcessor = $this->make(SniffFileProcessor::class);
         $this->assertCount(1, $sniffFileProcessor->getCheckers());
     }
+
+    public function testDeprecatedClosureConfig(): void
+    {
+        // the old closure config format is deprecated, but still loads
+        $this->createContainerWithConfigs([__DIR__ . '/ConfigurationFileSource/deprecated-closure-config.php']);
+
+        $fixerFileProcessor = $this->make(FixerFileProcessor::class);
+        $this->assertCount(0, $fixerFileProcessor->getCheckers());
+    }
 }
