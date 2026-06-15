@@ -69,7 +69,7 @@ final class ServiceContainerFactory
             $configClosure = require $configFile;
             Assert::isCallable($configClosure);
 
-            if ($configClosure instanceof Closure) {
+            if ($configClosure instanceof Closure && ! defined('PHPUNIT_COMPOSER_INSTALL')) {
                 /** @var SymfonyStyle $symfonyStyle */
                 $symfonyStyle = $ecsConfig->make(SymfonyStyle::class);
                 $symfonyStyle->warning(sprintf(
