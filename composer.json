@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": ">=8.4",
-        "composer/pcre": "^3.3.2",
+        "composer/pcre": "^3.4",
         "composer/xdebug-handler": "^3.0.5",
         "entropy/entropy": "^0.4",
         "friendsofphp/php-cs-fixer": "^3.95.5",
@@ -37,7 +37,7 @@
         "symplify/phpstan-rules": "^14.11",
         "symplify/vendor-patches": "^11.5",
         "tomasvotruba/class-leak": "^2.1.7",
-        "tomasvotruba/type-coverage": "^2.1",
+        "tomasvotruba/type-coverage": "^2.2",
         "tomasvotruba/unused-public": "^2.2",
         "tracy/tracy": "^2.12"
     },
