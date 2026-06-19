@@ -4,48 +4,92 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Console\Command;
 
-use Override;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Entropy\Console\Contract\CommandInterface;
+use Entropy\Console\Contract\DefaultCommandInterface;
 use Symplify\EasyCodingStandard\Application\EasyCodingStandardApplication;
 use Symplify\EasyCodingStandard\Configuration\ConfigInitializer;
 use Symplify\EasyCodingStandard\Configuration\ConfigurationFactory;
+use Symplify\EasyCodingStandard\Console\ExitCode;
+use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 use Symplify\EasyCodingStandard\MemoryLimitter;
 use Symplify\EasyCodingStandard\Reporter\ProcessedFileReporter;
 
-final class CheckCommand extends AbstractCheckCommand
+final readonly class CheckCommand implements CommandInterface, DefaultCommandInterface
 {
     public function __construct(
-        private readonly ProcessedFileReporter $processedFileReporter,
-        private readonly MemoryLimitter $memoryLimitter,
-        private readonly ConfigInitializer $configInitializer,
-        private readonly EasyCodingStandardApplication $easyCodingStandardApplication,
-        private readonly ConfigurationFactory $configurationFactory,
+        private ProcessedFileReporter $processedFileReporter,
+        private MemoryLimitter $memoryLimitter,
+        private ConfigInitializer $configInitializer,
+        private EasyCodingStandardApplication $easyCodingStandardApplication,
+        private ConfigurationFactory $configurationFactory,
     ) {
-        parent::__construct();
     }
 
-    #[Override]
-    protected function configure(): void
+    public function getName(): string
     {
-        $this->setName('check');
-        $this->setDescription('Check coding standard in one or more directories');
-
-        parent::configure();
+        return 'check';
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function getDescription(): string
     {
+        return 'Check coding standard in one or more directories';
+    }
+
+    /**
+     * @param string $config       Path to config file
+     * @param string $outputFormat Select output format
+     * @param string $memoryLimit  Memory limit for check
+     * @param string $port         [INTERNAL] parallel TCP port
+     * @param string $identifier   [INTERNAL] parallel identifier
+     * @param string ...$paths     The path(s) to be checked.
+     *
+     * @option $config
+     * @option $outputFormat
+     * @option $memoryLimit
+     * @option $port
+     * @option $identifier
+     *
+     * @api invoked via reflection by the Entropy console application
+     *
+     * @return ExitCode::*
+     */
+    public function run(
+        bool $fix = false,
+        bool $clearCache = false,
+        bool $noProgressBar = false,
+        bool $noErrorTable = false,
+        bool $noDiffs = false,
+        bool $debug = false,
+        string $config = '',
+        string $outputFormat = ConsoleOutputFormatter::NAME,
+        string $memoryLimit = '',
+        string $port = '',
+        string $identifier = '',
+        string ...$paths,
+    ): int {
         // create ecs.php config file if does not exist yet
         if (! $this->configInitializer->areSomeCheckersRegistered()) {
-            $this->configInitializer->createConfig(getcwd());
-            return self::SUCCESS;
+            $this->configInitializer->createConfig((string) getcwd());
+            return ExitCode::SUCCESS;
         }
 
-        $configuration = $this->configurationFactory->createFromInput($input);
+        $configuration = $this->configurationFactory->create(
+            array_values($paths),
+            $fix,
+            $clearCache,
+            $noProgressBar,
+            $noErrorTable,
+            $noDiffs,
+            $outputFormat,
+            $config !== '' ? $config : null,
+            $port,
+            $identifier,
+            $memoryLimit !== '' ? $memoryLimit : null,
+            $debug,
+        );
         $this->memoryLimitter->adjust($configuration);
 
-        $errorsAndDiffs = $this->easyCodingStandardApplication->run($configuration, $input);
+        $errorsAndDiffs = $this->easyCodingStandardApplication->run($configuration);
         return $this->processedFileReporter->report($errorsAndDiffs, $configuration);
     }
 }

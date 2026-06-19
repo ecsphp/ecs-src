@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Console\Reporter;
 
-use Symfony\Component\Console\Style\SymfonyStyle;
+use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 
 final readonly class CheckerListReporter
 {
     public function __construct(
-        private SymfonyStyle $symfonyStyle
+        private EasyCodingStandardStyle $easyCodingStandardStyle
     ) {
     }
 
@@ -28,7 +28,7 @@ final readonly class CheckerListReporter
             count($checkerClasses) === 1 ? '' : 's',
             $type
         );
-        $this->symfonyStyle->section($sectionMessage);
-        $this->symfonyStyle->listing($checkerClasses);
+        $this->easyCodingStandardStyle->section($sectionMessage);
+        $this->easyCodingStandardStyle->listing($checkerClasses);
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Configuration;
 
-use Symfony\Component\Console\Input\InputInterface;
 use Symplify\EasyCodingStandard\Console\Output\OutputFormatterCollector;
 use Symplify\EasyCodingStandard\DependencyInjection\SimpleParameterProvider;
 use Symplify\EasyCodingStandard\Exception\Configuration\SourceNotFoundException;
@@ -20,32 +19,31 @@ final readonly class ConfigurationFactory
 
     /**
      * Needs to run in the start of the life cycle, since the rest of workflow uses it.
+     *
+     * @param string[] $paths
      */
-    public function createFromInput(InputInterface $input): Configuration
-    {
-        $paths = $this->resolvePaths($input);
+    public function create(
+        array $paths,
+        bool $isFixer,
+        bool $shouldClearCache,
+        bool $noProgressBar,
+        bool $noErrorTable,
+        bool $noDiffs,
+        string $outputFormat,
+        ?string $config,
+        string $parallelPort,
+        string $parallelIdentifier,
+        ?string $memoryLimit,
+        bool $debug,
+    ): Configuration {
+        $paths = $this->resolvePaths($paths);
 
-        $isFixer = (bool) $input->getOption(Option::FIX);
-        $shouldClearCache = (bool) $input->getOption(Option::CLEAR_CACHE);
-        $showProgressBar = $this->canShowProgressBar($input);
-        $showErrorTable = ! (bool) $input->getOption(Option::NO_ERROR_TABLE);
-        $showDiffs = ! (bool) $input->getOption(Option::NO_DIFFS);
-        $parallelPort = (string) $input->getOption(Option::PARALLEL_PORT);
-        $parallelIdentifier = (string) $input->getOption(Option::PARALLEL_IDENTIFIER);
-
-        $outputFormat = (string) $input->getOption(Option::OUTPUT_FORMAT);
-
-        /** @var string|null $memoryLimit */
-        $memoryLimit = $input->getOption(Option::MEMORY_LIMIT);
+        $showProgressBar = $this->canShowProgressBar($debug, $outputFormat, $noProgressBar);
+        $showErrorTable = ! $noErrorTable;
+        $showDiffs = ! $noDiffs;
 
         $isParallel = SimpleParameterProvider::getBoolParameter(Option::PARALLEL);
-
         $isReportingWithRealPath = SimpleParameterProvider::getBoolParameter(Option::REPORTING_REALPATH);
-
-        $config = $input->getOption(Option::CONFIG);
-        if ($config !== null) {
-            $config = (string) $config;
-        }
 
         return new Configuration(
             $isFixer,
@@ -64,22 +62,19 @@ final readonly class ConfigurationFactory
         );
     }
 
-    private function canShowProgressBar(InputInterface $input): bool
+    private function canShowProgressBar(bool $debug, string $outputFormat, bool $noProgressBar): bool
     {
         // --debug option shows more
-        $debug = (bool) $input->getOption(Option::DEBUG);
         if ($debug) {
             return false;
         }
 
-        $outputFormat = $input->getOption(Option::OUTPUT_FORMAT);
         $outputFormatter = $this->outputFormatterCollector->getByName($outputFormat);
-
         if (! $outputFormatter->hasSupportForProgressBars()) {
             return false;
         }
 
-        return ! (bool) $input->getOption(Option::NO_PROGRESS_BAR);
+        return ! $noProgressBar;
     }
 
     /**
@@ -97,12 +92,11 @@ final readonly class ConfigurationFactory
     }
 
     /**
+     * @param string[] $paths
      * @return string[]
      */
-    private function resolvePaths(InputInterface $input): array
+    private function resolvePaths(array $paths): array
     {
-        /** @var string[] $paths */
-        $paths = (array) $input->getArgument(Option::PATHS);
         if ($paths === []) {
             // if not paths are provided from CLI, use the config ones
             $paths = SimpleParameterProvider::getArrayParameter(Option::PATHS);

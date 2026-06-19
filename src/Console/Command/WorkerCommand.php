@@ -6,13 +6,14 @@ namespace Symplify\EasyCodingStandard\Console\Command;
 
 use Clue\React\NDJson\Decoder;
 use Clue\React\NDJson\Encoder;
-use Override;
+use Entropy\Console\Contract\CommandInterface;
+use Entropy\Console\Contract\HiddenCommandInterface;
 use React\EventLoop\StreamSelectLoop;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpConnector;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symplify\EasyCodingStandard\Configuration\ConfigurationFactory;
+use Symplify\EasyCodingStandard\Console\ExitCode;
+use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 use Symplify\EasyCodingStandard\MemoryLimitter;
 use Symplify\EasyCodingStandard\Parallel\WorkerRunner;
 use Symplify\EasyParallel\Enum\Action;
@@ -25,28 +26,71 @@ use Symplify\EasyParallel\Enum\ReactCommand;
  * ↓↓↓
  * https://github.com/phpstan/phpstan-src/commit/b84acd2e3eadf66189a64fdbc6dd18ff76323f67#diff-7f625777f1ce5384046df08abffd6c911cfbb1cfc8fcb2bdeaf78f337689e3e2
  */
-final class WorkerCommand extends AbstractCheckCommand
+final readonly class WorkerCommand implements CommandInterface, HiddenCommandInterface
 {
     public function __construct(
-        private readonly WorkerRunner $workerRunner,
-        private readonly MemoryLimitter $memoryLimitter,
-        private readonly ConfigurationFactory $configurationFactory,
+        private WorkerRunner $workerRunner,
+        private MemoryLimitter $memoryLimitter,
+        private ConfigurationFactory $configurationFactory,
     ) {
-        parent::__construct();
     }
 
-    #[Override]
-    protected function configure(): void
+    public function getName(): string
     {
-        $this->setName('worker');
-        $this->setDescription('[INTERNAL] Support for parallel process');
-
-        parent::configure();
+        return 'worker';
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function getDescription(): string
     {
-        $configuration = $this->configurationFactory->createFromInput($input);
+        return '[INTERNAL] Support for parallel process';
+    }
+
+    /**
+     * @param string $config       Path to config file
+     * @param string $outputFormat Select output format
+     * @param string $memoryLimit  Memory limit for check
+     * @param string $port         [INTERNAL] parallel TCP port
+     * @param string $identifier   [INTERNAL] parallel identifier
+     * @param string ...$paths     The path(s) to be checked.
+     *
+     * @option $config
+     * @option $outputFormat
+     * @option $memoryLimit
+     * @option $port
+     * @option $identifier
+     *
+     * @api invoked via reflection by the Entropy console application
+     *
+     * @return ExitCode::*
+     */
+    public function run(
+        bool $fix = false,
+        bool $clearCache = false,
+        bool $noProgressBar = false,
+        bool $noErrorTable = false,
+        bool $noDiffs = false,
+        bool $debug = false,
+        string $config = '',
+        string $outputFormat = ConsoleOutputFormatter::NAME,
+        string $memoryLimit = '',
+        string $port = '',
+        string $identifier = '',
+        string ...$paths,
+    ): int {
+        $configuration = $this->configurationFactory->create(
+            array_values($paths),
+            $fix,
+            $clearCache,
+            $noProgressBar,
+            $noErrorTable,
+            $noDiffs,
+            $outputFormat,
+            $config !== '' ? $config : null,
+            $port,
+            $identifier,
+            $memoryLimit !== '' ? $memoryLimit : null,
+            $debug,
+        );
         $this->memoryLimitter->adjust($configuration);
 
         $streamSelectLoop = new StreamSelectLoop();
@@ -70,6 +114,6 @@ final class WorkerCommand extends AbstractCheckCommand
 
         $streamSelectLoop->run();
 
-        return self::SUCCESS;
+        return ExitCode::SUCCESS;
     }
 }
