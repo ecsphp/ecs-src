@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Symplify\EasyCodingStandard\Application;
 
 use ParseError;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Symplify\EasyCodingStandard\Caching\ChangedFilesDetector;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\DependencyInjection\SimpleParameterProvider;
@@ -38,7 +36,6 @@ final readonly class EasyCodingStandardApplication
         private ScheduleFactory $scheduleFactory,
         private ParallelFileProcessor $parallelFileProcessor,
         private CpuCoreCountProvider $cpuCoreCountProvider,
-        private SymfonyStyle $symfonyStyle,
         private ParametersMerger $parametersMerger
     ) {
     }
@@ -46,7 +43,7 @@ final readonly class EasyCodingStandardApplication
     /**
      * @return array{coding_standard_errors?: CodingStandardError[], file_diffs?: FileDiff[], system_errors?: SystemError[]|string[], system_errors_count?: int}
      */
-    public function run(Configuration $configuration, InputInterface $input): array
+    public function run(Configuration $configuration): array
     {
         // 1. find files in sources
         $filePaths = $this->sourceFinder->find($configuration->getSources());
@@ -87,11 +84,11 @@ final readonly class EasyCodingStandardApplication
 
                 if (! $isProgressBarStarted) {
                     $fileCount = count($filePaths);
-                    $this->symfonyStyle->progressStart($fileCount);
+                    $this->easyCodingStandardStyle->progressStart($fileCount);
                     $isProgressBarStarted = true;
                 }
 
-                $this->symfonyStyle->progressAdvance($stepCount);
+                $this->easyCodingStandardStyle->progressAdvance($stepCount);
                 // running in parallel here → nothing else to do
             };
 
@@ -106,7 +103,7 @@ final readonly class EasyCodingStandardApplication
                 $mainScript,
                 $postFileCallback,
                 $configuration->getConfig(),
-                $input
+                $configuration
             );
         }
 

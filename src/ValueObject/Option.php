@@ -10,11 +10,7 @@ final class Option
 
     public const string CLEAR_CACHE = 'clear-cache';
 
-    public const string NO_PROGRESS_BAR = 'no-progress-bar';
-
     public const string NO_ERROR_TABLE = 'no-error-table';
-
-    public const string OUTPUT_FORMAT = 'output-format';
 
     public const string NO_DIFFS = 'no-diffs';
 
@@ -73,23 +69,15 @@ final class Option
      */
     public const string INDENTATION_TAB = 'tab';
 
-    public const string XDEBUG = 'xdebug';
-
-    public const string DEBUG = 'debug';
-
     /**
      * @see \Symplify\EasyCodingStandard\Config\ECSConfig::parallel()
      */
     public const string PARALLEL = 'parallel';
 
-    public const string CONFIG = 'config';
-
     /**
      * @see \Symplify\EasyCodingStandard\Config\ECSConfig::parallel()
      */
     public const string PARALLEL_JOB_SIZE = 'parallel_job_size';
-
-    public const string PARALLEL_PORT = 'port';
 
     public const string PARALLEL_IDENTIFIER = 'identifier';
 

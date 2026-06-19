@@ -10,12 +10,11 @@ use Nette\Utils\Random;
 use React\EventLoop\StreamSelectLoop;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpServer;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symplify\EasyCodingStandard\Console\Command\CheckCommand;
+use Symplify\EasyCodingStandard\Console\ExitCode;
 use Symplify\EasyCodingStandard\DependencyInjection\SimpleParameterProvider;
 use Symplify\EasyCodingStandard\Parallel\ValueObject\Bridge;
 use Symplify\EasyCodingStandard\SniffRunner\ValueObject\Error\CodingStandardError;
+use Symplify\EasyCodingStandard\ValueObject\Configuration;
 use Symplify\EasyCodingStandard\ValueObject\Error\FileDiff;
 use Symplify\EasyCodingStandard\ValueObject\Error\SystemError;
 use Symplify\EasyCodingStandard\ValueObject\Option;
@@ -57,7 +56,7 @@ final class ParallelFileProcessor
         string $mainScript,
         callable $postFileCallback,
         ?string $projectConfigFile,
-        InputInterface $input
+        Configuration $configuration
     ): array {
         $jobs = array_reverse($schedule->getJobs());
         $streamSelectLoop = new StreamSelectLoop();
@@ -124,6 +123,15 @@ final class ParallelFileProcessor
 
         $timeoutInSeconds = SimpleParameterProvider::getIntParameter(Option::PARALLEL_TIMEOUT_IN_SECONDS);
 
+        // options mirrored to each worker sub-process
+        $workerOptionValues = [
+            Option::FIX => $configuration->isFixer(),
+            Option::CLEAR_CACHE => $configuration->shouldClearCache(),
+            Option::NO_ERROR_TABLE => ! $configuration->shouldShowErrorTable(),
+            Option::NO_DIFFS => ! $configuration->shouldShowDiffs(),
+            Option::MEMORY_LIMIT => $configuration->getMemoryLimit(),
+        ];
+
         for ($i = 0; $i < $numberOfProcesses; ++$i) {
             // nothing else to process, stop now
             if ($jobs === []) {
@@ -133,11 +141,10 @@ final class ParallelFileProcessor
             $processIdentifier = Random::generate();
             $workerCommandLine = $this->workerCommandLineFactory->create(
                 $mainScript,
-                CheckCommand::class,
                 'worker',
-                Option::PATHS,
                 $projectConfigFile,
-                $input,
+                $workerOptionValues,
+                $configuration->getSources(),
                 $processIdentifier,
                 $serverPort,
             );
@@ -200,7 +207,7 @@ final class ParallelFileProcessor
                 // 3. callable on exit
                 function ($exitCode, string $stdErr) use (&$systemErrors, $processIdentifier): void {
                     $this->processPool->tryQuitProcess($processIdentifier);
-                    if ($exitCode === Command::SUCCESS) {
+                    if ($exitCode === ExitCode::SUCCESS) {
                         return;
                     }
 

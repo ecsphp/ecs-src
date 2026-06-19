@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Symplify\EasyCodingStandard\Configuration;
 
 use Nette\Utils\FileSystem;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Symplify\EasyCodingStandard\Application\FileProcessorCollector;
+use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 
 final readonly class ConfigInitializer
 {
     public function __construct(
         private FileProcessorCollector $fileProcessorCollector,
-        private SymfonyStyle $symfonyStyle,
+        private EasyCodingStandardStyle $easyCodingStandardStyle,
         private InitPathsResolver $initPathsResolver,
         private \Symfony\Component\Filesystem\Filesystem $filesystem,
     ) {
@@ -30,13 +30,16 @@ final readonly class ConfigInitializer
 
         // config already exists, nothing to add
         if ($doesConfigExist) {
-            $this->symfonyStyle->warning(
+            $this->easyCodingStandardStyle->warning(
                 'We found ecs.php config, but no rules in it. Register some rules or sets there first'
             );
             return;
         }
 
-        $response = $this->symfonyStyle->ask('No "ecs.php" config found. Should we generate it for you?', 'yes');
+        $response = $this->easyCodingStandardStyle->ask(
+            'No "ecs.php" config found. Should we generate it for you?',
+            'yes'
+        );
 
         // be tolerant about input
         if (! in_array($response, ['yes', 'YES', 'y', 'Y'], true)) {
@@ -52,7 +55,9 @@ final readonly class ConfigInitializer
         // create the ecs.php file
         FileSystem::write(getcwd() . '/ecs.php', $templateFileContents, null);
 
-        $this->symfonyStyle->success('The ecs.php config was generated! Re-run the command to tidy your code');
+        $this->easyCodingStandardStyle->success(
+            'The ecs.php config was generated! Re-run the command to tidy your code'
+        );
     }
 
     private function fillPaths(string $projectDirectory, string $templateFileContents): string

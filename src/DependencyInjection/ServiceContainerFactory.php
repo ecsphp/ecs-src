@@ -10,13 +10,11 @@ use PHP_CodeSniffer\Util\Tokens;
 use PhpCsFixer\Differ\DifferInterface;
 use PhpCsFixer\Differ\UnifiedDiffer;
 use PhpCsFixer\WhitespacesFixerConfig;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Symplify\EasyCodingStandard\Caching\Cache;
 use Symplify\EasyCodingStandard\Caching\CacheFactory;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyleFactory;
-use Symplify\EasyCodingStandard\Console\Style\SymfonyStyleFactory;
 use Symplify\EasyCodingStandard\FixerRunner\WhitespacesFixerConfigFactory;
 use Webmozart\Assert\Assert;
 
@@ -41,7 +39,8 @@ final class ServiceContainerFactory
             }
         );
 
-        $ecsConfig->service(SymfonyStyle::class, static fn (): SymfonyStyle => SymfonyStyleFactory::create());
+        // console commands - autodiscovered, then collected by the default CommandRegistry contract lookup
+        $ecsConfig->autodiscover(__DIR__ . '/../Console/Command');
 
         // whitespace
         $ecsConfig->service(WhitespacesFixerConfig::class, static function (): WhitespacesFixerConfig {
@@ -70,9 +69,9 @@ final class ServiceContainerFactory
             Assert::isCallable($configClosure);
 
             if ($configClosure instanceof Closure && ! defined('PHPUNIT_COMPOSER_INSTALL')) {
-                /** @var SymfonyStyle $symfonyStyle */
-                $symfonyStyle = $ecsConfig->make(SymfonyStyle::class);
-                $symfonyStyle->warning(sprintf(
+                /** @var EasyCodingStandardStyle $easyCodingStandardStyle */
+                $easyCodingStandardStyle = $ecsConfig->make(EasyCodingStandardStyle::class);
+                $easyCodingStandardStyle->warning(sprintf(
                     'The "return function (ECSConfig $ecsConfig): void {}" config format is deprecated. Use "return ECSConfig::configure()" fluent API instead in "%s".',
                     $configFile
                 ));
