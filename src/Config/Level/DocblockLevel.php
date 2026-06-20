@@ -103,7 +103,6 @@ final class DocblockLevel
         NoEmptyPhpdocFixer::class,
         PhpdocNoEmptyReturnFixer::class,
         RemoveUselessDefaultCommentFixer::class,
-        NoSuperfluousPhpdocTagsFixer::class,
 
         // annotation cleanup (from deprecated "symplify" set)
         RemovePHPStormAnnotationFixer::class,

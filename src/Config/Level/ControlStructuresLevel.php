@@ -24,7 +24,7 @@ use PhpCsFixer\Fixer\LanguageConstruct\FunctionToConstantFixer;
 use PhpCsFixer\Fixer\LanguageConstruct\IsNullFixer;
 use PhpCsFixer\Fixer\Operator\AssignNullCoalescingToCoalesceEqualFixer;
 use PhpCsFixer\Fixer\Operator\LongToShorthandOperatorFixer;
-use PhpCsFixer\Fixer\Operator\NewWithBracesFixer;
+use PhpCsFixer\Fixer\Operator\NewWithParenthesesFixer;
 use PhpCsFixer\Fixer\Operator\NoUselessConcatOperatorFixer;
 use PhpCsFixer\Fixer\Operator\NoUselessNullsafeOperatorFixer;
 use PhpCsFixer\Fixer\Operator\ObjectOperatorWithoutWhitespaceFixer;
@@ -57,7 +57,7 @@ final class ControlStructuresLevel
         IsNullFixer::class,
         FunctionToConstantFixer::class,
         StandardizeIncrementFixer::class,
-        NewWithBracesFixer::class,
+        NewWithParenthesesFixer::class,
         NullableTypeDeclarationForDefaultNullValueFixer::class,
 
         // operator spacing and simplification
@@ -75,8 +75,6 @@ final class ControlStructuresLevel
 
         // class-level tweaks
         SelfAccessorFixer::class,
-        ClassDefinitionFixer::class,
-        SingleClassElementPerStatementFixer::class,
 
         // control-flow normalization
         IncludeFixer::class,
@@ -85,7 +83,6 @@ final class ControlStructuresLevel
         SwitchContinueToBreakFixer::class,
 
         // invasive control-flow / ordering changes
-        YodaStyleFixer::class,
         NoUselessElseFixer::class,
         SimplifiedIfReturnFixer::class,
         OrderedClassElementsFixer::class,
