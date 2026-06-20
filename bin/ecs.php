@@ -22,10 +22,6 @@ define('__ECS_RUNNING__', true);
 # 1. autoload
 $autoloadIncluder = new ECSAutoloadIncluder();
 
-if (file_exists(__DIR__ . '/../preload.php')) {
-    require_once __DIR__ . '/../preload.php';
-}
-
 $autoloadIncluder->includeCwdVendorAutoloadIfExists();
 $autoloadIncluder->loadIfNotLoadedYet(__DIR__ . '/../vendor/scoper-autoload.php');
 $autoloadIncluder->autoloadProjectAutoloaderFile('/../../autoload.php');
