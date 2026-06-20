@@ -8,6 +8,7 @@ use PHP_CodeSniffer\Sniffs\Sniff;
 use PhpCsFixer\Fixer\Comment\NoTrailingWhitespaceInCommentFixer;
 use PhpCsFixer\Fixer\FixerInterface;
 use PhpCsFixer\Fixer\Phpdoc\AlignMultilineCommentFixer;
+use PhpCsFixer\Fixer\Phpdoc\GeneralPhpdocAnnotationRemoveFixer;
 use PhpCsFixer\Fixer\Phpdoc\NoBlankLinesAfterPhpdocFixer;
 use PhpCsFixer\Fixer\Phpdoc\NoEmptyPhpdocFixer;
 use PhpCsFixer\Fixer\Phpdoc\NoSuperfluousPhpdocTagsFixer;
@@ -27,6 +28,9 @@ use PhpCsFixer\Fixer\Phpdoc\PhpdocTrimConsecutiveBlankLineSeparationFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocTrimFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocTypesFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocVarWithoutNameFixer;
+use Symplify\CodingStandard\Fixer\Annotation\RemoveMethodNameDuplicateDescriptionFixer;
+use Symplify\CodingStandard\Fixer\Annotation\RemovePHPStormAnnotationFixer;
+use Symplify\CodingStandard\Fixer\Annotation\RemovePropertyVariableNameDescriptionFixer;
 use Symplify\CodingStandard\Fixer\Commenting\AddMissingParamNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\AddMissingVarNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\DoubleAsteriskInlineVarFixer;
@@ -100,6 +104,11 @@ final class DocblockLevel
         PhpdocNoEmptyReturnFixer::class,
         RemoveUselessDefaultCommentFixer::class,
         NoSuperfluousPhpdocTagsFixer::class,
+
+        // annotation cleanup (from deprecated "symplify" set)
+        RemovePHPStormAnnotationFixer::class,
+        RemoveMethodNameDuplicateDescriptionFixer::class,
+        RemovePropertyVariableNameDescriptionFixer::class,
     ];
 
     /**
@@ -109,6 +118,9 @@ final class DocblockLevel
         NoSuperfluousPhpdocTagsFixer::class => [
             'remove_inheritdoc' => true,
             'allow_mixed' => true,
+        ],
+        GeneralPhpdocAnnotationRemoveFixer::class => [
+            'annotations' => ['author', 'package', 'group', 'covers', 'category'],
         ],
     ];
 }
