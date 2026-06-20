@@ -60,7 +60,7 @@ jobs:
                     wget https://github.com/humbug/php-scoper/releases/download/0.18.17/php-scoper.phar -N --no-verbose
 
                     # scope /bin, /config, /packages, /src, /vendor and composer.json
-                    php -d memory_limit=-1 php-scoper.phar add-prefix bin config packages/coding-standard/config packages/coding-standard/src src vendor composer.json --output-dir ../ecs-prefixed-downgraded --config scoper.php --force --ansi --working-dir ecs-build
+                    php -d memory_limit=-1 php-scoper.phar add-prefix bin config packages/coding-standard/src src vendor composer.json --output-dir ../ecs-prefixed-downgraded --config scoper.php --force --ansi --working-dir ecs-build
 
                     # dump composer autoload
                     composer dump-autoload --working-dir ecs-prefixed-downgraded --ansi --classmap-authoritative --no-dev
