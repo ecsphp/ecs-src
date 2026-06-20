@@ -234,7 +234,10 @@ final class ECSConfigBuilder
         bool $psr12 = false,
         /** @see SetList::COMMON */
         bool $common = false,
-        /** @see SetList::SYMPLIFY */
+        /**
+         * @deprecated rules moved to the "common" sets. Use common: true or the with*Level() methods instead.
+         * @see SetList::SYMPLIFY
+         */
         bool $symplify = false,
         /** @see SetList::LARAVEL */
         bool $laravel = false,
@@ -352,6 +355,8 @@ final class ECSConfigBuilder
         }
 
         if ($symplify) {
+            // soft-deprecated: rules moved to the "common" sets, still loaded for backward compatibility
+            // deprecation warning is emitted on set import, see config/set/symplify.php
             $this->sets[] = SetList::SYMPLIFY;
         }
 
