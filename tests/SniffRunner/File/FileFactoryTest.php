@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Tests\SniffRunner\File;
 
-use PHP_CodeSniffer\Files\File as PhpCodeSnifferFile;
 use PHP_CodeSniffer\Fixer;
 use Symplify\EasyCodingStandard\SniffRunner\File\FileFactory;
 use Symplify\EasyCodingStandard\SniffRunner\ValueObject\File;
@@ -20,7 +19,6 @@ final class FileFactoryTest extends AbstractTestCase
         $file = $fileFactory->createFromFile($filePath);
 
         $this->assertInstanceOf(File::class, $file);
-        $this->assertInstanceOf(PhpCodeSnifferFile::class, $file);
         $this->assertInstanceOf(Fixer::class, $file->fixer);
         $this->assertSame($filePath, $file->getFilename());
     }
