@@ -131,6 +131,7 @@ final class ECSAutoloadIncluder
             return;
         }
 
+        /** @var string|false $realPath */
         $realPath = realpath($file);
         if (! is_string($realPath)) {
             return;
