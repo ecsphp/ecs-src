@@ -70,18 +70,11 @@ final class SpacesLevel
         ReturnTypeDeclarationFixer::class,
         TypeDeclarationSpacesFixer::class,
         TypesSpacesFixer::class,
-        SuperfluousWhitespaceSniff::class,
-
-        // configurable, more impactful
-        ConcatSpaceFixer::class,
-        BinaryOperatorSpacesFixer::class,
 
         // most invasive structural changes
         MethodChainingIndentationFixer::class,
         StandaloneLinePromotedPropertyFixer::class,
         MethodArgumentSpaceFixer::class,
-        ClassAttributesSeparationFixer::class,
-        NoExtraBlankLinesFixer::class,
 
         // newline spacing (from deprecated "symplify" set)
         BlankLineAfterStrictTypesFixer::class,
