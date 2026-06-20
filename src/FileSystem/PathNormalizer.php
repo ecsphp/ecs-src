@@ -20,7 +20,7 @@ final class PathNormalizer
     /**
      * @see https://regex101.com/r/d4F5Fm/1
      */
-    private const string SCHEME_PATH_REGEX = '#^([a-z]+)\\:\\/\\/(.+)#';
+    private const string SCHEME_PATH_REGEX = '#^([a-z]+)\:\/\/(.+)#';
 
     /**
      * @see https://regex101.com/r/no28vw/1

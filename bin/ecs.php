@@ -19,7 +19,7 @@ gc_disable();
 
 define('__ECS_RUNNING__', true);
 
-# 1. autoload
+// 1. autoload
 $autoloadIncluder = new ECSAutoloadIncluder();
 
 $autoloadIncluder->includeCwdVendorAutoloadIfExists();

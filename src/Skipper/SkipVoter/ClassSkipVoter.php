@@ -17,7 +17,7 @@ final readonly class ClassSkipVoter implements SkipVoterInterface
     ) {
     }
 
-    public function match(string | object $element): bool
+    public function match(string|object $element): bool
     {
         if (is_object($element)) {
             return true;
@@ -26,7 +26,7 @@ final readonly class ClassSkipVoter implements SkipVoterInterface
         return class_exists($element) || interface_exists($element);
     }
 
-    public function shouldSkip(string | object $element, SplFileInfo | string $file): bool
+    public function shouldSkip(string|object $element, SplFileInfo|string $file): bool
     {
         $skippedClasses = $this->skippedClassResolver->resolve();
         return $this->skipSkipper->doesMatchSkip($element, $file, $skippedClasses);

@@ -63,7 +63,7 @@ final class ECSConfigBuilder
     private array $rules = [];
 
     /**
-     * @var array<class-string<(FixerInterface | Sniff)>, mixed>
+     * @var array<class-string<(FixerInterface|Sniff)>, mixed>
      */
     private array $rulesWithConfiguration = [];
 
@@ -252,6 +252,10 @@ final class ECSConfigBuilder
         bool $namespaces = false,
         /** @see SetList::CONTROL_STRUCTURES */
         bool $controlStructures = false,
+        /** @see SetList::CASING */
+        bool $casing = false,
+        /** @see SetList::CLEANUP */
+        bool $cleanup = false,
         /**
          * @deprecated as never worked, used different rules. Use Rector instead.
          * @see SetList::PHPUNIT
@@ -286,6 +290,8 @@ final class ECSConfigBuilder
                 'docblocks' => $docblocks,
                 'controlStructures' => $controlStructures,
                 'comments' => $comments,
+                'casing' => $casing,
+                'cleanup' => $cleanup,
             ]))) !== []) {
                 throw new SuperfluousConfigurationException(
                     sprintf(
@@ -323,6 +329,14 @@ final class ECSConfigBuilder
 
             if ($comments) {
                 $this->sets[] = SetList::COMMENTS;
+            }
+
+            if ($casing) {
+                $this->sets[] = SetList::CASING;
+            }
+
+            if ($cleanup) {
+                $this->sets[] = SetList::CLEANUP;
             }
         }
 
@@ -725,7 +739,7 @@ final class ECSConfigBuilder
     }
 
     /**
-     * @param class-string<(FixerInterface | Sniff)> $checkerClass
+     * @param class-string<(FixerInterface|Sniff)> $checkerClass
      * @param mixed[] $configuration
      */
     public function withConfiguredRule(string $checkerClass, array $configuration): self

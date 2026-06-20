@@ -32,7 +32,7 @@ final class Skipper
         $this->skipVoters = [$classAndCodeSkipVoter, $classSkipVoter, $messageSkipVoter, $pathSkipVoter];
     }
 
-    public function shouldSkipElement(string | object $element): bool
+    public function shouldSkipElement(string|object $element): bool
     {
         return $this->shouldSkipElementAndFilePath($element, __FILE__);
     }
@@ -42,7 +42,7 @@ final class Skipper
         return $this->shouldSkipElementAndFilePath(self::FILE_ELEMENT, $filePath);
     }
 
-    public function shouldSkipElementAndFilePath(string | object $element, string $filePath): bool
+    public function shouldSkipElementAndFilePath(string|object $element, string $filePath): bool
     {
         foreach ($this->skipVoters as $skipVoter) {
             if (! $skipVoter->match($element)) {

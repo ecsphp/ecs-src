@@ -21,7 +21,7 @@ final readonly class FileInfoMatcher
     /**
      * @param string[] $filePatterns
      */
-    public function doesFileInfoMatchPatterns(SplFileInfo | string $fileInfo, array $filePatterns): bool
+    public function doesFileInfoMatchPatterns(SplFileInfo|string $fileInfo, array $filePatterns): bool
     {
         return array_any(
             $filePatterns,
@@ -32,7 +32,7 @@ final readonly class FileInfoMatcher
     /**
      * Supports both relative and absolute $file path. They differ for PHP-CS-Fixer and PHP_CodeSniffer.
      */
-    private function doesFileInfoMatchPattern(SplFileInfo | string $file, string $ignoredPath): bool
+    private function doesFileInfoMatchPattern(SplFileInfo|string $file, string $ignoredPath): bool
     {
         $filePath = $file instanceof SplFileInfo ? $file->getRealPath() : $file;
 

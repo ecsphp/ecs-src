@@ -13,5 +13,7 @@ return ECSConfig::configure()
         SetList::DOCBLOCK,
         SetList::NAMESPACES,
         SetList::SPACES,
+        SetList::CASING,
+        SetList::CLEANUP,
         SetList::CLEAN_CODE,
     ]);
