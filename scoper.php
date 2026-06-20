@@ -122,14 +122,14 @@ return [
             }
 
             // real namespace
-            $content = Strings::replace($content, '#' . $prefix . '\\\PHPUnit\\\Framework#', 'PHPUnit\Framework');
-            $content = Strings::replace($content, '#' . $prefix . '\\\PHPUnit\\\Runner#', 'PHPUnit\Runner');
-            $content = Strings::replace($content, '#' . $prefix . '\\\PHPUnit\\\Util#', 'PHPUnit\Util');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\Framework#', 'PHPUnit\Framework');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\Runner#', 'PHPUnit\Runner');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\Util#', 'PHPUnit\Util');
 
             // lower case namespace
-            $content = Strings::replace($content, '#' . $prefix . '\\\phpunit\\\framework#', 'phpunit\framework');
-            $content = Strings::replace($content, '#' . $prefix . '\\\phpunit\\\runner#', 'phpunit\runner');
-            $content = Strings::replace($content, '#' . $prefix . '\\\phpunit\\\util#', 'phpunit\util');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPunit\\\framework#', 'phpunit\framework');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPunit\\\runner#', 'phpunit\runner');
+            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPunit\\\util#', 'phpunit\util');
 
             return $content;
         },

@@ -84,11 +84,6 @@ final class SetList
     /**
      * @api
      */
-    public const string STRINGS = __DIR__ . '/../../../config/set/common/strings.php';
-
-    /**
-     * @api
-     */
     public const string CLEANUP = __DIR__ . '/../../../config/set/common/cleanup.php';
 
     /**

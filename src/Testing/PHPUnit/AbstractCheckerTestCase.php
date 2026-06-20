@@ -25,7 +25,7 @@ if (file_exists($scoperAutoloadFilepath)) {
  */
 abstract class AbstractCheckerTestCase extends AbstractTestCase implements ConfigAwareInterface
 {
-    private const string SPLIT_LINE_REGEX = "#\\-\\-\\-\\-\\-\r?\n#";
+    private const string SPLIT_LINE_REGEX = "#\-\-\-\-\-\r?\n#";
 
     /**
      * @var string[]

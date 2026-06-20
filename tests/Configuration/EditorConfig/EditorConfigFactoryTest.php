@@ -47,7 +47,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
         $this->expectException(Exception::class);
 
         $editorConfigFactory = new EditorConfigFactory();
-        @$editorConfigFactory->parse(<<<'INI'
+        @$editorConfigFactory->parse(<<<INI
             fleeb!
             INI
         );
@@ -58,7 +58,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
         $this->assertEquals(
             new EditorConfigFactory()
                 ->parse(
-                    <<<'INI'
+                    <<<INI
                 [*]
                 indent_style = space
                 max_line_length = 100
@@ -99,7 +99,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 indent_style = space
                 INI
@@ -119,7 +119,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 indent_style = tab
                 INI
@@ -139,7 +139,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 end_of_line = lf
                 INI
@@ -159,7 +159,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 end_of_line = cr
                 INI
@@ -179,7 +179,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 end_of_line = crlf
                 INI
@@ -200,7 +200,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
         $this->assertEquals(
             new EditorConfigFactory()
                 ->parse(
-                    <<<'INI'
+                    <<<INI
                 [*]
                 trim_trailing_whitespace = true
                 INI
@@ -221,7 +221,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
         $this->assertEquals(
             new EditorConfigFactory()
                 ->parse(
-                    <<<'INI'
+                    <<<INI
                 [*]
                 trim_trailing_whitespace = false
                 INI
@@ -241,8 +241,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(
-                    <<<'INI'
+                ->parse(<<<INI
                 [*]
                 insert_final_newline = true
                 INI
@@ -263,7 +262,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
         $this->assertEquals(
             new EditorConfigFactory()
                 ->parse(
-                    <<<'INI'
+                    <<<INI
                 [*]
                 insert_final_newline = false
                 INI
@@ -283,7 +282,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 max_line_length = 63
                 INI
@@ -303,7 +302,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 quote_type = auto
                 INI
@@ -323,7 +322,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 quote_type = single
                 INI
@@ -343,7 +342,7 @@ final class EditorConfigFactoryTest extends AbstractTestCase
     {
         $this->assertEquals(
             new EditorConfigFactory()
-                ->parse(<<<'INI'
+                ->parse(<<<INI
                 [*]
                 quote_type = double
                 INI

@@ -15,7 +15,6 @@ return ECSConfig::configure()
         SetList::SPACES,
         SetList::CASING,
         SetList::OPERATORS,
-        SetList::STRINGS,
         SetList::CLEANUP,
         SetList::CLEAN_CODE,
     ]);

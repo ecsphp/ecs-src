@@ -256,8 +256,6 @@ final class ECSConfigBuilder
         bool $casing = false,
         /** @see SetList::OPERATORS */
         bool $operators = false,
-        /** @see SetList::STRINGS */
-        bool $strings = false,
         /** @see SetList::CLEANUP */
         bool $cleanup = false,
         /**
@@ -296,7 +294,6 @@ final class ECSConfigBuilder
                 'comments' => $comments,
                 'casing' => $casing,
                 'operators' => $operators,
-                'strings' => $strings,
                 'cleanup' => $cleanup,
             ]))) !== []) {
                 throw new SuperfluousConfigurationException(
@@ -343,10 +340,6 @@ final class ECSConfigBuilder
 
             if ($operators) {
                 $this->sets[] = SetList::OPERATORS;
-            }
-
-            if ($strings) {
-                $this->sets[] = SetList::STRINGS;
             }
 
             if ($cleanup) {
