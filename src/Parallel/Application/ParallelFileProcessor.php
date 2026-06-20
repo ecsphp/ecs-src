@@ -34,14 +34,12 @@ use Throwable;
  *
  * https://github.com/phpstan/phpstan-src/commit/b84acd2e3eadf66189a64fdbc6dd18ff76323f67#diff-7f625777f1ce5384046df08abffd6c911cfbb1cfc8fcb2bdeaf78f337689e3e2R150
  */
-final class ParallelFileProcessor
+final readonly class ParallelFileProcessor
 {
     private const int SYSTEM_ERROR_LIMIT = 50;
 
-    private ProcessPool|null $processPool = null;
-
     public function __construct(
-        private readonly WorkerCommandLineFactory $workerCommandLineFactory,
+        private WorkerCommandLineFactory $workerCommandLineFactory,
     ) {
     }
 
@@ -70,24 +68,32 @@ final class ParallelFileProcessor
         $systemErrors = [];
 
         $tcpServer = new TcpServer('127.0.0.1:0', $streamSelectLoop);
-        $this->processPool = new ProcessPool($tcpServer);
+        $processPool = new ProcessPool($tcpServer);
 
-        $tcpServer->on(ReactEvent::CONNECTION, function (ConnectionInterface $connection) use (&$jobs): void {
+        $tcpServer->on(ReactEvent::CONNECTION, function (ConnectionInterface $connection) use (
+            &$jobs,
+            $processPool
+        ): void {
             $inDecoder = new Decoder($connection, true, 512, 0, 4 * 1024 * 1024);
             $outEncoder = new Encoder($connection);
 
-            $inDecoder->on(ReactEvent::DATA, function (array $data) use (&$jobs, $inDecoder, $outEncoder): void {
+            $inDecoder->on(ReactEvent::DATA, function (array $data) use (
+                &$jobs,
+                $inDecoder,
+                $outEncoder,
+                $processPool
+            ): void {
                 $action = $data[ReactCommand::ACTION];
                 if ($action !== Action::HELLO) {
                     return;
                 }
 
                 $processIdentifier = $data[Option::PARALLEL_IDENTIFIER];
-                $parallelProcess = $this->processPool->getProcess($processIdentifier);
+                $parallelProcess = $processPool->getProcess($processIdentifier);
                 $parallelProcess->bindConnection($inDecoder, $outEncoder);
 
                 if ($jobs === []) {
-                    $this->processPool->quitProcess($processIdentifier);
+                    $processPool->quitProcess($processIdentifier);
                     return;
                 }
 
@@ -112,13 +118,14 @@ final class ParallelFileProcessor
         $handleErrorCallable = function (Throwable $throwable) use (
             &$systemErrors,
             &$systemErrorsCount,
-            &$reachedSystemErrorsCountLimit
+            &$reachedSystemErrorsCountLimit,
+            $processPool
         ): void {
             $systemErrors[] = new SystemError($throwable->getLine(), $throwable->getMessage(), $throwable->getFile());
 
             ++$systemErrorsCount;
             $reachedSystemErrorsCountLimit = true;
-            $this->processPool->quitAll();
+            $processPool->quitAll();
         };
 
         $timeoutInSeconds = SimpleParameterProvider::getIntParameter(Option::PARALLEL_TIMEOUT_IN_SECONDS);
@@ -161,7 +168,8 @@ final class ParallelFileProcessor
                     $postFileCallback,
                     &$systemErrorsCount,
                     &$reachedInternalErrorsCountLimit,
-                    $processIdentifier
+                    $processIdentifier,
+                    $processPool
                 ): void {
                     // decode arrays to objects
                     foreach ($json[Bridge::SYSTEM_ERRORS] as $jsonError) {
@@ -186,11 +194,11 @@ final class ParallelFileProcessor
                     $systemErrorsCount += $json[Bridge::SYSTEM_ERRORS_COUNT];
                     if ($systemErrorsCount >= self::SYSTEM_ERROR_LIMIT) {
                         $reachedInternalErrorsCountLimit = true;
-                        $this->processPool->quitAll();
+                        $processPool->quitAll();
                     }
 
                     if ($jobs === []) {
-                        $this->processPool->quitProcess($processIdentifier);
+                        $processPool->quitProcess($processIdentifier);
                         return;
                     }
 
@@ -205,8 +213,8 @@ final class ParallelFileProcessor
                 $handleErrorCallable,
 
                 // 3. callable on exit
-                function ($exitCode, string $stdErr) use (&$systemErrors, $processIdentifier): void {
-                    $this->processPool->tryQuitProcess($processIdentifier);
+                function ($exitCode, string $stdErr) use (&$systemErrors, $processIdentifier, $processPool): void {
+                    $processPool->tryQuitProcess($processIdentifier);
                     if ($exitCode === ExitCode::SUCCESS) {
                         return;
                     }
@@ -219,7 +227,7 @@ final class ParallelFileProcessor
                 }
             );
 
-            $this->processPool->attachProcess($processIdentifier, $parallelProcess);
+            $processPool->attachProcess($processIdentifier, $parallelProcess);
         }
 
         $streamSelectLoop->run();

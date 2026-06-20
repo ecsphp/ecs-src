@@ -28,7 +28,8 @@ final readonly class SingleFileProcessor
             return [];
         }
 
-        $errorsAndDiffs = [];
+        $fileDiffs = [];
+        $codingStandardErrors = [];
 
         $this->changedFilesDetector->addFilePath($filePath);
         $fileProcessors = $this->fileProcessorCollector->getFileProcessors();
@@ -43,12 +44,25 @@ final readonly class SingleFileProcessor
                 continue;
             }
 
-            $errorsAndDiffs = [...$errorsAndDiffs, ...$currentErrorsAndFileDiffs];
+            $fileDiffs = [...$fileDiffs, ...($currentErrorsAndFileDiffs['file_diffs'] ?? [])];
+            $codingStandardErrors = [
+                ...$codingStandardErrors,
+                ...($currentErrorsAndFileDiffs['coding_standard_errors'] ?? []),
+            ];
         }
 
         // invalidate broken file, to analyse in next run too
-        if ($errorsAndDiffs !== []) {
+        if ($fileDiffs !== [] || $codingStandardErrors !== []) {
             $this->changedFilesDetector->invalidateFilePath($filePath);
+        }
+
+        $errorsAndDiffs = [];
+        if ($fileDiffs !== []) {
+            $errorsAndDiffs['file_diffs'] = $fileDiffs;
+        }
+
+        if ($codingStandardErrors !== []) {
+            $errorsAndDiffs['coding_standard_errors'] = $codingStandardErrors;
         }
 
         return $errorsAndDiffs;
