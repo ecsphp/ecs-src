@@ -259,16 +259,6 @@ final class ECSConfigBuilder
         bool $casing = false,
         /** @see SetList::CLEANUP */
         bool $cleanup = false,
-        /**
-         * @deprecated as never worked, used different rules. Use Rector instead.
-         * @see SetList::PHPUNIT
-         */
-        bool $phpunit = false,
-        /**
-         * @deprecated as dangerous without context. Use Rector instead.
-         * @see SetList::STRICT
-         */
-        bool $strict = false,
         /** @see SetList::CLEAN_CODE */
         bool $cleanCode = false,
     ): self {
@@ -324,12 +314,6 @@ final class ECSConfigBuilder
                 $this->sets[] = SetList::CONTROL_STRUCTURES;
             }
 
-            if ($phpunit) {
-                throw new DeprecatedException(
-                    'The "phpunit" set is deprecated as it is dangerous to run without proper context. Please use Rector instead.'
-                );
-            }
-
             if ($comments) {
                 $this->sets[] = SetList::COMMENTS;
             }
@@ -341,13 +325,6 @@ final class ECSConfigBuilder
             if ($cleanup) {
                 $this->sets[] = SetList::CLEANUP;
             }
-        }
-
-        if ($strict) {
-            // throw exception, as deprecated
-            throw new DeprecatedException(
-                'The "strict" set is deprecated as it is dangerous without context. Remove the "strict: true" from ->withPreparedSets(strict: true, ...) call in "ecs.php" and use Rector instead to make sure you are not breaking your code.'
-            );
         }
 
         if ($cleanCode) {
