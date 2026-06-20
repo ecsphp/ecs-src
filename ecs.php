@@ -9,4 +9,4 @@ return ECSConfig::configure()
     ->withEditorConfig()
     ->withRootFiles()
     ->withSkip(['*/Source/*', '*/Fixture/*'])
-    ->withPreparedSets(psr12: true, common: true, symplify: true);
+    ->withPreparedSets(psr12: true, common: true);
