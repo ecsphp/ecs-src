@@ -1,15 +1,6 @@
 parameters:
     level: 8
 
-    # reportUnmatchedIgnoredErrors: false
-
-    # requires exact closure types
-    checkMissingCallableSignature: true
-
-    # symplify - see https://github.com/symplify/phpstan-rules#usage
-    symplify:
-        pathStrings: true
-
     paths:
         - packages
         - src
@@ -23,6 +14,10 @@ parameters:
         - '*/Source/*'
         - '*/Fixture/*'
 
+    # see https://github.com/symplify/phpstan-rules#usage
+    symplify:
+        pathStrings: true
+
     # see https://github.com/tomasVotruba/unused-public
     unused_public:
         methods: true
@@ -32,23 +27,20 @@ parameters:
     # see https://github.com/TomasVotruba/type-coverage
     type_coverage:
         return: 99
-        param: 94.4
+        param: 99
         property: 99
 
     bootstrapFiles:
         - tests/bootstrap.php
 
-    treatPhpDocTypesAsCertain: true
+    errorFormat: symplify
+    treatPhpDocTypesAsCertain: false
 
     ignoreErrors:
-        # set above
-        -
-            path: src/Parallel/Application/ParallelFileProcessor.php
-            message: '#Cannot call method (.*?)\(\) on Symplify\\EasyCodingStandard\\Parallel\\ValueObject\\ProcessPool\|null#'
-
+        # @todo revisit: split return into typed file_diffs/coding_standard_errors buckets
         - '#Method Symplify\\EasyCodingStandard\\Application\\SingleFileProcessor\:\:processFilePath\(\) should return array\{file_diffs\?\: array<Symplify\\EasyCodingStandard\\ValueObject\\Error\\FileDiff>, coding_standard_errors\?\: array<Symplify\\EasyCodingStandard\\SniffRunner\\ValueObject\\Error\\CodingStandardError>\} but returns array<(.*?), array<Symplify\\EasyCodingStandard\\SniffRunner\\ValueObject\\Error\\CodingStandardError\|Symplify\\EasyCodingStandard\\ValueObject\\Error\\FileDiff>>#'
 
-        # false positive on custom config tets
+        # on purpose to override a config
         -
             message: '#Missing call to parent\:\:setUp\(\) method#'
             paths:
@@ -57,43 +49,16 @@ parameters:
                  - tests/Skipper/SkipCriteriaResolver/SkippedPathsResolver/SkippedPathsResolverTest.php
                  - src/Testing/PHPUnit/AbstractCheckerTestCase.php
 
-        # testing instance of on purpose
-        -
-            message: '#Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf#'
-            path: tests/*
-
-        # overly detailed
-        - '#PHPDoc tag @var with type string\|false is not subtype of native type non\-empty\-string\|false#'
-
-        # array validation on purpose
-        - '#Call to static method Webmozart\\Assert\\Assert\:\:allString\(\) with (non-empty-array|list|array)<string> will always evaluate to true#'
-        - '#Call to static method Webmozart\\Assert\\Assert\:\:allIsArray\(\) with array<class\-string<PHP_CodeSniffer\\Sniffs\\Sniff\|PhpCsFixer\\Fixer\\FixerInterface>, array<mixed>> will always evaluate to true#'
-
-        # hack to autoload contants
+        # intentional: hack to autoload contants
         - '#Call to new PHP_CodeSniffer\\Util\\Tokens\(\) on a separate line has no effect#'
-
-        # php version condition
-        -
-            identifier: smaller.alwaysFalse
-            path: src/Configuration/ConfigInitializer.php
-
-        # false positive
-        -
-            identifier: offsetAssign.dimType
-            path: src/Console/Output/JsonOutputFormatter.php
 
         # coding-standard: runtime-defined PHP_CodeSniffer/php-cs-fixer token constants
         - '#Constant T_OPEN_CURLY_BRACKET|T_START_NOWDOC not found#'
-
-        # coding-standard: php-cs-fixer interface generics intentionally left unspecified
-        - '#Class (.*?) implements generic interface PhpCsFixer\\Fixer\\ConfigurableFixerInterface but does not specify its types\: TFixerInputConfig, TFixerComputedConfig#'
 
         # coding-standard: intentional cross-version condition
         -
             message: '#Comparison operation ">\=" between int<\d+, \d+> and (.*?) is always true#'
             path: packages/coding-standard/src/TokenAnalyzer/DocblockRelatedParamNamesResolver.php
-
-        # coding-standard: intentional null removal
         -
-            message: '#Parameter \#1 \$array \(array<int, PhpCsFixer\\Tokenizer\\Token>\) to function array_filter does not contain falsy values, the array will always stay the same#'
-            path: packages/coding-standard/src/TokenRunner/Traverser/TokenReverser.php
+            identifier: smaller.alwaysFalse
+            path: src/Configuration/ConfigInitializer.php
