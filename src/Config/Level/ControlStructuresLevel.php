@@ -7,14 +7,11 @@ namespace Symplify\EasyCodingStandard\Config\Level;
 use PHP_CodeSniffer\Sniffs\Sniff;
 use PhpCsFixer\Fixer\Casing\MagicConstantCasingFixer;
 use PhpCsFixer\Fixer\ClassNotation\ClassDefinitionFixer;
-use PhpCsFixer\Fixer\ClassNotation\OrderedClassElementsFixer;
 use PhpCsFixer\Fixer\ClassNotation\SelfAccessorFixer;
 use PhpCsFixer\Fixer\ClassNotation\SingleClassElementPerStatementFixer;
 use PhpCsFixer\Fixer\ControlStructure\IncludeFixer;
 use PhpCsFixer\Fixer\ControlStructure\NoAlternativeSyntaxFixer;
 use PhpCsFixer\Fixer\ControlStructure\NoSuperfluousElseifFixer;
-use PhpCsFixer\Fixer\ControlStructure\NoUselessElseFixer;
-use PhpCsFixer\Fixer\ControlStructure\SimplifiedIfReturnFixer;
 use PhpCsFixer\Fixer\ControlStructure\SwitchContinueToBreakFixer;
 use PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer;
 use PhpCsFixer\Fixer\FixerInterface;
@@ -81,11 +78,6 @@ final class ControlStructuresLevel
         NoAlternativeSyntaxFixer::class,
         NoSuperfluousElseifFixer::class,
         SwitchContinueToBreakFixer::class,
-
-        // invasive control-flow / ordering changes
-        NoUselessElseFixer::class,
-        SimplifiedIfReturnFixer::class,
-        OrderedClassElementsFixer::class,
     ];
 
     /**
