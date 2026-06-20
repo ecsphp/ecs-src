@@ -28,7 +28,6 @@ use Symplify\EasyCodingStandard\Configuration\EditorConfig\QuoteType;
 use Symplify\EasyCodingStandard\Configuration\Levels\LevelRulesResolver;
 use Symplify\EasyCodingStandard\Exception\Configuration\InitializationException;
 use Symplify\EasyCodingStandard\Exception\Configuration\SuperfluousConfigurationException;
-use Symplify\EasyCodingStandard\Exception\DeprecatedException;
 use Symplify\EasyCodingStandard\ValueObject\Option;
 use Symplify\EasyCodingStandard\ValueObject\Set\SetList;
 
@@ -333,8 +332,10 @@ final class ECSConfigBuilder
 
         if ($symplify) {
             // soft-deprecated: rules moved to the "common" sets, still loaded for backward compatibility
-            // deprecation warning is emitted on set import, see config/set/symplify.php
-            $this->sets[] = SetList::SYMPLIFY;
+            trigger_error(
+                'The "symplify" set is deprecated. Its rules now live in the "common" sets - use ->withPreparedSets(common: true) or the matching ->withDocblockLevel()/->withSpacesLevel()/->withArrayLevel() methods instead.',
+                E_USER_DEPRECATED
+            );
         }
 
         if ($laravel) {
@@ -654,21 +655,6 @@ final class ECSConfigBuilder
      */
     public function withSets(array $sets): self
     {
-        // report deprecated STRICT set
-        foreach ($sets as $set) {
-            if ($set === SetList::STRICT) {
-                throw new DeprecatedException(
-                    'The "strict" set is deprecated as it is dangerous without context. Use Rector instead to make sure you are not breaking your code'
-                );
-            }
-
-            if ($set === SetList::PHPUNIT) {
-                throw new DeprecatedException(
-                    'The "phpunit" set is deprecated as it is dangerous to run without proper context. Please use Rector instead.'
-                );
-            }
-        }
-
         $this->sets = [...$this->sets, ...$sets];
 
         return $this;

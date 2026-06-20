@@ -109,7 +109,6 @@ final class DocblockLevel
         RemovePHPStormAnnotationFixer::class,
         RemoveMethodNameDuplicateDescriptionFixer::class,
         RemovePropertyVariableNameDescriptionFixer::class,
-        GeneralPhpdocAnnotationRemoveFixer::class,
     ];
 
     /**
@@ -121,7 +120,7 @@ final class DocblockLevel
             'allow_mixed' => true,
         ],
         GeneralPhpdocAnnotationRemoveFixer::class => [
-            'annotations' => ['throws', 'author', 'package', 'group', 'covers', 'category'],
+            'annotations' => ['author', 'package', 'group', 'covers', 'category'],
         ],
     ];
 }
