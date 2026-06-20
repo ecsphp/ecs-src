@@ -11,8 +11,11 @@ use PhpCsFixer\Fixer\Phpdoc\NoEmptyPhpdocFixer;
 use PhpCsFixer\Fixer\Phpdoc\NoSuperfluousPhpdocTagsFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocIndentFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocLineSpanFixer;
+use PhpCsFixer\Fixer\Phpdoc\PhpdocNoDuplicateTypesFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocNoEmptyReturnFixer;
+use PhpCsFixer\Fixer\Phpdoc\PhpdocOrderByValueFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocReturnSelfReferenceFixer;
+use PhpCsFixer\Fixer\Phpdoc\PhpdocTagCasingFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocTrimConsecutiveBlankLineSeparationFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocTrimFixer;
 use PhpCsFixer\Fixer\Phpdoc\PhpdocTypesFixer;
@@ -70,10 +73,13 @@ final class DocblockLevel
         PhpdocIndentFixer::class,
 
         // type / formatting normalization
+        PhpdocTagCasingFixer::class,
+        PhpdocNoDuplicateTypesFixer::class,
         PhpdocTypesFixer::class,
         PhpdocLineSpanFixer::class,
         PhpdocVarWithoutNameFixer::class,
         PhpdocReturnSelfReferenceFixer::class,
+        PhpdocOrderByValueFixer::class,
 
         // dropping content
         NoEmptyPhpdocFixer::class,

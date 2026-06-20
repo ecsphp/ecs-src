@@ -141,7 +141,7 @@ final class AddMissingParamNameFixer extends AbstractDocBlockFixer
     private function createNewLineContent(string $newArgumentName, Line $line): string
     {
         // @see https://regex101.com/r/4FL49H/1
-        $missingDollarSignPattern = '#(@param\s+([\w\|\[\]\\\\]+\s)?)(' . ltrim($newArgumentName, '$') . ')#';
+        $missingDollarSignPattern = '#(@param\s+([\w\|\[\]\\\]+\s)?)(' . ltrim($newArgumentName, '$') . ')#';
 
         // missing \$ case - possibly own worker
         if (Regex::match($line->getContent(), $missingDollarSignPattern)) {

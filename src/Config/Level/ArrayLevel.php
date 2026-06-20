@@ -6,7 +6,9 @@ namespace Symplify\EasyCodingStandard\Config\Level;
 
 use PHP_CodeSniffer\Sniffs\Sniff;
 use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
+use PhpCsFixer\Fixer\ArrayNotation\NoMultilineWhitespaceAroundDoubleArrowFixer;
 use PhpCsFixer\Fixer\ArrayNotation\NoWhitespaceBeforeCommaInArrayFixer;
+use PhpCsFixer\Fixer\ArrayNotation\NoWhitespaceInEmptyArrayFixer;
 use PhpCsFixer\Fixer\ArrayNotation\TrimArraySpacesFixer;
 use PhpCsFixer\Fixer\ArrayNotation\WhitespaceAfterCommaInArrayFixer;
 use PhpCsFixer\Fixer\Basic\NoTrailingCommaInSinglelineFixer;
@@ -34,6 +36,8 @@ final class ArrayLevel
         NoWhitespaceBeforeCommaInArrayFixer::class,
         WhitespaceAfterCommaInArrayFixer::class,
         TrimArraySpacesFixer::class,
+        NoWhitespaceInEmptyArrayFixer::class,
+        NoMultilineWhitespaceAroundDoubleArrowFixer::class,
         NoTrailingCommaInSinglelineFixer::class,
 
         // syntax normalization

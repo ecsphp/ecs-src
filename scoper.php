@@ -42,14 +42,14 @@ return [
 
     // excluded
     'exclude-namespaces' => [
-        '#^Symplify\\\\EasyCodingStandard#',
-        '#^Symplify\\\\CodingStandard#',
+        '#^Symplify\\\EasyCodingStandard#',
+        '#^Symplify\\\CodingStandard#',
         '#^PhpCsFixer#',
         '#^PHP_CodeSniffer#',
-        '#^Symfony\\\\Polyfill#',
-        '#^PHPUnit\\\\Framework#',
-        '#^PHPUnit\\\\Runner#',
-        '#^PHPUnit\\\\Util#',
+        '#^Symfony\\\Polyfill#',
+        '#^PHPUnit\\\Framework#',
+        '#^PHPUnit\\\Runner#',
+        '#^PHPUnit\\\Util#',
     ],
     'exclude-constants' => [
         // Symfony global constants
@@ -79,11 +79,11 @@ return [
             // php-cs-fixer uses partial namespaces, that are only strings - should be kept untouched
             // ref.: https://github.com/easy-coding-standard/easy-coding-standard/issues/91
             return str_replace([
-                $prefix . '\\\\ORM\\\\Entity',
-                $prefix . '\\\\ORM\\\\Mapping\\\\Entity',
-                $prefix . '\\\\Mapping\\\\Entity',
-                $prefix . '\\\\ODM\\\\Document',
-            ], ['ORM\\Entity', 'ORM\\Mapping\\Entity', 'Mapping\\Entity', 'ODM\\Document'], $content);
+                $prefix . '\\\ORM\\\Entity',
+                $prefix . '\\\ORM\\\Mapping\\\Entity',
+                $prefix . '\\\Mapping\\\Entity',
+                $prefix . '\\\ODM\\\Document',
+            ], ['ORM\Entity', 'ORM\Mapping\Entity', 'Mapping\Entity', 'ODM\Document'], $content);
         },
 
         static function (string $filePath, string $prefix, string $content): string {
@@ -122,14 +122,14 @@ return [
             }
 
             // real namespace
-            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\\Framework#', 'PHPUnit\Framework');
-            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\\Runner#', 'PHPUnit\Runner');
-            $content = Strings::replace($content, '#' . $prefix . '\\\\PHPUnit\\\\Util#', 'PHPUnit\Util');
+            $content = Strings::replace($content, '#' . $prefix . '\\\PHPUnit\\\Framework#', 'PHPUnit\Framework');
+            $content = Strings::replace($content, '#' . $prefix . '\\\PHPUnit\\\Runner#', 'PHPUnit\Runner');
+            $content = Strings::replace($content, '#' . $prefix . '\\\PHPUnit\\\Util#', 'PHPUnit\Util');
 
             // lower case namespace
-            $content = Strings::replace($content, '#' . $prefix . '\\\\phpunit\\\\framework#', 'phpunit\framework');
-            $content = Strings::replace($content, '#' . $prefix . '\\\\phpunit\\\\runner#', 'phpunit\runner');
-            $content = Strings::replace($content, '#' . $prefix . '\\\\phpunit\\\\util#', 'phpunit\util');
+            $content = Strings::replace($content, '#' . $prefix . '\\\phpunit\\\framework#', 'phpunit\framework');
+            $content = Strings::replace($content, '#' . $prefix . '\\\phpunit\\\runner#', 'phpunit\runner');
+            $content = Strings::replace($content, '#' . $prefix . '\\\phpunit\\\util#', 'phpunit\util');
 
             return $content;
         },

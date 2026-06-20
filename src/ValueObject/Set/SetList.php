@@ -74,6 +74,26 @@ final class SetList
     /**
      * @api
      */
+    public const string CASING = __DIR__ . '/../../../config/set/common/casing.php';
+
+    /**
+     * @api
+     */
+    public const string OPERATORS = __DIR__ . '/../../../config/set/common/operators.php';
+
+    /**
+     * @api
+     */
+    public const string STRINGS = __DIR__ . '/../../../config/set/common/strings.php';
+
+    /**
+     * @api
+     */
+    public const string CLEANUP = __DIR__ . '/../../../config/set/common/cleanup.php';
+
+    /**
+     * @api
+     */
     public const string DOCTRINE_ANNOTATIONS = __DIR__ . '/../../../config/set/doctrine-annotations.php';
 
     /**
