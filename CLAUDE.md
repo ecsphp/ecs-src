@@ -31,7 +31,7 @@ Memory limit for PHPStan and Rector is `1G` (already set in composer scripts).
 
 ## Architecture
 
-- `src/Config/ECSConfig.php` — Illuminate container subclass, low-level rule registration (`rule()`, `ruleWithConfiguration()`, `sets()`, `import()`). Auto-tags Sniff/FixerInterface/OutputFormatterInterface bindings.
+- `src/Config/ECSConfig.php` — `Entropy\Container\Container` subclass, low-level rule registration (`rule()`, `ruleWithConfiguration()`, `sets()`, `import()`). Auto-tags Sniff/FixerInterface/OutputFormatterInterface bindings.
 - `src/Configuration/ECSConfigBuilder.php` — fluent user-facing API (`withRules`, `withSets`, `withPreparedSets`, `withPhpCsFixerSets`, `withSpacesLevel`, …). Returned by `ECSConfig::configure()`. `__invoke(ECSConfig)` flushes the builder state into the container.
 - `config/set/common/*.php` — prepared rule sets (spaces, arrays, namespaces, docblock, etc.); each returns a closure consumed by `ECSConfig::import()`.
 - `src/Config/Level/` — gradual-adoption levels (e.g. `SpacesLevel`). Each level class exposes `RULES` (ordered safest → most invasive) and optionally `RULE_CONFIGURATIONS`.
@@ -49,10 +49,6 @@ Memory limit for PHPStan and Rector is `1G` (already set in composer scripts).
 - PHPStan level 8, `type_coverage.return: 99`. Keep new code fully typed.
 - Don't introduce new comments unless they explain a non-obvious why; well-named identifiers should carry meaning.
 - Don't add backwards-compat shims, dead re-exports, or features that aren't required by the task.
-
-## Patched dependency
-
-`illuminate/container` is patched via `patches/illuminate-container-container-php.patch` (cweagans/composer-patches). Don't update the package without re-checking the patch.
 
 ## Don't
 

@@ -73,19 +73,20 @@ final class ParallelProcess
         $this->onError = $onError;
 
         $this->process->on(ReactEvent::EXIT, function ($exitCode) use ($onExit): void {
-            if ($this->stdErr === null) {
+            $stdErr = $this->stdErr;
+            if ($stdErr === null) {
                 throw new ParallelShouldNotHappenException();
             }
 
             $this->cancelTimer();
 
-            rewind($this->stdErr);
+            rewind($stdErr);
 
             /** @var string $streamContents */
-            $streamContents = stream_get_contents($this->stdErr);
+            $streamContents = stream_get_contents($stdErr);
             $onExit($exitCode, $streamContents);
 
-            fclose($this->stdErr);
+            fclose($stdErr);
         });
     }
 

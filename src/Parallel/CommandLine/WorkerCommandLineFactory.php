@@ -6,10 +6,7 @@ namespace Symplify\EasyCodingStandard\Parallel\CommandLine;
 
 final class WorkerCommandLineFactory
 {
-    /**
-     * @var string
-     */
-    private const OPTION_DASHES = '--';
+    private const string OPTION_DASHES = '--';
 
     /**
      * @param array<string, bool|string|null> $workerOptionValues option name => value, mirrored to the worker process

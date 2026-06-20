@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Symplify\EasyCodingStandard\Parallel;
 
 use Symplify\EasyCodingStandard\Parallel\ValueObject\Schedule;
+use Webmozart\Assert\Assert;
 
 /**
  * Used from
@@ -17,6 +18,8 @@ final class ScheduleFactory
      */
     public function create(int $cpuCores, int $jobSize, int $maxNumberOfProcesses, array $files): Schedule
     {
+        Assert::positiveInteger($jobSize);
+
         $jobs = array_chunk($files, $jobSize);
         $numberOfProcesses = min(count($jobs), $cpuCores);
 

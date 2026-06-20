@@ -6,13 +6,7 @@ namespace Symplify\EasyCodingStandard\Parallel\Enum;
 
 final class ReactCommand
 {
-    /**
-     * @var string
-     */
-    public const ACTION = 'action';
+    public const string ACTION = 'action';
 
-    /**
-     * @var string
-     */
-    public const IDENTIFIER = 'identifier';
+    public const string IDENTIFIER = 'identifier';
 }
