@@ -120,7 +120,7 @@ final class DocblockLevel
             'allow_mixed' => true,
         ],
         GeneralPhpdocAnnotationRemoveFixer::class => [
-            'annotations' => ['author', 'package', 'group', 'covers', 'category'],
+            'annotations' => ['author', 'package', 'group', 'category'],
         ],
     ];
 }
