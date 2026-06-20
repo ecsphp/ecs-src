@@ -14,7 +14,6 @@ return ECSConfig::configure()
         SetList::NAMESPACES,
         SetList::SPACES,
         SetList::CASING,
-        SetList::OPERATORS,
         SetList::CLEANUP,
         SetList::CLEAN_CODE,
     ]);

@@ -79,11 +79,6 @@ final class SetList
     /**
      * @api
      */
-    public const string OPERATORS = __DIR__ . '/../../../config/set/common/operators.php';
-
-    /**
-     * @api
-     */
     public const string CLEANUP = __DIR__ . '/../../../config/set/common/cleanup.php';
 
     /**

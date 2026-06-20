@@ -22,8 +22,15 @@ use PhpCsFixer\Fixer\FunctionNotation\NullableTypeDeclarationForDefaultNullValue
 use PhpCsFixer\Fixer\LanguageConstruct\ExplicitIndirectVariableFixer;
 use PhpCsFixer\Fixer\LanguageConstruct\FunctionToConstantFixer;
 use PhpCsFixer\Fixer\LanguageConstruct\IsNullFixer;
+use PhpCsFixer\Fixer\Operator\AssignNullCoalescingToCoalesceEqualFixer;
+use PhpCsFixer\Fixer\Operator\LongToShorthandOperatorFixer;
 use PhpCsFixer\Fixer\Operator\NewWithBracesFixer;
+use PhpCsFixer\Fixer\Operator\NoUselessConcatOperatorFixer;
+use PhpCsFixer\Fixer\Operator\NoUselessNullsafeOperatorFixer;
+use PhpCsFixer\Fixer\Operator\ObjectOperatorWithoutWhitespaceFixer;
 use PhpCsFixer\Fixer\Operator\StandardizeIncrementFixer;
+use PhpCsFixer\Fixer\Operator\StandardizeNotEqualsFixer;
+use PhpCsFixer\Fixer\Operator\TernaryToNullCoalescingFixer;
 use PhpCsFixer\Fixer\PhpUnit\PhpUnitMethodCasingFixer;
 use PhpCsFixer\Fixer\StringNotation\ExplicitStringVariableFixer;
 use PhpCsFixer\Fixer\StringNotation\SingleQuoteFixer;
@@ -52,6 +59,15 @@ final class ControlStructuresLevel
         StandardizeIncrementFixer::class,
         NewWithBracesFixer::class,
         NullableTypeDeclarationForDefaultNullValueFixer::class,
+
+        // operator spacing and simplification
+        ObjectOperatorWithoutWhitespaceFixer::class,
+        StandardizeNotEqualsFixer::class,
+        NoUselessConcatOperatorFixer::class,
+        NoUselessNullsafeOperatorFixer::class,
+        LongToShorthandOperatorFixer::class,
+        TernaryToNullCoalescingFixer::class,
+        AssignNullCoalescingToCoalesceEqualFixer::class,
 
         // string and variable handling
         ExplicitStringVariableFixer::class,
