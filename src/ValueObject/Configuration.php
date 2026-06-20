@@ -20,9 +20,9 @@ final readonly class Configuration
         private string $outputFormat = ConsoleOutputFormatter::NAME,
         private bool $isParallel = false,
         private ?string $config = null,
-        private string | null $parallelPort = null,
-        private string | null $parallelIdentifier = null,
-        private string | null $memoryLimit = null,
+        private string|null $parallelPort = null,
+        private string|null $parallelIdentifier = null,
+        private string|null $memoryLimit = null,
         private bool $showDiffs = true,
         private bool $reportingWithRealPath = false
     ) {

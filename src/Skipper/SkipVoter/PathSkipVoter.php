@@ -17,12 +17,12 @@ final readonly class PathSkipVoter implements SkipVoterInterface
     ) {
     }
 
-    public function match(string | object $element): bool
+    public function match(string|object $element): bool
     {
         return true;
     }
 
-    public function shouldSkip(string | object $element, SplFileInfo | string $file): bool
+    public function shouldSkip(string|object $element, SplFileInfo|string $file): bool
     {
         $skippedPaths = $this->skippedPathsResolver->resolve();
         return $this->fileInfoMatcher->doesFileInfoMatchPatterns($file, $skippedPaths);

@@ -8,7 +8,7 @@ use SplFileInfo;
 
 interface SkipVoterInterface
 {
-    public function match(string | object $element): bool;
+    public function match(string|object $element): bool;
 
-    public function shouldSkip(string | object $element, SplFileInfo | string $file): bool;
+    public function shouldSkip(string|object $element, SplFileInfo|string $file): bool;
 }

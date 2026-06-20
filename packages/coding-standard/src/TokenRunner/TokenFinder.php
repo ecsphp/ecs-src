@@ -13,7 +13,7 @@ final class TokenFinder
     /**
      * @param Tokens<Token> $tokens
      */
-    public function getPreviousMeaningfulToken(Tokens $tokens, int | Token $position): Token
+    public function getPreviousMeaningfulToken(Tokens $tokens, int|Token $position): Token
     {
         if (is_int($position)) {
             return $this->findPreviousTokenByPosition($tokens, $position);

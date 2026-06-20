@@ -20,7 +20,7 @@ final readonly class ClassAndCodeSkipVoter implements SkipVoterInterface
     ) {
     }
 
-    public function match(string | object $element): bool
+    public function match(string|object $element): bool
     {
         if (! is_string($element)) {
             return false;
@@ -29,7 +29,7 @@ final readonly class ClassAndCodeSkipVoter implements SkipVoterInterface
         return substr_count($element, '.') === 1;
     }
 
-    public function shouldSkip(string | object $element, SplFileInfo | string $file): bool
+    public function shouldSkip(string|object $element, SplFileInfo|string $file): bool
     {
         if (is_object($element)) {
             return false;

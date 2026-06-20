@@ -14,6 +14,7 @@ use PhpCsFixer\Fixer\ArrayNotation\WhitespaceAfterCommaInArrayFixer;
 use PhpCsFixer\Fixer\Basic\NoTrailingCommaInSinglelineFixer;
 use PhpCsFixer\Fixer\ControlStructure\TrailingCommaInMultilineFixer;
 use PhpCsFixer\Fixer\FixerInterface;
+use PhpCsFixer\Fixer\ListNotation\ListSyntaxFixer;
 use PhpCsFixer\Fixer\Whitespace\ArrayIndentationFixer;
 use Symplify\CodingStandard\Fixer\ArrayNotation\ArrayListItemNewlineFixer;
 use Symplify\CodingStandard\Fixer\ArrayNotation\ArrayOpenerAndCloserNewlineFixer;
@@ -42,6 +43,7 @@ final class ArrayLevel
 
         // syntax normalization
         ArraySyntaxFixer::class,
+        ListSyntaxFixer::class,
         TrailingCommaInMultilineFixer::class,
 
         // invasive layout changes
@@ -59,6 +61,9 @@ final class ArrayLevel
             'elements' => ['arguments', 'array_destructuring', 'array', 'group_import'],
         ],
         ArraySyntaxFixer::class => [
+            'syntax' => 'short',
+        ],
+        ListSyntaxFixer::class => [
             'syntax' => 'short',
         ],
         TrailingCommaInMultilineFixer::class => [
