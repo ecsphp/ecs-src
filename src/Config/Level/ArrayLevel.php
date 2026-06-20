@@ -43,7 +43,6 @@ final class ArrayLevel
 
         // syntax normalization
         ArraySyntaxFixer::class,
-        ListSyntaxFixer::class,
         TrailingCommaInMultilineFixer::class,
 
         // invasive layout changes
