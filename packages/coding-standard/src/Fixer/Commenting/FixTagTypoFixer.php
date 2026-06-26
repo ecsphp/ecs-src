@@ -11,7 +11,7 @@ use PhpCsFixer\Tokenizer\Tokens;
 use Symplify\CodingStandard\Utils\Regex;
 
 /**
- * Fixes a plural typo in a doc block tag, e.g. "@returns" → "@return", "@params" → "@param", "@vars" → "@var".
+ * Fixes a plural-"s" typo on the @return, @param and @var doc block tags (e.g. a stray "@return" + "s" becomes "@return").
  *
  * @see \Symplify\CodingStandard\Tests\Fixer\Commenting\FixTagTypoFixer\FixTagTypoFixerTest
  */
