@@ -7,6 +7,7 @@ namespace Symplify\EasyCodingStandard\Configuration;
 use Nette\Utils\FileSystem;
 use Symplify\EasyCodingStandard\Application\FileProcessorCollector;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
+use Symplify\EasyCodingStandard\Contract\Application\FileProcessorInterface;
 
 final readonly class ConfigInitializer
 {
@@ -21,7 +22,7 @@ final readonly class ConfigInitializer
     public function areSomeCheckersRegistered(): bool
     {
         $fileProcessors = $this->fileProcessorCollector->getFileProcessors();
-        return array_any($fileProcessors, fn ($fileProcessor): bool => $fileProcessor->getCheckers() !== []);
+        return array_any($fileProcessors, fn (FileProcessorInterface $fileProcessor): bool => $fileProcessor->getCheckers() !== []);
     }
 
     public function createConfig(string $projectDirectory): void
