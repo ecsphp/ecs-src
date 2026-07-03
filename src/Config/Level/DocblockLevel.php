@@ -44,6 +44,7 @@ use Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousVarNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveUselessDefaultCommentFixer;
 use Symplify\CodingStandard\Fixer\Commenting\SingleLineInlineVarDocBlockFixer;
 use Symplify\CodingStandard\Fixer\Commenting\SwitchedTypeAndNameFixer;
+use Symplify\CodingStandard\Fixer\Commenting\TypeToVarTagFixer;
 
 /**
  * Key 0 = level 0
@@ -62,6 +63,7 @@ final class DocblockLevel
         FixTagTypoFixer::class,
 
         // inline @var
+        TypeToVarTagFixer::class,
         DoubleAsteriskInlineVarFixer::class,
         RemoveDeadVarThisFixer::class,
         SingleLineInlineVarDocBlockFixer::class,
