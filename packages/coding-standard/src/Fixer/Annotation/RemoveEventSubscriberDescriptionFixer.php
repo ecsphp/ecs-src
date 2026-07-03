@@ -57,8 +57,13 @@ final class RemoveEventSubscriberDescriptionFixer extends AbstractSymplifyFixer
                 continue;
             }
 
-            // keep docblocks that carry real annotations
-            if (str_contains($token->getContent(), '@')) {
+            $functionIndex = $this->resolveFunctionIndex($tokens, $index);
+            if ($functionIndex === null) {
+                continue;
+            }
+
+            // only handle public methods (event subscriber handlers)
+            if (! $this->isPublicMethod($tokens, $index, $functionIndex)) {
                 continue;
             }
 
@@ -67,17 +72,65 @@ final class RemoveEventSubscriberDescriptionFixer extends AbstractSymplifyFixer
                 continue;
             }
 
-            if (! $this->isEventDescription($token->getContent(), $methodName)) {
+            $docblockLines = explode("\n", $token->getContent());
+
+            $hasChanged = false;
+            foreach ($docblockLines as $key => $docblockLine) {
+                if (! $this->isEventDescriptionLine($docblockLine, $methodName)) {
+                    continue;
+                }
+
+                unset($docblockLines[$key]);
+                $hasChanged = true;
+            }
+
+            if (! $hasChanged) {
                 continue;
             }
 
-            $tokens->clearTokenAndMergeSurroundingWhitespace($index);
+            if ($this->isEmptyDocblock($docblockLines)) {
+                $tokens->clearTokenAndMergeSurroundingWhitespace($index);
+            } else {
+                $tokens[$index] = new Token([T_DOC_COMMENT, implode("\n", $docblockLines)]);
+            }
         }
     }
 
-    private function isEventDescription(string $docContent, string $methodName): bool
+    /**
+     * @param Tokens<Token> $tokens
+     */
+    private function resolveFunctionIndex(Tokens $tokens, int $commentIndex): ?int
     {
-        $descriptionWords = $this->resolveWords($docContent);
+        foreach ($tokens as $position => $token) {
+            if ($position <= $commentIndex) {
+                continue;
+            }
+
+            if ($token->isGivenKind(T_FUNCTION)) {
+                return $position;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param Tokens<Token> $tokens
+     */
+    private function isPublicMethod(Tokens $tokens, int $commentIndex, int $functionIndex): bool
+    {
+        for ($position = $commentIndex + 1; $position < $functionIndex; ++$position) {
+            if ($tokens[$position]->isGivenKind([T_PRIVATE, T_PROTECTED])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isEventDescriptionLine(string $docblockLine, string $methodName): bool
+    {
+        $descriptionWords = $this->resolveWords($docblockLine);
 
         // must be an "... event" description, otherwise leave it to duplicate-description fixer
         if (! in_array('event', $descriptionWords, true)) {
@@ -103,6 +156,16 @@ final class RemoveEventSubscriberDescriptionFixer extends AbstractSymplifyFixer
         sort($methodWords);
 
         return $descriptionWords === $methodWords;
+    }
+
+    /**
+     * @param string[] $docblockLines
+     */
+    private function isEmptyDocblock(array $docblockLines): bool
+    {
+        $bareContent = preg_replace('#[/*\s]+#', '', implode('', $docblockLines));
+
+        return $bareContent === '';
     }
 
     /**

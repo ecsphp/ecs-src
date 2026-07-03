@@ -2,14 +2,12 @@
 
 namespace Symplify\CodingStandard\Tests\Fixer\Annotation\RemoveEventSubscriberDescriptionFixer\Fixture;
 
-final class SkipParamTag
+final class SkipPrivateMethod
 {
     /**
      * Delete lead event
-     *
-     * @param LeadEvent $event
      */
-    public function onLeadDelete(LeadEvent $event): bool
+    private function onLeadDelete(LeadEvent $event): bool
     {
     }
 }
