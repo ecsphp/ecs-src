@@ -53,8 +53,15 @@ parameters:
         # intentional: hack to autoload contants
         - '#Call to new PHP_CodeSniffer\\Util\\Tokens\(\) on a separate line has no effect#'
 
-        # coding-standard: runtime-defined PHP_CodeSniffer/php-cs-fixer token constants
-        - '#Constant T_OPEN_CURLY_BRACKET|T_START_NOWDOC not found#'
+        # coding-standard: runtime-defined PHP_CodeSniffer token constants resolve differently per env
+        # (either "Constant ... not found" or a string leaking into an int-kind array)
+        -
+            message: '#Constant T_OPEN_CURLY_BRACKET|T_START_NOWDOC not found#'
+            reportUnmatched: false
+        -
+            message: '#Parameter \#1 \$possibleKind of method PhpCsFixer\\Tokenizer\\Token\:\:isGivenKind\(\) expects int\|list<int>, array\{.*PHPCS_T_OPEN_CURLY.*\} given#'
+            path: packages/coding-standard/src/TokenAnalyzer/NewlineAnalyzer.php
+            reportUnmatched: false
 
         # coding-standard: intentional cross-version condition
         -
