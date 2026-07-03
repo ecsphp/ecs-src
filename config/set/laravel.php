@@ -37,7 +37,6 @@ use PhpCsFixer\Fixer\ClassNotation\SelfStaticAccessorFixer;
 use PhpCsFixer\Fixer\ClassNotation\SingleClassElementPerStatementFixer;
 use PhpCsFixer\Fixer\ClassNotation\VisibilityRequiredFixer;
 use PhpCsFixer\Fixer\Comment\NoTrailingWhitespaceInCommentFixer;
-use PhpCsFixer\Fixer\Comment\SingleLineCommentStyleFixer;
 use PhpCsFixer\Fixer\ControlStructure\ControlStructureBracesFixer;
 use PhpCsFixer\Fixer\ControlStructure\ControlStructureContinuationPositionFixer;
 use PhpCsFixer\Fixer\ControlStructure\ElseifFixer;
@@ -315,9 +314,6 @@ return ECSConfig::configure()
     ])
     ->withConfiguredRule(SingleClassElementPerStatementFixer::class, [
         'elements' => ['const', 'property'],
-    ])
-    ->withConfiguredRule(SingleLineCommentStyleFixer::class, [
-        'comment_types' => ['hash'],
     ])
     ->withConfiguredRule(TrailingCommaInMultilineFixer::class, [
         'elements' => ['arrays'],
