@@ -67,6 +67,13 @@ final class AddMissingVarNameFixer extends AbstractDocBlockFixer
             return null;
         }
 
+        $afterVariableTokenPosition = $tokens->getNextMeaningfulToken($nextMeaningfulTokenPosition);
+        if ($afterVariableTokenPosition !== null
+            && $tokens[$afterVariableTokenPosition]->isGivenKind(T_OBJECT_OPERATOR)
+        ) {
+            return null;
+        }
+
         return $nextToken;
     }
 }
