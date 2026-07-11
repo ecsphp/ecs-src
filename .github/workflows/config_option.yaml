@@ -1,0 +1,64 @@
+name: Config Option
+
+# verifies https://github.com/ecsphp/ecs-src/pull/27#issuecomment-4938413629
+# the "--config <file>" option must work in every position, including before the
+# command name / with no command name, where the Entropy input parser would
+# otherwise fail with 'Unknown option: "--config=..."'
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+jobs:
+    config_option:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v4
+
+            -
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 8.4
+                    coverage: none
+
+            -   run: composer install --no-progress --ansi
+
+            -
+                name: "Create a custom config in a non-default location"
+                run: |
+                    mkdir -p build/nested
+                    printf '<?php  $%s=1;\n' 'x' > build/nested/some_file.php
+                    cat > build/custom-ecs.php <<'PHP'
+                    <?php
+                    declare(strict_types=1);
+                    return \Symplify\EasyCodingStandard\Config\ECSConfig::configure()
+                        ->withPaths([__DIR__ . '/nested'])
+                        ->withPreparedSets(psr12: true);
+                    PHP
+
+            -
+                name: "ecs --config=<file> (leading option, default command) must load the custom config"
+                run: |
+                    OUTPUT="$(bin/ecs --config=build/custom-ecs.php --no-progress-bar --ansi || true)"
+                    echo "$OUTPUT"
+                    echo "$OUTPUT" | grep -q 'some_file.php'
+                    ! echo "$OUTPUT" | grep -q 'Unknown option'
+
+            -
+                name: "ecs --config <file> (space-separated, leading option) must load the custom config"
+                run: |
+                    OUTPUT="$(bin/ecs --config build/custom-ecs.php --no-progress-bar --ansi || true)"
+                    echo "$OUTPUT"
+                    echo "$OUTPUT" | grep -q 'some_file.php'
+                    ! echo "$OUTPUT" | grep -q 'Unknown option'
+
+            -
+                name: "ecs check --config=<file> (option after command) must load the custom config"
+                run: |
+                    OUTPUT="$(bin/ecs check --config=build/custom-ecs.php --no-progress-bar --ansi || true)"
+                    echo "$OUTPUT"
+                    echo "$OUTPUT" | grep -q 'some_file.php'
+                    ! echo "$OUTPUT" | grep -q 'Unknown option'
