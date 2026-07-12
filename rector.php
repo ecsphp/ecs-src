@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\DeadCode\Rector\ClassMethod\RemoveReturnTagIncompatibleWithNativeTypeRector;
 use Rector\DeadCode\Rector\ConstFetch\RemovePhpVersionIdCheckRector;
 use Rector\Php84\Rector\Class_\DeprecatedAnnotationToDeprecatedAttributeRector;
 
@@ -29,6 +30,12 @@ return RectorConfig::configure()
 
         // conditional checks
         RemovePhpVersionIdCheckRector::class,
+
+        // rector <= 2.5.6 misreads the @phpstan-type GitlabIssue array-shape alias
+        // as incompatible with the native "array" return type and strips the tag
+        RemoveReturnTagIncompatibleWithNativeTypeRector::class => [
+            __DIR__ . '/src/Console/Output/GitlabOutputFormatter.php',
+        ],
 
         DeprecatedAnnotationToDeprecatedAttributeRector::class => [
             // avoid runtime reporting in output, only for the user
