@@ -32,6 +32,7 @@ use PhpCsFixer\Fixer\Whitespace\TypesSpacesFixer;
 use Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer;
 use Symplify\CodingStandard\Fixer\Spacing\SpaceAfterCommaHereNowDocFixer;
 use Symplify\CodingStandard\Fixer\Spacing\StandaloneLinePromotedPropertyFixer;
+use Symplify\CodingStandard\Fixer\Spacing\StandaloneLineRequiredParamFixer;
 use Symplify\CodingStandard\Fixer\Strict\BlankLineAfterStrictTypesFixer;
 
 /**
@@ -74,6 +75,7 @@ final class SpacesLevel
         // most invasive structural changes
         MethodChainingIndentationFixer::class,
         StandaloneLinePromotedPropertyFixer::class,
+        StandaloneLineRequiredParamFixer::class,
         MethodArgumentSpaceFixer::class,
 
         // newline spacing (from deprecated "symplify" set)
