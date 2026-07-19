@@ -8,8 +8,9 @@ use Exception;
 
 final class TokenNotFoundException extends Exception
 {
-    public function __construct(int $position)
-    {
+    public function __construct(
+        int $position
+    ) {
         $message = sprintf('Token on position %d was not found', $position);
 
         parent::__construct($message);
