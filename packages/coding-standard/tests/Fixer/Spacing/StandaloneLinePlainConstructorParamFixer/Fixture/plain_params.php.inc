@@ -4,7 +4,7 @@ namespace Symplify\CodingStandard\Tests\Fixer\Spacing\StandaloneLinePlainConstru
 
 final class PlainParams
 {
-    public function __construct(CorePermissions $security, Translator $translator, RouterInterface $router)
+    public function __construct(CorePermissions $security, Translator $translator, RouterInterface $router, Logger $logger)
     {
     }
 }
@@ -20,7 +20,8 @@ final class PlainParams
     public function __construct(
         CorePermissions $security,
         Translator $translator,
-        RouterInterface $router
+        RouterInterface $router,
+        Logger $logger
     )
     {
     }
