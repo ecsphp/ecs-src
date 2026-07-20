@@ -78,12 +78,11 @@ return [
 
             // php-cs-fixer uses partial namespaces, that are only strings - should be kept untouched
             // ref.: https://github.com/easy-coding-standard/easy-coding-standard/issues/91
-            return str_replace([
-                $prefix . '\\\\ORM\\\\Entity',
-                $prefix . '\\\\ORM\\\\Mapping\\\\Entity',
-                $prefix . '\\\\Mapping\\\\Entity',
-                $prefix . '\\\\ODM\\\\Document',
-            ], ['ORM\\Entity', 'ORM\\Mapping\\Entity', 'Mapping\\Entity', 'ODM\\Document'], $content);
+            return Strings::replace(
+                $content,
+                '#' . $prefix . '\\\\{1,2}(?=(?:ORM|ODM|Mapping)\\\\)#',
+                ''
+            );
         },
 
         static function (string $filePath, string $prefix, string $content): string {
