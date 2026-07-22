@@ -8,6 +8,7 @@ use Override;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
 use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
+use PhpCsFixer\Tokenizer\Analyzer\NamespaceUsesAnalyzer;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
 use SplFileInfo;
@@ -19,8 +20,8 @@ use Symplify\CodingStandard\TokenRunner\ValueObject\BlockInfo;
 /**
  * Every argument of a Symfony attribute must be on a standalone line, to ease git diffs when arguments change.
  *
- * Only attributes whose written name contains the "Symfony" namespace part are handled, so third-party attributes
- * keep their original layout.
+ * Only Symfony attributes are handled, so third-party attributes keep their original layout. Both fully-qualified
+ * names (#[\Symfony\...\AsCommand]) and short names imported via a use statement (#[AsCommand]) are recognized.
  *
  * @see \Symplify\CodingStandard\Tests\Fixer\Spacing\StandaloneLineSymfonyAttributeParamFixer\StandaloneLineSymfonyAttributeParamFixerTest
  */
@@ -31,7 +32,8 @@ final class StandaloneLineSymfonyAttributeParamFixer extends AbstractSymplifyFix
     private const string SYMFONY_NAMESPACE_PART = 'Symfony';
 
     public function __construct(
-        private readonly TokensNewliner $tokensNewliner
+        private readonly TokensNewliner $tokensNewliner,
+        private readonly NamespaceUsesAnalyzer $namespaceUsesAnalyzer
     ) {
     }
 
@@ -71,6 +73,8 @@ CODE_SAMPLE
      */
     public function fix(SplFileInfo $fileInfo, Tokens $tokens): void
     {
+        $shortNameToFullName = $this->resolveShortNameToFullName($tokens);
+
         // from the bottom up, as adding tokens shifts every position after them
         for ($position = count($tokens) - 1; $position >= 0; --$position) {
             /** @var Token $token */
@@ -92,7 +96,7 @@ CODE_SAMPLE
                 continue;
             }
 
-            if (! $this->isSymfonyAttribute($tokens, $position, $openBracketPosition)) {
+            if (! $this->isSymfonyAttribute($tokens, $openBracketPosition, $shortNameToFullName)) {
                 continue;
             }
 
@@ -109,18 +113,64 @@ CODE_SAMPLE
 
     /**
      * @param Tokens<Token> $tokens
+     * @param array<string, string> $shortNameToFullName
      */
-    private function isSymfonyAttribute(Tokens $tokens, int $attributePosition, int $openBracketPosition): bool
+    private function isSymfonyAttribute(Tokens $tokens, int $openBracketPosition, array $shortNameToFullName): bool
     {
-        for ($index = $attributePosition + 1; $index < $openBracketPosition; ++$index) {
+        $attributeName = $this->resolveAttributeName($tokens, $openBracketPosition);
+
+        // fully-qualified or partially-qualified Symfony name, e.g. #[\Symfony\...\AsCommand]
+        if (str_contains($attributeName, self::SYMFONY_NAMESPACE_PART)) {
+            return true;
+        }
+
+        // fully-qualified but not Symfony
+        if (str_starts_with($attributeName, '\\')) {
+            return false;
+        }
+
+        // short name imported via a use statement, e.g. #[AsCommand] with "use Symfony\...\AsCommand;"
+        $firstNamePart = explode('\\', $attributeName)[0];
+        $fullName = $shortNameToFullName[$firstNamePart] ?? null;
+
+        return $fullName !== null && str_contains($fullName, self::SYMFONY_NAMESPACE_PART);
+    }
+
+    /**
+     * Reads the attribute name written right before its "(", e.g. "\Symfony\...\AsCommand" or "AsCommand".
+     *
+     * @param Tokens<Token> $tokens
+     */
+    private function resolveAttributeName(Tokens $tokens, int $openBracketPosition): string
+    {
+        $attributeName = '';
+
+        for ($index = $openBracketPosition - 1; $index >= 0; --$index) {
             /** @var Token $token */
             $token = $tokens[$index];
 
-            if ($token->isGivenKind(T_STRING) && $token->getContent() === self::SYMFONY_NAMESPACE_PART) {
-                return true;
+            if (! $token->isGivenKind([T_STRING, T_NS_SEPARATOR])) {
+                break;
             }
+
+            $attributeName = $token->getContent() . $attributeName;
         }
 
-        return false;
+        return $attributeName;
+    }
+
+    /**
+     * @param Tokens<Token> $tokens
+     * @return array<string, string>
+     */
+    private function resolveShortNameToFullName(Tokens $tokens): array
+    {
+        $shortNameToFullName = [];
+
+        foreach ($this->namespaceUsesAnalyzer->getDeclarationsFromTokens($tokens) as $namespaceUseAnalysis) {
+            $shortNameToFullName[$namespaceUseAnalysis->getShortName()] = $namespaceUseAnalysis->getFullName();
+        }
+
+        return $shortNameToFullName;
     }
 }
