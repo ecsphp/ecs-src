@@ -79,4 +79,9 @@ final class SetList
      * @api
      */
     public const string LARAVEL = __DIR__ . '/../../../config/set/laravel.php';
+
+    /**
+     * @api
+     */
+    public const string STANDALONE_LINE = __DIR__ . '/../../../config/set/standalone-line.php';
 }
