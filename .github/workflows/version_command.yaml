@@ -5,7 +5,6 @@ name: Version Command
 # which prints the bundled PHP-CS-Fixer version
 
 on:
-    pull_request:
     push:
         branches:
             - main
