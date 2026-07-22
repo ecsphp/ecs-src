@@ -20,8 +20,9 @@ use Symplify\CodingStandard\TokenRunner\ValueObject\BlockInfo;
 /**
  * Every argument of a Symfony attribute must be on a standalone line, to ease git diffs when arguments change.
  *
- * Only Symfony attributes are handled, so third-party attributes keep their original layout. Both fully-qualified
- * names (#[\Symfony\...\AsCommand]) and short names imported via a use statement (#[AsCommand]) are recognized.
+ * Only a fixed allowlist of Symfony attributes is handled, so third-party attributes keep their original layout.
+ * Both fully-qualified names (#[\Symfony\...\AsCommand]) and short names imported via a use statement (#[AsCommand])
+ * are recognized. See self::SYMFONY_ATTRIBUTE_CLASSES.
  *
  * @see \Symplify\CodingStandard\Tests\Fixer\Spacing\StandaloneLineSymfonyAttributeParamFixer\StandaloneLineSymfonyAttributeParamFixerTest
  */
@@ -29,7 +30,28 @@ final class StandaloneLineSymfonyAttributeParamFixer extends AbstractSymplifyFix
 {
     private const string ERROR_MESSAGE = 'Symfony attribute argument should be on a standalone line to ease git diffs on change';
 
-    private const string SYMFONY_NAMESPACE_PART = 'Symfony';
+    /**
+     * @var string[]
+     */
+    private const array SYMFONY_ATTRIBUTE_CLASSES = [
+        'Symfony\Component\Console\Attribute\AsCommand',
+        'Symfony\Component\Routing\Attribute\Route',
+        'Symfony\Component\DependencyInjection\Attribute\Autowire',
+        'Symfony\Component\DependencyInjection\Attribute\AutowireIterator',
+        'Symfony\Component\DependencyInjection\Attribute\AutowireLocator',
+        'Symfony\Component\DependencyInjection\Attribute\AsAlias',
+        'Symfony\Component\DependencyInjection\Attribute\AsDecorator',
+        'Symfony\Component\DependencyInjection\Attribute\AsTaggedItem',
+        'Symfony\Component\DependencyInjection\Attribute\When',
+        'Symfony\Component\EventDispatcher\Attribute\AsEventListener',
+        'Symfony\Component\Messenger\Attribute\AsMessageHandler',
+        'Symfony\Component\HttpKernel\Attribute\AsController',
+        'Symfony\Component\HttpKernel\Attribute\MapRequestPayload',
+        'Symfony\Component\HttpKernel\Attribute\MapQueryParameter',
+        'Symfony\Component\HttpKernel\Attribute\MapQueryString',
+        'Symfony\Component\HttpKernel\Attribute\MapEntity',
+        'Symfony\Component\Security\Http\Attribute\IsGranted',
+    ];
 
     public function __construct(
         private readonly TokensNewliner $tokensNewliner,
@@ -119,21 +141,16 @@ CODE_SAMPLE
     {
         $attributeName = $this->resolveAttributeName($tokens, $openBracketPosition);
 
-        // fully-qualified or partially-qualified Symfony name, e.g. #[\Symfony\...\AsCommand]
-        if (str_contains($attributeName, self::SYMFONY_NAMESPACE_PART)) {
-            return true;
-        }
-
-        // fully-qualified but not Symfony
+        // fully-qualified name, e.g. #[\Symfony\...\AsCommand]
         if (str_starts_with($attributeName, '\\')) {
-            return false;
+            return in_array(ltrim($attributeName, '\\'), self::SYMFONY_ATTRIBUTE_CLASSES, true);
         }
 
         // short name imported via a use statement, e.g. #[AsCommand] with "use Symfony\...\AsCommand;"
         $firstNamePart = explode('\\', $attributeName)[0];
         $fullName = $shortNameToFullName[$firstNamePart] ?? null;
 
-        return $fullName !== null && str_contains($fullName, self::SYMFONY_NAMESPACE_PART);
+        return $fullName !== null && in_array($fullName, self::SYMFONY_ATTRIBUTE_CLASSES, true);
     }
 
     /**
