@@ -17,6 +17,11 @@ final class SetList
     /**
      * @api
      */
+    public const string PER_CS = __DIR__ . '/../../../config/set/per-cs.php';
+
+    /**
+     * @api
+     */
     public const string CLEAN_CODE = __DIR__ . '/../../../config/set/clean-code.php';
 
     /**
