@@ -13,6 +13,11 @@ final class SimpleParameterProvider
      */
     private static array $parameters = [];
 
+    public static function reset(): void
+    {
+        self::$parameters = [];
+    }
+
     public static function addParameter(string $key, mixed $value): void
     {
         if (is_array($value)) {
