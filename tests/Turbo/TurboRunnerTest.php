@@ -19,15 +19,15 @@ final class TurboRunnerTest extends TestCase
 
     public function testCreateArgumentsInCheckModeAddsDryRun(): void
     {
-        $arguments = $this->turboRunner->createArguments('reco', ['src', 'tests'], false);
+        $arguments = $this->turboRunner->createArguments('reco', '/tmp/ecs-turbo.json', false);
 
-        $this->assertSame(['reco', 'run', '--dry-run', 'src', 'tests'], $arguments);
+        $this->assertSame(['reco', 'run', '--ecs-config', '/tmp/ecs-turbo.json', '--dry-run'], $arguments);
     }
 
     public function testCreateArgumentsInFixModeRewritesInPlace(): void
     {
-        $arguments = $this->turboRunner->createArguments('reco', ['src'], true);
+        $arguments = $this->turboRunner->createArguments('reco', '/tmp/ecs-turbo.json', true);
 
-        $this->assertSame(['reco', 'run', 'src'], $arguments);
+        $this->assertSame(['reco', 'run', '--ecs-config', '/tmp/ecs-turbo.json'], $arguments);
     }
 }

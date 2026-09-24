@@ -29,6 +29,7 @@ final class CommandRegistrationTest extends AbstractTestCase
         $this->assertTrue($this->commandRegistry->has('check'));
         $this->assertTrue($this->commandRegistry->has('worker'));
         $this->assertTrue($this->commandRegistry->has('list-checkers'));
+        $this->assertTrue($this->commandRegistry->has('dump-config'));
     }
 
     public function testCheckIsTheDefaultCommand(): void
