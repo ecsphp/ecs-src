@@ -14,11 +14,11 @@ use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedPathsResolve
 use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
 
 /**
- * Turns the resolved ecs.php configuration into the JSON shape the reco turbo
+ * Turns the resolved ecs.php configuration into the JSON shape the ecs-go turbo
  * runner consumes: paths, rules (each a class and its config) and skips. See
  * docs/turbo.md for the schema.
  */
-final readonly class RecoConfigDumper
+final readonly class TurboConfigDumper
 {
     public function __construct(
         private SniffFileProcessor $sniffFileProcessor,
@@ -58,7 +58,7 @@ final readonly class RecoConfigDumper
         foreach ($this->sniffFileProcessor->getCheckers() as $sniff) {
             $rules[] = [
                 'class' => $sniff::class,
-                // sniff properties are not extracted yet; reco maps only config-less sniffs
+                // sniff properties are not extracted yet; ecs-go maps only config-less sniffs
                 'config' => new stdClass(),
             ];
         }
@@ -99,7 +99,7 @@ final readonly class RecoConfigDumper
     /**
      * Reads a configured fixer's options off the ConfigurableFixerTrait's
      * `configuration` property. An unconfigured or non-configurable fixer yields
-     * an empty object, which reco reads as the config-less form.
+     * an empty object, which ecs-go reads as the config-less form.
      *
      * @return object|array<string, mixed>
      */

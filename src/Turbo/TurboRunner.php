@@ -7,17 +7,17 @@ namespace Symplify\EasyCodingStandard\Turbo;
 use Nette\Utils\Json;
 
 /**
- * Experimental --turbo mode: hands the run over to the "reco" Go binary instead
+ * Experimental --turbo mode: hands the run over to the "ecs-go" Go binary instead
  * of the PHP engine. The resolved ecs.php config (paths, rules, skips) is written
- * to a temp JSON file and passed to reco via --ecs-config, so reco maps the ECS
- * rules to its native ones. See docs/turbo.md for the current limitations.
+ * to a temp JSON file and passed to ecs-go via --ecs-config, so ecs-go maps the
+ * ECS rules onto its own fixers. See docs/turbo.md for the current limitations.
  *
  * @see \Symplify\EasyCodingStandard\Tests\Turbo\TurboRunnerTest
  */
 final readonly class TurboRunner
 {
     public function __construct(
-        private RecoBinaryLocator $recoBinaryLocator,
+        private EcsGoBinaryLocator $ecsGoBinaryLocator,
     ) {
     }
 
@@ -26,14 +26,14 @@ final readonly class TurboRunner
      */
     public function run(array $configData, bool $isFixMode): int
     {
-        $binary = $this->recoBinaryLocator->locate();
+        $binary = $this->ecsGoBinaryLocator->locate();
 
         $configPath = $this->writeConfig($configData);
 
         try {
             $arguments = $this->createArguments($binary, $configPath, $isFixMode);
 
-            // symfony/process is in "replace"; passthru streams reco's output straight through
+            // symfony/process is in "replace"; passthru streams ecs-go's output straight through
             $command = implode(' ', array_map(escapeshellarg(...), $arguments));
 
             $exitCode = 0;
@@ -50,12 +50,12 @@ final readonly class TurboRunner
      */
     public function createArguments(string $binary, string $configPath, bool $isFixMode): array
     {
-        $arguments = [$binary, 'run', '--ecs-config', $configPath];
+        $arguments = [$binary, '--ecs-config', $configPath];
 
-        // reco rewrites in place by default; --dry-run only reports, matching the
+        // ecs-go reports by default; --fix rewrites in place, matching the
         // check-vs-fix split of ECS itself
-        if (! $isFixMode) {
-            $arguments[] = '--dry-run';
+        if ($isFixMode) {
+            $arguments[] = '--fix';
         }
 
         return $arguments;

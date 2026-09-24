@@ -8,11 +8,11 @@ use Override;
 use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
 use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
 use Symplify\EasyCodingStandard\Testing\PHPUnit\AbstractTestCase;
-use Symplify\EasyCodingStandard\Turbo\RecoConfigDumper;
+use Symplify\EasyCodingStandard\Turbo\TurboConfigDumper;
 
-final class RecoConfigDumperTest extends AbstractTestCase
+final class TurboConfigDumperTest extends AbstractTestCase
 {
-    private RecoConfigDumper $recoConfigDumper;
+    private TurboConfigDumper $turboConfigDumper;
 
     #[Override]
     protected function setUp(): void
@@ -20,19 +20,19 @@ final class RecoConfigDumperTest extends AbstractTestCase
         parent::setUp();
 
         $this->createContainerWithConfigs([__DIR__ . '/Source/configured-ecs.php']);
-        $this->recoConfigDumper = $this->make(RecoConfigDumper::class);
+        $this->turboConfigDumper = $this->make(TurboConfigDumper::class);
     }
 
     public function testDumpPassesPathsThrough(): void
     {
-        $data = $this->recoConfigDumper->dump(['src', 'tests']);
+        $data = $this->turboConfigDumper->dump(['src', 'tests']);
 
         $this->assertSame(['src', 'tests'], $data['paths']);
     }
 
     public function testDumpExtractsConfiguredFixerConfig(): void
     {
-        $data = $this->recoConfigDumper->dump([]);
+        $data = $this->turboConfigDumper->dump([]);
 
         $configByClass = [];
         foreach ($data['rules'] as $rule) {
@@ -47,7 +47,7 @@ final class RecoConfigDumperTest extends AbstractTestCase
 
     public function testDumpReportsPathSkipAndClassSkip(): void
     {
-        $data = $this->recoConfigDumper->dump([]);
+        $data = $this->turboConfigDumper->dump([]);
 
         $skipPaths = [];
         $skipClasses = [];
