@@ -13,6 +13,7 @@ use Symplify\EasyCodingStandard\Console\ExitCode;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 use Symplify\EasyCodingStandard\MemoryLimitter;
 use Symplify\EasyCodingStandard\Reporter\ProcessedFileReporter;
+use Symplify\EasyCodingStandard\Turbo\TurboRunner;
 
 final readonly class CheckCommand implements CommandInterface, DefaultCommandInterface
 {
@@ -22,6 +23,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         private ConfigInitializer $configInitializer,
         private EasyCodingStandardApplication $easyCodingStandardApplication,
         private ConfigurationFactory $configurationFactory,
+        private TurboRunner $turboRunner,
     ) {
     }
 
@@ -36,6 +38,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
     }
 
     /**
+     * @param bool   $turbo        [EXPERIMENTAL] run the reco Go binary instead of the PHP engine
      * @param string $config       Path to config file
      * @param string $outputFormat Select output format
      * @param string $memoryLimit  Memory limit for check
@@ -60,6 +63,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         bool $noErrorTable = false,
         bool $noDiffs = false,
         bool $debug = false,
+        bool $turbo = false,
         string $config = '',
         string $outputFormat = ConsoleOutputFormatter::NAME,
         string $memoryLimit = '',
@@ -87,6 +91,13 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
             $memoryLimit !== '' ? $memoryLimit : null,
             $debug,
         );
+
+        // experimental: hand the resolved paths to the reco Go binary and skip the PHP engine
+        if ($turbo) {
+            $turboExitCode = $this->turboRunner->run($configuration->getSources(), $fix);
+            return $turboExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+        }
+
         $this->memoryLimitter->adjust($configuration);
 
         $errorsAndDiffs = $this->easyCodingStandardApplication->run($configuration);
