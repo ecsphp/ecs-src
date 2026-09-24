@@ -15,3 +15,5 @@ composer lint.fix     # auto-fix rector + coding standard
 ```
 
 Please make sure `composer lint` and `composer test` pass before sending a pull request.
+
+Experimental [`--turbo` mode](docs/turbo.md) runs the reco Go binary instead of the PHP engine.
