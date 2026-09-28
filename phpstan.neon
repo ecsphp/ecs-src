@@ -77,3 +77,13 @@ parameters:
         -
             identifier: symplify.forbiddenStaticClassConstFetch
             path: packages/coding-standard/src/Fixer/AbstractSymplifyFixer.php
+
+        # property_exists() is needed to read the fixer configuration
+        -
+            message: '#Function "property_exists\(\)" cannot be used/left in the code#'
+            path: src/Turbo/TurboConfigDumper.php
+
+        # nullable on purpose - hack to avoid running both rules together
+        -
+            identifier: symplify.noNullableServiceInConstructor
+            path: packages/coding-standard/src/Fixer/LineLength/LineLengthFixer.php
