@@ -13,6 +13,7 @@ use PhpCsFixer\Fixer\ConfigurableFixerInterface;
 use PhpCsFixer\Fixer\FixerInterface;
 use PhpCsFixer\Fixer\WhitespacesAwareFixerInterface;
 use PhpCsFixer\WhitespacesFixerConfig;
+use ReflectionProperty;
 use Symplify\EasyCodingStandard\Configuration\ECSConfigBuilder;
 use Symplify\EasyCodingStandard\DependencyInjection\CompilerPass\ConflictingCheckersCompilerPass;
 use Symplify\EasyCodingStandard\DependencyInjection\CompilerPass\RemoveExcludedCheckersCompilerPass;
@@ -389,7 +390,8 @@ final class ECSConfig extends Container
         } elseif ($checker instanceof Sniff) {
             foreach ($configuration as $propertyName => $value) {
                 Assert::propertyExists($checker, $propertyName);
-                $checker->{$propertyName} = $value;
+                new ReflectionProperty($checker, $propertyName)
+                    ->setValue($checker, $value);
             }
         }
 

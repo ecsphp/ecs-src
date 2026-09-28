@@ -89,7 +89,7 @@ final class SniffFileProcessor implements FileProcessorInterface
         $errorsAndDiffs = [];
 
         $file = $this->fileFactory->createFromFile($filePath);
-        $this->fixFile($file, $this->fixer, $filePath, $this->tokenListeners, self::ESCALATE_WARNINGS_SNIFF);
+        $this->fixFile($file, $filePath, $this->tokenListeners, self::ESCALATE_WARNINGS_SNIFF);
 
         // add coding standard errors
         $codingStandardErrors = $this->sniffMetadataCollector->getCodingStandardErrors();
@@ -127,7 +127,7 @@ final class SniffFileProcessor implements FileProcessorInterface
     public function processFileToString(string $filePath): string
     {
         $file = $this->fileFactory->createFromFile($filePath);
-        $this->fixFile($file, $this->fixer, $filePath, $this->tokenListeners, []);
+        $this->fixFile($file, $filePath, $this->tokenListeners, []);
 
         return $this->fixer->getContents();
     }
@@ -151,7 +151,6 @@ final class SniffFileProcessor implements FileProcessorInterface
      */
     private function fixFile(
         File $file,
-        Fixer $fixer,
         string $filePath,
         array $tokenListeners,
         array $reportSniffClassesWarnings
@@ -165,13 +164,13 @@ final class SniffFileProcessor implements FileProcessorInterface
             $content = $previousContent;
 
             // set property value
-            PrivatesAccessorHelper::setPropertyValue($fixer, 'inConflict', false);
+            PrivatesAccessorHelper::setPropertyValue($this->fixer, 'inConflict', false);
 
             $file->setContent($content);
             $file->processWithTokenListenersAndFilePath($tokenListeners, $filePath, $reportSniffClassesWarnings);
 
             // fixed content
-            $previousContent = $fixer->getContents();
+            $previousContent = $this->fixer->getContents();
             ++$this->fixer->loops;
 
             if ($previousContent !== $content && $this->fixer->loops >= self::MAX_FIXER_LOOPS) {

@@ -49,7 +49,7 @@ final readonly class FileCacheStorage
         $this->fileSystem->mkdir($cacheFilePaths->getSecondDirectory());
 
         $errorBefore = error_get_last();
-        $exported = @var_export(new CacheItem($variableKey, $data), true);
+        $exported = var_export(new CacheItem($variableKey, $data), true);
         $errorAfter = error_get_last();
 
         if ($errorAfter !== null && $errorBefore !== $errorAfter) {
