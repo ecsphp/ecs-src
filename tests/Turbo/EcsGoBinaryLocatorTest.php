@@ -6,6 +6,7 @@ namespace Symplify\EasyCodingStandard\Tests\Turbo;
 
 use PHPUnit\Framework\TestCase;
 use Symplify\EasyCodingStandard\Turbo\EcsGoBinaryLocator;
+use Symplify\EasyCodingStandard\Turbo\Exception\EcsGoBinaryNotFoundException;
 
 final class EcsGoBinaryLocatorTest extends TestCase
 {
@@ -25,10 +26,28 @@ final class EcsGoBinaryLocatorTest extends TestCase
         putenv('ECS_TURBO_BIN');
     }
 
-    public function testFallsBackToPathWhenNoBinaryFound(): void
+    public function testFindsBinaryOnPath(): void
     {
         putenv('ECS_TURBO_BIN');
+        $originalPath = (string) getenv('PATH');
+        putenv('PATH=' . __DIR__ . '/Source/bin');
 
-        $this->assertSame('ecs-go', $this->ecsGoBinaryLocator->locate());
+        $this->assertSame(__DIR__ . '/Source/bin/ecs-go', $this->ecsGoBinaryLocator->locate());
+
+        putenv('PATH=' . $originalPath);
+    }
+
+    public function testThrowsWhenNoBinaryFound(): void
+    {
+        putenv('ECS_TURBO_BIN');
+        $originalPath = (string) getenv('PATH');
+        putenv('PATH=');
+
+        try {
+            $this->expectException(EcsGoBinaryNotFoundException::class);
+            $this->ecsGoBinaryLocator->locate();
+        } finally {
+            putenv('PATH=' . $originalPath);
+        }
     }
 }

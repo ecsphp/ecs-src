@@ -52,6 +52,8 @@ The ecs-go binary is looked up in this order:
 2. `vendor/bin/ecs-go`, if present;
 3. `ecs-go` on the `PATH`.
 
+If none is found, `--turbo` fails with an error explaining how to provide the binary.
+
 ## Prototype caveat
 
 This is an RFC-stage prototype. ecs-go reads the rules and skips from your `ecs.php` (not just the paths), and because every ecs-go fixer is named by its PHP-CS-Fixer class, the rules map straight across by name. Every rule ecs-go has no fixer for is reported and skipped, and a configured rule runs with ecs-go's built-in behaviour (its configuration is not modelled yet) and is noted in the report. So a turbo run is never silently narrower than your config, but it is not yet equivalent to a full ECS run.
