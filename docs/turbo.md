@@ -49,7 +49,7 @@ Configured fixer options are read off the fixer instance; sniff properties are n
 The ecs-go binary is looked up in this order:
 
 1. the `ECS_TURBO_BIN` environment variable, if it points to an existing file;
-2. the binary bundled with ECS in `bin/turbo/` (Linux and macOS, amd64 and arm64);
+2. the binary bundled with ECS in `bin/turbo/` (Linux, macOS and Windows, amd64 and arm64);
 3. `vendor/bin/ecs-go`, if present;
 4. `ecs-go` on the `PATH`.
 
@@ -61,4 +61,4 @@ This is an RFC-stage prototype. ecs-go reads the rules and skips from your `ecs.
 
 ## Bundled binary
 
-The release build cross-compiles ecs-go from its `main` branch and ships it in `bin/turbo/`, so `--turbo` works out of the box on Linux and macOS - no Go toolchain needed. Windows is not bundled yet, as ecs-go does not build there; use `ECS_TURBO_BIN` or WSL.
+The release build cross-compiles ecs-go from its `main` branch and ships it in `bin/turbo/`, so `--turbo` works out of the box on Linux, macOS and Windows - no Go toolchain needed.
