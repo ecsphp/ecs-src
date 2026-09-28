@@ -34,7 +34,8 @@ final class EcsGoBinaryLocatorTest extends TestCase
         mkdir($bundledDirectory);
 
         $arch = in_array(strtolower(php_uname('m')), ['aarch64', 'arm64'], true) ? 'arm64' : 'amd64';
-        $bundledBinary = $bundledDirectory . '/ecs-go-' . strtolower(PHP_OS_FAMILY) . '-' . $arch;
+        $suffix = PHP_OS_FAMILY === 'Windows' ? '.exe' : '';
+        $bundledBinary = $bundledDirectory . '/ecs-go-' . strtolower(PHP_OS_FAMILY) . '-' . $arch . $suffix;
         touch($bundledBinary);
 
         $ecsGoBinaryLocator = new EcsGoBinaryLocator($bundledDirectory);

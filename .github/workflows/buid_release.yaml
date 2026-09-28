@@ -101,8 +101,10 @@ jobs:
                     git clone --depth 1 https://github.com/TomasVotruba/ecs-go.git ecs-go-local
                     mkdir -p ecs-prefixed-downgraded/bin/turbo
 
-                    for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
-                        (cd ecs-go-local/ecs-go && CGO_ENABLED=0 GOOS=${target%/*} GOARCH=${target#*/} go build -trimpath -ldflags="-s -w" -o "$GITHUB_WORKSPACE/ecs-prefixed-downgraded/bin/turbo/ecs-go-${target%/*}-${target#*/}" .)
+                    for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+                        suffix=""
+                        if [ "${target%/*}" = "windows" ]; then suffix=".exe"; fi
+                        (cd ecs-go-local/ecs-go && CGO_ENABLED=0 GOOS=${target%/*} GOARCH=${target#*/} go build -trimpath -ldflags="-s -w" -o "$GITHUB_WORKSPACE/ecs-prefixed-downgraded/bin/turbo/ecs-go-${target%/*}-${target#*/}${suffix}" .)
                     done
 
                     chmod 755 ecs-prefixed-downgraded/bin/turbo/*
