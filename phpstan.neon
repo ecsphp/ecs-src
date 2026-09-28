@@ -18,6 +18,14 @@ parameters:
     # see https://github.com/symplify/phpstan-rules#usage
     symplify:
         pathStrings: true
+        naming: false
+        complexity: false
+        configurable: false
+        static: false
+        symfony: false
+        symfonyConfig: false
+        doctrine: false
+        phpunit: false
 
     # see https://github.com/tomasVotruba/unused-public
     unused_public:
