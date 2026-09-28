@@ -26,6 +26,28 @@ final class EcsGoBinaryLocatorTest extends TestCase
         putenv('ECS_TURBO_BIN');
     }
 
+    public function testBundledBinaryWinsOverPath(): void
+    {
+        putenv('ECS_TURBO_BIN');
+
+        $bundledDirectory = sys_get_temp_dir() . '/ecs-turbo-bundled-' . uniqid();
+        mkdir($bundledDirectory);
+
+        $arch = in_array(strtolower(php_uname('m')), ['aarch64', 'arm64'], true) ? 'arm64' : 'amd64';
+        $bundledBinary = $bundledDirectory . '/ecs-go-' . strtolower(PHP_OS_FAMILY) . '-' . $arch;
+        touch($bundledBinary);
+
+        $ecsGoBinaryLocator = new EcsGoBinaryLocator($bundledDirectory);
+
+        try {
+            $this->assertSame($bundledBinary, $ecsGoBinaryLocator->locate());
+            $this->assertTrue(is_executable($bundledBinary));
+        } finally {
+            unlink($bundledBinary);
+            rmdir($bundledDirectory);
+        }
+    }
+
     public function testFindsBinaryOnPath(): void
     {
         putenv('ECS_TURBO_BIN');

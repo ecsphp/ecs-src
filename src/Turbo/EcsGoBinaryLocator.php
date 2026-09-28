@@ -11,15 +11,31 @@ use Symplify\EasyCodingStandard\Turbo\Exception\EcsGoBinaryNotFoundException;
  *
  * @see \Symplify\EasyCodingStandard\Tests\Turbo\EcsGoBinaryLocatorTest
  */
-final class EcsGoBinaryLocator
+final readonly class EcsGoBinaryLocator
 {
     private const string ENV_OVERRIDE = 'ECS_TURBO_BIN';
+
+    public function __construct(
+        // filled with per-platform binaries by the release build, see .github/workflows/buid_release.yaml
+        private string $bundledDirectory = __DIR__ . '/../../bin/turbo',
+    ) {
+    }
 
     public function locate(): string
     {
         $envBinary = getenv(self::ENV_OVERRIDE);
         if (is_string($envBinary) && $envBinary !== '' && is_file($envBinary)) {
             return $envBinary;
+        }
+
+        $bundledBinary = $this->bundledDirectory . '/ecs-go-' . $this->resolvePlatform();
+        if (is_file($bundledBinary)) {
+            // archive extraction can drop the executable bit
+            if (! is_executable($bundledBinary)) {
+                chmod($bundledBinary, 0755);
+            }
+
+            return $bundledBinary;
         }
 
         $vendorBinary = getcwd() . '/vendor/bin/ecs-go';
@@ -37,6 +53,14 @@ final class EcsGoBinaryLocator
             self::ENV_OVERRIDE,
             self::ENV_OVERRIDE,
         ));
+    }
+
+    private function resolvePlatform(): string
+    {
+        $machine = strtolower(php_uname('m'));
+        $arch = in_array($machine, ['aarch64', 'arm64'], true) ? 'arm64' : 'amd64';
+
+        return strtolower(PHP_OS_FAMILY) . '-' . $arch;
     }
 
     private function findOnPath(string $binaryName): ?string
