@@ -1,0 +1,54 @@
+name: Turbo
+
+# End-to-end check of --turbo: ECS dumps the resolved ecs.php config to JSON and
+# hands it to the ecs-go binary, which maps the rules and rewrites the code. This
+# builds ecs-go from source, runs --turbo --fix over a golden fixture, and asserts
+# the output matches the expected result.
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+jobs:
+    turbo:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v4
+
+            -
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 8.4
+                    coverage: none
+
+            -   run: composer install --no-progress --ansi
+
+            -
+                uses: actions/setup-go@v5
+                with:
+                    go-version: "1.26.6"
+
+            -
+                name: "Build the ecs-go binary from source"
+                run: |
+                    git clone --depth 1 https://github.com/TomasVotruba/ecs-go.git /tmp/ecs-go
+                    cd /tmp/ecs-go/ecs-go
+                    go build -o /tmp/ecs-go-bin .
+
+            -
+                name: "Run --turbo --fix over the golden fixture"
+                run: |
+                    cp -r tests/Turbo/Fixture/input /tmp/turbo-work
+                    ECS_TURBO_BIN=/tmp/ecs-go-bin bin/ecs check /tmp/turbo-work --turbo --fix \
+                        --config=tests/Turbo/Fixture/ecs.php --no-progress-bar --ansi || true
+
+            -
+                name: "Assert the output matches the expected result"
+                run: |
+                    if ! diff -r /tmp/turbo-work tests/Turbo/Fixture/expected; then
+                        echo "::error::--turbo output does not match the expected fixture"
+                        exit 1
+                    fi
