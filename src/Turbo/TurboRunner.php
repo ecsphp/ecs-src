@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Turbo;
 
+use Nette\Utils\FileSystem;
 use Nette\Utils\Json;
 
 /**
@@ -41,7 +42,7 @@ final readonly class TurboRunner
 
             return $exitCode;
         } finally {
-            @unlink($configPath);
+            FileSystem::delete($configPath);
         }
     }
 

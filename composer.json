@@ -56,10 +56,7 @@
         "psr-4": {
             "Symplify\\EasyCodingStandard\\Tests\\": "tests",
             "Symplify\\CodingStandard\\Tests\\": "packages/coding-standard/tests"
-        },
-        "files": [
-            "tests/functions.php"
-        ]
+        }
     },
     "config": {
         "sort-packages": true,

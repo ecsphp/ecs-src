@@ -6,6 +6,7 @@ namespace Symplify\EasyCodingStandard\Turbo;
 
 use PhpCsFixer\Fixer\ConfigurableFixerInterface;
 use PhpCsFixer\Fixer\FixerInterface;
+use ReflectionObject;
 use ReflectionProperty;
 use stdClass;
 use Symplify\EasyCodingStandard\FixerRunner\Application\FixerFileProcessor;
@@ -109,7 +110,7 @@ final readonly class TurboConfigDumper
             return new stdClass();
         }
 
-        if (! property_exists($fixer, 'configuration')) {
+        if (! new ReflectionObject($fixer)->hasProperty('configuration')) {
             return new stdClass();
         }
 

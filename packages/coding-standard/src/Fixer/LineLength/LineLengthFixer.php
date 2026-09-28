@@ -15,7 +15,6 @@ use PhpCsFixer\Tokenizer\Tokens;
 use SplFileInfo;
 use Symplify\CodingStandard\Exception\ShouldNotHappenException;
 use Symplify\CodingStandard\Fixer\AbstractSymplifyFixer;
-use Symplify\CodingStandard\Fixer\Spacing\StandaloneLineConstructorParamFixer;
 use Symplify\CodingStandard\TokenAnalyzer\FunctionCallNameMatcher;
 use Symplify\CodingStandard\TokenAnalyzer\HeredocAnalyzer;
 use Symplify\CodingStandard\TokenAnalyzer\Naming\MethodNameResolver;
@@ -71,8 +70,7 @@ final class LineLengthFixer extends AbstractSymplifyFixer implements Configurabl
         private readonly BlockFinder $blockFinder,
         private readonly FunctionCallNameMatcher $functionCallNameMatcher,
         private readonly MethodNameResolver $methodNameResolver,
-        private readonly HeredocAnalyzer $heredocAnalyzer,
-        private readonly ?StandaloneLineConstructorParamFixer $standaloneLineConstructorParamFixer = null
+        private readonly HeredocAnalyzer $heredocAnalyzer
     ) {
     }
 
@@ -205,7 +203,7 @@ final class LineLengthFixer extends AbstractSymplifyFixer implements Configurabl
         }
 
         // @todo is __construct() class method and is newline parma enabled? → skip it
-        if ($this->standaloneLineConstructorParamFixer instanceof StandaloneLineConstructorParamFixer && $this->methodNameResolver->isMethodName(
+        if ($this->methodNameResolver->isMethodName(
             $tokens,
             $position,
             '__construct'

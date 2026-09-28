@@ -18,14 +18,6 @@ parameters:
     # see https://github.com/symplify/phpstan-rules#usage
     symplify:
         pathStrings: true
-        naming: false
-        complexity: false
-        configurable: false
-        static: false
-        symfony: false
-        symfonyConfig: false
-        doctrine: false
-        phpunit: false
 
     # see https://github.com/tomasVotruba/unused-public
     unused_public:
@@ -75,3 +67,13 @@ parameters:
         -
             identifier: smaller.alwaysFalse
             path: src/Configuration/ConfigInitializer.php
+
+        # parent constructor requires a PHP_CodeSniffer Ruleset, which ECS does not use
+        -
+            identifier: symplify.noConstructorOverride
+            path: src/SniffRunner/ValueObject/File.php
+
+        # static::class is the late-bound class name, not a constant that can change
+        -
+            identifier: symplify.forbiddenStaticClassConstFetch
+            path: packages/coding-standard/src/Fixer/AbstractSymplifyFixer.php
