@@ -90,6 +90,7 @@ final readonly class WorkerCommand implements CommandInterface, HiddenCommandInt
             $identifier,
             $memoryLimit !== '' ? $memoryLimit : null,
             $debug,
+            false,
         );
         $this->memoryLimitter->adjust($configuration);
 

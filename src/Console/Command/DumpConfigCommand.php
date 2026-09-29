@@ -58,6 +58,7 @@ final readonly class DumpConfigCommand implements CommandInterface
             '',
             null,
             false,
+            false,
         );
 
         $data = $this->turboConfigDumper->dump($configuration->getSources());
