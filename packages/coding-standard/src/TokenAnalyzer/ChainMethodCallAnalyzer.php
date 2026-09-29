@@ -133,6 +133,82 @@ final class ChainMethodCallAnalyzer
         return false;
     }
 
+    /**
+     * Matches e.g: if ($x->isInteger()->yes()), while ($x->next()->valid())
+     *
+     * @param Tokens<Token> $tokens
+     */
+    public function isInsideControlCondition(Tokens $tokens, int $position): bool
+    {
+        $bracketNesting = 0;
+
+        for ($i = $position; $i >= 0; --$i) {
+            /** @var Token $currentToken */
+            $currentToken = $tokens[$i];
+            $content = $currentToken->getContent();
+
+            if ($content === ')' || $content === ']') {
+                ++$bracketNesting;
+                continue;
+            }
+
+            if ($content === '(' || $content === '[') {
+                if ($bracketNesting !== 0) {
+                    --$bracketNesting;
+                    continue;
+                }
+
+                if ($content === '[') {
+                    return false;
+                }
+
+                $beforeIndex = $tokens->getPrevMeaningfulToken($i);
+                if ($beforeIndex === null) {
+                    return false;
+                }
+
+                return $tokens[$beforeIndex]->isGivenKind([T_IF, T_ELSEIF, T_WHILE, T_SWITCH]);
+            }
+
+            if ($bracketNesting === 0 && in_array($content, [';', '{', '}'], true)) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Matches e.g: ->yes(), ->no(), ->maybe() - short predicate-like accessors
+     *
+     * @param Tokens<Token> $tokens
+     */
+    public function isShortNoArgTrailingMethod(Tokens $tokens, int $objectOperatorIndex): bool
+    {
+        $methodNameIndex = $tokens->getNextMeaningfulToken($objectOperatorIndex);
+        if ($methodNameIndex === null) {
+            return false;
+        }
+
+        /** @var Token $methodNameToken */
+        $methodNameToken = $tokens[$methodNameIndex];
+        if (! $methodNameToken->isGivenKind(T_STRING)) {
+            return false;
+        }
+
+        if (strlen($methodNameToken->getContent()) > 5) {
+            return false;
+        }
+
+        $openIndex = $tokens->getNextMeaningfulToken($methodNameIndex);
+        if ($openIndex === null || $tokens[$openIndex]->getContent() !== '(') {
+            return false;
+        }
+
+        $closeIndex = $tokens->getNextMeaningfulToken($openIndex);
+        return $closeIndex !== null && $tokens[$closeIndex]->getContent() === ')';
+    }
+
     private function isBooleanOrComparisonToken(Token $token): bool
     {
         if ($token->isGivenKind([
