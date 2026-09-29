@@ -1,0 +1,156 @@
+package rules
+
+import (
+	"regexp"
+	"strings"
+
+	"blink/internal/token"
+	"blink/internal/tokens"
+)
+
+// applyToDocblocks runs fn over each doc comment, replacing it when fn reports a
+// change.
+func applyToDocblocks(s *tokens.Stream, fn func(*docblock) bool) bool {
+	changed := false
+	for i := range s.Len() {
+		t := s.At(i)
+		if t.Kind != token.DocComment {
+			continue
+		}
+		d, ok := parseDoc(t.Value)
+		if !ok {
+			continue
+		}
+		if fn(&d) {
+			s.SetValue(i, d.render())
+			changed = true
+		}
+	}
+	return changed
+}
+
+// PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTrimFixer.php
+//
+// PhpdocTrim removes blank lines at the start and end of a docblock.
+type PhpdocTrim struct{}
+
+func (PhpdocTrim) Name() string {
+	return `PhpCsFixer\Fixer\Phpdoc\PhpdocTrimFixer`
+}
+
+func (PhpdocTrim) SourceURL() string {
+	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTrimFixer.php"
+}
+
+func (PhpdocTrim) Fix(s *tokens.Stream) bool {
+	return applyToDocblocks(s, func(d *docblock) bool {
+		before := len(d.inner)
+		for len(d.inner) > 0 && strings.TrimSpace(d.inner[0].content) == "" {
+			d.inner = d.inner[1:]
+		}
+		for len(d.inner) > 0 && strings.TrimSpace(d.inner[len(d.inner)-1].content) == "" {
+			d.inner = d.inner[:len(d.inner)-1]
+		}
+		return len(d.inner) != before
+	})
+}
+
+// only when void/null is the whole return type - not part of a union like
+// "null|string", which is a real nullable type
+var emptyReturnRe = regexp.MustCompile(`(?i)^@return\s+(void|null)($|\s)`)
+
+// PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocNoEmptyReturnFixer.php
+//
+// PhpdocNoEmptyReturn removes an "@return void" or "@return null" tag.
+type PhpdocNoEmptyReturn struct{}
+
+func (PhpdocNoEmptyReturn) Name() string {
+	return `PhpCsFixer\Fixer\Phpdoc\PhpdocNoEmptyReturnFixer`
+}
+
+func (PhpdocNoEmptyReturn) SourceURL() string {
+	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocNoEmptyReturnFixer.php"
+}
+
+func (PhpdocNoEmptyReturn) Fix(s *tokens.Stream) bool {
+	return applyToDocblocks(s, func(d *docblock) bool {
+		kept := d.inner[:0:0]
+		removed := false
+		for _, l := range d.inner {
+			if emptyReturnRe.MatchString(strings.TrimSpace(l.content)) {
+				removed = true
+				continue
+			}
+			kept = append(kept, l)
+		}
+		if removed {
+			d.inner = kept
+		}
+		return removed
+	})
+}
+
+var phpdocScalarMap = map[string]string{
+	"boolean": "bool", "integer": "int", "double": "float",
+	"real": "float", "str": "string", "callback": "callable",
+}
+
+var phpdocTypeTagRe = regexp.MustCompile(`(?i)^(@(?:param|return|var|throws|property|property-read|property-write|method)\s+)(\S+)(.*)$`)
+
+// PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocScalarFixer.php
+//
+// PhpdocScalar normalizes scalar type aliases in phpdoc tags (integer -> int,
+// boolean -> bool, double/real -> float, str -> string, callback -> callable).
+type PhpdocScalar struct{}
+
+func (PhpdocScalar) Name() string {
+	return `PhpCsFixer\Fixer\Phpdoc\PhpdocScalarFixer`
+}
+
+func (PhpdocScalar) SourceURL() string {
+	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocScalarFixer.php"
+}
+
+func (PhpdocScalar) Fix(s *tokens.Stream) bool {
+	return applyToDocblocks(s, func(d *docblock) bool {
+		changed := false
+		for i, l := range d.inner {
+			m := phpdocTypeTagRe.FindStringSubmatch(strings.TrimLeft(l.content, " "))
+			if m == nil {
+				continue
+			}
+			newType := normalizeScalarType(m[2])
+			if newType == m[2] {
+				continue
+			}
+			lead := l.content[:len(l.content)-len(strings.TrimLeft(l.content, " "))]
+			d.inner[i].content = lead + m[1] + newType + m[3]
+			changed = true
+		}
+		return changed
+	})
+}
+
+// normalizeScalarType replaces scalar aliases in a phpdoc type, handling unions,
+// nullables and array suffixes ("integer[]|null" -> "int[]|null"). The lookup is
+// case-sensitive so a class named like an alias (e.g. Laravel's "Str") is safe.
+func normalizeScalarType(typ string) string {
+	nullable := strings.HasPrefix(typ, "?")
+	body := strings.TrimPrefix(typ, "?")
+	parts := strings.Split(body, "|")
+	for i, p := range parts {
+		base, suffix := p, ""
+		for strings.HasSuffix(base, "[]") {
+			base = base[:len(base)-2]
+			suffix = "[]" + suffix
+		}
+		if repl, ok := phpdocScalarMap[base]; ok {
+			parts[i] = repl + suffix
+		}
+	}
+	out := strings.Join(parts, "|")
+	if nullable {
+		out = "?" + out
+	}
+	return out
+}

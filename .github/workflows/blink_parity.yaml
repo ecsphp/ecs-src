@@ -1,0 +1,162 @@
+name: Blink Parity
+
+# Runs blink and the ECS in this repository on the same real codebase (full
+# rector-src) and fails if blink's output differs from ECS (psr12 + common) on
+# any file. This is the 1:1 parity gate - it stays red until blink reproduces
+# ECS exactly.
+
+on:
+    pull_request:
+        paths:
+            - 'blink/**'
+            - 'src/**'
+            - 'packages/**'
+            - 'config/**'
+            - '.github/workflows/blink_parity.yaml'
+    workflow_dispatch: null
+
+jobs:
+    blink-parity:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - name: Build blink
+              working-directory: blink
+              run: go build -o /tmp/blink .
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.4"
+                  coverage: none
+
+            # installs this repository's ECS so parity runs against the code being shipped
+            - uses: "ramsey/composer-install@v4"
+
+            - name: Fetch a real codebase sample
+              run: |
+                  git clone --depth 1 https://github.com/rectorphp/rector-src.git /tmp/rector
+                  # full rector-src tree; .php.inc fixtures are skipped by the *.php find below
+                  mkdir -p /tmp/sample
+                  cp -r /tmp/rector/src /tmp/rector/rules /tmp/rector/tests /tmp/sample/
+                  cp -r /tmp/sample /tmp/ours
+                  cp -r /tmp/sample /tmp/ecs
+
+            - name: Run blink
+              run: /tmp/blink --fix /tmp/ours || true
+
+            - name: Build the local ECS config
+              run: |
+                  cat > /tmp/ecs.php <<'PHP'
+                  <?php
+
+                  declare(strict_types=1);
+
+                  use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+                  return ECSConfig::configure()
+                      ->withPreparedSets(psr12: true, common: true);
+                  PHP
+
+            - name: Run the local ECS
+              run: bin/ecs check /tmp/ecs --fix --no-progress-bar --config /tmp/ecs.php || true
+
+            - name: Rank missing fixers (data-driven backlog)
+              run: |
+                  # what ECS would apply on the pristine sample, as JSON
+                  bin/ecs check /tmp/sample --output-format=json --config /tmp/ecs.php > /tmp/ecs.json 2>/dev/null || true
+                  # fixers we already implement
+                  /tmp/blink list-checkers | sed 's/^[[:space:]]*-[[:space:]]*//; /Registered/d' | sort -u > /tmp/impl.txt
+                  # count applied checkers across files, most frequent first
+                  jq -r '[.files[]?.diffs[]?.applied_checkers[]?] | group_by(.) | map("\(length) \(.[0])") | .[]' /tmp/ecs.json 2>/dev/null | sort -rn > /tmp/counts.txt || true
+                  {
+                      echo "## Backlog: ECS fixers not yet in blink, ranked by frequency on the sample"
+                      echo ""
+                      echo "| fixer | files |"
+                      echo "|---|---|"
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  n=0
+                  while read -r count chk; do
+                      [ "$n" -ge 25 ] && break
+                      if ! grep -qxF "$chk" /tmp/impl.txt; then
+                          echo "| \`$chk\` | $count |" >> "$GITHUB_STEP_SUMMARY"
+                          n=$((n + 1))
+                      fi
+                  done < /tmp/counts.txt
+                  if [ "$n" -eq 0 ]; then
+                      echo "| (no data - check the ECS JSON shape) | |" >> "$GITHUB_STEP_SUMMARY"
+                  fi
+                  # stdout diagnostics (the summary table is not fetchable via CLI)
+                  echo "=== implemented: $(wc -l < /tmp/impl.txt) | ecs.json bytes: $(wc -c < /tmp/ecs.json) ==="
+                  echo "=== top applied checkers, raw (before excluding implemented) ==="
+                  head -20 /tmp/counts.txt || true
+
+            - name: Compare outputs
+              run: |
+                  total=0
+                  differ=0
+                  for f in $(cd /tmp/ours && find . -name '*.php'); do
+                      total=$((total + 1))
+                      if ! diff -q "/tmp/ours/$f" "/tmp/ecs/$f" >/dev/null 2>&1; then
+                          differ=$((differ + 1))
+                      fi
+                  done
+                  same=$((total - differ))
+                  {
+                      echo "## blink vs ECS (psr12 + common) on full rector-src"
+                      echo ""
+                      echo "| metric | value |"
+                      echo "|---|---|"
+                      echo "| files | $total |"
+                      echo "| identical output | $same |"
+                      echo "| differing output | $differ |"
+                      echo ""
+                      echo "This is the 1:1 parity gate: it fails while any file differs from ECS."
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  echo "identical=$same differing=$differ of $total"
+
+                  # Per differing file: which rules ECS applied vs blink, and the
+                  # snippet they differ on. ECS applied checkers come from the JSON
+                  # captured on the pristine sample; blink's from a dry-run check.
+                  echo "### Divergences ($differ files): applied rules + diff" >> "$GITHUB_STEP_SUMMARY"
+                  echo ""
+                  echo "=== Divergences ($differ files) ==="
+                  export LC_ALL=C
+                  for f in $(cd /tmp/ours && find . -name '*.php' | sort); do
+                      diff -q "/tmp/ours/$f" "/tmp/ecs/$f" >/dev/null 2>&1 && continue
+                      rel=${f#./}
+                      abs="/tmp/sample/$rel"
+                      ecs_rules=$(jq -r --arg k "$abs" '.files[$k].diffs[]?.applied_checkers[]?' /tmp/ecs.json 2>/dev/null | sed -E 's#.*\\##' | sort -u)
+                      go_rules=$(/tmp/blink "$abs" 2>/dev/null | sed -n 's/^[[:space:]]*\*[[:space:]]//p' | sed -E 's#.*\\##' | sort -u)
+                      ecs_only=$(comm -23 <(printf '%s\n' "$ecs_rules") <(printf '%s\n' "$go_rules") | grep -v '^$' | paste -sd, - || true)
+                      go_only=$(comm -13 <(printf '%s\n' "$ecs_rules") <(printf '%s\n' "$go_rules") | grep -v '^$' | paste -sd, - || true)
+                      # stdout (CI log): file + which rules differ + the diff
+                      echo ""
+                      echo "--- $rel"
+                      echo "    ECS applied, blink did not: ${ecs_only:-(none)}"
+                      echo "    blink applied, ECS did not: ${go_only:-(none)}"
+                      diff "/tmp/ours/$f" "/tmp/ecs/$f" | sed 's/^/    /' | head -40 || true
+                      # job summary (rich, collapsible)
+                      {
+                          echo ""
+                          echo "<details><summary>$rel</summary>"
+                          echo ""
+                          echo "- **ECS applied, blink did not:** ${ecs_only:-(none)}"
+                          echo "- **blink applied, ECS did not:** ${go_only:-(none)}"
+                          echo ""
+                          echo '```diff'
+                          diff "/tmp/ours/$f" "/tmp/ecs/$f" | head -40 || true
+                          echo '```'
+                          echo "</details>"
+                      } >> "$GITHUB_STEP_SUMMARY"
+                  done
+
+                  # fail when blink output does not match ECS
+                  if [ "$differ" -gt 0 ]; then
+                      echo "::error::blink output differs from ECS on $differ of $total files"
+                      exit 1
+                  fi

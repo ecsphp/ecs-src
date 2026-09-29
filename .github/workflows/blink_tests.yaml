@@ -1,0 +1,144 @@
+name: Blink Tests
+
+on:
+    pull_request:
+        paths:
+            - 'blink/**'
+            - '.github/workflows/blink_tests.yaml'
+    push:
+        branches:
+            - main
+        paths:
+            - 'blink/**'
+            - '.github/workflows/blink_tests.yaml'
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: blink
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - run: go build ./...
+
+            - run: go vet ./...
+
+            - run: go test ./...
+
+    windows:
+        runs-on: windows-latest
+        defaults:
+            run:
+                working-directory: blink
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - run: go build -o blink.exe .
+
+            - run: go test ./...
+
+            - name: Fix a sample file
+              shell: bash
+              run: |
+                  mkdir sample
+                  printf '<?php\n\n$values = array(1, 2);\n' > sample/Sample.php
+                  ./blink.exe --fix sample || true
+                  grep -q '\$values = \[1, 2\];' sample/Sample.php
+
+    format:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: blink
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - name: Check gofmt -s
+              run: |
+                  unformatted=$(gofmt -l -s $(find . -name '*.go'))
+                  if [ -n "$unformatted" ]; then
+                      echo "These files need 'gofmt -s -w':"
+                      echo "$unformatted"
+                      exit 1
+                  fi
+
+            - name: Check go fix ./...
+              if: ${{ !cancelled() }}
+              run: |
+                  changed=$(go fix -diff ./... 2>/dev/null)
+                  if [ -n "$changed" ]; then
+                      echo "These files need 'go fix ./...':"
+                      echo "$changed"
+                      exit 1
+                  fi
+
+    analysis:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: blink
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - name: gopls modernize
+              run: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest ./...
+
+            - uses: golangci/golangci-lint-action@v8
+              if: ${{ !cancelled() }}
+              with:
+                  version: v2.12.2
+                  working-directory: blink
+
+    security:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: blink
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - uses: actions/cache@v4
+              with:
+                  path: ~/go/bin/govulncheck
+                  key: govulncheck-v1.6.0
+            - name: install govulncheck
+              run: test -x ~/go/bin/govulncheck || go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
+            - name: govulncheck
+              run: govulncheck ./...
+
+    fixer_sources:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: blink
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            # verifies every fixer's SourceURL() points at a reachable PHP-CS-Fixer rule
+            - run: go run ./cmd/check-sources

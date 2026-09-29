@@ -1,0 +1,103 @@
+package rules
+
+import (
+	"strings"
+
+	"blink/internal/token"
+	"blink/internal/tokens"
+)
+
+// PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/LanguageConstruct/FunctionToConstantFixer.php
+//
+// FunctionToConstant replaces a configured function call with its constant
+// equivalent: pi() -> M_PI, phpversion() -> PHP_VERSION, php_sapi_name() ->
+// PHP_SAPI, get_called_class() -> static::class, get_class($this) ->
+// static::class.
+type FunctionToConstant struct{}
+
+func (FunctionToConstant) Name() string {
+	return `PhpCsFixer\Fixer\LanguageConstruct\FunctionToConstantFixer`
+}
+
+func (FunctionToConstant) SourceURL() string {
+	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/LanguageConstruct/FunctionToConstantFixer.php"
+}
+
+var noArgConstants = map[string]string{
+	"pi":            "M_PI",
+	"phpversion":    "PHP_VERSION",
+	"php_sapi_name": "PHP_SAPI",
+}
+
+func (FunctionToConstant) Fix(s *tokens.Stream) bool {
+	changed := false
+	for i := 0; i < s.Len(); i++ {
+		if s.At(i).Kind != token.Ident {
+			continue
+		}
+		name := strings.ToLower(s.At(i).Value)
+		_, isNoArg := noArgConstants[name]
+		if !isNoArg && name != "get_called_class" && name != "get_class" {
+			continue
+		}
+		// a plain function call: not a method/static call, not a declaration,
+		// and optionally prefixed by a single leading "\"
+		start := i
+		if prev, ok := prevSignificant(s, i); ok {
+			switch {
+			case prev.Kind == token.Punct && (prev.Value == "->" || prev.Value == "?->" || prev.Value == "::"):
+				continue
+			case prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "function"):
+				continue
+			case prev.Kind == token.Punct && prev.Value == `\`:
+				pj := prevSignificantIndex(s, i)
+				if before, ok := prevSignificant(s, pj); ok && (before.Kind == token.Ident || before.Value == `\`) {
+					continue // namespaced call, not the global function
+				}
+				start = pj
+			}
+		}
+		open := nextSignificantIndex(s, i)
+		if open < 0 || s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+			continue
+		}
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 {
+			continue
+		}
+		var repl []token.Token
+		switch {
+		case isNoArg:
+			if nextSignificantIndex(s, open) != closeIdx {
+				continue // has arguments
+			}
+			repl = []token.Token{{Kind: token.Ident, Value: noArgConstants[name]}}
+		case name == "get_called_class":
+			if nextSignificantIndex(s, open) != closeIdx {
+				continue
+			}
+			repl = staticClassTokens()
+		case name == "get_class":
+			arg := nextSignificantIndex(s, open)
+			if arg < 0 || s.At(arg).Kind != token.Variable || !strings.EqualFold(s.At(arg).Value, "$this") {
+				continue
+			}
+			if nextSignificantIndex(s, arg) != closeIdx {
+				continue // more than just $this
+			}
+			repl = staticClassTokens()
+		}
+		s.ReplaceRange(start, closeIdx, repl)
+		changed = true
+		i = start
+	}
+	return changed
+}
+
+func staticClassTokens() []token.Token {
+	return []token.Token{
+		{Kind: token.Keyword, Value: "static"},
+		{Kind: token.Punct, Value: "::"},
+		{Kind: token.Ident, Value: "class"},
+	}
+}

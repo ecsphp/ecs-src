@@ -1,0 +1,5 @@
+{
+    "paths": ["src", "tests"],
+    "skip": ["*/Fixture/*", "*/Source/*"],
+    "sets": ["psr12"]
+}

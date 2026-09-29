@@ -1,0 +1,60 @@
+PSR-12 rules left to implement
+==============================
+
+Reference: PHP-CS-Fixer @PSR12 = @PSR2 (+ @PSR1) plus extra rules.
+Below: what remains NOT implemented in blink. 47 fixers are done (see bottom).
+
+A statement/scope layer exists: Stream.MatchForward/MatchBackward, classifyBrace
+(labels each "{"), and classMemberStarts (iterates class members). The rules
+below need more of it (member reordering, type spans) or a fuller type model.
+
+
+NEEDS FULLER AST / TYPE MODEL
+-----------------------------
+function_declaration            "function" signature spacing, closures
+compact_nullable_type_declaration   "? int" -> "?int" in type positions
+modifier_keywords               modifier ordering (casing/presence done)
+new_with_parentheses            "new Foo" -> "new Foo()" (needs class-name ctx)
+
+Notes:
+- method_argument_space is implemented for single-line comma spacing only; the
+  multi-line "one argument per line" reflow is not done.
+- ordered_class_elements is conservative: it skips any class containing comments
+  or attributes (attributes lex as # comments here), reordering only simple
+  classes. Broadening it needs first-class attribute tokens.
+
+
+LEFTOVERS (bounded / low value)
+-------------------------------
+no_break_comment                add "// no break" on fallthrough (heuristic)
+binary_operator_spaces          arithmetic/bitwise (+ - * / % & | ^): unary-
+                                ambiguous, need operand context
+
+
+IMPLEMENTED (47)
+----------------
+casing:      lowercase_keywords, constant_case, lowercase_static_reference,
+             lowercase_cast, short_scalar_cast
+spacing:     no_leading_namespace_whitespace, no_singleline_whitespace_before_semicolons,
+             no_whitespace_in_blank_line, no_extra_blank_lines, space_after_semicolon,
+             binary_operator_spaces (=, =>, comparison, logical), concat_space,
+             cast_spaces, ternary_operator_spaces, blank_line_after_opening_tag,
+             no_trailing_whitespace, no_trailing_whitespace_in_comment,
+             single_blank_line_at_eof
+functions:   method_argument_space (single-line), return_type_declaration,
+             no_spaces_after_function_name
+constructs:  single_space_around_construct, spaces_inside_parentheses,
+             unary_operator_spaces, elseif,
+             no_leading_import_slash, declare_equal_normalize,
+             switch_case_semicolon_to_colon, switch_case_space,
+             no_multiple_statements_per_line
+php tag:     full_opening_tag, no_closing_tag
+braces:      braces_position
+class:       visibility_required, single_trait_insert_per_statement,
+             single_class_element_per_statement, class_definition,
+             ordered_class_elements (conservative)
+imports:     single_import_per_statement, ordered_imports,
+             blank_line_between_import_groups, single_line_after_imports
+structural:  blank_lines_before_namespace, blank_line_after_namespace,
+             no_blank_lines_after_class_opening, indentation_type,
+             statement_indentation
