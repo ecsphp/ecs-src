@@ -129,7 +129,7 @@ func (f SingleSpaceAroundConstruct) fixPreceded(s *tokens.Stream) bool {
 			continue
 		}
 		kw := strings.ToLower(t.Value)
-		if !f.Preceded[kw] && !(kw == "use" && f.Preceded["use_lambda"] && nextSignificantValue(s, i) == "(") {
+		if !f.Preceded[kw] && (kw != "use" || !f.Preceded["use_lambda"] || nextSignificantValue(s, i) != "(") {
 			continue
 		}
 		prev := s.At(i - 1)
@@ -147,10 +147,8 @@ func (f SingleSpaceAroundConstruct) fixPreceded(s *tokens.Stream) bool {
 }
 
 func (f SingleSpaceAroundConstruct) Fix(s *tokens.Stream) bool {
-	changed := false
-	if f.YieldFrom && f.fixYieldFrom(s) {
-		changed = true
-	}
+	changed := f.YieldFrom && f.fixYieldFrom(s)
+
 	if len(f.Preceded) > 0 && f.fixPreceded(s) {
 		changed = true
 	}

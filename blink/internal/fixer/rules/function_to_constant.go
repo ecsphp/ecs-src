@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -39,12 +40,7 @@ func (f FunctionToConstant) enabled(key string) bool {
 	if f.Functions == nil {
 		return true
 	}
-	for _, name := range f.Functions {
-		if name == key {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(f.Functions, key)
 }
 
 func (FunctionToConstant) Name() string {
