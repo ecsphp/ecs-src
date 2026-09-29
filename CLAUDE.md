@@ -54,4 +54,4 @@ Memory limit for PHPStan and Rector is `1G` (already set in composer scripts).
 
 - Don't bypass `phpstan`, `rector`, or `check-cs` with skip comments unless the user asks for it.
 - Don't run `lint.fix` or `fix-cs` automatically when the user only asked for analysis — the autofix changes files.
-- Don't push, force-push, or open PRs unless explicitly asked.
+- Opening non-draft PRs against `main` is allowed. Don't force-push unless explicitly asked.
