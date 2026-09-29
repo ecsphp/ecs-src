@@ -174,3 +174,41 @@ func (RemoveSuperfluousVarName) Fix(s *tokens.Stream) bool {
 		return strings.Join(lines, "")
 	})
 }
+
+// --- RemoveParamDescriptionDuplicateName: "@param Type $id Id" -> "@param Type $id" ---
+
+type RemoveParamDescriptionDuplicateName struct{}
+
+var paramDescriptionRe = regexp.MustCompile(`(@(?:psalm-|phpstan-)?param\s+.+?\s+\$(\w+))[ \t]+(\S[^\r\n]*?)([ \t]*(?:\*/)?[ \t]*[\r\n]*)$`)
+
+func (RemoveParamDescriptionDuplicateName) Name() string {
+	return `Symplify\CodingStandard\Fixer\Commenting\RemoveParamDescriptionDuplicateNameFixer`
+}
+
+func (RemoveParamDescriptionDuplicateName) SourceURL() string {
+	return "https://github.com/ecsphp/ecs-src/blob/main/packages/coding-standard/src/Fixer/Commenting/RemoveParamDescriptionDuplicateNameFixer.php"
+}
+
+func (RemoveParamDescriptionDuplicateName) Fix(s *tokens.Stream) bool {
+	return docBlockFixerApply(s, func(content string, _ *tokens.Stream, _ int) string {
+		lines := splitDocLines(content)
+		for idx, line := range lines {
+			m := paramDescriptionRe.FindStringSubmatch(line)
+			if m == nil {
+				continue
+			}
+			if !paramDescriptionDuplicatesName(m[3], m[2]) {
+				continue
+			}
+			lines[idx] = paramDescriptionRe.ReplaceAllString(line, "${1}${4}")
+		}
+		return strings.Join(lines, "")
+	})
+}
+
+// paramDescriptionDuplicatesName reports whether the description is just the
+// parameter name reworded, ignoring case, whitespace and trailing punctuation.
+func paramDescriptionDuplicatesName(description, name string) bool {
+	normalized := strings.ToLower(strings.Join(strings.Fields(strings.TrimRight(description, ".!")), ""))
+	return normalized == strings.ToLower(name)
+}

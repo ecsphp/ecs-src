@@ -263,6 +263,7 @@ func All() []fixer.Fixer {
 		SingleLineInlineVarDocBlock{},
 		RemoveSuperfluousReturnName{},
 		RemoveSuperfluousVarName{},
+		RemoveParamDescriptionDuplicateName{},
 		FixParamNameTypo{})
 	all = append(all, NoClosingTag{})
 	// run in PHP-CS-Fixer priority order (descending); ties keep the curated

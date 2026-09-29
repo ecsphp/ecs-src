@@ -13,6 +13,7 @@ var fixerPriority = map[string]int{
 	"RemoveSuperfluousVarNameFixer":            -37,
 	"FixParamNameTypoFixer":                    -37,
 	"RemoveParamNameReferenceFixer":            -37,
+	"RemoveParamDescriptionDuplicateNameFixer": -37,
 	"SwitchedTypeAndNameFixer":                 -37,
 	"RemoveDeadParamFixer":                     -37,
 	"RemoveDeadVarThisFixer":                   -37,

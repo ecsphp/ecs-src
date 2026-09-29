@@ -102,7 +102,7 @@ func TestSymplifyDocBlockSourceURLs(t *testing.T) {
 	fixers := []fixer.Fixer{
 		DoubleAsteriskInlineVar{}, FixTagTypo{}, TypeToVarTag{}, MergeDocBlockStart{},
 		AddMissingVarName{}, SingleLineInlineVarDocBlock{}, RemoveSuperfluousReturnName{},
-		RemoveSuperfluousVarName{}, FixParamNameTypo{},
+		RemoveSuperfluousVarName{}, RemoveParamDescriptionDuplicateName{}, FixParamNameTypo{},
 	}
 	for _, f := range fixers {
 		if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {

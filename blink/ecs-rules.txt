@@ -4,7 +4,7 @@ ECS rules NOT yet implemented in blink
 Source: every Fixer/Sniff referenced across ecs-src config/set/* and
 src/Config/Level/*, listed in ecs-all-fixers.txt.
 
-208 rules configured in ECS. The live implemented/missing counts are in the
+209 rules configured in ECS. The live implemented/missing counts are in the
 README (bin/rule-counts.sh keeps them current). Regenerate the list below with:
 
   comm -23 <(sort -u blink/ecs-all-fixers.txt) \

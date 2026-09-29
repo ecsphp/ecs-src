@@ -40,6 +40,7 @@ use Symplify\CodingStandard\Fixer\Commenting\FixTagTypoFixer;
 use Symplify\CodingStandard\Fixer\Commenting\MergeDocBlockStartFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveDeadParamFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveDeadVarThisFixer;
+use Symplify\CodingStandard\Fixer\Commenting\RemoveParamDescriptionDuplicateNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveParamNameReferenceFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousReturnNameFixer;
 use Symplify\CodingStandard\Fixer\Commenting\RemoveSuperfluousVarNameFixer;
@@ -76,6 +77,7 @@ final class DocblockLevel
         AddMissingParamNameFixer::class,
         FixParamNameTypoFixer::class,
         RemoveParamNameReferenceFixer::class,
+        RemoveParamDescriptionDuplicateNameFixer::class,
         RemoveDeadParamFixer::class,
 
         // superfluous names
