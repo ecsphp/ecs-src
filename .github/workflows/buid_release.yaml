@@ -73,6 +73,7 @@ jobs:
                     # make bin files runnable without "php"
                     chmod 777 ecs-prefixed-downgraded/bin/ecs
                     chmod 777 ecs-prefixed-downgraded/bin/ecs.php
+                    chmod 777 ecs-prefixed-downgraded/bin/blink
 
             # 4. lint the code for PHP 7.4 - this must happen here, as setup-php allows only one PHP version switch: https://github.com/shivammathur/setup-php/issues/434
             -
@@ -91,24 +92,21 @@ jobs:
                     cp -R build/target-repository/. ecs-prefixed-downgraded
                     cp -R templates ecs-prefixed-downgraded/
 
-            # 5b. bundle ecs-go binaries for --blink, so it works without a Go toolchain
+            # 5b. bundle blink binaries for --blink, built from the local blink/ module,
+            # so it works without a Go toolchain
             -
                 uses: actions/setup-go@v5
                 with:
                     go-version: "1.26.6"
 
             -   run: |
-                    git clone --depth 1 https://github.com/TomasVotruba/ecs-go.git ecs-go-local
-                    mkdir -p ecs-prefixed-downgraded/bin/turbo
-
                     for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
                         suffix=""
                         if [ "${target%/*}" = "windows" ]; then suffix=".exe"; fi
-                        (cd ecs-go-local/ecs-go && CGO_ENABLED=0 GOOS=${target%/*} GOARCH=${target#*/} go build -trimpath -ldflags="-s -w" -o "$GITHUB_WORKSPACE/ecs-prefixed-downgraded/bin/turbo/ecs-go-${target%/*}-${target#*/}${suffix}" .)
+                        (cd blink && CGO_ENABLED=0 GOOS=${target%/*} GOARCH=${target#*/} go build -trimpath -ldflags="-s -w" -o "$GITHUB_WORKSPACE/ecs-prefixed-downgraded/bin/blink-${target%/*}-${target#*/}${suffix}" .)
                     done
 
-                    chmod 755 ecs-prefixed-downgraded/bin/turbo/*
-                    rm -rf ecs-go-local
+                    chmod 755 ecs-prefixed-downgraded/bin/blink-*
 
             # 6. clone remote repository, so we can push it
             -
@@ -121,7 +119,8 @@ jobs:
                     token: ${{ secrets.ACCESS_TOKEN }}
 
             # remove remote files, to avoid piling up dead code in remote repository
-            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/packages remote-repository/src remote-repository/vendor
+            # bin/turbo is the obsolete ecs-go binary directory, replaced by bin/blink-<platform>
+            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/packages remote-repository/src remote-repository/vendor remote-repository/bin/turbo
 
             # clear the dev files
             - run: cp -a ecs-prefixed-downgraded/. remote-repository
