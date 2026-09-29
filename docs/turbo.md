@@ -1,19 +1,19 @@
 # Turbo mode (experimental)
 
-`--turbo` hands the run over to the [`ecs-go`](https://github.com/TomasVotruba/ecs-go) Go binary instead of the PHP engine:
+`--blink` hands the run over to the [`ecs-go`](https://github.com/TomasVotruba/ecs-go) Go binary instead of the PHP engine:
 
 ```bash
-vendor/bin/ecs check --turbo          # report only (like a normal check)
-vendor/bin/ecs check --turbo --fix    # rewrite files in place
-vendor/bin/ecs check src --turbo      # limit to a path - pass the path before the flag
+vendor/bin/ecs check --blink          # report only (like a normal check)
+vendor/bin/ecs check --blink --fix    # rewrite files in place
+vendor/bin/ecs check src --blink      # limit to a path - pass the path before the flag
 ```
 
-Pass any explicit path before the flags (`check src --turbo`), as with `--fix`; a path written after a boolean flag is consumed as that flag's value.
+Pass any explicit path before the flags (`check src --blink`), as with `--fix`; a path written after a boolean flag is consumed as that flag's value.
 
 ECS resolves the configuration from `ecs.php` (paths, rules and skips) exactly as usual, dumps it to a temporary JSON file, and hands that file to ecs-go via `--ecs-config`. ecs-go maps each ECS rule onto its own fixer by class name, applies the shared paths and skips, and reports every rule it could not map. The check/fix split maps onto ecs-go directly:
 
-- `--turbo` runs `ecs-go --ecs-config <config.json>` - reports without writing.
-- `--turbo --fix` runs `ecs-go --ecs-config <config.json> --fix` - rewrites in place.
+- `--blink` runs `ecs-go --ecs-config <config.json>` - reports without writing.
+- `--blink --fix` runs `ecs-go --ecs-config <config.json> --fix` - rewrites in place.
 
 The exit code of `ecs-go` is passed through.
 
@@ -53,7 +53,7 @@ The ecs-go binary is looked up in this order:
 3. `vendor/bin/ecs-go`, if present;
 4. `ecs-go` on the `PATH`.
 
-If none is found, `--turbo` fails with an error explaining how to provide the binary.
+If none is found, `--blink` fails with an error explaining how to provide the binary.
 
 ## Prototype caveat
 
@@ -61,4 +61,4 @@ This is an RFC-stage prototype. ecs-go reads the rules and skips from your `ecs.
 
 ## Bundled binary
 
-The release build cross-compiles ecs-go from its `main` branch and ships it in `bin/turbo/`, so `--turbo` works out of the box on Linux, macOS and Windows - no Go toolchain needed.
+The release build cross-compiles ecs-go from its `main` branch and ships it in `bin/turbo/`, so `--blink` works out of the box on Linux, macOS and Windows - no Go toolchain needed.

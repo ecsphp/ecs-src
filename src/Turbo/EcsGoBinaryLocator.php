@@ -7,7 +7,7 @@ namespace Symplify\EasyCodingStandard\Turbo;
 use Symplify\EasyCodingStandard\Turbo\Exception\EcsGoBinaryNotFoundException;
 
 /**
- * Resolves the "ecs-go" Go binary that powers the experimental --turbo mode.
+ * Resolves the "ecs-go" Go binary that powers the experimental --blink mode.
  *
  * @see \Symplify\EasyCodingStandard\Tests\Turbo\EcsGoBinaryLocatorTest
  */
@@ -49,7 +49,7 @@ final readonly class EcsGoBinaryLocator
         }
 
         throw new EcsGoBinaryNotFoundException(sprintf(
-            'The ecs-go binary for --turbo was not found in "%s" env, "vendor/bin/ecs-go" or on PATH. Build it from https://github.com/TomasVotruba/ecs-go and point "%s" to it.',
+            'The ecs-go binary for --blink was not found in "%s" env, "vendor/bin/ecs-go" or on PATH. Build it from https://github.com/TomasVotruba/ecs-go and point "%s" to it.',
             self::ENV_OVERRIDE,
             self::ENV_OVERRIDE,
         ));

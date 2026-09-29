@@ -40,7 +40,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
     }
 
     /**
-     * @param bool   $turbo        [EXPERIMENTAL] run the ecs-go Go binary instead of the PHP engine
+     * @param bool   $blink        [EXPERIMENTAL] run the ecs-go Go binary instead of the PHP engine
      * @param string $config       Path to config file
      * @param string $outputFormat Select output format
      * @param string $memoryLimit  Memory limit for check
@@ -65,7 +65,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         bool $noErrorTable = false,
         bool $noDiffs = false,
         bool $debug = false,
-        bool $turbo = false,
+        bool $blink = false,
         string $config = '',
         string $outputFormat = ConsoleOutputFormatter::NAME,
         string $memoryLimit = '',
@@ -95,7 +95,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         );
 
         // experimental: hand the resolved config to the ecs-go Go binary and skip the PHP engine
-        if ($turbo) {
+        if ($blink) {
             $configData = $this->turboConfigDumper->dump($configuration->getSources());
             $turboExitCode = $this->turboRunner->run($configData, $fix);
             return $turboExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
