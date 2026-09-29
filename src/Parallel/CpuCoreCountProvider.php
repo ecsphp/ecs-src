@@ -14,10 +14,13 @@ final class CpuCoreCountProvider
     public function provide(): int
     {
         try {
-            return new CpuCoreCounter()
+            $coreCount = new CpuCoreCounter()
                 ->getCount();
         } catch (NumberOfCpuCoreNotFound) {
             return self::DEFAULT_CORE_COUNT;
         }
+
+        // leave one core free, to avoid maxing out the CPU
+        return max(1, $coreCount - 1);
     }
 }
