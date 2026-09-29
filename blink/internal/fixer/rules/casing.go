@@ -40,16 +40,27 @@ func (LowercaseKeywords) Fix(s *tokens.Stream) bool {
 		if t.Kind != token.Keyword {
 			continue
 		}
-		// a keyword-spelled constant name in assignment position (e.g.
-		// "const string RETURN = ...") must not be lowercased
-		if nextSignificantValue(s, i) == "=" {
-			continue
-		}
-		// a keyword-spelled class/member name (e.g. "Enum" in "extends Enum",
-		// "Spatie\Enum\Enum", "class Enum", or a named argument "instanceOf:") is
-		// an identifier, not a keyword
-		if keywordUsedAsIdentifier(s, i) {
-			continue
+		// a keyword-spelled class-constant name is left as written, EXCEPT when the
+		// same keyword reappears after :: in that constant's value (e.g.
+		// "const int PUBLIC = Modifiers::PUBLIC" -> "public"). PHP-CS-Fixer's
+		// LowercaseKeywordsFixer lowercases it only in that case (a transformer
+		// misfire); mirroring it keeps blink 1:1 with ECS.
+		if isClassConstName(s, i) {
+			if !sameKeywordAfterDoubleColon(s, i, lowerASCII(t.Value)) {
+				continue
+			}
+		} else {
+			// a keyword-spelled constant name in assignment position (e.g.
+			// "const string RETURN = ...") must not be lowercased
+			if nextSignificantValue(s, i) == "=" {
+				continue
+			}
+			// a keyword-spelled class/member name (e.g. "Enum" in "extends Enum",
+			// "Spatie\Enum\Enum", "class Enum", or a named argument "instanceOf:") is
+			// an identifier, not a keyword
+			if keywordUsedAsIdentifier(s, i) {
+				continue
+			}
 		}
 		if lower := lowerASCII(t.Value); lower != t.Value {
 			s.SetValue(i, lower)
@@ -155,6 +166,44 @@ func keywordUsedAsIdentifier(s *tokens.Stream, i int) bool {
 		switch s.At(n).Value {
 		case `\`, "::", ":":
 			return true
+		}
+	}
+	return false
+}
+
+// isClassConstName reports whether token i is the name in a class-constant
+// declaration - "const NAME" or a typed "const <type> NAME".
+func isClassConstName(s *tokens.Stream, i int) bool {
+	j := prevSignificantIndex(s, i)
+	for steps := 0; j >= 0 && steps < 8; steps++ {
+		prev := s.At(j)
+		if prev.Kind == token.Keyword && strings.ToLower(prev.Value) == "const" {
+			return true
+		}
+		// walk back over the type between "const" and the name
+		if prev.Kind == token.Ident || prev.Kind == token.Keyword ||
+			(prev.Kind == token.Punct && (prev.Value == "?" || prev.Value == "|" || prev.Value == "&" || prev.Value == `\`)) {
+			j = prevSignificantIndex(s, j)
+			continue
+		}
+		return false
+	}
+	return false
+}
+
+// sameKeywordAfterDoubleColon reports whether the same keyword (name, already
+// lowercased) reappears after :: within the constant's value, up to the ; or {
+// that ends the declaration.
+func sameKeywordAfterDoubleColon(s *tokens.Stream, i int, name string) bool {
+	for j := i + 1; j < s.Len(); j++ {
+		v := s.At(j)
+		if v.Kind == token.Punct && (v.Value == ";" || v.Value == "{") {
+			return false
+		}
+		if v.Kind == token.Punct && v.Value == "::" {
+			if n := nextSignificantIndex(s, j); n >= 0 && lowerASCII(s.At(n).Value) == name {
+				return true
+			}
 		}
 	}
 	return false
