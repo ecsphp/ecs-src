@@ -9,8 +9,7 @@
         "fixer"
     ],
     "bin": [
-        "bin/ecs",
-        "bin/blink"
+        "bin/ecs"
     ],
     "require": {
         "php": ">=8.4",
