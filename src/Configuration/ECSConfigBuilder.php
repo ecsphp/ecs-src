@@ -72,7 +72,7 @@ final class ECSConfigBuilder
 
     private int $parallelMaxNumberOfProcess = 32;
 
-    private int $parallelJobSize = 20;
+    private int $parallelJobSize = 16;
 
     /**
      * To make sure each common set and its corresponding level are not
