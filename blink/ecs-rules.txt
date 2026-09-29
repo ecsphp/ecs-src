@@ -1,0 +1,43 @@
+ECS rules NOT yet implemented in blink
+=======================================
+
+Source: every Fixer/Sniff referenced across ecs-src config/set/* and
+src/Config/Level/*, listed in ecs-all-fixers.txt.
+
+208 rules configured in ECS. The live implemented/missing counts are in the
+README (bin/rule-counts.sh keeps them current). Regenerate the list below with:
+
+  comm -23 <(sort -u blink/ecs-all-fixers.txt) \
+           <(./blink list-checkers | sed 's/^[[:space:]]*-[[:space:]]*//' | sort -u) \
+    | sed -E 's#.*\\##'
+
+A few "missing" names below are already implemented under the fixer's newer
+PHP-CS-Fixer name and only differ by alias:
+  CurlyBracesPositionFixer          -> BracesPositionFixer (done)
+  CompactNullableTypehintFixer      -> CompactNullableTypeDeclarationFixer (done)
+  NoSpacesInsideParenthesisFixer    -> SpacesInsideParenthesesFixer (done)
+  FunctionTypehintSpaceFixer        -> TypeDeclarationSpacesFixer (done, deprecated alias)
+
+PsrAutoloadingFixer cannot be ported: blink fixers receive only a token stream,
+not the file path the rule needs.
+
+
+NOT YET IMPLEMENTED (behavior)
+------------------------------
+control structures:  NoBreakComment
+functions:           LambdaNotUsedImport
+class:               ModifierKeywords
+operators:           OperatorLinebreak
+types:               FullyQualifiedStrictTypes
+phpdoc:              PhpdocSeparation, PhpdocToComment, GeneralPhpdocTagRename,
+                     ParamReturnAndVarTagMalforms
+doctrine annotations: DoctrineAnnotationArrayAssignment, DoctrineAnnotationIndentation
+                      (need an annotation parser)
+symplify custom:     StandaloneLinePlainConstructorParam, StandaloneLineRequiredParam,
+                     StandaloneLineSymfonyAttributeParam
+
+
+RECENTLY IMPLEMENTED
+--------------------
+ControlStructureBraces, NoAlternativeSyntax, NoUnneededBraces
+(NoUnneededCurlyBraces), NoUnreachableDefaultArgumentValue.

@@ -14,3 +14,9 @@ php-scoper.phar
 
 # gpt
 .claude
+
+# blink Go build artifacts
+/blink/blink
+/blink/blink.exe
+*.test
+*.out

@@ -1,0 +1,32 @@
+name: Blink Rule counts
+
+on:
+    pull_request:
+        branches:
+            - main
+        paths:
+            - 'blink/**'
+            - '.github/workflows/blink_rule_counts.yaml'
+    push:
+        branches:
+            - main
+        paths:
+            - 'blink/**'
+            - '.github/workflows/blink_rule_counts.yaml'
+
+jobs:
+    rule-counts:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: blink
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            # counts ECS/blink rules, writes them to the job summary
+            # (shown on every PR), and fails if README is stale
+            - run: bin/rule-counts.sh --check
