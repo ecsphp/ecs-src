@@ -102,7 +102,7 @@ func fnRemoveTrailingCommaSingleLine(s *tokens.Stream, open int) bool {
 		}
 	}
 	p := prevSignificantIndex(s, closeParen)
-	if p <= open || !(s.At(p).Kind == token.Punct && s.At(p).Value == ",") {
+	if p <= open || (s.At(p).Kind != token.Punct || s.At(p).Value != ",") {
 		return false
 	}
 	// drop any single-line whitespace between the comma and ")", then the comma

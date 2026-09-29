@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -64,12 +65,7 @@ func arrayNotationStringList(v any) ([]string, bool) {
 }
 
 func arrayNotationContains(list []string, want string) bool {
-	for _, item := range list {
-		if item == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, want)
 }
 
 func arrayNotationIsHeredoc(t token.Token) bool {

@@ -92,7 +92,7 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			// No space before the comma (single-line only), unless after_heredoc is
 			// off and a heredoc precedes the comma.
 			if i > 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
-				if !(f.keepSpaceAfterHeredoc && methodArgSpacePrevIsHeredoc(s, i-1)) {
+				if !f.keepSpaceAfterHeredoc || !methodArgSpacePrevIsHeredoc(s, i-1) {
 					s.RemoveAt(i - 1)
 					i--
 					changed = true

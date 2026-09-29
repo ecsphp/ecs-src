@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -41,12 +42,7 @@ func (f NoUnneededControlParentheses) enabled(key string) bool {
 	if f.Statements == nil {
 		return true
 	}
-	for _, name := range f.Statements {
-		if name == key {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(f.Statements, key)
 }
 
 func nucpStatementKey(keyword string) string {
