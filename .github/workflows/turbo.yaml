@@ -1,9 +1,9 @@
 name: Turbo
 
 # End-to-end check of --blink: ECS dumps the resolved ecs.php config to JSON and
-# hands it to the ecs-go binary, which maps the rules and rewrites the code. This
-# builds ecs-go from source, runs --blink --fix over a golden fixture, and asserts
-# the output matches the expected result.
+# hands it to the blink binary, which maps the rules and rewrites the code. This
+# builds blink from the local blink/ module, runs --blink --fix over a golden
+# fixture, and asserts the output matches the expected result.
 
 on:
     pull_request:
@@ -32,17 +32,14 @@ jobs:
                     go-version: "1.26.6"
 
             -
-                name: "Build the ecs-go binary from source"
-                run: |
-                    git clone --depth 1 https://github.com/TomasVotruba/ecs-go.git /tmp/ecs-go
-                    cd /tmp/ecs-go/ecs-go
-                    go build -o /tmp/ecs-go-bin .
+                name: "Build the blink binary from the local blink/ module"
+                run: go build -C blink -o /tmp/blink-bin .
 
             -
                 name: "Run --blink --fix over the golden fixture"
                 run: |
                     cp -r tests/Turbo/Fixture/input /tmp/turbo-work
-                    ECS_TURBO_BIN=/tmp/ecs-go-bin bin/ecs check /tmp/turbo-work --blink --fix \
+                    ECS_TURBO_BIN=/tmp/blink-bin bin/ecs check /tmp/turbo-work --blink --fix \
                         --config=tests/Turbo/Fixture/ecs.php --no-progress-bar --ansi || true
 
             -
