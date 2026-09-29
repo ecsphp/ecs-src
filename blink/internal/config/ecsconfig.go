@@ -126,6 +126,10 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 		}
 	}
 
+	// apply fixers in the same canonical (priority) order as the standalone path,
+	// since the ECS dump lists them in set order, not execution order
+	rules.CanonicalOrder(config.Rules)
+
 	sort.Strings(resolution.Unsupported)
 	sort.Strings(resolution.ConfigIgnored)
 	sort.Strings(resolution.PerPathSkips)

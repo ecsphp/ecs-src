@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -12,7 +13,31 @@ import (
 //
 // NoBreakComment adds a "// no break" comment before an intentional fall-through
 // case in a switch, and removes it where there is no fall-through.
-type NoBreakComment struct{}
+type NoBreakComment struct {
+	// CommentText is the comment body; empty means the default "no break".
+	CommentText string
+}
+
+func (f NoBreakComment) WithConfig(config map[string]any) fixer.Fixer {
+	if c, ok := config["comment_text"].(string); ok && !strings.ContainsAny(c, "\r\n") {
+		f.CommentText = c
+	}
+	return f
+}
+
+type noBreakCommentMatcher struct {
+	text string
+	re   *regexp.Regexp
+}
+
+func newNoBreakCommentMatcher(text string) noBreakCommentMatcher {
+	if text == "" || text == noBreakCommentText {
+		return noBreakCommentMatcher{text: noBreakCommentText, re: noBreakCommentRe}
+	}
+	q := regexp.QuoteMeta(text)
+	re := regexp.MustCompile(`(?i)^((//|#)\s*` + q + `\s*)|(/\*\*?\s*` + q + `(\s+.*)*\*/)$`)
+	return noBreakCommentMatcher{text: text, re: re}
+}
 
 const noBreakCommentText = "no break"
 
@@ -33,7 +58,7 @@ func (NoBreakComment) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoBreakCommentFixer.php"
 }
 
-func (NoBreakComment) Fix(s *tokens.Stream) bool {
+func (f NoBreakComment) Fix(s *tokens.Stream) bool {
 	hasSwitch, hasEnum := false, false
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind == token.Keyword {
@@ -49,6 +74,7 @@ func (NoBreakComment) Fix(s *tokens.Stream) bool {
 		return false
 	}
 
+	m := newNoBreakCommentMatcher(f.CommentText)
 	before := s.Render()
 	for i := s.Len() - 1; i >= 0; i-- {
 		t := s.At(i)
@@ -64,12 +90,12 @@ func (NoBreakComment) Fix(s *tokens.Stream) bool {
 		if colon < 0 {
 			continue
 		}
-		fixNoBreakCase(s, colon)
+		fixNoBreakCase(s, colon, m)
 	}
 	return s.Render() != before
 }
 
-func fixNoBreakCase(s *tokens.Stream, casePosition int) {
+func fixNoBreakCase(s *tokens.Stream, casePosition int, m noBreakCommentMatcher) {
 	empty := true
 	fallThrough := true
 	commentPosition := -1
@@ -100,7 +126,7 @@ func fixNoBreakCase(s *tokens.Stream, casePosition int) {
 				}
 				return
 			case "case", "default":
-				handleNextCase(s, i, empty, fallThrough, commentPosition)
+				handleNextCase(s, i, empty, fallThrough, commentPosition, m)
 				return
 			}
 		}
@@ -112,7 +138,7 @@ func fixNoBreakCase(s *tokens.Stream, casePosition int) {
 			return
 		}
 
-		if isNoBreakCommentToken(t) {
+		if isNoBreakCommentToken(t, m.re) {
 			commentPosition = i
 			continue
 		}
@@ -125,14 +151,14 @@ func fixNoBreakCase(s *tokens.Stream, casePosition int) {
 
 // handleNextCase applies the fall-through decision when the scan reaches the
 // following case/default.
-func handleNextCase(s *tokens.Stream, casePos int, empty, fallThrough bool, commentPosition int) {
+func handleNextCase(s *tokens.Stream, casePos int, empty, fallThrough bool, commentPosition int, m noBreakCommentMatcher) {
 	if !empty && fallThrough {
 		if commentPosition >= 0 && getPrevNonWhitespace(s, casePos) != commentPosition {
 			removeNoBreakComment(s, commentPosition)
 			commentPosition = -1
 		}
 		if commentPosition < 0 {
-			insertNoBreakCommentAt(s, casePos)
+			insertNoBreakCommentAt(s, casePos, m.text)
 		} else {
 			ensureNewLineAt(s, commentPosition)
 		}
@@ -156,11 +182,11 @@ func isThrowStatementStart(s *tokens.Stream, prev int) bool {
 	return false
 }
 
-func isNoBreakCommentToken(t token.Token) bool {
+func isNoBreakCommentToken(t token.Token, re *regexp.Regexp) bool {
 	if t.Kind != token.Comment && t.Kind != token.DocComment {
 		return false
 	}
-	return noBreakCommentRe.MatchString(t.Value)
+	return re.MatchString(t.Value)
 }
 
 // noBreakStructureEnd mirrors getStructureEnd: the index of the token closing
@@ -203,7 +229,7 @@ func noBreakStructureEnd(s *tokens.Stream, position int) int {
 	return position
 }
 
-func insertNoBreakCommentAt(s *tokens.Stream, casePosition int) {
+func insertNoBreakCommentAt(s *tokens.Stream, casePosition int, text string) {
 	newlinePosition := ensureNewLineAt(s, casePosition)
 	content := s.At(newlinePosition).Value
 	nbNewlines := strings.Count(content, "\n")
@@ -226,7 +252,7 @@ func insertNoBreakCommentAt(s *tokens.Stream, casePosition int) {
 		s.InsertAt(newlinePosition, token.Token{Kind: token.Whitespace, Value: tail})
 	}
 
-	s.InsertAt(newlinePosition, token.Token{Kind: token.Comment, Value: "// " + noBreakCommentText})
+	s.InsertAt(newlinePosition, token.Token{Kind: token.Comment, Value: "// " + text})
 	ensureNewLineAt(s, newlinePosition)
 }
 

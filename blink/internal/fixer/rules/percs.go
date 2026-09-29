@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -11,7 +12,21 @@ import (
 //
 // NewWithParentheses adds parentheses to a parameterless "new": "new Foo" ->
 // "new Foo()". Anonymous classes and dynamic "new $var" are left alone.
-type NewWithParentheses struct{}
+type NewWithParentheses struct {
+	// SkipNamedClass and SkipAnonymousClass disable the named_class/anonymous_class options.
+	SkipNamedClass     bool
+	SkipAnonymousClass bool
+}
+
+func (f NewWithParentheses) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["named_class"].(bool); ok {
+		f.SkipNamedClass = !v
+	}
+	if v, ok := config["anonymous_class"].(bool); ok {
+		f.SkipAnonymousClass = !v
+	}
+	return f
+}
 
 func (NewWithParentheses) Name() string {
 	return `PhpCsFixer\Fixer\Operator\NewWithParenthesesFixer`
@@ -21,7 +36,7 @@ func (NewWithParentheses) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/NewWithParenthesesFixer.php"
 }
 
-func (NewWithParentheses) Fix(s *tokens.Stream) bool {
+func (f NewWithParentheses) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
@@ -38,12 +53,15 @@ func (NewWithParentheses) Fix(s *tokens.Stream) bool {
 		if nt.Kind == token.Keyword && strings.ToLower(nt.Value) == "class" {
 			// anonymous class: "new class extends X" -> "new class() extends X"
 			// (ECS's psr12 config sets anonymous_class => true)
-			if nextSignificantValue(s, j) == "(" {
-				continue // already "new class(...)"
+			if f.SkipAnonymousClass || nextSignificantValue(s, j) == "(" {
+				continue // disabled, or already "new class(...)"
 			}
 			s.InsertAt(j+1, token.Token{Kind: token.Punct, Value: "("})
 			s.InsertAt(j+2, token.Token{Kind: token.Punct, Value: ")"})
 			changed = true
+			continue
+		}
+		if f.SkipNamedClass {
 			continue
 		}
 		if nt.Kind == token.Variable {

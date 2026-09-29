@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -11,7 +12,19 @@ import (
 // space after ("function f() : int" and "function f():int" -> "function f(): int").
 // The colon is only a return type when it follows the ")" of a function parameter
 // list, so ternary, case and alternative-syntax colons are left untouched.
-type ReturnTypeDeclaration struct{}
+//
+// spaceBeforeOne mirrors the "space_before" option: the zero value ("none")
+// removes the space before the colon; when set it keeps exactly one space.
+type ReturnTypeDeclaration struct {
+	spaceBeforeOne bool
+}
+
+func (f ReturnTypeDeclaration) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["space_before"].(string); ok {
+		f.spaceBeforeOne = v == "one"
+	}
+	return f
+}
 
 func (ReturnTypeDeclaration) Name() string {
 	return `PhpCsFixer\Fixer\FunctionNotation\ReturnTypeDeclarationFixer`
@@ -21,7 +34,7 @@ func (ReturnTypeDeclaration) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/ReturnTypeDeclarationFixer.php"
 }
 
-func (ReturnTypeDeclaration) Fix(s *tokens.Stream) bool {
+func (f ReturnTypeDeclaration) Fix(s *tokens.Stream) bool {
 	changed := false
 	i := 0
 	for i < s.Len() {
@@ -48,11 +61,25 @@ func (ReturnTypeDeclaration) Fix(s *tokens.Stream) bool {
 			}
 		}
 
-		// before side: no space, but keep newline-spanning whitespace intact
-		if i > 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
-			s.RemoveAt(i - 1)
-			changed = true
-			i-- // colon shifted left by the removed whitespace
+		if f.spaceBeforeOne {
+			// exactly one space before the colon, keeping newline-spanning whitespace
+			if i > 0 && s.At(i-1).Kind == token.Whitespace {
+				if !hasNewline(s.At(i-1).Value) && s.At(i-1).Value != " " {
+					s.SetValue(i-1, " ")
+					changed = true
+				}
+			} else if i > 0 {
+				s.InsertAt(i, token.Token{Kind: token.Whitespace, Value: " "})
+				changed = true
+				i++ // colon shifted right by the inserted whitespace
+			}
+		} else {
+			// before side: no space, but keep newline-spanning whitespace intact
+			if i > 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
+				s.RemoveAt(i - 1)
+				changed = true
+				i-- // colon shifted left by the removed whitespace
+			}
 		}
 		i++
 	}
