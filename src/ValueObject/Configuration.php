@@ -23,7 +23,8 @@ final readonly class Configuration
         private string|null $parallelPort = null,
         private string|null $parallelIdentifier = null,
         private string|null $memoryLimit = null,
-        private bool $showDiffs = true
+        private bool $showDiffs = true,
+        private bool $isDirty = false
     ) {
     }
 
@@ -50,6 +51,11 @@ final readonly class Configuration
     public function shouldShowDiffs(): bool
     {
         return $this->showDiffs;
+    }
+
+    public function isDirty(): bool
+    {
+        return $this->isDirty;
     }
 
     /**

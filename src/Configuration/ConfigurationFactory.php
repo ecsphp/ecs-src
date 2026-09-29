@@ -35,6 +35,7 @@ final readonly class ConfigurationFactory
         string $parallelIdentifier,
         ?string $memoryLimit,
         bool $debug,
+        bool $isDirty,
     ): Configuration {
         $paths = $this->resolvePaths($paths);
 
@@ -56,7 +57,8 @@ final readonly class ConfigurationFactory
             $parallelPort,
             $parallelIdentifier,
             $memoryLimit,
-            $showDiffs
+            $showDiffs,
+            $isDirty
         );
     }
 

@@ -10,6 +10,7 @@ use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\DependencyInjection\SimpleParameterProvider;
 use Symplify\EasyCodingStandard\Exception\ShouldNotHappenException;
 use Symplify\EasyCodingStandard\FileSystem\FileFilter;
+use Symplify\EasyCodingStandard\FileSystem\GitDirtyFilesResolver;
 use Symplify\EasyCodingStandard\FileSystem\StaticRelativeFilePathHelper;
 use Symplify\EasyCodingStandard\Finder\SourceFinder;
 use Symplify\EasyCodingStandard\Parallel\Application\ParallelFileProcessor;
@@ -32,6 +33,7 @@ final readonly class EasyCodingStandardApplication
         private SourceFinder $sourceFinder,
         private ChangedFilesDetector $changedFilesDetector,
         private FileFilter $fileFilter,
+        private GitDirtyFilesResolver $gitDirtyFilesResolver,
         private SingleFileProcessor $singleFileProcessor,
         private ScheduleFactory $scheduleFactory,
         private ParallelFileProcessor $parallelFileProcessor,
@@ -47,6 +49,11 @@ final readonly class EasyCodingStandardApplication
     {
         // 1. find files in sources
         $filePaths = $this->sourceFinder->find($configuration->getSources());
+
+        // keep only files with uncommitted git changes
+        if ($configuration->isDirty()) {
+            $filePaths = $this->gitDirtyFilesResolver->filterDirty($filePaths);
+        }
 
         // 2. clear cache
         if ($configuration->shouldClearCache()) {

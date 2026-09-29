@@ -40,6 +40,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
     }
 
     /**
+     * @param bool   $dirty        Check only files with uncommitted git changes
      * @param bool   $blink        [EXPERIMENTAL] run the ecs-go Go binary instead of the PHP engine
      * @param string $config       Path to config file
      * @param string $outputFormat Select output format
@@ -65,6 +66,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         bool $noErrorTable = false,
         bool $noDiffs = false,
         bool $debug = false,
+        bool $dirty = false,
         bool $blink = false,
         string $config = '',
         string $outputFormat = ConsoleOutputFormatter::NAME,
@@ -92,6 +94,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
             $identifier,
             $memoryLimit !== '' ? $memoryLimit : null,
             $debug,
+            $dirty,
         );
 
         // experimental: hand the resolved config to the ecs-go Go binary and skip the PHP engine
