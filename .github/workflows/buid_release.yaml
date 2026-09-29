@@ -91,7 +91,7 @@ jobs:
                     cp -R build/target-repository/. ecs-prefixed-downgraded
                     cp -R templates ecs-prefixed-downgraded/
 
-            # 5b. bundle ecs-go binaries for --turbo, so it works without a Go toolchain
+            # 5b. bundle ecs-go binaries for --blink, so it works without a Go toolchain
             -
                 uses: actions/setup-go@v5
                 with:
