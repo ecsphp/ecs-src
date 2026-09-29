@@ -186,7 +186,7 @@ func (RemoveParamDescriptionDuplicateName) Name() string {
 }
 
 func (RemoveParamDescriptionDuplicateName) SourceURL() string {
-	return "https://github.com/symplify/coding-standard/blob/main/src/Fixer/Commenting/RemoveParamDescriptionDuplicateNameFixer.php"
+	return "https://github.com/ecsphp/ecs-src/blob/main/packages/coding-standard/src/Fixer/Commenting/RemoveParamDescriptionDuplicateNameFixer.php"
 }
 
 func (RemoveParamDescriptionDuplicateName) Fix(s *tokens.Stream) bool {

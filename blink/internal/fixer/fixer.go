@@ -33,6 +33,7 @@ var ecsSrcOnlyFixers = map[string]bool{
 	`Symplify\CodingStandard\Fixer\Commenting\MergeDocBlockStartFixer`:                    true,
 	`Symplify\CodingStandard\Fixer\Commenting\RemoveDeadParamFixer`:                       true,
 	`Symplify\CodingStandard\Fixer\Commenting\RemoveDeadVarThisFixer`:                     true,
+	`Symplify\CodingStandard\Fixer\Commenting\RemoveParamDescriptionDuplicateNameFixer`:   true,
 	`Symplify\CodingStandard\Fixer\Commenting\RemoveParamNameReferenceFixer`:              true,
 	`Symplify\CodingStandard\Fixer\Commenting\SwitchedTypeAndNameFixer`:                   true,
 	`Symplify\CodingStandard\Fixer\Annotation\RemovePHPStormAnnotationFixer`:              true,
