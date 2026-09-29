@@ -137,6 +137,10 @@ final class MethodChainingNewlineFixer extends AbstractSymplifyFixer
             return false;
         }
 
+        if ($this->chainMethodCallAnalyzer->isPartOfBooleanOrComparison($tokens, $objectOperatorIndex)) {
+            return false;
+        }
+
         if ($this->chainMethodCallAnalyzer->isPartOfMethodCallOrArray($tokens, $position)) {
             return false;
         }
