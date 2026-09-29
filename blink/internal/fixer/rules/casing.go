@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -73,7 +74,16 @@ func (LowercaseKeywords) Fix(s *tokens.Stream) bool {
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/ConstantCaseFixer.php
 //
 // ConstantCase lowercases the true, false and null constants.
-type ConstantCase struct{}
+type ConstantCase struct {
+	Upper bool
+}
+
+func (f ConstantCase) WithConfig(config map[string]any) fixer.Fixer {
+	if c, ok := config["case"].(string); ok {
+		f.Upper = c == "upper"
+	}
+	return f
+}
 
 func (ConstantCase) Name() string {
 	return `PhpCsFixer\Fixer\Casing\ConstantCaseFixer`
@@ -83,7 +93,7 @@ func (ConstantCase) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/ConstantCaseFixer.php"
 }
 
-func (ConstantCase) Fix(s *tokens.Stream) bool {
+func (f ConstantCase) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
@@ -97,8 +107,12 @@ func (ConstantCase) Fix(s *tokens.Stream) bool {
 		if memberPrev(s, i) {
 			continue // $obj->true, Foo::null - a member name, not the constant
 		}
-		if lower != t.Value {
-			s.SetValue(i, lower)
+		want := lower
+		if f.Upper {
+			want = strings.ToUpper(lower)
+		}
+		if want != t.Value {
+			s.SetValue(i, want)
 			changed = true
 		}
 	}

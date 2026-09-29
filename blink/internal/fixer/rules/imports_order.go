@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -115,7 +116,60 @@ func collectImportRun(s *tokens.Stream, start int) []importStmt {
 // then const) and alphabetically by imported path within each kind
 // (case-insensitive), matching ECS's psr12 config (sort_algorithm: alpha,
 // imports_order: ['class', 'function', 'const']).
-type OrderedImports struct{}
+//
+// The fields mirror the fixer options; their zero values reproduce today's
+// behavior (alpha sort, grouped class/function/const, case-insensitive):
+//   - sortAlgorithm: "" == "alpha" (also "length" or "none")
+//   - orderKinds: nil == default [class, function, const]
+//   - noGrouping: "imports_order" explicitly null (sort without grouping)
+//   - caseSensitive: "case_sensitive"
+type OrderedImports struct {
+	sortAlgorithm string
+	orderKinds    []string
+	noGrouping    bool
+	caseSensitive bool
+}
+
+func (f OrderedImports) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["sort_algorithm"].(string); ok {
+		switch v {
+		case "length":
+			f.sortAlgorithm = "length"
+		case "none":
+			f.sortAlgorithm = "none"
+		default:
+			f.sortAlgorithm = ""
+		}
+	}
+	if raw, exists := config["imports_order"]; exists {
+		if raw == nil {
+			f.noGrouping = true
+		} else if list := orderedImportsConfigStrings(raw); list != nil {
+			f.orderKinds = list
+		}
+	}
+	if v, ok := config["case_sensitive"].(bool); ok {
+		f.caseSensitive = v
+	}
+	return f
+}
+
+// orderedImportsConfigStrings converts a config list ([]any or []string) to []string.
+func orderedImportsConfigStrings(raw any) []string {
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, e := range v {
+			if sv, ok := e.(string); ok {
+				out = append(out, sv)
+			}
+		}
+		return out
+	}
+	return nil
+}
 
 func (OrderedImports) Name() string {
 	return `PhpCsFixer\Fixer\Import\OrderedImportsFixer`
@@ -125,7 +179,7 @@ func (OrderedImports) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Import/OrderedImportsFixer.php"
 }
 
-func (OrderedImports) Fix(s *tokens.Stream) bool {
+func (f OrderedImports) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); {
 		t := s.At(i)
@@ -138,7 +192,7 @@ func (OrderedImports) Fix(s *tokens.Stream) bool {
 			i++
 			continue
 		}
-		newEnd, c := reorderImports(s, run)
+		newEnd, c := f.reorderImports(s, run)
 		if c {
 			changed = true
 		}
@@ -147,18 +201,29 @@ func (OrderedImports) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
-func reorderImports(s *tokens.Stream, run []importStmt) (int, bool) {
+func (f OrderedImports) reorderImports(s *tokens.Stream, run []importStmt) (int, bool) {
 	first := run[0].start
 	last := run[len(run)-1].semi
 	indent := indentBefore(s, first)
 
 	ordered := append([]importStmt(nil), run...)
 	sort.SliceStable(ordered, func(a, b int) bool {
-		// ECS default imports_order: class, then function, then const; alpha within
-		if ra, rb := importKindRank(ordered[a].kind), importKindRank(ordered[b].kind); ra != rb {
-			return ra < rb
+		if !f.noGrouping {
+			if ra, rb := f.orderedImportsRank(ordered[a].kind), f.orderedImportsRank(ordered[b].kind); ra != rb {
+				return ra < rb
+			}
 		}
-		return ordered[a].pathKey < ordered[b].pathKey
+		switch f.sortAlgorithm {
+		case "none":
+			return false // keep original order within a group
+		case "length":
+			if la, lb := f.orderedImportsLen(s, ordered[a]), f.orderedImportsLen(s, ordered[b]); la != lb {
+				return la < lb
+			}
+			return f.orderedImportsAlphaKey(s, ordered[a]) < f.orderedImportsAlphaKey(s, ordered[b])
+		default: // alpha
+			return f.orderedImportsAlphaKey(s, ordered[a]) < f.orderedImportsAlphaKey(s, ordered[b])
+		}
 	})
 
 	var repl []token.Token
@@ -178,6 +243,64 @@ func reorderImports(s *tokens.Stream, run []importStmt) (int, bool) {
 	changed := !tokensEqual(orig, repl)
 	s.ReplaceRange(first, last, repl)
 	return first + len(repl), changed
+}
+
+// orderedImportsRank returns the group index of a kind per the configured order,
+// or the default class/function/const order when none is configured.
+func (f OrderedImports) orderedImportsRank(kind string) int {
+	kinds := f.orderKinds
+	if kinds == nil {
+		return importKindRank(kind)
+	}
+	for i, k := range kinds {
+		if k == kind {
+			return i
+		}
+	}
+	return len(kinds)
+}
+
+// orderedImportsAlphaKey returns the alphabetical sort key for a statement,
+// honoring case sensitivity. The default (case-insensitive) reuses the key
+// precomputed in collectImportRun.
+func (f OrderedImports) orderedImportsAlphaKey(s *tokens.Stream, st importStmt) string {
+	if !f.caseSensitive {
+		return st.pathKey
+	}
+	return strings.ReplaceAll(orderedImportsPath(s, st.start, st.semi), `\`, "\x00")
+}
+
+// orderedImportsLen returns the length used by the (deprecated) length algorithm:
+// the imported path plus a "function "/"const " prefix for non-class imports.
+func (f OrderedImports) orderedImportsLen(s *tokens.Stream, st importStmt) int {
+	n := len(orderedImportsPath(s, st.start, st.semi))
+	if st.kind != "class" {
+		n += len(st.kind) + 1
+	}
+	return n
+}
+
+// orderedImportsPath returns the imported path (case preserved) after an optional
+// "function"/"const", up to ";" or " as ".
+func orderedImportsPath(s *tokens.Stream, useIdx, semi int) string {
+	j := skipWhitespace(s, useIdx+1)
+	if j < s.Len() && s.At(j).Kind == token.Keyword {
+		if lw := strings.ToLower(s.At(j).Value); lw == "function" || lw == "const" {
+			j = skipWhitespace(s, j+1)
+		}
+	}
+	var b strings.Builder
+	for k := j; k < semi; k++ {
+		t := s.At(k)
+		if t.Kind == token.Keyword && strings.ToLower(t.Value) == "as" {
+			break
+		}
+		if t.Kind == token.Whitespace {
+			continue
+		}
+		b.WriteString(t.Value)
+	}
+	return b.String()
 }
 
 func tokensEqual(a, b []token.Token) bool {

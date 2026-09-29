@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -13,7 +14,38 @@ import (
 // equivalent: pi() -> M_PI, phpversion() -> PHP_VERSION, php_sapi_name() ->
 // PHP_SAPI, get_called_class() -> static::class, get_class($this) ->
 // static::class.
-type FunctionToConstant struct{}
+type FunctionToConstant struct {
+	// Functions limits the converted functions; nil means the built-in default set.
+	Functions []string
+}
+
+func (f FunctionToConstant) WithConfig(config map[string]any) fixer.Fixer {
+	switch list := config["functions"].(type) {
+	case []string:
+		f.Functions = append([]string{}, list...)
+	case []any:
+		f.Functions = []string{}
+		for _, v := range list {
+			if name, ok := v.(string); ok {
+				f.Functions = append(f.Functions, name)
+			}
+		}
+	}
+	return f
+}
+
+// functionToConstantEnabled reports whether the option key is enabled.
+func (f FunctionToConstant) enabled(key string) bool {
+	if f.Functions == nil {
+		return true
+	}
+	for _, name := range f.Functions {
+		if name == key {
+			return true
+		}
+	}
+	return false
+}
 
 func (FunctionToConstant) Name() string {
 	return `PhpCsFixer\Fixer\LanguageConstruct\FunctionToConstantFixer`
@@ -29,7 +61,7 @@ var noArgConstants = map[string]string{
 	"php_sapi_name": "PHP_SAPI",
 }
 
-func (FunctionToConstant) Fix(s *tokens.Stream) bool {
+func (f FunctionToConstant) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Ident {
@@ -38,6 +70,9 @@ func (FunctionToConstant) Fix(s *tokens.Stream) bool {
 		name := strings.ToLower(s.At(i).Value)
 		_, isNoArg := noArgConstants[name]
 		if !isNoArg && name != "get_called_class" && name != "get_class" {
+			continue
+		}
+		if name != "get_class" && !f.enabled(name) {
 			continue
 		}
 		// a plain function call: not a method/static call, not a declaration,
@@ -79,6 +114,17 @@ func (FunctionToConstant) Fix(s *tokens.Stream) bool {
 			repl = staticClassTokens()
 		case name == "get_class":
 			arg := nextSignificantIndex(s, open)
+			if arg == closeIdx {
+				// get_class() without arguments -> self::class, only when opted in
+				if f.Functions == nil || !f.enabled("get_class") {
+					continue
+				}
+				repl = functionToConstantSelfClassTokens()
+				break
+			}
+			if !f.enabled("get_class_this") {
+				continue
+			}
 			if arg < 0 || s.At(arg).Kind != token.Variable || !strings.EqualFold(s.At(arg).Value, "$this") {
 				continue
 			}
@@ -97,6 +143,14 @@ func (FunctionToConstant) Fix(s *tokens.Stream) bool {
 func staticClassTokens() []token.Token {
 	return []token.Token{
 		{Kind: token.Keyword, Value: "static"},
+		{Kind: token.Punct, Value: "::"},
+		{Kind: token.Ident, Value: "class"},
+	}
+}
+
+func functionToConstantSelfClassTokens() []token.Token {
+	return []token.Token{
+		{Kind: token.Keyword, Value: "self"},
 		{Kind: token.Punct, Value: "::"},
 		{Kind: token.Ident, Value: "class"},
 	}

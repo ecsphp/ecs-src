@@ -1,0 +1,32 @@
+package rules
+
+import "testing"
+
+func TestMethodArgumentSpaceConfig(t *testing.T) {
+	// default: one space after each comma
+	got, changed := apply(t, MethodArgumentSpace{}, "<?php foo(1,2);")
+	if want := "<?php foo(1, 2);"; !changed || got != want {
+		t.Fatalf("default: changed=%v got=%q", changed, got)
+	}
+
+	// keep_multiple_spaces_after_comma=true leaves the extra spaces
+	keep := MethodArgumentSpace{}.WithConfig(map[string]any{"keep_multiple_spaces_after_comma": true}).(fixerRule)
+	got, _ = apply(t, keep, "<?php foo(1,   2);")
+	if want := "<?php foo(1,   2);"; got != want {
+		t.Fatalf("keep spaces: got=%q", got)
+	}
+
+	// on_multiline=ignore leaves a multiline list untouched
+	ignore := MethodArgumentSpace{}.WithConfig(map[string]any{"on_multiline": "ignore"}).(fixerRule)
+	got, _ = apply(t, ignore, "<?php foo(1,\n    2);")
+	if want := "<?php foo(1,\n    2);"; got != want {
+		t.Fatalf("ignore: got=%q", got)
+	}
+
+	// on_multiline=ensure_single_line collapses a multiline list
+	single := MethodArgumentSpace{}.WithConfig(map[string]any{"on_multiline": "ensure_single_line"}).(fixerRule)
+	got, changed = apply(t, single, "<?php foo(\n    1,\n    2\n);")
+	if want := "<?php foo(1, 2);"; !changed || got != want {
+		t.Fatalf("ensure_single_line: changed=%v got=%q", changed, got)
+	}
+}

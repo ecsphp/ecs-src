@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -16,10 +17,13 @@ var castTypes = map[string]bool{
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/CastNotation/CastSpacesFixer.php
 //
 // CastSpaces normalizes a type cast to no inner spaces and a single space after:
-// "(int)$x" and "( int )$x" both become "(int) $x". A flat token stream cannot
+// "(int)$x" and "( int )$x" both become "(int) $x". With None set (space: none)
+// no space follows the cast: "(int)$x". A flat token stream cannot
 // see PHP cast tokens, so casts are detected heuristically as "(" type ")" not
 // preceded by a call, index or value.
-type CastSpaces struct{}
+type CastSpaces struct {
+	None bool
+}
 
 func (CastSpaces) Name() string {
 	return `PhpCsFixer\Fixer\CastNotation\CastSpacesFixer`
@@ -29,7 +33,14 @@ func (CastSpaces) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/CastNotation/CastSpacesFixer.php"
 }
 
-func (CastSpaces) Fix(s *tokens.Stream) bool {
+func (f CastSpaces) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["space"].(string); ok {
+		f.None = v == "none"
+	}
+	return f
+}
+
+func (f CastSpaces) Fix(s *tokens.Stream) bool {
 	changed := false
 	i := 0
 	for i < s.Len() {
@@ -71,7 +82,12 @@ func (CastSpaces) Fix(s *tokens.Stream) bool {
 		}
 
 		// mutate high index to low so earlier indices stay valid
-		if closeIdx+1 < s.Len() {
+		if f.None {
+			if closeIdx+1 < s.Len() && s.At(closeIdx+1).Kind == token.Whitespace {
+				s.RemoveAt(closeIdx + 1)
+				changed = true
+			}
+		} else if closeIdx+1 < s.Len() {
 			next := s.At(closeIdx + 1)
 			if next.Kind == token.Whitespace {
 				if !hasNewline(next.Value) && next.Value != " " {

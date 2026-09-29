@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -300,7 +301,16 @@ func rangeHasNewline(s *tokens.Stream, lo, hi int) bool {
 // NoUselessConcatOperator merges two adjacent string literals joined by "." into
 // one when they share a quote style and neither interpolates ("'a' . 'b'" ->
 // "'ab'"). Merges across a newline are left alone.
-type NoUselessConcatOperator struct{}
+type NoUselessConcatOperator struct {
+	JuggleSimpleStrings bool
+}
+
+func (f NoUselessConcatOperator) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["juggle_simple_strings"].(bool); ok {
+		f.JuggleSimpleStrings = v
+	}
+	return f
+}
 
 func (NoUselessConcatOperator) Name() string {
 	return `PhpCsFixer\Fixer\Operator\NoUselessConcatOperatorFixer`
@@ -310,7 +320,7 @@ func (NoUselessConcatOperator) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/NoUselessConcatOperatorFixer.php"
 }
 
-func (NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
+func (f NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 	changed := false
 	i := 0
 	for i < s.Len() {
@@ -335,15 +345,20 @@ func (NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		next := s.At(k).Value
-		if stringQuote(next) != q || (q == '"' && strings.Contains(next, "$")) {
-			i++
-			continue
+		merged := t.Value[:len(t.Value)-1] + next[1:]
+		if nq := stringQuote(next); nq != q || (q == '"' && strings.Contains(next, "$")) {
+			simple, ok := noUselessConcatJuggle(f.JuggleSimpleStrings, t.Value, q, next, nq)
+			if !ok {
+				i++
+				continue
+			}
+			merged = simple
 		}
 		if rangeHasNewline(s, i, k) {
 			i++
 			continue
 		}
-		s.SetValue(i, t.Value[:len(t.Value)-1]+next[1:])
+		s.SetValue(i, merged)
 		for idx := k; idx > i; idx-- {
 			s.RemoveAt(idx)
 		}
@@ -388,4 +403,25 @@ func (NoBinaryString) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	return changed
+}
+
+// noUselessConcatJuggle merges a double-quoted string with a simple single-quoted
+// one (either order) into a double-quoted string when juggle_simple_strings is on.
+func noUselessConcatJuggle(enabled bool, first string, firstQuote byte, second string, secondQuote byte) (string, bool) {
+	if !enabled || first == "" || second == "" {
+		return "", false
+	}
+	var single string
+	switch {
+	case firstQuote == '"' && secondQuote == '\'' && !strings.Contains(first, "$"):
+		single = second
+	case firstQuote == '\'' && secondQuote == '"' && !strings.Contains(second, "$"):
+		single = first
+	default:
+		return "", false
+	}
+	if strings.ContainsAny(single[1:len(single)-1], "$\"'\\") {
+		return "", false
+	}
+	return `"` + first[1:len(first)-1] + second[1:len(second)-1] + `"`, true
 }

@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -12,7 +13,43 @@ import (
 //
 // SingleClassElementPerStatement splits a multi-element property or constant
 // declaration into one per line: "public $a, $b;" -> "public $a;\npublic $b;".
-type SingleClassElementPerStatement struct{}
+//
+// elements mirrors the "elements" option (subset of const/property); a nil value
+// (the zero value) means both, matching the default.
+type SingleClassElementPerStatement struct {
+	elements []string
+}
+
+func (f SingleClassElementPerStatement) WithConfig(config map[string]any) fixer.Fixer {
+	if raw, ok := config["elements"]; ok {
+		f.elements = singleElementConfigStrings(raw)
+	}
+	return f
+}
+
+// singleElementConfigStrings converts a config list ([]any or []string) to []string.
+func singleElementConfigStrings(raw any) []string {
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, e := range v {
+			if sv, ok := e.(string); ok {
+				out = append(out, sv)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+func (f SingleClassElementPerStatement) singleElementEnabled(kind string) bool {
+	if f.elements == nil {
+		return true // default: both const and property
+	}
+	return slices.Contains(f.elements, kind)
+}
 
 func (SingleClassElementPerStatement) Name() string {
 	return `PhpCsFixer\Fixer\ClassNotation\SingleClassElementPerStatementFixer`
@@ -22,7 +59,7 @@ func (SingleClassElementPerStatement) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/SingleClassElementPerStatementFixer.php"
 }
 
-func (SingleClassElementPerStatement) Fix(s *tokens.Stream) bool {
+func (f SingleClassElementPerStatement) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
@@ -32,7 +69,7 @@ func (SingleClassElementPerStatement) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		for _, m := range slices.Backward(classMemberStarts(s, i)) {
-			if splitClassElement(s, m) {
+			if f.splitClassElement(s, m) {
 				changed = true
 			}
 		}
@@ -40,7 +77,7 @@ func (SingleClassElementPerStatement) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
-func splitClassElement(s *tokens.Stream, m int) bool {
+func (f SingleClassElementPerStatement) splitClassElement(s *tokens.Stream, m int) bool {
 	// step over leading modifiers
 	k := m
 	for k < s.Len() && s.At(k).Kind == token.Keyword && memberModifiers[strings.ToLower(s.At(k).Value)] {
@@ -58,6 +95,14 @@ func splitClassElement(s *tokens.Stream, m int) bool {
 		default:
 			return false // function / use / case / unknown
 		}
+	}
+
+	if isConst {
+		if !f.singleElementEnabled("const") {
+			return false
+		}
+	} else if !f.singleElementEnabled("property") {
+		return false
 	}
 
 	semi := memberEndSemi(s, m)
