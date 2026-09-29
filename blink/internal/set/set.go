@@ -255,6 +255,7 @@ var commonMembers = map[string]bool{
 	"RemoveEventSubscriberDescriptionFixer":           true,
 	"RemoveMethodNameDuplicateDescriptionFixer":       true,
 	"RemovePHPStormAnnotationFixer":                   true,
+	"RemoveParamDescriptionDuplicateNameFixer":        true,
 	"RemoveParamNameReferenceFixer":                   true,
 	"RemovePropertyVariableNameDescriptionFixer":      true,
 	"RemoveSuperfluousReturnNameFixer":                true,
