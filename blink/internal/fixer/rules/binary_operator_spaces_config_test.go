@@ -15,6 +15,8 @@ func TestBinaryOperatorSpacesConfigCases(t *testing.T) {
 		{"align unsupported is a no-op", BinaryOperatorSpaces{}.WithConfig(map[string]any{"default": "align"}).(fixerRule), "<?php $a=1;", "<?php $a=1;"},
 		{"nil default leaves rest alone", BinaryOperatorSpaces{}.WithConfig(map[string]any{"default": nil, "operators": map[string]any{"=": "single_space"}}).(fixerRule), "<?php $a=[1=>2];", "<?php $a = [1=>2];"},
 		{"extra operator via map", BinaryOperatorSpaces{}.WithConfig(map[string]any{"operators": map[string]any{"+=": "single_space"}}).(fixerRule), "<?php $a+=1;", "<?php $a += 1;"},
+		{"collapse aligned arrow inside attribute", BinaryOperatorSpaces{}, "<?php #[X([\n    'a'   => 1,\n    'bb'  => 2,\n])]\nclass C {}", "<?php #[X([\n    'a' => 1,\n    'bb' => 2,\n])]\nclass C {}"},
+		{"arrow inside attribute string left alone", BinaryOperatorSpaces{}, "<?php #[X('a   => b')]\nclass C {}", "<?php #[X('a   => b')]\nclass C {}"},
 	}
 	for _, c := range cases {
 		got, _ := apply(t, c.rule, c.src)

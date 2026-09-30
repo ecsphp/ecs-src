@@ -80,4 +80,10 @@ func TestMethodChainingIndentation(t *testing.T) {
 	if _, changed := apply(t, MethodChainingIndentation{}, "<?php\n$x = $obj->foo()\n    ->bar();\n"); changed {
 		t.Fatal("already aligned chain must not change")
 	}
+	// multiline arguments follow the "->" line when it shifts
+	src := "<?php\n$x = $obj->foo()\n  ->bar(\n      1,\n      2\n  );\n"
+	want := "<?php\n$x = $obj->foo()\n    ->bar(\n        1,\n        2\n    );\n"
+	if got, changed := apply(t, MethodChainingIndentation{}, src); !changed || got != want {
+		t.Fatalf("nested args: changed=%v got=%q want=%q", changed, got, want)
+	}
 }
