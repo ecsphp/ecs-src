@@ -53,6 +53,22 @@ func (MethodChainingNewline) Fix(s *tokens.Stream) bool {
 		if chainLineHasBreakingChar(s, prev) {
 			continue
 		}
+		// a chain used in a boolean/comparison expression stays inline
+		if chainIsPartOfBooleanOrComparison(s, i) {
+			continue
+		}
+		// a chain inside an if/elseif/while/switch condition stays inline
+		if chainIsInsideControlCondition(s, i) {
+			continue
+		}
+		// a short (<=5 chars) no-argument trailing call stays inline ("->yes()")
+		if chainIsShortNoArgTrailingMethod(s, i) {
+			continue
+		}
+		// a chain rooted in a function call that already requires a newline stays inline
+		if chainIsPrecededByFuncCall(s, prev) {
+			continue
+		}
 		nl := "\n" + chainFirstLineIndent(s, i) + "    "
 		if s.At(i-1).Kind == token.Whitespace {
 			s.SetValue(i-1, nl)
@@ -63,6 +79,148 @@ func (MethodChainingNewline) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	return changed
+}
+
+// chainIsShortNoArgTrailingMethod reports whether the method called via the "->"
+// at opIdx has a name of at most five characters and no arguments ("->yes()").
+// Symplify keeps such short predicate-like accessors inline.
+func chainIsShortNoArgTrailingMethod(s *tokens.Stream, opIdx int) bool {
+	name := nextSignificantIndex(s, opIdx)
+	if name < 0 || s.At(name).Kind != token.Ident || len(s.At(name).Value) > 5 {
+		return false
+	}
+	open := nextSignificantIndex(s, name)
+	if open < 0 || s.At(open).Value != "(" {
+		return false
+	}
+	close := nextSignificantIndex(s, open)
+	return close >= 0 && s.At(close).Value == ")"
+}
+
+// chainIsPartOfBooleanOrComparison reports whether the chain at opIdx is an
+// operand of a boolean or comparison operator on the same statement level.
+func chainIsPartOfBooleanOrComparison(s *tokens.Stream, opIdx int) bool {
+	return chainHasOperatorInDirection(s, opIdx, -1) || chainHasOperatorInDirection(s, opIdx, 1)
+}
+
+func chainHasOperatorInDirection(s *tokens.Stream, pos, step int) bool {
+	nesting := 0
+	for i := pos + step; i >= 0 && i < s.Len(); i += step {
+		c := s.At(i).Value
+		if (step < 0 && (c == ")" || c == "]")) || (step > 0 && (c == "(" || c == "[")) {
+			nesting++
+			continue
+		}
+		if (step < 0 && (c == "(" || c == "[")) || (step > 0 && (c == ")" || c == "]")) {
+			if nesting == 0 {
+				return false
+			}
+			nesting--
+			continue
+		}
+		if nesting != 0 {
+			continue
+		}
+		if c == ";" || c == "{" || c == "}" {
+			return false
+		}
+		if isBooleanOrComparisonToken(s.At(i)) {
+			return true
+		}
+	}
+	return false
+}
+
+// isBooleanOrComparisonToken reports whether t is a boolean or comparison
+// operator. The word operators and/or/xor count only as keywords, never as a
+// method name like "->and(" or "->or(".
+func isBooleanOrComparisonToken(t token.Token) bool {
+	if t.Kind == token.Punct {
+		switch t.Value {
+		case "&&", "||", "==", "!=", "===", "!==", "<=", ">=", "<=>", "<", ">":
+			return true
+		}
+		return false
+	}
+	if t.Kind == token.Keyword {
+		switch strings.ToLower(t.Value) {
+		case "and", "or", "xor":
+			return true
+		}
+	}
+	return false
+}
+
+// chainIsInsideControlCondition reports whether the chain at opIdx sits inside an
+// if/elseif/while/switch condition.
+func chainIsInsideControlCondition(s *tokens.Stream, opIdx int) bool {
+	nesting := 0
+	for i := opIdx; i >= 0; i-- {
+		c := s.At(i).Value
+		if c == ")" || c == "]" {
+			nesting++
+			continue
+		}
+		if c == "(" || c == "[" {
+			if nesting != 0 {
+				nesting--
+				continue
+			}
+			if c == "[" {
+				return false
+			}
+			b := prevSignificantIndex(s, i)
+			if b < 0 || s.At(b).Kind != token.Keyword {
+				return false
+			}
+			switch strings.ToLower(s.At(b).Value) {
+			case "if", "elseif", "while", "switch":
+				return true
+			}
+			return false
+		}
+		if nesting == 0 && (c == ";" || c == "{" || c == "}") {
+			return false
+		}
+	}
+	return false
+}
+
+// chainIsPrecededByFuncCall reports whether the ")" at closeIdx belongs to a
+// function call that itself requires a newline (return app(), Foo::app(), clone),
+// which keeps the following "->" inline.
+func chainIsPrecededByFuncCall(s *tokens.Stream, closeIdx int) bool {
+	for i := closeIdx; i >= 0; i-- {
+		t := s.At(i)
+		if t.Kind == token.Keyword && strings.EqualFold(t.Value, "clone") {
+			return true
+		}
+		if t.Kind == token.Punct && t.Value == "(" {
+			return chainContentBeforeBracketRequiresNewline(s, i)
+		}
+		if t.Kind == token.Whitespace && hasNewline(t.Value) {
+			return false
+		}
+	}
+	return false
+}
+
+// chainContentBeforeBracketRequiresNewline mirrors symplify's NewlineAnalyzer: a
+// "(" preceded by "name" that itself follows "{", "return" or "::".
+func chainContentBeforeBracketRequiresNewline(s *tokens.Stream, parenIdx int) bool {
+	p := prevSignificantIndex(s, parenIdx)
+	if p < 0 || s.At(p).Kind != token.Ident {
+		return false
+	}
+	pp := prevSignificantIndex(s, p)
+	if pp < 0 {
+		return false
+	}
+	t := s.At(pp)
+	if t.Value == "{" || t.Value == "::" {
+		return true
+	}
+	return t.Kind == token.Keyword && strings.EqualFold(t.Value, "return")
 }
 
 // chainIsCallClose reports whether the ")" at closeIdx closes a function/method
