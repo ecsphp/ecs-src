@@ -16,7 +16,7 @@ func TestUnifiedChange(t *testing.T) {
 	if !strings.Contains(got, "--- Original") || !strings.Contains(got, "+++ New") {
 		t.Fatalf("missing header:\n%s", got)
 	}
-	if !strings.Contains(got, "@@ @@") {
+	if !strings.Contains(got, "@@ Line 1 @@") {
 		t.Fatalf("missing hunk header:\n%s", got)
 	}
 	if !strings.Contains(got, "-<?php $x = 1 ;") {

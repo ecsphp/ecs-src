@@ -102,7 +102,7 @@ namespace, no blank lines after a class opening, and tab-to-space indentation.
 1) src/Foo.php
 
     ---------- begin diff ----------
-@@ @@
+@@ Line 1 @@
  <?php
 -    namespace App;
 +namespace App;

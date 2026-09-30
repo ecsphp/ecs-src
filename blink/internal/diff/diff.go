@@ -1,9 +1,12 @@
 // Package diff produces a unified text diff in the shape PHP-CS-Fixer emits
-// (an "--- Original / +++ New" header and "@@ @@" hunks), so the reporter can
-// wrap it exactly like ECS.
+// (an "--- Original / +++ New" header and "@@ Line N @@" hunks), so the reporter
+// can wrap it exactly like ECS.
 package diff
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const context = 3
 
@@ -32,8 +35,8 @@ func Unified(before, after string) string {
 	var out strings.Builder
 	out.WriteString("--- Original\n+++ New\n")
 	for _, h := range hunks(ops) {
-		out.WriteString("@@ @@\n")
-		for _, o := range h {
+		fmt.Fprintf(&out, "@@ Line %d @@\n", h.fromLine)
+		for _, o := range h.ops {
 			switch o.kind {
 			case equal:
 				out.WriteString(" " + o.text + "\n")
@@ -101,9 +104,16 @@ func diffLines(a, b []string) []op {
 	return ops
 }
 
+// hunk is a change region plus the 1-based line number of its first line in the
+// original file, matching the `-N` start that PHP-CS-Fixer's unified diff emits.
+type hunk struct {
+	fromLine int
+	ops      []op
+}
+
 // hunks groups ops into change regions, each padded with up to `context` equal
 // lines, dropping long stretches of unchanged code between them.
-func hunks(ops []op) [][]op {
+func hunks(ops []op) []hunk {
 	changed := make([]bool, len(ops))
 	any := false
 	for i, o := range ops {
@@ -131,18 +141,26 @@ func hunks(ops []op) [][]op {
 		}
 	}
 
-	var result [][]op
+	var result []hunk
 	var cur []op
+	curFrom := 0
+	origLine := 1
 	for i := range ops {
 		if keep[i] {
+			if len(cur) == 0 {
+				curFrom = origLine
+			}
 			cur = append(cur, ops[i])
 		} else if len(cur) > 0 {
-			result = append(result, cur)
+			result = append(result, hunk{curFrom, cur})
 			cur = nil
+		}
+		if ops[i].kind != add {
+			origLine++
 		}
 	}
 	if len(cur) > 0 {
-		result = append(result, cur)
+		result = append(result, hunk{curFrom, cur})
 	}
 	return result
 }
