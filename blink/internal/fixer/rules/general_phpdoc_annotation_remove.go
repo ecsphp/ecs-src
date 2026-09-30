@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/tokens"
 )
 
@@ -11,7 +12,14 @@ import (
 // GeneralPhpdocAnnotationRemove removes the configured phpdoc annotations. ECS's
 // psr12+common (via SetList::DOCBLOCK) configures it to strip author, package,
 // group and category, so those are the default set here.
-type GeneralPhpdocAnnotationRemove struct{}
+//
+// Option `annotations` overrides the annotation set (an empty list removes
+// nothing, matching PHP-CS-Fixer's default). Option `case_sensitive` switches to
+// exact-case matching; the zero value keeps blink's case-insensitive match.
+type GeneralPhpdocAnnotationRemove struct {
+	annotations   []string
+	caseSensitive bool
+}
 
 func (GeneralPhpdocAnnotationRemove) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\GeneralPhpdocAnnotationRemoveFixer`
@@ -25,15 +33,29 @@ func (GeneralPhpdocAnnotationRemove) SourceURL() string {
 // ECS's psr12+common (SetList::DOCBLOCK).
 var generalPhpdocAnnotationsToRemove = []string{"author", "package", "group", "category"}
 
-func (GeneralPhpdocAnnotationRemove) Fix(s *tokens.Stream) bool {
-	if len(generalPhpdocAnnotationsToRemove) == 0 {
+func (f GeneralPhpdocAnnotationRemove) WithConfig(config map[string]any) fixer.Fixer {
+	if list, ok := generalPhpdocAnnotationStringList(config["annotations"]); ok {
+		f.annotations = list
+	}
+	if cs, ok := config["case_sensitive"].(bool); ok {
+		f.caseSensitive = cs
+	}
+	return f
+}
+
+func (f GeneralPhpdocAnnotationRemove) Fix(s *tokens.Stream) bool {
+	tags := f.annotations
+	if tags == nil {
+		tags = generalPhpdocAnnotationsToRemove
+	}
+	if len(tags) == 0 {
 		return false
 	}
 	return applyToDocblocks(s, func(d *docblock) bool {
 		kept := d.inner[:0:0]
 		removed := false
 		for _, l := range d.inner {
-			if generalPhpdocLineHasTag(l.content, generalPhpdocAnnotationsToRemove) {
+			if generalPhpdocLineHasTag(l.content, tags, f.caseSensitive) {
 				removed = true
 				continue
 			}
@@ -46,7 +68,7 @@ func (GeneralPhpdocAnnotationRemove) Fix(s *tokens.Stream) bool {
 	})
 }
 
-func generalPhpdocLineHasTag(content string, tags []string) bool {
+func generalPhpdocLineHasTag(content string, tags []string, caseSensitive bool) bool {
 	trimmed := strings.TrimLeft(content, " ")
 	name := ""
 	if strings.HasPrefix(trimmed, "@") {
@@ -60,9 +82,30 @@ func generalPhpdocLineHasTag(content string, tags []string) bool {
 		return false
 	}
 	for _, t := range tags {
-		if strings.EqualFold(name, t) {
+		if caseSensitive {
+			if name == t {
+				return true
+			}
+		} else if strings.EqualFold(name, t) {
 			return true
 		}
 	}
 	return false
+}
+
+// generalPhpdocAnnotationStringList reads a config value as a list of strings.
+func generalPhpdocAnnotationStringList(v any) ([]string, bool) {
+	switch list := v.(type) {
+	case []string:
+		return append([]string{}, list...), true
+	case []any:
+		out := make([]string, 0, len(list))
+		for _, e := range list {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out, true
+	}
+	return nil, false
 }

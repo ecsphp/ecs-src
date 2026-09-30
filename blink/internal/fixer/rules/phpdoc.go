@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -101,7 +102,11 @@ var phpdocTypeTagRe = regexp.MustCompile(`(?i)^(@(?:param|return|var|throws|prop
 //
 // PhpdocScalar normalizes scalar type aliases in phpdoc tags (integer -> int,
 // boolean -> bool, double/real -> float, str -> string, callback -> callable).
-type PhpdocScalar struct{}
+// Option `types` restricts which aliases are converted; a nil set converts all of
+// them (blink's default).
+type PhpdocScalar struct {
+	types map[string]bool
+}
 
 func (PhpdocScalar) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\PhpdocScalarFixer`
@@ -111,7 +116,18 @@ func (PhpdocScalar) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocScalarFixer.php"
 }
 
-func (PhpdocScalar) Fix(s *tokens.Stream) bool {
+func (f PhpdocScalar) WithConfig(config map[string]any) fixer.Fixer {
+	if list, ok := phpdocScalarStringList(config["types"]); ok {
+		set := make(map[string]bool, len(list))
+		for _, t := range list {
+			set[t] = true
+		}
+		f.types = set
+	}
+	return f
+}
+
+func (f PhpdocScalar) Fix(s *tokens.Stream) bool {
 	return applyToDocblocks(s, func(d *docblock) bool {
 		changed := false
 		for i, l := range d.inner {
@@ -119,7 +135,7 @@ func (PhpdocScalar) Fix(s *tokens.Stream) bool {
 			if m == nil {
 				continue
 			}
-			newType := normalizeScalarType(m[2])
+			newType := normalizeScalarType(m[2], f.types)
 			if newType == m[2] {
 				continue
 			}
@@ -134,7 +150,7 @@ func (PhpdocScalar) Fix(s *tokens.Stream) bool {
 // normalizeScalarType replaces scalar aliases in a phpdoc type, handling unions,
 // nullables and array suffixes ("integer[]|null" -> "int[]|null"). The lookup is
 // case-sensitive so a class named like an alias (e.g. Laravel's "Str") is safe.
-func normalizeScalarType(typ string) string {
+func normalizeScalarType(typ string, enabled map[string]bool) string {
 	nullable := strings.HasPrefix(typ, "?")
 	body := strings.TrimPrefix(typ, "?")
 	parts := strings.Split(body, "|")
@@ -144,7 +160,7 @@ func normalizeScalarType(typ string) string {
 			base = base[:len(base)-2]
 			suffix = "[]" + suffix
 		}
-		if repl, ok := phpdocScalarMap[base]; ok {
+		if repl, ok := phpdocScalarMap[base]; ok && (enabled == nil || enabled[base]) {
 			parts[i] = repl + suffix
 		}
 	}
@@ -153,4 +169,21 @@ func normalizeScalarType(typ string) string {
 		out = "?" + out
 	}
 	return out
+}
+
+// phpdocScalarStringList reads a config value as a list of strings.
+func phpdocScalarStringList(v any) ([]string, bool) {
+	switch list := v.(type) {
+	case []string:
+		return append([]string{}, list...), true
+	case []any:
+		out := make([]string, 0, len(list))
+		for _, e := range list {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out, true
+	}
+	return nil, false
 }
