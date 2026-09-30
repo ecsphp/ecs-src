@@ -240,7 +240,7 @@ func insideFunctionBody(s *tokens.Stream, i int) bool {
 	depth := 0
 	pendingBody := false
 	funcDepths := []int{}
-	for j := 0; j < i; j++ {
+	for j := range i {
 		t := s.At(j)
 		switch {
 		case t.Kind == token.Keyword && strings.EqualFold(t.Value, "function"):

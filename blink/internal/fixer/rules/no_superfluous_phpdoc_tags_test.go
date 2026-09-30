@@ -54,10 +54,20 @@ func TestNoSuperfluousPhpdocTags(t *testing.T) {
 		"<?php\n/**\n * @return array<int>|float\n */\nfunction f(): array|float {}",
 		"<?php\n/**\n * @return array<int>|float\n */\nfunction f(): array|float {}", false)
 
-	// FQ phpdoc type equals the imported short native type -> removed
+	// FQ phpdoc type resolves to the imported short native type (same class) -> removed
 	assertFix(t, f,
-		"<?php\n/**\n * @param \\A\\B\\Foo $x\n */\nfunction f(Foo $x) {}",
-		"<?php\n/**\n */\nfunction f(Foo $x) {}", true)
+		"<?php\nnamespace App;\nuse A\\B\\Foo;\n/**\n * @param \\A\\B\\Foo $x\n */\nfunction f(Foo $x) {}",
+		"<?php\nnamespace App;\nuse A\\B\\Foo;\n/**\n */\nfunction f(Foo $x) {}", true)
+
+	// FQ phpdoc type is a DIFFERENT class than the imported native short name -> kept
+	assertFix(t, f,
+		"<?php\nnamespace App;\nuse Mautic\\LeadBundle\\Entity\\Tag;\n/**\n * @param \\MauticPlugin\\Foo\\Entity\\Tag $tag\n */\nfunction f(Tag $tag) {}",
+		"<?php\nnamespace App;\nuse Mautic\\LeadBundle\\Entity\\Tag;\n/**\n * @param \\MauticPlugin\\Foo\\Entity\\Tag $tag\n */\nfunction f(Tag $tag) {}", false)
+
+	// imported short name repeated in the docblock (same class) -> removed
+	assertFix(t, f,
+		"<?php\nnamespace App;\nuse A\\B\\Foo;\n/**\n * @param Foo $x\n */\nfunction f(Foo $x) {}",
+		"<?php\nnamespace App;\nuse A\\B\\Foo;\n/**\n */\nfunction f(Foo $x) {}", true)
 
 	// nullable equivalence: string|null == ?string -> removed
 	assertFix(t, f,
