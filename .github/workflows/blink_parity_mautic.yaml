@@ -7,8 +7,9 @@ name: Blink Parity (mautic)
 # prepared set (psr12 + perCs + common + standaloneLine + cleanCode) to measure
 # how far blink parity reaches on mautic under the full rule surface.
 #
-# Informational only: it reports the parity table and per-file divergences to the
-# job summary but never fails the build.
+# Ratchet gate: it reports the parity table and per-file divergences to the job
+# summary, and fails once the differing share crosses MAX_DIFF_PERCENT. Lower the
+# threshold as blink parity improves.
 
 on:
     pull_request:
@@ -90,6 +91,8 @@ jobs:
 
             - name: Compare the two trees
               run: |
+                  # ratchet gate: fail once the differing share crosses this; lower it as parity improves
+                  MAX_DIFF_PERCENT=10
                   total=0
                   differ=0
                   differing_files=""
@@ -102,7 +105,8 @@ jobs:
                   done
                   same=$((total - differ))
                   pct=0
-                  [ "$total" -gt 0 ] && pct=$((same * 100 / total))
+                  diff_pct=0
+                  [ "$total" -gt 0 ] && pct=$((same * 100 / total)) && diff_pct=$((differ * 100 / total))
                   {
                       echo "## blink (--blink) vs PHP ECS on mautic/mautic (all sets)"
                       echo ""
@@ -114,10 +118,11 @@ jobs:
                       echo "| identical output | $same |"
                       echo "| differing output | $differ |"
                       echo "| parity | ${pct}% |"
+                      echo "| diff | ${diff_pct}% (max ${MAX_DIFF_PERCENT}%) |"
                       echo ""
-                      echo "Informational: this job reports parity but does not fail the build."
+                      echo "Ratchet gate: fails once the differing share exceeds ${MAX_DIFF_PERCENT}%."
                   } >> "$GITHUB_STEP_SUMMARY"
-                  echo "identical=$same differing=$differ of $total (${pct}% parity)"
+                  echo "identical=$same differing=$differ of $total (${pct}% parity, ${diff_pct}% diff, max ${MAX_DIFF_PERCENT}%)"
 
                   for f in $differing_files; do
                       {
@@ -133,6 +138,8 @@ jobs:
                       diff "/tmp/ecs/$f" "/tmp/ours/$f" | sed 's/^/    /' | head -60 || true
                   done
 
-                  if [ "$differ" -gt 0 ]; then
-                      echo "::notice::--blink output differs from the PHP engine on $differ of $total files (informational, not failing)"
+                  if [ "$diff_pct" -gt "$MAX_DIFF_PERCENT" ]; then
+                      echo "::error::--blink differs from the PHP engine on ${diff_pct}% of files ($differ of $total), over the ${MAX_DIFF_PERCENT}% limit"
+                      exit 1
                   fi
+                  echo "::notice::--blink differs on ${diff_pct}% of files ($differ of $total), within the ${MAX_DIFF_PERCENT}% limit"
