@@ -129,7 +129,7 @@ return ECSConfig::configure()
 
 Or enable everything at once with `->withPreparedSets(common: true)`.
 
-Standalone presets are also available: `psr12: true`, `perCs: true`, and `laravel: true` (the [Laravel Pint](https://github.com/laravel/pint/blob/main/resources/presets/laravel.php) ruleset):
+Standalone presets are also available: `psr12: true`, `perCs: true`, `cleanCode: true` (dead code, unused imports, redundant syntax), `standaloneLine: true` (each constructor param on its own line), and `laravel: true` (the [Laravel Pint](https://github.com/laravel/pint/blob/main/resources/presets/laravel.php) ruleset):
 
 ```php
 use Symplify\EasyCodingStandard\Config\ECSConfig;
