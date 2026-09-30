@@ -118,7 +118,7 @@ func chainRequiresExtraIndent(s *tokens.Stream, start, end int) bool {
 		}
 		return s.MatchForward(third) > end
 	}
-	if !(s.At(end).Kind == token.Punct && s.At(end).Value == ")") {
+	if s.At(end).Kind != token.Punct || s.At(end).Value != ")" {
 		return true
 	}
 	return s.MatchBackward(end) >= start
