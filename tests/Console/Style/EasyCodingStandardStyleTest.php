@@ -48,7 +48,12 @@ final class EasyCodingStandardStyleTest extends TestCase
 
         yield 'info tag becomes green' => ['<info>done</info>', '<fg=green>done</>'];
 
-        yield 'bold options are stripped, text kept' => ['<options=bold>title</>', 'title'];
+        yield 'bold options pass through to colorizer' => ['<options=bold>title</>', '<options=bold>title</>'];
+
+        yield 'underscore options pass through to colorizer' => [
+            '<options=underscore>Applied checkers:</>',
+            '<options=underscore>Applied checkers:</>',
+        ];
 
         yield 'explicit color closing tag is normalized' => ['<fg=red>err</fg=red>', '<fg=red>err</>'];
 
