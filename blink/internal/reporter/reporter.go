@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -83,6 +84,20 @@ func newFormatter(w io.Writer) formatter {
 	return formatter{w: w, width: width, color: color}
 }
 
+// relativePath resolves an absolute file path against the current working
+// directory, matching ECS's StaticRelativeFilePathHelper output.
+func relativePath(path string) string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return path
+	}
+	rel, err := filepath.Rel(cwd, path)
+	if err != nil {
+		return path
+	}
+	return rel
+}
+
 func (f formatter) reportFileDiffs(results []runner.FileResult) {
 	if len(results) == 0 {
 		return
@@ -91,7 +106,7 @@ func (f formatter) reportFileDiffs(results []runner.FileResult) {
 
 	for i, r := range results {
 		f.newLine(2)
-		f.writeln(f.bold(fmt.Sprintf("%d) %s", i+1, r.Path)))
+		f.writeln(f.bold(fmt.Sprintf("%d) %s", i+1, relativePath(r.Path))))
 		f.newLine(1)
 		f.writeln(f.formatDiff(r.Diff))
 		f.newLine(1)
