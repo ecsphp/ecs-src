@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symplify\CodingStandard\Fixer\Commenting;
 
+use Override;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
 use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\Token;
@@ -25,6 +26,14 @@ final class RemoveParamDescriptionDuplicateNameFixer extends AbstractDocBlockFix
     public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(self::ERROR_MESSAGE, []);
+    }
+
+    // run before NoSuperfluousPhpdocTagsFixer (priority 6) so it strips the description
+    // first, letting the now-bare @param tag be dropped as superfluous
+    #[Override]
+    public function getPriority(): int
+    {
+        return 7;
     }
 
     /**
