@@ -37,6 +37,15 @@ func TestTypeToVarTag(t *testing.T) {
 	idempotent(t, TypeToVarTag{}, got)
 }
 
+// TestTypeToVarTagSkipsDescription leaves "@type" inside a description untouched,
+// only rewriting it at the start of a doc line (mirrors #81).
+func TestTypeToVarTagSkipsDescription(t *testing.T) {
+	src := "<?php\nclass A {\n    /**\n     * Matches only \"@type\" at the start of a line\n     */\n    public $x;\n}\n"
+	if got, changed := apply(t, TypeToVarTag{}, src); changed || got != src {
+		t.Fatalf("@type in a description must not change: %q", got)
+	}
+}
+
 // TestMergeDocBlockStart folds an empty leading line into the /** opener.
 func TestMergeDocBlockStart(t *testing.T) {
 	got, changed := apply(t, MergeDocBlockStart{}, "<?php\nclass A {\n    /*\n     *\n     * @var int\n     */\n    private $x;\n}\n")
