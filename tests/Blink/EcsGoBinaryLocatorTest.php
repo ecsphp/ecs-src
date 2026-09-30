@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Symplify\EasyCodingStandard\Tests\Turbo;
+namespace Symplify\EasyCodingStandard\Tests\Blink;
 
 use PHPUnit\Framework\TestCase;
-use Symplify\EasyCodingStandard\Turbo\EcsGoBinaryLocator;
-use Symplify\EasyCodingStandard\Turbo\Exception\EcsGoBinaryNotFoundException;
+use Symplify\EasyCodingStandard\Blink\EcsGoBinaryLocator;
+use Symplify\EasyCodingStandard\Blink\Exception\EcsGoBinaryNotFoundException;
 
 final class EcsGoBinaryLocatorTest extends TestCase
 {
@@ -19,18 +19,18 @@ final class EcsGoBinaryLocatorTest extends TestCase
 
     public function testEnvironmentOverrideWins(): void
     {
-        putenv('ECS_TURBO_BIN=' . __FILE__);
+        putenv('ECS_BLINK_BIN=' . __FILE__);
 
         $this->assertSame(__FILE__, $this->ecsGoBinaryLocator->locate());
 
-        putenv('ECS_TURBO_BIN');
+        putenv('ECS_BLINK_BIN');
     }
 
     public function testBundledBinaryWinsOverPath(): void
     {
-        putenv('ECS_TURBO_BIN');
+        putenv('ECS_BLINK_BIN');
 
-        $bundledDirectory = sys_get_temp_dir() . '/ecs-turbo-bundled-' . uniqid();
+        $bundledDirectory = sys_get_temp_dir() . '/ecs-blink-bundled-' . uniqid();
         mkdir($bundledDirectory);
 
         $arch = in_array(strtolower(php_uname('m')), ['aarch64', 'arm64'], true) ? 'arm64' : 'amd64';
@@ -51,7 +51,7 @@ final class EcsGoBinaryLocatorTest extends TestCase
 
     public function testFindsBinaryOnPath(): void
     {
-        putenv('ECS_TURBO_BIN');
+        putenv('ECS_BLINK_BIN');
         $originalPath = (string) getenv('PATH');
         putenv('PATH=' . __DIR__ . '/Source/bin');
 
@@ -62,7 +62,7 @@ final class EcsGoBinaryLocatorTest extends TestCase
 
     public function testThrowsWhenNoBinaryFound(): void
     {
-        putenv('ECS_TURBO_BIN');
+        putenv('ECS_BLINK_BIN');
         $originalPath = (string) getenv('PATH');
         putenv('PATH=');
 

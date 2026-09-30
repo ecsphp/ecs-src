@@ -106,11 +106,11 @@ func loadConfig(configPath string) (*config.Config, error) {
 	return config.Configure(), nil
 }
 
-// reportECSResolution prints, to w, how an ECS turbo config mapped: how many
-// rules resolved to blink fixers and everything that could not, so a turbo run
+// reportECSResolution prints, to w, how an ECS blink config mapped: how many
+// rules resolved to blink fixers and everything that could not, so a blink run
 // is never silently narrower than the ECS config it stands in for.
 func reportECSResolution(w io.Writer, resolution *config.ECSResolution) {
-	_, _ = fmt.Fprintf(w, "turbo: mapped %d of %d ECS rules to blink fixers\n", resolution.Mapped, resolution.Total)
+	_, _ = fmt.Fprintf(w, "blink: mapped %d of %d ECS rules to blink fixers\n", resolution.Mapped, resolution.Total)
 	if len(resolution.Unsupported) > 0 {
 		_, _ = fmt.Fprintf(w, "  %d unsupported (no blink fixer), skipped:\n", len(resolution.Unsupported))
 		for _, class := range resolution.Unsupported {
@@ -146,7 +146,7 @@ Usage:
   blink [paths...]            check paths (default: .)
   blink --fix [paths...]      fix paths in place
   blink --config FILE ...     use a blink.json config
-  blink --ecs-config FILE ... use an ECS dump-config JSON (turbo mode)
+  blink --ecs-config FILE ... use an ECS dump-config JSON (blink mode)
   blink list-checkers         list registered fixers
 
 Loads blink.json from the working directory when present.

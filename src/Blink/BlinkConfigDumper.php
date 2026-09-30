@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symplify\EasyCodingStandard\Turbo;
+namespace Symplify\EasyCodingStandard\Blink;
 
 use PhpCsFixer\Fixer\ConfigurableFixerInterface;
 use PhpCsFixer\Fixer\FixerInterface;
@@ -14,11 +14,11 @@ use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedPathsResolve
 use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
 
 /**
- * Turns the resolved ecs.php configuration into the JSON shape the ecs-go turbo
+ * Turns the resolved ecs.php configuration into the JSON shape the ecs-go blink
  * runner consumes: paths, rules (each a class and its config) and skips. See
- * docs/turbo.md for the schema.
+ * docs/blink.md for the schema.
  */
-final readonly class TurboConfigDumper
+final readonly class BlinkConfigDumper
 {
     public function __construct(
         private SniffFileProcessor $sniffFileProcessor,

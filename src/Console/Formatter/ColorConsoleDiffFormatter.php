@@ -29,6 +29,9 @@ final readonly class ColorConsoleDiffFormatter
      */
     private const string AT_START_REGEX = '#^(@.*)#';
 
+    // @@ -67,6 +67,8 @@ -> @@ Line 67 @@
+    private const string AT_DIFF_LINE_REGEX = '#^@@ \-(\d+),\d+ \+\d+,\d+ @@$#';
+
     /**
      * @see https://regex101.com/r/qduj2O/1
      */
@@ -94,6 +97,8 @@ final readonly class ColorConsoleDiffFormatter
 
     private function makeAtNoteCyan(string $string): string
     {
+        $string = Strings::replace($string, self::AT_DIFF_LINE_REGEX, '@@ Line $1 @@');
+
         return Strings::replace($string, self::AT_START_REGEX, '<fg=cyan>$1</fg=cyan>');
     }
 }

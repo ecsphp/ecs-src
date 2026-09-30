@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Symplify\EasyCodingStandard\Tests\Turbo;
+namespace Symplify\EasyCodingStandard\Tests\Blink;
 
 use Override;
 use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
 use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
+use Symplify\EasyCodingStandard\Blink\BlinkConfigDumper;
 use Symplify\EasyCodingStandard\Testing\PHPUnit\AbstractTestCase;
-use Symplify\EasyCodingStandard\Turbo\TurboConfigDumper;
 
-final class TurboConfigDumperTest extends AbstractTestCase
+final class BlinkConfigDumperTest extends AbstractTestCase
 {
-    private TurboConfigDumper $turboConfigDumper;
+    private BlinkConfigDumper $blinkConfigDumper;
 
     #[Override]
     protected function setUp(): void
@@ -20,19 +20,19 @@ final class TurboConfigDumperTest extends AbstractTestCase
         parent::setUp();
 
         $this->createContainerWithConfigs([__DIR__ . '/Source/configured-ecs.php']);
-        $this->turboConfigDumper = $this->make(TurboConfigDumper::class);
+        $this->blinkConfigDumper = $this->make(BlinkConfigDumper::class);
     }
 
     public function testDumpPassesPathsThrough(): void
     {
-        $data = $this->turboConfigDumper->dump(['src', 'tests']);
+        $data = $this->blinkConfigDumper->dump(['src', 'tests']);
 
         $this->assertSame(['src', 'tests'], $data['paths']);
     }
 
     public function testDumpExtractsConfiguredFixerConfig(): void
     {
-        $data = $this->turboConfigDumper->dump([]);
+        $data = $this->blinkConfigDumper->dump([]);
 
         $configByClass = [];
         foreach ($data['rules'] as $rule) {
@@ -47,7 +47,7 @@ final class TurboConfigDumperTest extends AbstractTestCase
 
     public function testDumpReportsPathSkipAndClassSkip(): void
     {
-        $data = $this->turboConfigDumper->dump([]);
+        $data = $this->blinkConfigDumper->dump([]);
 
         $skipPaths = [];
         $skipClasses = [];
