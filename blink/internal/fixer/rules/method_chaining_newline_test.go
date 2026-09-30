@@ -9,28 +9,31 @@ func TestMethodChainingNewline(t *testing.T) {
 		src, want string
 		changed   bool
 	}{
-		// plain variable-rooted chain at statement level: split
-		{"<?php\n$x->one()->two();", "<?php\n$x->one()\n    ->two();", true},
-		{"<?php\nreturn $this->a()->b()->c();", "<?php\nreturn $this->a()\n    ->b()\n    ->c();", true},
-		{"<?php\n$a = $x->one()->two();", "<?php\n$a = $x->one()\n    ->two();", true},
+		// plain variable-rooted chain with a long trailing call: split
+		{"<?php\n$x->first()->second();", "<?php\n$x->first()\n    ->second();", true},
+
+		// short (<=5 chars) no-argument trailing calls stay inline
+		{"<?php\n$x->one()->two();", "<?php\n$x->one()->two();", false},
+		{"<?php\nreturn $this->a()->b()->c();", "<?php\nreturn $this->a()->b()->c();", false},
 
 		// single method call: nothing to split
 		{"<?php\n$x->one();", "<?php\n$x->one();", false},
 
 		// a "::" earlier on the line suppresses the split (symplify heuristic)
-		{"<?php\nstatic::$r = $b->one()->two();", "<?php\nstatic::$r = $b->one()->two();", false},
+		{"<?php\nstatic::$r = $b->one()->second();", "<?php\nstatic::$r = $b->one()->second();", false},
 		// a "[" earlier on the line likewise
-		{"<?php\n$s = $a->b($m[2])->c();", "<?php\n$s = $a->b($m[2])->c();", false},
+		{"<?php\n$s = $a->b($m[2])->second();", "<?php\n$s = $a->b($m[2])->second();", false},
 
 		// a chain inline inside a call's arguments is left alone
-		{"<?php\nfoo($x->a()->b());", "<?php\nfoo($x->a()->b());", false},
+		{"<?php\nfoo($x->a()->second());", "<?php\nfoo($x->a()->second());", false},
 		// grouped root: the first call stays inline, later calls split
-		{"<?php\n$y = (new Foo())->bar()->baz();", "<?php\n$y = (new Foo())->bar()\n    ->baz();", true},
+		{"<?php\n$y = (new Foo())->bar()->second();", "<?php\n$y = (new Foo())->bar()\n    ->second();", true},
 		{"<?php\n$y = (new Foo())->bar();", "<?php\n$y = (new Foo())->bar();", false},
 
-		// a chain that starts its own line (inside a multi-line expression) splits
-		{"<?php\nreturn (\n    $this->a($x)->b() ||\n    $this->c()->d()\n);",
-			"<?php\nreturn (\n    $this->a($x)\n        ->b() ||\n    $this->c()\n        ->d()\n);", true},
+		// a chain used in a boolean or comparison expression stays inline
+		{"<?php\n$r = $this->first()->second() || $x;", "<?php\n$r = $this->first()->second() || $x;", false},
+		// a chain inside an if condition stays inline
+		{"<?php\nif ($this->first()->second()) {\n}", "<?php\nif ($this->first()->second()) {\n}", false},
 
 		// already multi-line: no-op
 		{"<?php\n$x->one()\n    ->two();", "<?php\n$x->one()\n    ->two();", false},

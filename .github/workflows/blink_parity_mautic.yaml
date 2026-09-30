@@ -92,7 +92,7 @@ jobs:
             - name: Compare the two trees
               run: |
                   # ratchet gate: fail once the differing share crosses this; lower it as parity improves
-                  MAX_DIFF_PERCENT=10
+                  MAX_DIFF_PERCENT=7
                   total=0
                   differ=0
                   differing_files=""
