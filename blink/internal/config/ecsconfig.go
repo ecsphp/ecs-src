@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"sort"
 
+	"blink/internal/fixer"
 	"blink/internal/fixer/rules"
 )
 
@@ -104,20 +105,24 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 			continue
 		}
 
-		fixer, ok := rules.ByName(rule.Class)
+		resolved, ok := rules.ByName(rule.Class)
 		if !ok {
 			resolution.Unsupported = append(resolution.Unsupported, rule.Class)
 			continue
 		}
 
 		if len(rule.Config) > 0 {
-			resolution.ConfigIgnored = append(resolution.ConfigIgnored, rule.Class)
+			if configurable, ok := resolved.(fixer.ConfigurableFixer); ok {
+				resolved = configurable.WithConfig(rule.Config)
+			} else {
+				resolution.ConfigIgnored = append(resolution.ConfigIgnored, rule.Class)
+			}
 		}
 
 		if !seen[rule.Class] {
 			seen[rule.Class] = true
 			resolution.Mapped++
-			config.Rules = append(config.Rules, fixer)
+			config.Rules = append(config.Rules, resolved)
 		}
 	}
 
