@@ -26,6 +26,18 @@ func TestRemoveParamDescriptionDuplicateNameSingleLine(t *testing.T) {
 	idempotent(t, RemoveParamDescriptionDuplicateName{}, got)
 }
 
+// TestRemoveParamDescriptionDuplicateNameAttributedMethod strips the duplicate
+// even when the docblock sits ahead of a method attribute.
+func TestRemoveParamDescriptionDuplicateNameAttributedMethod(t *testing.T) {
+	src := "<?php\nclass A {\n    /**\n     * @param int $leadId Lead ID\n     */\n    #[Route('/x/{leadId}')]\n    function f($leadId) {}\n}\n"
+	want := "<?php\nclass A {\n    /**\n     * @param int $leadId\n     */\n    #[Route('/x/{leadId}')]\n    function f($leadId) {}\n}\n"
+	got, changed := apply(t, RemoveParamDescriptionDuplicateName{}, src)
+	if !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
+	idempotent(t, RemoveParamDescriptionDuplicateName{}, got)
+}
+
 // TestRemoveParamDescriptionDuplicateNameKeepsRealDescription leaves a genuine
 // description untouched.
 func TestRemoveParamDescriptionDuplicateNameKeepsRealDescription(t *testing.T) {
