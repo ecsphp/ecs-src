@@ -275,7 +275,7 @@ func All() []fixer.Fixer {
 }
 
 // CanonicalOrder sorts fixers in place to match All()'s execution order
-// (PHP-CS-Fixer priority plus the curated tie-break), so the turbo/--blink path
+// (PHP-CS-Fixer priority plus the curated tie-break), so the blink/--blink path
 // applies rules in the same order as the standalone path. Fixers unknown to
 // All() are placed last.
 func CanonicalOrder(fixers []fixer.Fixer) {

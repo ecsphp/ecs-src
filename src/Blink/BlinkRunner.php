@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symplify\EasyCodingStandard\Turbo;
+namespace Symplify\EasyCodingStandard\Blink;
 
 use Nette\Utils\FileSystem;
 use Nette\Utils\Json;
@@ -12,11 +12,11 @@ use Symplify\EasyCodingStandard\Exception\ShouldNotHappenException;
  * Experimental --blink mode: hands the run over to the "ecs-go" Go binary instead
  * of the PHP engine. The resolved ecs.php config (paths, rules, skips) is written
  * to a temp JSON file and passed to ecs-go via --ecs-config, so ecs-go maps the
- * ECS rules onto its own fixers. See docs/turbo.md for the current limitations.
+ * ECS rules onto its own fixers. See docs/blink.md for the current limitations.
  *
- * @see \Symplify\EasyCodingStandard\Tests\Turbo\TurboRunnerTest
+ * @see \Symplify\EasyCodingStandard\Tests\Blink\BlinkRunnerTest
  */
-final readonly class TurboRunner
+final readonly class BlinkRunner
 {
     public function __construct(
         private EcsGoBinaryLocator $ecsGoBinaryLocator,
@@ -71,7 +71,7 @@ final readonly class TurboRunner
      */
     private function writeConfig(array $configData): string
     {
-        $configPath = tempnam(sys_get_temp_dir(), 'ecs-turbo-') . '.json';
+        $configPath = tempnam(sys_get_temp_dir(), 'ecs-blink-') . '.json';
         file_put_contents($configPath, Json::encode($configData, Json::PRETTY));
 
         return $configPath;

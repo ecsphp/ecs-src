@@ -7,14 +7,14 @@ namespace Symplify\EasyCodingStandard\Console\Command;
 use Entropy\Console\Contract\CommandInterface;
 use Entropy\Console\Contract\DefaultCommandInterface;
 use Symplify\EasyCodingStandard\Application\EasyCodingStandardApplication;
+use Symplify\EasyCodingStandard\Blink\BlinkConfigDumper;
+use Symplify\EasyCodingStandard\Blink\BlinkRunner;
 use Symplify\EasyCodingStandard\Configuration\ConfigInitializer;
 use Symplify\EasyCodingStandard\Configuration\ConfigurationFactory;
 use Symplify\EasyCodingStandard\Console\ExitCode;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 use Symplify\EasyCodingStandard\MemoryLimitter;
 use Symplify\EasyCodingStandard\Reporter\ProcessedFileReporter;
-use Symplify\EasyCodingStandard\Turbo\TurboConfigDumper;
-use Symplify\EasyCodingStandard\Turbo\TurboRunner;
 
 final readonly class CheckCommand implements CommandInterface, DefaultCommandInterface
 {
@@ -24,8 +24,8 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         private ConfigInitializer $configInitializer,
         private EasyCodingStandardApplication $easyCodingStandardApplication,
         private ConfigurationFactory $configurationFactory,
-        private TurboRunner $turboRunner,
-        private TurboConfigDumper $turboConfigDumper,
+        private BlinkRunner $blinkRunner,
+        private BlinkConfigDumper $blinkConfigDumper,
     ) {
     }
 
@@ -99,9 +99,9 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
 
         // experimental: hand the resolved config to the ecs-go Go binary and skip the PHP engine
         if ($blink) {
-            $configData = $this->turboConfigDumper->dump($configuration->getSources());
-            $turboExitCode = $this->turboRunner->run($configData, $fix);
-            return $turboExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+            $configData = $this->blinkConfigDumper->dump($configuration->getSources());
+            $blinkExitCode = $this->blinkRunner->run($configData, $fix);
+            return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
 
         $this->memoryLimitter->adjust($configuration);

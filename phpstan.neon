@@ -93,7 +93,7 @@ parameters:
         # property_exists() is needed to read the fixer configuration
         -
             message: '#Function "property_exists\(\)" cannot be used/left in the code#'
-            path: src/Turbo/TurboConfigDumper.php
+            path: src/Blink/BlinkConfigDumper.php
 
         # nullable on purpose - hack to avoid running both rules together
         -

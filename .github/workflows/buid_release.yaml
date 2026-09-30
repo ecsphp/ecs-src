@@ -118,8 +118,7 @@ jobs:
                     token: ${{ secrets.ACCESS_TOKEN }}
 
             # remove remote files, to avoid piling up dead code in remote repository
-            # bin/turbo is the obsolete ecs-go binary directory, replaced by bin/blink-<platform>
-            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/packages remote-repository/src remote-repository/vendor remote-repository/bin/turbo
+            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/packages remote-repository/src remote-repository/vendor
 
             # clear the dev files
             - run: cp -a ecs-prefixed-downgraded/. remote-repository
