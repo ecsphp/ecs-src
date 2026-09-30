@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"strings"
+
 	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
@@ -82,7 +84,90 @@ func (f BinaryOperatorSpaces) Fix(s *tokens.Stream) bool {
 		}
 		i++
 	}
+	// Attributes are lexed as one opaque token, so the loop above never sees the
+	// "=>" inside them; normalize their arrow alignment directly when "=>" is set
+	// to a single space (php-cs-fixer collapses it the same way).
+	if f.arrowSingleSpace() {
+		for j := 0; j < s.Len(); j++ {
+			t := s.At(j)
+			if t.Kind != token.Comment || !strings.HasPrefix(t.Value, "#[") {
+				continue
+			}
+			if nv, ch := collapseAttributeArrowSpacing(t.Value); ch {
+				s.SetValue(j, nv)
+				changed = true
+			}
+		}
+	}
 	return changed
+}
+
+// arrowSingleSpace reports whether "=>" resolves to a single space under this
+// configuration.
+func (f BinaryOperatorSpaces) arrowSingleSpace() bool {
+	if m, ok := f.Operators["=>"]; ok {
+		return m == "single"
+	}
+	if f.Default == "" {
+		return true
+	}
+	return f.Default == "single"
+}
+
+// collapseAttributeArrowSpacing collapses aligned whitespace around each "=>" in
+// an attribute token's text to a single space, ignoring "=>" inside strings and
+// leaving newlines (multiline alignment) alone.
+func collapseAttributeArrowSpacing(value string) (string, bool) {
+	var b []byte
+	changed := false
+	var quote byte
+	for i := 0; i < len(value); i++ {
+		c := value[i]
+		if quote != 0 {
+			b = append(b, c)
+			if c == '\\' && i+1 < len(value) {
+				i++
+				b = append(b, value[i])
+				continue
+			}
+			if c == quote {
+				quote = 0
+			}
+			continue
+		}
+		if c == '\'' || c == '"' {
+			quote = c
+			b = append(b, c)
+			continue
+		}
+		if c == '=' && i+1 < len(value) && value[i+1] == '>' {
+			// collapse a same-line run of spaces already written before "=>"
+			end := len(b)
+			start := end
+			for start > 0 && (b[start-1] == ' ' || b[start-1] == '\t') {
+				start--
+			}
+			if start > 0 && start < end {
+				b = append(b[:start], ' ')
+				changed = true
+			}
+			b = append(b, '=', '>')
+			i++
+			// collapse a same-line run of spaces after "=>"
+			j := i + 1
+			for j < len(value) && (value[j] == ' ' || value[j] == '\t') {
+				j++
+			}
+			if j > i+1 && j < len(value) && value[j] != '\n' && value[j] != '\r' {
+				b = append(b, ' ')
+				i = j - 1
+				changed = true
+			}
+			continue
+		}
+		b = append(b, c)
+	}
+	return string(b), changed
 }
 
 // modeAt returns the spacing mode for the token at i, or "" when it is not a
