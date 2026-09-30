@@ -44,6 +44,13 @@ func TestBracesPositionClosureLeftAlone(t *testing.T) {
 	}
 }
 
+func TestBracesPositionDynamicAccessLeftAlone(t *testing.T) {
+	// "->{$prop}" is dynamic access, not a control block: no space inserted
+	if _, changed := apply(t, BracesPosition{}, "<?php if ($this->{$prop} != $v) {\n}"); changed {
+		t.Fatal("dynamic property access brace must not get a space")
+	}
+}
+
 func TestClassifyBrace(t *testing.T) {
 	cases := []struct {
 		src  string
