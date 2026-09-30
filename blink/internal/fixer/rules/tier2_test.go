@@ -61,6 +61,12 @@ func TestMultilineWhitespaceBeforeSemicolons(t *testing.T) {
 	if _, changed := apply(t, MultilineWhitespaceBeforeSemicolons{}, "<?php $a = 1;"); changed {
 		t.Fatal("single-line semicolon must not change")
 	}
+	// WithConfig("no_multi_line") keeps the built-in behaviour
+	configured := MultilineWhitespaceBeforeSemicolons{}.WithConfig(map[string]any{"strategy": "no_multi_line"})
+	got, changed = apply(t, configured, "<?php $a = foo()\n    ;")
+	if want := "<?php $a = foo();"; !changed || got != want {
+		t.Fatalf("configured: changed=%v got=%q want=%q", changed, got, want)
+	}
 }
 
 func TestSingleLineEmptyBodyRegistered(t *testing.T) {
