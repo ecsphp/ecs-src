@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Symplify\EasyCodingStandard\Turbo;
+namespace Symplify\EasyCodingStandard\Blink;
 
-use Symplify\EasyCodingStandard\Turbo\Exception\EcsGoBinaryNotFoundException;
+use Symplify\EasyCodingStandard\Blink\Exception\EcsGoBinaryNotFoundException;
 
 /**
  * Resolves the "ecs-go" Go binary that powers the experimental --blink mode.
  *
- * @see \Symplify\EasyCodingStandard\Tests\Turbo\EcsGoBinaryLocatorTest
+ * @see \Symplify\EasyCodingStandard\Tests\Blink\EcsGoBinaryLocatorTest
  */
 final readonly class EcsGoBinaryLocator
 {
-    private const string ENV_OVERRIDE = 'ECS_TURBO_BIN';
+    private const string ENV_OVERRIDE = 'ECS_BLINK_BIN';
 
     public function __construct(
         // filled with per-platform blink binaries by the release build, see .github/workflows/buid_release.yaml

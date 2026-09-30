@@ -6,20 +6,20 @@ namespace Symplify\EasyCodingStandard\Console\Command;
 
 use Entropy\Console\Contract\CommandInterface;
 use Nette\Utils\Json;
+use Symplify\EasyCodingStandard\Blink\BlinkConfigDumper;
 use Symplify\EasyCodingStandard\Configuration\ConfigurationFactory;
 use Symplify\EasyCodingStandard\Console\ExitCode;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
-use Symplify\EasyCodingStandard\Turbo\TurboConfigDumper;
 
 /**
  * Dumps the resolved ecs.php configuration - paths, rules and skips - as JSON,
- * for the ecs-go turbo runner to consume. See docs/turbo.md.
+ * for the ecs-go blink runner to consume. See docs/blink.md.
  */
 final readonly class DumpConfigCommand implements CommandInterface
 {
     public function __construct(
         private ConfigurationFactory $configurationFactory,
-        private TurboConfigDumper $turboConfigDumper,
+        private BlinkConfigDumper $blinkConfigDumper,
     ) {
     }
 
@@ -30,7 +30,7 @@ final readonly class DumpConfigCommand implements CommandInterface
 
     public function getDescription(): string
     {
-        return 'Dump the resolved configuration (paths, rules, skips) as JSON for the ecs-go turbo runner';
+        return 'Dump the resolved configuration (paths, rules, skips) as JSON for the ecs-go blink runner';
     }
 
     /**
@@ -61,7 +61,7 @@ final readonly class DumpConfigCommand implements CommandInterface
             false,
         );
 
-        $data = $this->turboConfigDumper->dump($configuration->getSources());
+        $data = $this->blinkConfigDumper->dump($configuration->getSources());
 
         echo Json::encode($data, Json::PRETTY) . PHP_EOL;
 

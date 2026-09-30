@@ -95,7 +95,7 @@ jobs:
 
             - name: Fix with blink (--blink)
               env:
-                  ECS_TURBO_BIN: /tmp/blink
+                  ECS_BLINK_BIN: /tmp/blink
               run: bin/ecs check --fix --no-progress-bar --config /tmp/ours/ecs.php --blink || true
 
             - name: Fix with the PHP engine

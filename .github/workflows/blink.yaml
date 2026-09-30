@@ -1,4 +1,4 @@
-name: Turbo
+name: Blink
 
 # End-to-end check of --blink: ECS dumps the resolved ecs.php config to JSON and
 # hands it to the blink binary, which maps the rules and rewrites the code. This
@@ -12,7 +12,7 @@ on:
             - main
 
 jobs:
-    turbo:
+    blink:
         runs-on: ubuntu-latest
 
         steps:
@@ -38,14 +38,14 @@ jobs:
             -
                 name: "Run --blink --fix over the golden fixture"
                 run: |
-                    cp -r tests/Turbo/Fixture/input /tmp/turbo-work
-                    ECS_TURBO_BIN=/tmp/blink-bin bin/ecs check /tmp/turbo-work --blink --fix \
-                        --config=tests/Turbo/Fixture/ecs.php --no-progress-bar --ansi || true
+                    cp -r tests/Blink/Fixture/input /tmp/blink-work
+                    ECS_BLINK_BIN=/tmp/blink-bin bin/ecs check /tmp/blink-work --blink --fix \
+                        --config=tests/Blink/Fixture/ecs.php --no-progress-bar --ansi || true
 
             -
                 name: "Assert the output matches the expected result"
                 run: |
-                    if ! diff -r /tmp/turbo-work tests/Turbo/Fixture/expected; then
+                    if ! diff -r /tmp/blink-work tests/Blink/Fixture/expected; then
                         echo "::error::--blink output does not match the expected fixture"
                         exit 1
                     fi

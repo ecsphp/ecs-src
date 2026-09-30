@@ -1,4 +1,4 @@
-# Turbo mode (experimental)
+# Blink mode (experimental)
 
 `--blink` hands the run over to the [`ecs-go`](https://github.com/TomasVotruba/ecs-go) Go binary instead of the PHP engine:
 
@@ -48,8 +48,8 @@ Configured fixer options are read off the fixer instance; sniff properties are n
 
 The ecs-go binary is looked up in this order:
 
-1. the `ECS_TURBO_BIN` environment variable, if it points to an existing file;
-2. the binary bundled with ECS in `bin/turbo/` (Linux, macOS and Windows, amd64 and arm64);
+1. the `ECS_BLINK_BIN` environment variable, if it points to an existing file;
+2. the binary bundled with ECS in `bin/` as `blink-<platform>` (Linux, macOS and Windows, amd64 and arm64);
 3. `vendor/bin/ecs-go`, if present;
 4. `ecs-go` on the `PATH`.
 
@@ -57,8 +57,8 @@ If none is found, `--blink` fails with an error explaining how to provide the bi
 
 ## Prototype caveat
 
-This is an RFC-stage prototype. ecs-go reads the rules and skips from your `ecs.php` (not just the paths), and because every ecs-go fixer is named by its PHP-CS-Fixer class, the rules map straight across by name. Every rule ecs-go has no fixer for is reported and skipped, and a configured rule runs with ecs-go's built-in behaviour (its configuration is not modelled yet) and is noted in the report. So a turbo run is never silently narrower than your config, but it is not yet equivalent to a full ECS run.
+This is an RFC-stage prototype. ecs-go reads the rules and skips from your `ecs.php` (not just the paths), and because every ecs-go fixer is named by its PHP-CS-Fixer class, the rules map straight across by name. Every rule ecs-go has no fixer for is reported and skipped, and a configured rule runs with ecs-go's built-in behaviour (its configuration is not modelled yet) and is noted in the report. So a blink run is never silently narrower than your config, but it is not yet equivalent to a full ECS run.
 
 ## Bundled binary
 
-The release build cross-compiles ecs-go from its `main` branch and ships it in `bin/turbo/`, so `--blink` works out of the box on Linux, macOS and Windows - no Go toolchain needed.
+The release build cross-compiles ecs-go from its `main` branch and ships it in `bin/` as `blink-<platform>`, so `--blink` works out of the box on Linux, macOS and Windows - no Go toolchain needed.

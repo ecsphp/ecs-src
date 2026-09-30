@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Symplify\EasyCodingStandard\Turbo\Exception;
+namespace Symplify\EasyCodingStandard\Blink\Exception;
 
 use Exception;
 

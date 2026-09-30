@@ -11,7 +11,7 @@ import (
 	"blink/internal/fixer/rules"
 )
 
-// Turbo mode: ECS dumps its resolved ecs.php configuration to JSON (paths, rules,
+// Blink mode: ECS dumps its resolved ecs.php configuration to JSON (paths, rules,
 // skips) with `ecs dump-config`, and blink consumes it here. Every blink fixer
 // is named by its PHP-CS-Fixer FQCN, which is exactly the class ECS reports, so
 // the rules map by name without a translation table.
@@ -39,7 +39,7 @@ type ecsFile struct {
 	Skips      []ecsSkip           `json:"skips"`
 }
 
-// ECSResolution reports how an ECS config mapped onto blink, so a turbo run is
+// ECSResolution reports how an ECS config mapped onto blink, so a blink run is
 // never silently narrower than the config it stands in for.
 type ECSResolution struct {
 	// Total is the number of ECS rules in the config.
