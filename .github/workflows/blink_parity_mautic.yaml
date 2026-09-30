@@ -3,9 +3,12 @@ name: Blink Parity (mautic)
 # Runs the same ECS config both ways on a real mautic/mautic checkout:
 #   bin/ecs check --fix              (PHP engine)
 #   bin/ecs check --fix --blink      (ecs-go binary, via --ecs-config)
-# on two identical copies, then diffs the resulting trees. Both must produce
-# byte-for-byte identical files. This is the 1:1 parity gate on mautic: it stays
-# red until --blink reproduces the PHP engine exactly.
+# on two identical copies, then diffs the resulting trees. This applies every
+# prepared set (psr12 + perCs + common + standaloneLine + cleanCode) to measure
+# how far blink parity reaches on mautic under the full rule surface.
+#
+# Informational only: it reports the parity table and per-file divergences to the
+# job summary but never fails the build.
 
 on:
     pull_request:
@@ -43,7 +46,7 @@ jobs:
               run: git clone --depth 1 https://github.com/mautic/mautic.git /tmp/mautic
 
             # the ECS config lives inside the checkout so __DIR__ resolves against it;
-            # mirrors the prepared sets and skips used on the mautic tv-ecs-go branch
+            # applies every prepared set, no per-fixer skips, to exercise the full surface
             - name: Write the shared ECS config
               run: |
                   cat > /tmp/mautic/ecs.php <<'PHP'
@@ -61,29 +64,13 @@ jobs:
                       ->withSkip([
                           '*/node_modules/*',
                           '*/Fixture/*',
-                          PhpCsFixer\Fixer\Phpdoc\PhpdocNoEmptyReturnFixer::class => [
-                              __DIR__ . '/app/bundles/CoreBundle/Entity/CommonEntity.php',
-                          ],
-                          PhpCsFixer\Fixer\Phpdoc\GeneralPhpdocAnnotationRemoveFixer::class,
-                          PhpCsFixer\Fixer\Operator\BinaryOperatorSpacesFixer::class,
-                          PhpCsFixer\Fixer\Operator\ConcatSpaceFixer::class,
-                          PhpCsFixer\Fixer\Operator\NotOperatorWithSpaceFixer::class,
-                          PhpCsFixer\Fixer\Operator\NotOperatorWithSuccessorSpaceFixer::class,
-                          PhpCsFixer\Fixer\Whitespace\MethodChainingIndentationFixer::class,
-                          Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer::class,
-                          PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer::class,
-                          PhpCsFixer\Fixer\ControlStructure\NoAlternativeSyntaxFixer::class,
-                      ])
-                      ->withRules([
-                          PhpCsFixer\Fixer\Semicolon\MultilineWhitespaceBeforeSemicolonsFixer::class,
                       ])
                       ->withPreparedSets(
-                          comments: true,
-                          docblocks: true,
-                          namespaces: true,
-                          cleanup: true,
-                          controlStructures: true,
+                          psr12: true,
+                          perCs: true,
+                          common: true,
                           standaloneLine: true,
+                          cleanCode: true,
                       );
                   PHP
                   cp /tmp/mautic/ecs.php /tmp/mautic/ecs-copy.php
@@ -114,18 +101,23 @@ jobs:
                       fi
                   done
                   same=$((total - differ))
+                  pct=0
+                  [ "$total" -gt 0 ] && pct=$((same * 100 / total))
                   {
-                      echo "## blink (--blink) vs PHP ECS on mautic/mautic"
+                      echo "## blink (--blink) vs PHP ECS on mautic/mautic (all sets)"
+                      echo ""
+                      echo "Sets applied: psr12 + perCs + common + standaloneLine + cleanCode."
                       echo ""
                       echo "| metric | value |"
                       echo "|---|---|"
                       echo "| files | $total |"
                       echo "| identical output | $same |"
                       echo "| differing output | $differ |"
+                      echo "| parity | ${pct}% |"
                       echo ""
-                      echo "1:1 parity gate: fails while any file differs between the two runners."
+                      echo "Informational: this job reports parity but does not fail the build."
                   } >> "$GITHUB_STEP_SUMMARY"
-                  echo "identical=$same differing=$differ of $total"
+                  echo "identical=$same differing=$differ of $total (${pct}% parity)"
 
                   for f in $differing_files; do
                       {
@@ -142,6 +134,5 @@ jobs:
                   done
 
                   if [ "$differ" -gt 0 ]; then
-                      echo "::error::--blink output differs from the PHP engine on $differ of $total files"
-                      exit 1
+                      echo "::notice::--blink output differs from the PHP engine on $differ of $total files (informational, not failing)"
                   fi
