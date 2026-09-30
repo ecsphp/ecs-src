@@ -58,6 +58,19 @@ func TestOrderedTypes(t *testing.T) {
 	}
 }
 
+func TestOrderedTypesConfig(t *testing.T) {
+	// sort_algorithm=none keeps source order; null_adjustment=always_last moves null last
+	cfg := map[string]any{"sort_algorithm": "none", "null_adjustment": "always_last"}
+	keep := OrderedTypes{}.WithConfig(cfg).(fixerRule)
+	if _, changed := apply(t, keep, "<?php function a(): B|A {}"); changed {
+		t.Fatal("sort_algorithm=none must keep source order")
+	}
+	got, changed := apply(t, keep, "<?php function a(): null|B|A {}")
+	if want := "<?php function a(): B|A|null {}"; !changed || got != want {
+		t.Fatalf("null-last: changed=%v got=%q want=%q", changed, got, want)
+	}
+}
+
 func TestMethodChainingIndentation(t *testing.T) {
 	got, changed := apply(t, MethodChainingIndentation{}, "<?php\n$x = $obj->foo()\n->bar()\n        ->baz();\n")
 	if want := "<?php\n$x = $obj->foo()\n    ->bar()\n    ->baz();\n"; !changed || got != want {

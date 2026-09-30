@@ -29,4 +29,11 @@ func TestMethodArgumentSpaceConfig(t *testing.T) {
 	if want := "<?php foo(1, 2);"; !changed || got != want {
 		t.Fatalf("ensure_single_line: changed=%v got=%q", changed, got)
 	}
+
+	// a trailing line comment stays on the argument's line, break goes after it
+	fully := MethodArgumentSpace{}.WithConfig(map[string]any{"on_multiline": "ensure_fully_multiline"}).(fixerRule)
+	got, _ = apply(t, fully, "<?php foo(\n    1, // one\n    2, // two\n);")
+	if want := "<?php foo(\n    1, // one\n    2, // two\n);"; got != want {
+		t.Fatalf("trailing comment: got=%q", got)
+	}
 }
