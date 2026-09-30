@@ -2,8 +2,10 @@ package rules
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -72,7 +74,11 @@ var phpdocTypeKeywords = map[string]bool{
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTypesFixer.php
 //
 // PhpdocTypes lowercases known phpdoc type keywords to their canonical form.
-type PhpdocTypes struct{}
+// Options `groups` (default ["simple","alias","meta"]) and `exclude` (default [])
+// select the type set; a nil set keeps blink's built-in keyword list.
+type PhpdocTypes struct {
+	typeSet map[string]bool
+}
 
 func (PhpdocTypes) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\PhpdocTypesFixer`
@@ -85,7 +91,39 @@ func (PhpdocTypes) SourceURL() string {
 // phpdocGenericTagRe matches type-carrying generic tags (@implements X<Y>, ...).
 var phpdocGenericTagRe = regexp.MustCompile(`(?i)^(@(?:implements|extends|use|template-extends|template-implements)\s+)(\S+)(.*)$`)
 
-func (PhpdocTypes) Fix(s *tokens.Stream) bool {
+// phpdocTypesPossible are the type groups from PhpdocTypesFixer, used to build the
+// keyword set when the fixer is configured.
+var phpdocTypesPossible = map[string][]string{
+	"alias":  {"boolean", "double", "integer"},
+	"meta":   {"$this", "false", "mixed", "parent", "resource", "scalar", "self", "static", "true", "void"},
+	"simple": {"array", "bool", "callable", "float", "int", "iterable", "null", "object", "string"},
+}
+
+func (f PhpdocTypes) WithConfig(config map[string]any) fixer.Fixer {
+	groups, ok := phpdocBatchStringList(config["groups"])
+	if !ok {
+		groups = []string{"simple", "alias", "meta"}
+	}
+	set := map[string]bool{}
+	for _, g := range groups {
+		for _, t := range phpdocTypesPossible[g] {
+			set[t] = true
+		}
+	}
+	if exclude, ok := phpdocBatchStringList(config["exclude"]); ok {
+		for _, e := range exclude {
+			delete(set, e)
+		}
+	}
+	f.typeSet = set
+	return f
+}
+
+func (f PhpdocTypes) Fix(s *tokens.Stream) bool {
+	keywords := f.typeSet
+	if keywords == nil {
+		keywords = phpdocTypeKeywords
+	}
 	return applyToDocblocks(s, func(d *docblock) bool {
 		changed := false
 		for i, l := range d.inner {
@@ -97,7 +135,7 @@ func (PhpdocTypes) Fix(s *tokens.Stream) bool {
 			if m == nil {
 				continue
 			}
-			newType := normalizePhpdocTypeCase(m[2])
+			newType := normalizePhpdocTypeCase(m[2], keywords)
 			if newType == m[2] {
 				continue
 			}
@@ -115,7 +153,7 @@ var phpdocTypeWordRe = regexp.MustCompile(`[$A-Za-z_\\][A-Za-z0-9_\\]*`)
 // unions, array suffixes, nullables and generics (Foo<Scalar> -> Foo<scalar>).
 // A word that is namespaced ("\Foo") or a class-constant/member reference
 // ("Ref::STATIC") is left as-is.
-func normalizePhpdocTypeCase(typ string) string {
+func normalizePhpdocTypeCase(typ string, keywords map[string]bool) string {
 	var b strings.Builder
 	prev := 0
 	for _, loc := range phpdocTypeWordRe.FindAllStringIndex(typ, -1) {
@@ -124,7 +162,7 @@ func normalizePhpdocTypeCase(typ string) string {
 		w := typ[st:en]
 		qualified := strings.Contains(w, `\`) || (st > 0 && (typ[st-1] == ':' || typ[st-1] == '\\'))
 		if !qualified {
-			if low := strings.ToLower(w); low != w && phpdocTypeKeywords[low] {
+			if low := strings.ToLower(w); low != w && keywords[low] {
 				w = low
 			}
 		}
@@ -135,14 +173,34 @@ func normalizePhpdocTypeCase(typ string) string {
 	return b.String()
 }
 
+// phpdocBatchStringList reads a config value as a list of strings.
+func phpdocBatchStringList(v any) ([]string, bool) {
+	switch list := v.(type) {
+	case []string:
+		return append([]string{}, list...), true
+	case []any:
+		out := make([]string, 0, len(list))
+		for _, e := range list {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out, true
+	}
+	return nil, false
+}
+
 var aliasTagRe = regexp.MustCompile(`^@(type|link)\b`)
 
 var aliasTagMap = map[string]string{"type": "var", "link": "see"}
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocNoAliasTagFixer.php
 //
-// PhpdocNoAliasTag rewrites alias tags: @type -> @var, @link -> @see.
-type PhpdocNoAliasTag struct{}
+// PhpdocNoAliasTag rewrites alias tags: @type -> @var, @link -> @see. Option
+// `replacements` overrides the tag mapping; a nil map keeps blink's default.
+type PhpdocNoAliasTag struct {
+	replacements map[string]string
+}
 
 func (PhpdocNoAliasTag) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\PhpdocNoAliasTagFixer`
@@ -152,21 +210,68 @@ func (PhpdocNoAliasTag) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocNoAliasTagFixer.php"
 }
 
-func (PhpdocNoAliasTag) Fix(s *tokens.Stream) bool {
+func (f PhpdocNoAliasTag) WithConfig(config map[string]any) fixer.Fixer {
+	if raw, ok := config["replacements"].(map[string]any); ok {
+		m := make(map[string]string, len(raw))
+		for k, v := range raw {
+			if s, ok := v.(string); ok {
+				m[k] = s
+			}
+		}
+		f.replacements = m
+	}
+	return f
+}
+
+func (f PhpdocNoAliasTag) Fix(s *tokens.Stream) bool {
+	if f.replacements == nil {
+		return applyToDocblocks(s, func(d *docblock) bool {
+			changed := false
+			for i, l := range d.inner {
+				trimmed := strings.TrimLeft(l.content, " ")
+				m := aliasTagRe.FindStringSubmatch(trimmed)
+				if m == nil {
+					continue
+				}
+				lead := l.content[:len(l.content)-len(trimmed)]
+				d.inner[i].content = lead + "@" + aliasTagMap[m[1]] + trimmed[len(m[0]):]
+				changed = true
+			}
+			return changed
+		})
+	}
+	if len(f.replacements) == 0 {
+		return false
+	}
+	re := phpdocNoAliasTagRe(f.replacements)
 	return applyToDocblocks(s, func(d *docblock) bool {
 		changed := false
 		for i, l := range d.inner {
 			trimmed := strings.TrimLeft(l.content, " ")
-			m := aliasTagRe.FindStringSubmatch(trimmed)
+			m := re.FindStringSubmatch(trimmed)
 			if m == nil {
 				continue
 			}
 			lead := l.content[:len(l.content)-len(trimmed)]
-			d.inner[i].content = lead + "@" + aliasTagMap[m[1]] + trimmed[len(m[0]):]
+			d.inner[i].content = lead + "@" + f.replacements[m[1]] + trimmed[len(m[0]):]
 			changed = true
 		}
 		return changed
 	})
+}
+
+// phpdocNoAliasTagRe builds a "^@(tag|...)\b" matcher for the configured tags,
+// longest first so a longer tag (e.g. property-read) wins over a prefix.
+func phpdocNoAliasTagRe(replacements map[string]string) *regexp.Regexp {
+	keys := make([]string, 0, len(replacements))
+	for k := range replacements {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return len(keys[i]) > len(keys[j]) })
+	for i, k := range keys {
+		keys[i] = regexp.QuoteMeta(k)
+	}
+	return regexp.MustCompile(`^@(` + strings.Join(keys, "|") + `)\b`)
 }
 
 var noPackageRe = regexp.MustCompile(`^@(?:package|subpackage)\b`)

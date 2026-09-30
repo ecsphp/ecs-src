@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -15,7 +16,16 @@ import (
 // function's native type declaration and carries no description. A tag whose
 // phpdoc type is more specific than the native type (generics, array shapes,
 // callable signatures) or that has a description is kept.
-type NoSuperfluousPhpdocTags struct{}
+//
+// The zero value matches blink's built-in behavior (equivalent to allow_mixed and
+// allow_unused_params). WithConfig honors allow_mixed, allow_unused_params,
+// allow_hidden_params and remove_inheritdoc.
+type NoSuperfluousPhpdocTags struct {
+	mixedIsSuperfluous      bool // allow_mixed=false: @param/@return mixed on an untyped element is superfluous
+	unusedParamsSuperfluous bool // allow_unused_params=false: a @param not in the signature is superfluous
+	removeInheritdoc        bool // remove_inheritdoc=true: drop standalone @inheritDoc lines
+	allowHiddenParams       bool // keep a @param named inside a signature comment
+}
 
 func (NoSuperfluousPhpdocTags) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\NoSuperfluousPhpdocTagsFixer`
@@ -29,23 +39,44 @@ var (
 	nspParamRe  = regexp.MustCompile(`(?i)^@param\s+(\S+)\s+(&?\.{0,3}\$[A-Za-z_][A-Za-z0-9_]*)\s*(.*)$`)
 	nspReturnRe = regexp.MustCompile(`(?i)^@return\s+(\S+)\s*(.*)$`)
 	nspVarRe    = regexp.MustCompile(`(?i)^@var\s+(\S+)(?:\s+\$[A-Za-z_][A-Za-z0-9_]*)?\s*(.*)$`)
+
+	nspInheritDocRe = regexp.MustCompile(`(?i)^\{?@inheritdocs?\}?$`)
 )
 
-func (NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
+func (f NoSuperfluousPhpdocTags) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["allow_mixed"].(bool); ok {
+		f.mixedIsSuperfluous = !v
+	}
+	if v, ok := config["allow_unused_params"].(bool); ok {
+		f.unusedParamsSuperfluous = !v
+	}
+	if v, ok := config["remove_inheritdoc"].(bool); ok {
+		f.removeInheritdoc = v
+	}
+	if v, ok := config["allow_hidden_params"].(bool); ok {
+		f.allowHiddenParams = v
+	}
+	return f
+}
+
+func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		if s.At(i).Kind != token.DocComment {
-			continue
-		}
-		sig, ok := signatureAfter(s, i)
-		if !ok {
 			continue
 		}
 		d, ok := parseDoc(s.At(i).Value)
 		if !ok || d.single {
 			continue
 		}
-		if filterSuperfluous(&d, sig) {
+		docChanged := false
+		if f.removeInheritdoc && nspRemoveInheritDoc(&d) {
+			docChanged = true
+		}
+		if sig, ok := signatureAfter(s, i); ok && f.filterSuperfluous(&d, sig) {
+			docChanged = true
+		}
+		if docChanged {
 			s.SetValue(i, d.render())
 			changed = true
 		}
@@ -53,8 +84,27 @@ func (NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
+// nspRemoveInheritDoc drops inner lines that are a standalone @inheritDoc /
+// @inheritDocs tag (bare or inline braces), reporting whether anything changed.
+func nspRemoveInheritDoc(d *docblock) bool {
+	kept := d.inner[:0:0]
+	removed := false
+	for _, l := range d.inner {
+		if nspInheritDocRe.MatchString(strings.TrimSpace(l.content)) {
+			removed = true
+			continue
+		}
+		kept = append(kept, l)
+	}
+	if removed {
+		d.inner = kept
+	}
+	return removed
+}
+
 type funcSig struct {
 	params  map[string]string // $var name (without $) -> normalized native type ("" if none)
+	hidden  map[string]bool   // param names appearing only in signature comments
 	ret     string            // normalized native return type ("" if none)
 	hasRet  bool
 	varType string // normalized native type of a documented property
@@ -149,7 +199,7 @@ func parseSignature(s *tokens.Stream, fn int) (funcSig, bool) {
 	if close < 0 {
 		return funcSig{}, false
 	}
-	sig := funcSig{params: map[string]string{}}
+	sig := funcSig{params: map[string]string{}, hidden: map[string]bool{}}
 	parseParams(s, open, close, &sig)
 
 	// return type: ": type ..." up to "{" or ";"
@@ -190,6 +240,11 @@ func parseParams(s *tokens.Stream, open, close int, sig *funcSig) {
 	for k := open + 1; k < close; k++ {
 		t := s.At(k)
 		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
+			if t.Kind == token.Comment || t.Kind == token.DocComment {
+				for _, name := range nspCommentParamNames(t.Value) {
+					sig.hidden[name] = true
+				}
+			}
 			continue
 		}
 		if t.Kind == token.Punct {
@@ -241,13 +296,13 @@ func isParamModifier(v string) bool {
 
 // filterSuperfluous drops @param/@return lines made redundant by sig. Reports
 // whether anything was removed.
-func filterSuperfluous(d *docblock, sig funcSig) bool {
+func (f NoSuperfluousPhpdocTags) filterSuperfluous(d *docblock, sig funcSig) bool {
 	kept := make([]docLine, 0, len(d.inner))
 	removed := false
 	for idx := 0; idx < len(d.inner); idx++ {
 		l := d.inner[idx]
 		content := strings.TrimLeft(l.content, " ")
-		if drop, ok := superfluousTag(content, sig); ok && drop && !hasContinuation(d.inner, idx) {
+		if drop, ok := f.superfluousTag(content, sig); ok && drop && !hasContinuation(d.inner, idx) {
 			removed = true
 			continue
 		}
@@ -271,7 +326,7 @@ func hasContinuation(inner []docLine, idx int) bool {
 }
 
 // superfluousTag reports whether a @param/@return line is redundant given sig.
-func superfluousTag(content string, sig funcSig) (bool, bool) {
+func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig) (bool, bool) {
 	if m := nspParamRe.FindStringSubmatch(content); m != nil {
 		phpType, name, desc := m[1], m[2], strings.TrimSpace(m[3])
 		if desc != "" {
@@ -280,16 +335,23 @@ func superfluousTag(content string, sig funcSig) (bool, bool) {
 		varName := name[strings.IndexByte(name, '$')+1:]
 		native, ok := sig.params[varName]
 		if !ok {
-			return false, true
+			// param not in signature
+			if !f.unusedParamsSuperfluous {
+				return false, true
+			}
+			if f.allowHiddenParams && sig.hidden[varName] {
+				return false, true
+			}
+			return true, true
 		}
-		return typeIsSuperfluous(phpType, native), true
+		return f.typeIsSuperfluous(phpType, native), true
 	}
 	if m := nspReturnRe.FindStringSubmatch(content); m != nil {
 		phpType, desc := m[1], strings.TrimSpace(m[2])
 		if desc != "" {
 			return false, true
 		}
-		return typeIsSuperfluous(phpType, sig.ret), true
+		return f.typeIsSuperfluous(phpType, sig.ret), true
 	}
 	if sig.hasVar {
 		if m := nspVarRe.FindStringSubmatch(content); m != nil {
@@ -297,7 +359,7 @@ func superfluousTag(content string, sig funcSig) (bool, bool) {
 			if desc != "" {
 				return false, true
 			}
-			return typeIsSuperfluous(phpType, sig.varType), true
+			return f.typeIsSuperfluous(phpType, sig.varType), true
 		}
 	}
 	return false, false
@@ -305,15 +367,14 @@ func superfluousTag(content string, sig funcSig) (bool, bool) {
 
 // typeIsSuperfluous reports whether a phpdoc type adds nothing over the native
 // type: it normalizes to exactly the native type and is not more specific (no
-// generics/shapes/callable signatures). A "mixed" tag is superfluous only when
-// the native type is also mixed; on an untyped param/return "@param mixed" adds
-// information and is kept, matching ECS (allow_mixed).
-func typeIsSuperfluous(phpType, native string) bool {
+// generics/shapes/callable signatures). On an untyped element only a "mixed" tag
+// can be superfluous, and only when allow_mixed is off (mixedIsSuperfluous).
+func (f NoSuperfluousPhpdocTags) typeIsSuperfluous(phpType, native string) bool {
 	if strings.ContainsAny(phpType, "<{(") {
 		return false
 	}
 	if native == "" {
-		return false
+		return f.mixedIsSuperfluous && normalizeType(phpType) == "mixed"
 	}
 	return normalizeType(phpType) == native
 }
@@ -349,4 +410,17 @@ func normalizeType(t string) string {
 	}
 	sort.Strings(out)
 	return strings.Join(out, "|")
+}
+
+var nspVarNameRe = regexp.MustCompile(`\$[A-Za-z_][A-Za-z0-9_]*`)
+
+// nspCommentParamNames extracts variable names from a comment inside the parameter
+// list, mirroring the "hidden params" the fixer virtualises for allow_hidden_params.
+func nspCommentParamNames(v string) []string {
+	matches := nspVarNameRe.FindAllString(v, -1)
+	out := make([]string, 0, len(matches))
+	for _, m := range matches {
+		out = append(out, m[1:])
+	}
+	return out
 }

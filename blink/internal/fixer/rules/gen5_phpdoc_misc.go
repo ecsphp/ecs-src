@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/tokens"
 )
 
@@ -26,7 +27,12 @@ var phpdocReturnSelfRefRe = regexp.MustCompile(`(?i)^(@return\s+)(\S+)(.*)$`)
 // (this -> $this, @self -> self, $static -> static, ...). Each union member that
 // exactly matches an alias (case-insensitive) is replaced; the description after
 // the type is preserved.
-type PhpdocReturnSelfReference struct{}
+//
+// Option `replacements` maps a self-reference alias (lowercased) to its target
+// type; a nil map keeps the default set above.
+type PhpdocReturnSelfReference struct {
+	replacements map[string]string
+}
 
 func (PhpdocReturnSelfReference) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\PhpdocReturnSelfReferenceFixer`
@@ -36,7 +42,24 @@ func (PhpdocReturnSelfReference) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocReturnSelfReferenceFixer.php"
 }
 
-func (PhpdocReturnSelfReference) Fix(s *tokens.Stream) bool {
+func (f PhpdocReturnSelfReference) WithConfig(config map[string]any) fixer.Fixer {
+	if raw, ok := config["replacements"].(map[string]any); ok {
+		m := make(map[string]string, len(raw))
+		for k, v := range raw {
+			if s, ok := v.(string); ok {
+				m[strings.ToLower(k)] = s
+			}
+		}
+		f.replacements = m
+	}
+	return f
+}
+
+func (f PhpdocReturnSelfReference) Fix(s *tokens.Stream) bool {
+	repl := f.replacements
+	if repl == nil {
+		repl = phpdocReturnSelfRefMap
+	}
 	return applyToDocblocks(s, func(d *docblock) bool {
 		changed := false
 		for i, l := range d.inner {
@@ -45,7 +68,7 @@ func (PhpdocReturnSelfReference) Fix(s *tokens.Stream) bool {
 			if m == nil {
 				continue
 			}
-			newType, ok := normalizeReturnSelfType(m[2])
+			newType, ok := normalizeReturnSelfType(m[2], repl)
 			if !ok {
 				continue
 			}
@@ -60,11 +83,11 @@ func (PhpdocReturnSelfReference) Fix(s *tokens.Stream) bool {
 // normalizeReturnSelfType replaces each union member equal (case-insensitive) to
 // a configured alias. Rejoining with "|" is lossless, so non-matching or complex
 // types round-trip unchanged; ok is false when nothing was replaced.
-func normalizeReturnSelfType(typ string) (string, bool) {
+func normalizeReturnSelfType(typ string, replacements map[string]string) (string, bool) {
 	parts := strings.Split(typ, "|")
 	changed := false
 	for i, p := range parts {
-		if repl, ok := phpdocReturnSelfRefMap[strings.ToLower(p)]; ok {
+		if repl, ok := replacements[strings.ToLower(p)]; ok {
 			parts[i] = repl
 			changed = true
 		}

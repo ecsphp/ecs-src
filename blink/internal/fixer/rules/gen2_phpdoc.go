@@ -1,10 +1,10 @@
 package rules
 
 import (
-	"regexp"
 	"sort"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -128,17 +128,15 @@ func reindentDocblock(d *docblock, indent string) bool {
 	return changed
 }
 
-// coversRe matches a "@covers" annotation line, capturing the value after the
-// tag. The value is required so "@coversNothing"/"@coversDefaultClass" and a
-// bare "@covers" are left untouched.
-var coversRe = regexp.MustCompile(`^@covers\s+(\S.*?)\s*$`)
-
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocOrderByValueFixer.php
 //
-// PhpdocOrderByValue sorts the annotations of the configured tag by their value.
-// The default tag set is ["covers"]; a contiguous run of "@covers" lines is
-// stable-sorted alphabetically (case-insensitively) by the value after the tag.
-type PhpdocOrderByValue struct{}
+// PhpdocOrderByValue sorts the annotations of the configured tags by their value.
+// Each contiguous run of a tag's lines is stable-sorted alphabetically
+// (case-insensitively) by its comparable value. Option `annotations` selects the
+// tags; a nil list keeps the default ["covers"].
+type PhpdocOrderByValue struct {
+	annotations []string
+}
 
 func (PhpdocOrderByValue) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\PhpdocOrderByValueFixer`
@@ -148,50 +146,125 @@ func (PhpdocOrderByValue) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocOrderByValueFixer.php"
 }
 
-func (PhpdocOrderByValue) Fix(s *tokens.Stream) bool {
+func (f PhpdocOrderByValue) WithConfig(config map[string]any) fixer.Fixer {
+	if list, ok := phpdocOrderByValueStringList(config["annotations"]); ok {
+		f.annotations = list
+	}
+	return f
+}
+
+func (f PhpdocOrderByValue) Fix(s *tokens.Stream) bool {
+	annotations := f.annotations
+	if annotations == nil {
+		annotations = []string{"covers"}
+	}
+	if len(annotations) == 0 {
+		return false
+	}
 	return applyToDocblocks(s, func(d *docblock) bool {
 		changed := false
-		n := len(d.inner)
-		for start := 0; start < n; {
-			if coversValue(d.inner[start]) == "" {
-				start++
-				continue
-			}
-			end := start + 1
-			for end < n && coversValue(d.inner[end]) != "" {
-				end++
-			}
-			if end-start > 1 && sortCoversRun(d.inner[start:end]) {
+		for _, anno := range annotations {
+			if phpdocOrderByValueSortType(d, anno) {
 				changed = true
 			}
-			start = end
 		}
 		return changed
 	})
 }
 
-// coversValue returns the lowercased value of a "@covers" annotation line, or ""
-// when the line is not a "@covers" annotation with a value.
-func coversValue(l docLine) string {
-	m := coversRe.FindStringSubmatch(strings.TrimSpace(l.content))
-	if m == nil {
-		return ""
+// phpdocOrderByValueSortType stable-sorts each contiguous run of the given
+// annotation's lines by comparable value.
+func phpdocOrderByValueSortType(d *docblock, anno string) bool {
+	changed := false
+	n := len(d.inner)
+	for start := 0; start < n; {
+		if _, ok := phpdocOrderByValueComparable(d.inner[start].content, anno); !ok {
+			start++
+			continue
+		}
+		end := start + 1
+		for end < n {
+			if _, ok := phpdocOrderByValueComparable(d.inner[end].content, anno); !ok {
+				break
+			}
+			end++
+		}
+		if end-start > 1 && phpdocOrderByValueSortRun(d.inner[start:end], anno) {
+			changed = true
+		}
+		start = end
 	}
-	return strings.ToLower(m[1])
+	return changed
 }
 
-// sortCoversRun stable-sorts a run of "@covers" lines by their value and reports
-// whether the order changed.
-func sortCoversRun(run []docLine) bool {
+// phpdocOrderByValueComparable returns the lowercased sort key for an annotation
+// line, or ok=false when the line is not the given annotation with a value.
+func phpdocOrderByValueComparable(content, anno string) (string, bool) {
+	trimmed := strings.TrimSpace(content)
+	prefix := "@" + anno
+	if !strings.HasPrefix(strings.ToLower(trimmed), strings.ToLower(prefix)) {
+		return "", false
+	}
+	rest := trimmed[len(prefix):]
+	if rest == "" || (rest[0] != ' ' && rest[0] != '\t') {
+		return "", false
+	}
+	rest = strings.TrimSpace(rest)
+	if rest == "" {
+		return "", false
+	}
+	switch strings.ToLower(anno) {
+	case "property", "property-read", "property-write":
+		if i := strings.IndexByte(rest, '$'); i >= 0 {
+			rest = rest[i+1:]
+		}
+		if j := strings.IndexAny(rest, " \t"); j >= 0 {
+			rest = rest[:j]
+		}
+	case "method":
+		if i := strings.IndexByte(rest, '('); i >= 0 {
+			rest = rest[:i]
+		}
+		if fields := strings.Fields(rest); len(fields) > 0 {
+			rest = fields[len(fields)-1]
+		}
+	}
+	return strings.ToLower(rest), true
+}
+
+// phpdocOrderByValueSortRun stable-sorts a run of annotation lines by comparable
+// value and reports whether the order changed.
+func phpdocOrderByValueSortRun(run []docLine, anno string) bool {
+	value := func(l docLine) string {
+		v, _ := phpdocOrderByValueComparable(l.content, anno)
+		return v
+	}
 	keys := make([]string, len(run))
 	for i, l := range run {
-		keys[i] = coversValue(l)
+		keys[i] = value(l)
 	}
 	if sort.StringsAreSorted(keys) {
 		return false
 	}
 	sort.SliceStable(run, func(i, j int) bool {
-		return coversValue(run[i]) < coversValue(run[j])
+		return value(run[i]) < value(run[j])
 	})
 	return true
+}
+
+// phpdocOrderByValueStringList reads a config value as a list of strings.
+func phpdocOrderByValueStringList(v any) ([]string, bool) {
+	switch list := v.(type) {
+	case []string:
+		return append([]string{}, list...), true
+	case []any:
+		out := make([]string, 0, len(list))
+		for _, e := range list {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out, true
+	}
+	return nil, false
 }
