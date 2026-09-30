@@ -2,15 +2,9 @@ name: Blink Tests
 
 on:
     pull_request:
-        paths:
-            - 'blink/**'
-            - '.github/workflows/blink_tests.yaml'
     push:
         branches:
             - main
-        paths:
-            - 'blink/**'
-            - '.github/workflows/blink_tests.yaml'
 
 jobs:
     test:

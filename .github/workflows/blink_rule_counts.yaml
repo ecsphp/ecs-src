@@ -4,15 +4,9 @@ on:
     pull_request:
         branches:
             - main
-        paths:
-            - 'blink/**'
-            - '.github/workflows/blink_rule_counts.yaml'
     push:
         branches:
             - main
-        paths:
-            - 'blink/**'
-            - '.github/workflows/blink_rule_counts.yaml'
 
 jobs:
     rule-counts:
