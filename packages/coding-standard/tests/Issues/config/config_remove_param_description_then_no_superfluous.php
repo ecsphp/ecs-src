@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+use PhpCsFixer\Fixer\Phpdoc\NoEmptyPhpdocFixer;
+use PhpCsFixer\Fixer\Phpdoc\NoSuperfluousPhpdocTagsFixer;
+use Symplify\CodingStandard\Fixer\Commenting\RemoveParamDescriptionDuplicateNameFixer;
+use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+return static function (ECSConfig $ecsConfig): void {
+    $ecsConfig->rule(RemoveParamDescriptionDuplicateNameFixer::class);
+    $ecsConfig->ruleWithConfiguration(NoSuperfluousPhpdocTagsFixer::class, [
+        'allow_mixed' => true,
+    ]);
+    $ecsConfig->rule(NoEmptyPhpdocFixer::class);
+};
