@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -63,7 +64,54 @@ func fnGlueAfter(s *tokens.Stream, i int) bool {
 // a static closure keeps one space after "static". Only "function" declarations
 // are touched, never a call; arrow "fn" and the "{"/"=>" and inner-parenthesis
 // spacing (owned by other fixers) are left alone.
-type FunctionDeclaration struct{}
+//
+// The fields mirror the fixer options; their zero values reproduce today's
+// behavior (one space for closures and arrow fns, trailing commas left in place):
+//   - closureFunctionSpacingNone: "closure_function_spacing" == "none"
+//   - closureFnSpacingNone: "closure_fn_spacing" == "none"
+//   - removeTrailingCommaSingleLine: "trailing_comma_single_line" == false
+type FunctionDeclaration struct {
+	closureFunctionSpacingNone    bool
+	closureFnSpacingNone          bool
+	removeTrailingCommaSingleLine bool
+}
+
+func (f FunctionDeclaration) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["closure_function_spacing"].(string); ok {
+		f.closureFunctionSpacingNone = v == "none"
+	}
+	if v, ok := config["closure_fn_spacing"].(string); ok {
+		f.closureFnSpacingNone = v == "none"
+	}
+	if v, ok := config["trailing_comma_single_line"].(bool); ok {
+		f.removeTrailingCommaSingleLine = !v
+	}
+	return f
+}
+
+// fnRemoveTrailingCommaSingleLine drops a trailing comma before the ")" that the
+// "(" at open matches, but only when the parenthesized list is on a single line.
+func fnRemoveTrailingCommaSingleLine(s *tokens.Stream, open int) bool {
+	closeParen := s.MatchForward(open)
+	if closeParen < 0 {
+		return false
+	}
+	for k := open; k <= closeParen; k++ {
+		if s.At(k).Kind == token.Whitespace && hasNewline(s.At(k).Value) {
+			return false // multiline signature: leave as-is
+		}
+	}
+	p := prevSignificantIndex(s, closeParen)
+	if p <= open || (s.At(p).Kind != token.Punct || s.At(p).Value != ",") {
+		return false
+	}
+	// drop any single-line whitespace between the comma and ")", then the comma
+	if p+1 < closeParen && s.At(p+1).Kind == token.Whitespace {
+		s.RemoveAt(p + 1)
+	}
+	s.RemoveAt(p)
+	return true
+}
 
 func (FunctionDeclaration) Name() string {
 	return `PhpCsFixer\Fixer\FunctionNotation\FunctionDeclarationFixer`
@@ -73,7 +121,7 @@ func (FunctionDeclaration) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/FunctionDeclarationFixer.php"
 }
 
-func (FunctionDeclaration) Fix(s *tokens.Stream) bool {
+func (f FunctionDeclaration) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
@@ -82,15 +130,20 @@ func (FunctionDeclaration) Fix(s *tokens.Stream) bool {
 		}
 		switch strings.ToLower(t.Value) {
 		case "function":
-			if fixFunctionDeclaration(s, i) {
+			if f.fixFunctionDeclaration(s, i) {
 				changed = true
 			}
 		case "fn":
-			// arrow function: one space between "fn" and "(" (closure_fn_spacing)
+			// arrow function: spacing between "fn" and "(" (closure_fn_spacing)
 			if n := nextSignificantIndex(s, i); n >= 0 &&
-				s.At(n).Kind == token.Punct && s.At(n).Value == "(" &&
-				fnEnsureSingleSpaceAfter(s, i) {
-				changed = true
+				s.At(n).Kind == token.Punct && s.At(n).Value == "(" {
+				if f.closureFnSpacingNone {
+					if fnGlueAfter(s, i) {
+						changed = true
+					}
+				} else if fnEnsureSingleSpaceAfter(s, i) {
+					changed = true
+				}
 			}
 		}
 	}
@@ -100,10 +153,17 @@ func (FunctionDeclaration) Fix(s *tokens.Stream) bool {
 // fixFunctionDeclaration normalizes the single declaration whose "function"
 // keyword is at fi. Mutations happen only at indices >= fi, so fi and the outer
 // loop stay valid.
-func fixFunctionDeclaration(s *tokens.Stream, fi int) bool {
+func (f FunctionDeclaration) fixFunctionDeclaration(s *tokens.Stream, fi int) bool {
 	startParen := findFunctionParamOpen(s, fi)
 	if startParen < 0 {
 		return false
+	}
+
+	changed := false
+	if f.removeTrailingCommaSingleLine {
+		if fnRemoveTrailingCommaSingleLine(s, startParen) {
+			changed = true
+		}
 	}
 
 	// classify: optional leading "&", optional name directly before "("
@@ -122,8 +182,6 @@ func fixFunctionDeclaration(s *tokens.Stream, fi int) bool {
 		}
 	}
 	named := nameIndex >= 0
-
-	changed := false
 
 	// closure "use": one space on each side (processed first, rightmost region)
 	if !named {
@@ -150,8 +208,14 @@ func fixFunctionDeclaration(s *tokens.Stream, fi int) bool {
 		}
 	}
 
-	// one space after the "function" keyword (before name, "&" or "(")
-	if fnEnsureSingleSpaceAfter(s, fi) {
+	// spacing after the "function" keyword (before name, "&" or "("). A closure
+	// with closure_function_spacing "none" glues "function" to "("; otherwise one
+	// space, and a named declaration always keeps one space before its name.
+	if !named && f.closureFunctionSpacingNone {
+		if fnGlueAfter(s, fi) {
+			changed = true
+		}
+	} else if fnEnsureSingleSpaceAfter(s, fi) {
 		changed = true
 	}
 

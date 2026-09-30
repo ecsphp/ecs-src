@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -14,7 +15,16 @@ import (
 // ("use A\{B};" -> "use A\B;"). The namespaces option is off by default, so
 // bracketed namespaces are left untouched. Named NoUnneededCurlyBracesFixer to
 // match the set membership (the rule's former name).
-type NoUnneededBraces struct{}
+type NoUnneededBraces struct {
+	Namespaces bool
+}
+
+func (f NoUnneededBraces) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["namespaces"].(bool); ok {
+		f.Namespaces = v
+	}
+	return f
+}
 
 func (NoUnneededBraces) Name() string {
 	return `PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`
@@ -24,7 +34,7 @@ func (NoUnneededBraces) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoUnneededCurlyBracesFixer.php"
 }
 
-func (NoUnneededBraces) Fix(s *tokens.Stream) bool {
+func (f NoUnneededBraces) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := s.Len() - 1; i > 0; i-- {
 		if !nubIsPunct(s.At(i), "{") {
@@ -55,7 +65,66 @@ func (NoUnneededBraces) Fix(s *tokens.Stream) bool {
 			}
 		}
 	}
+	if f.Namespaces && nubFixNamespaceBlock(s) {
+		changed = true
+	}
 	return changed
+}
+
+// nubFixNamespaceBlock turns a lone "namespace Foo { ... }" spanning the rest of
+// the file into "namespace Foo; ...".
+func nubFixNamespaceBlock(s *tokens.Stream) bool {
+	nsIndex := -1
+	for i := 0; i < s.Len(); i++ {
+		t := s.At(i)
+		if (t.Kind == token.Keyword || t.Kind == token.Ident) && strings.EqualFold(t.Value, "namespace") {
+			if nsIndex != -1 {
+				return false
+			}
+			nsIndex = i
+		}
+	}
+	if nsIndex == -1 {
+		return false
+	}
+	named := false
+	idx := nubNextMeaningful(s, nsIndex)
+	for idx != -1 && (s.At(idx).Kind == token.Ident || nubIsPunct(s.At(idx), `\`)) {
+		named = true
+		idx = nubNextMeaningful(s, idx)
+	}
+	if !named || idx == -1 || !nubIsPunct(s.At(idx), "{") {
+		return false
+	}
+	closeIdx := s.MatchForward(idx)
+	if closeIdx == -1 {
+		return false
+	}
+	after := nubNextMeaningful(s, closeIdx)
+	if after != -1 && (s.At(after).Kind != token.CloseTag || nubNextMeaningful(s, after) != -1) {
+		return false
+	}
+	s.RemoveAt(closeIdx)
+	if closeIdx < s.Len() && closeIdx > 0 && s.At(closeIdx).Kind == token.Whitespace && s.At(closeIdx-1).Kind == token.Whitespace {
+		s.SetValue(closeIdx-1, s.At(closeIdx-1).Value+s.At(closeIdx).Value)
+		s.RemoveAt(closeIdx)
+	}
+	s.Set(idx, token.Token{Kind: token.Punct, Value: ";"})
+	if idx > 1 && s.At(idx-1).Kind == token.Whitespace && strings.Trim(s.At(idx-1).Value, " \t") == "" && s.At(idx-2).Kind != token.Comment && s.At(idx-2).Kind != token.DocComment {
+		s.RemoveAt(idx - 1)
+	}
+	return true
+}
+
+func nubNextMeaningful(s *tokens.Stream, i int) int {
+	for j := i + 1; j < s.Len(); j++ {
+		k := s.At(j).Kind
+		if k == token.Whitespace || k == token.Comment || k == token.DocComment {
+			continue
+		}
+		return j
+	}
+	return -1
 }
 
 // nubRegularOverComplete reports whether a "{" whose previous meaningful token is

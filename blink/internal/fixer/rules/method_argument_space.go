@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -14,7 +15,16 @@ import (
 // parentheses (calls and signatures): no space before a comma, exactly one
 // space after it. Commas inside arrays "[...]", commas followed by a newline
 // (multiline alignment) and a trailing comma right before ")" are left alone.
-type MethodArgumentSpace struct{}
+// The zero value reflows already-multiline lists fully (on_multiline default).
+type MethodArgumentSpace struct {
+	// onMultiline is "", "ensure_fully_multiline", "ensure_single_line",
+	// "ensure_single_line_for_single_argument" or "ignore"; "" is the default.
+	onMultiline                  string
+	keepMultipleSpacesAfterComma bool
+	// keepSpaceAfterHeredoc is set from after_heredoc=false; the zero value keeps
+	// today's behaviour of always removing a space before a comma.
+	keepSpaceAfterHeredoc bool
+}
 
 func (MethodArgumentSpace) Name() string {
 	return `PhpCsFixer\Fixer\FunctionNotation\MethodArgumentSpaceFixer`
@@ -24,10 +34,38 @@ func (MethodArgumentSpace) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/MethodArgumentSpaceFixer.php"
 }
 
-func (MethodArgumentSpace) Fix(s *tokens.Stream) bool {
-	// ensure_fully_multiline: a call/declaration argument list that already spans
-	// lines gets one argument per line, "(" and ")" on their own lines.
-	changed := reflowMultilineArgs(s)
+func (f MethodArgumentSpace) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["on_multiline"].(string); ok {
+		f.onMultiline = v
+	}
+	if v, ok := config["keep_multiple_spaces_after_comma"].(bool); ok {
+		f.keepMultipleSpacesAfterComma = v
+	}
+	if v, ok := config["after_heredoc"].(bool); ok {
+		f.keepSpaceAfterHeredoc = !v
+	}
+	// attribute_placement is accepted but not applied: blink folds attributes into
+	// a single comment token, so it cannot reposition them.
+	return f
+}
+
+func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
+	changed := false
+	switch f.onMultiline {
+	case "ignore":
+		// leave multiline argument lists as they are
+	case "ensure_single_line":
+		if methodArgSpaceCollapse(s) {
+			changed = true
+		}
+	default:
+		// "", "ensure_fully_multiline" and "ensure_single_line_for_single_argument"
+		// (approximated as fully multiline): a call/declaration argument list that
+		// already spans lines gets one argument per line.
+		if reflowMultilineArgs(s) {
+			changed = true
+		}
+	}
 	var stack []string
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
@@ -51,17 +89,20 @@ func (MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && hasNewline(s.At(i+1).Value) {
 				continue
 			}
-			// No space before the comma (single-line only).
+			// No space before the comma (single-line only), unless after_heredoc is
+			// off and a heredoc precedes the comma.
 			if i > 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
-				s.RemoveAt(i - 1)
-				i--
-				changed = true
+				if !f.keepSpaceAfterHeredoc || !methodArgSpacePrevIsHeredoc(s, i-1) {
+					s.RemoveAt(i - 1)
+					i--
+					changed = true
+				}
 			}
 			// Exactly one space after the comma, except a trailing comma before ")".
 			if i+1 < s.Len() {
 				next := s.At(i + 1)
 				if next.Kind == token.Whitespace {
-					if next.Value != " " {
+					if next.Value != " " && !f.keepMultipleSpacesAfterComma {
 						s.SetValue(i+1, " ")
 						changed = true
 					}
@@ -72,6 +113,65 @@ func (MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 				}
 			}
 		}
+	}
+	return changed
+}
+
+// methodArgSpacePrevIsHeredoc reports whether the significant token before the
+// whitespace at wsIdx is a heredoc/nowdoc literal.
+func methodArgSpacePrevIsHeredoc(s *tokens.Stream, wsIdx int) bool {
+	p := prevSignificantIndex(s, wsIdx)
+	return p >= 0 && arrayNotationIsHeredoc(s.At(p))
+}
+
+// methodArgSpaceCollapse joins every already-multiline call/declaration argument
+// list onto a single line. Only top-level newlines are removed; a newline kept
+// inside a nested array or closure argument is left in place.
+func methodArgSpaceCollapse(s *tokens.Stream) bool {
+	changed := false
+	for open := 0; open < s.Len(); open++ {
+		if s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+			continue
+		}
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 || !argListIsMultiline(s, open, closeIdx) {
+			continue
+		}
+		if !isCallOrDeclParen(s, open) {
+			continue
+		}
+		if methodArgSpaceCollapseParen(s, open, closeIdx) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// methodArgSpaceCollapseParen removes top-level newlines within the paren at open,
+// dropping the whitespace next to "(" and ")" and collapsing the rest to a space.
+func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int) bool {
+	changed := false
+	depth := 0
+	for j := closeIdx - 1; j > open; j-- {
+		t := s.At(j)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case ")", "]", "}":
+				depth++
+			case "(", "[", "{":
+				depth--
+			}
+			continue
+		}
+		if depth != 0 || t.Kind != token.Whitespace || !hasNewline(t.Value) {
+			continue
+		}
+		if prevSignificantIndex(s, j) == open || nextSignificantIndex(s, j) == closeIdx {
+			s.RemoveAt(j)
+		} else {
+			s.SetValue(j, " ")
+		}
+		changed = true
 	}
 	return changed
 }

@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -24,7 +25,62 @@ const (
 // top-level class members per the fixer's DEFAULT config: one blank line between
 // methods, properties and consts; none between trait imports or enum cases. It
 // is conservative - see the caveats on Fix.
-type ClassAttributesSeparation struct{}
+//
+// elements mirrors the "elements" option (element -> one|none|only_if_meta); a
+// nil value (the zero value) means the default map below. A member type absent
+// from the map is left untouched, matching PHP-CS-Fixer.
+type ClassAttributesSeparation struct {
+	elements map[string]string
+}
+
+var classSepDefaultSpacing = map[string]string{
+	"const": "one", "method": "one", "property": "one",
+	"trait_import": "none", "case": "none",
+}
+
+func (f ClassAttributesSeparation) WithConfig(config map[string]any) fixer.Fixer {
+	if raw, ok := config["elements"].(map[string]any); ok {
+		m := make(map[string]string, len(raw))
+		for k, v := range raw {
+			if sv, ok := v.(string); ok {
+				m[k] = sv
+			}
+		}
+		f.elements = m
+	}
+	return f
+}
+
+// classSepTypeName maps a sep* member kind to its option element name.
+func classSepTypeName(sepType int) string {
+	switch sepType {
+	case sepConst:
+		return "const"
+	case sepMethod:
+		return "method"
+	case sepProperty:
+		return "property"
+	case sepTraitImport:
+		return "trait_import"
+	case sepCase:
+		return "case"
+	}
+	return ""
+}
+
+// classSepSpacingFor returns the configured spacing for a member kind and whether
+// that kind is targeted at all.
+func (f ClassAttributesSeparation) classSepSpacingFor(sepType int) (string, bool) {
+	name := classSepTypeName(sepType)
+	if name == "" {
+		return "", false
+	}
+	if f.elements == nil {
+		return classSepDefaultSpacing[name], true
+	}
+	sp, ok := f.elements[name]
+	return sp, ok
+}
 
 func (ClassAttributesSeparation) Name() string {
 	return `PhpCsFixer\Fixer\ClassNotation\ClassAttributesSeparationFixer`
@@ -44,7 +100,7 @@ func (ClassAttributesSeparation) SourceURL() string {
 // Gaps that glue members on one line, contain plain comments, or hold a detached
 // docblock are left untouched. The first member (after "{") and the last member's
 // gap to "}" are left to the blank-line-after-opening / brace fixers.
-func (ClassAttributesSeparation) Fix(s *tokens.Stream) bool {
+func (f ClassAttributesSeparation) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
@@ -55,7 +111,7 @@ func (ClassAttributesSeparation) Fix(s *tokens.Stream) bool {
 		}
 		starts := classMemberStarts(s, i)
 		for k := 0; k+1 < len(starts); k++ {
-			if fixMemberGap(s, starts[k], starts[k+1]) {
+			if f.fixMemberGap(s, starts[k], starts[k+1]) {
 				changed = true
 			}
 		}
@@ -66,7 +122,7 @@ func (ClassAttributesSeparation) Fix(s *tokens.Stream) bool {
 // fixMemberGap normalizes the whitespace separating the member at prevStart from
 // the one at nextStart. Only whitespace values change, so token indices stay
 // stable across calls. Returns whether it changed anything.
-func fixMemberGap(s *tokens.Stream, prevStart, nextStart int) bool {
+func (f ClassAttributesSeparation) fixMemberGap(s *tokens.Stream, prevStart, nextStart int) bool {
 	prevEnd := memberSpanEnd(s, prevStart)
 	if prevEnd < 0 || prevEnd >= nextStart {
 		return false
@@ -74,6 +130,10 @@ func fixMemberGap(s *tokens.Stream, prevStart, nextStart int) bool {
 	nextType := classSepMemberType(s, nextStart)
 	if nextType == sepUnknown {
 		return false
+	}
+	spacing, ok := f.classSepSpacingFor(nextType)
+	if !ok {
+		return false // member type not targeted by configuration
 	}
 
 	firstTrivia := -1
@@ -101,7 +161,7 @@ func fixMemberGap(s *tokens.Stream, prevStart, nextStart int) bool {
 			return false
 		}
 		prevType := classSepMemberType(s, prevStart)
-		return setNewlineCount(s, wsIdx, requiredNewlines(s, prevStart, prevType, nextType))
+		return setNewlineCount(s, wsIdx, requiredNewlines(s, prevStart, prevType, nextType, spacing))
 	}
 
 	// docblock/attribute block leading the next member: blank line goes above it.
@@ -124,17 +184,20 @@ func fixMemberGap(s *tokens.Stream, prevStart, nextStart int) bool {
 }
 
 // requiredNewlines returns the number of newlines wanted in a plain whitespace
-// gap above a member of nextType, following the fixer's default spacing.
-func requiredNewlines(s *tokens.Stream, prevStart, prevType, nextType int) int {
-	if nextType == sepTraitImport || nextType == sepCase {
-		// SPACING_NONE: tight only between same-type members whose upper element
-		// carries no docblock/attribute of its own.
+// gap above a member of nextType, following the configured spacing.
+func requiredNewlines(s *tokens.Stream, prevStart, prevType, nextType int, spacing string) int {
+	switch spacing {
+	case "one":
+		return 2
+	case "only_if_meta":
+		// no docblock/attribute directly above the next member in a plain gap
+		return 1
+	default: // "none"
 		if prevType == nextType && !hasDocOrAttrAbove(s, prevStart) {
 			return 1
 		}
 		return 2
 	}
-	return 2 // SPACING_ONE for const / method / property
 }
 
 // classSepMemberType classifies the member starting at m as one of the sep*

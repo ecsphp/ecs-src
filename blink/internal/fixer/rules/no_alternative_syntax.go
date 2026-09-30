@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -12,7 +13,33 @@ import (
 // NoAlternativeSyntax replaces control-structure alternative syntax with braces
 // ("if (x): ... endif;" -> "if (x) { ... }"). Matches ECS's default
 // (fix_non_monolithic_code=true), so inline-HTML blocks are converted too.
-type NoAlternativeSyntax struct{}
+type NoAlternativeSyntax struct {
+	// MonolithicOnly skips files with inline HTML (fix_non_monolithic_code=false).
+	MonolithicOnly bool
+}
+
+func (f NoAlternativeSyntax) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["fix_non_monolithic_code"].(bool); ok {
+		f.MonolithicOnly = !v
+	}
+	return f
+}
+
+func nasIsMonolithic(s *tokens.Stream) bool {
+	opens, html := 0, 0
+	for i := 0; i < s.Len(); i++ {
+		switch s.At(i).Kind {
+		case token.OpenTag:
+			opens++
+		case token.InlineHTML:
+			html++
+		}
+	}
+	if opens != 1 {
+		return false
+	}
+	return html == 0 || (html == 1 && s.At(0).Kind == token.InlineHTML && strings.HasPrefix(s.At(0).Value, "#!"))
+}
 
 func (NoAlternativeSyntax) Name() string {
 	return `PhpCsFixer\Fixer\ControlStructure\NoAlternativeSyntaxFixer`
@@ -35,7 +62,10 @@ func nasIsKeyword(t token.Token, set map[string]bool) bool {
 	return t.Kind == token.Keyword && set[strings.ToLower(t.Value)]
 }
 
-func (NoAlternativeSyntax) Fix(s *tokens.Stream) bool {
+func (f NoAlternativeSyntax) Fix(s *tokens.Stream) bool {
+	if f.MonolithicOnly && !nasIsMonolithic(s) {
+		return false
+	}
 	changed := false
 	for index := s.Len() - 1; index >= 0; index-- {
 		tok := s.At(index)

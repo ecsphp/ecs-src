@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -120,7 +121,15 @@ func isTypeUnionOperator(s *tokens.Stream, i int) bool {
 // names in a union/intersection ("int | string" -> "int|string", "A & B" ->
 // "A&B"). It acts only in confirmed type positions (parameter, return, typed
 // property) and never on a bitwise "|"/"&". Line breaks are preserved.
-type TypesSpaces struct{}
+//
+// Options: Single (space: single) forces one space around the operator instead.
+// Once WithConfig is called, multi-catch types ("catch (A | B $e)") are handled
+// too, using CatchSingle (space_multiple_catch) or, when unset, Single.
+type TypesSpaces struct {
+	Single      bool
+	CatchActive bool
+	CatchSingle bool
+}
 
 func (TypesSpaces) Name() string {
 	return `PhpCsFixer\Fixer\Whitespace\TypesSpacesFixer`
@@ -130,25 +139,103 @@ func (TypesSpaces) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Whitespace/TypesSpacesFixer.php"
 }
 
-func (TypesSpaces) Fix(s *tokens.Stream) bool {
+func (f TypesSpaces) WithConfig(config map[string]any) fixer.Fixer {
+	f.CatchActive = true
+	if v, ok := config["space"].(string); ok {
+		f.Single = v == "single"
+	}
+	f.CatchSingle = f.Single
+	if v, ok := config["space_multiple_catch"].(string); ok {
+		f.CatchSingle = v == "single"
+	}
+	return f
+}
+
+func (f TypesSpaces) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
+		if f.CatchActive && t.Kind == token.Keyword && strings.EqualFold(t.Value, "catch") {
+			if ch, end := typesSpacesCatch(s, i, f.CatchSingle); end > i {
+				changed = changed || ch
+				i = end
+				continue
+			}
+		}
 		if t.Kind != token.Punct || (t.Value != "|" && t.Value != "&") {
 			continue
 		}
 		if !isTypeUnionOperator(s, i) {
 			continue
 		}
-		if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) {
-			s.RemoveAt(i + 1)
-			changed = true
-		}
-		if i-1 >= 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
-			s.RemoveAt(i - 1)
-			i--
+		var ch bool
+		i, ch = typesSpacesFix(s, i, f.Single)
+		changed = changed || ch
+	}
+	return changed
+}
+
+// typesSpacesFix spaces the operator at i and returns its new index.
+func typesSpacesFix(s *tokens.Stream, i int, single bool) (int, bool) {
+	changed := false
+	if i+1 < s.Len() {
+		next := s.At(i + 1)
+		switch {
+		case next.Kind == token.Whitespace && !hasNewline(next.Value):
+			if !single {
+				s.RemoveAt(i + 1)
+				changed = true
+			} else if next.Value != " " {
+				s.SetValue(i+1, " ")
+				changed = true
+			}
+		case next.Kind != token.Whitespace && single:
+			s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
 			changed = true
 		}
 	}
-	return changed
+	if i >= 1 {
+		prev := s.At(i - 1)
+		switch {
+		case prev.Kind == token.Whitespace && !hasNewline(prev.Value):
+			if !single {
+				s.RemoveAt(i - 1)
+				i--
+				changed = true
+			} else if prev.Value != " " {
+				s.SetValue(i-1, " ")
+				changed = true
+			}
+		case prev.Kind != token.Whitespace && single:
+			s.InsertAt(i, token.Token{Kind: token.Whitespace, Value: " "})
+			i++
+			changed = true
+		}
+	}
+	return i, changed
+}
+
+// typesSpacesCatch spaces every "|" directly inside the parentheses of the catch
+// at i and returns whether anything changed and the index of the closing ")".
+func typesSpacesCatch(s *tokens.Stream, i int, single bool) (bool, int) {
+	open := nextSignificantIndex(s, i)
+	if open < 0 || s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+		return false, i
+	}
+	changed := false
+	for j := open + 1; j < s.Len(); j++ {
+		t := s.At(j)
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch t.Value {
+		case ")":
+			return changed, j
+		case "|":
+			var ch bool
+			j, ch = typesSpacesFix(s, j, single)
+			changed = changed || ch
+		}
+	}
+	return changed, i
 }

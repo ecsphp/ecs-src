@@ -274,6 +274,27 @@ func All() []fixer.Fixer {
 	return all
 }
 
+// CanonicalOrder sorts fixers in place to match All()'s execution order
+// (PHP-CS-Fixer priority plus the curated tie-break), so the turbo/--blink path
+// applies rules in the same order as the standalone path. Fixers unknown to
+// All() are placed last.
+func CanonicalOrder(fixers []fixer.Fixer) {
+	idx := map[string]int{}
+	for i, f := range All() {
+		idx[f.Name()] = i
+	}
+	const last = 1 << 30
+	pos := func(f fixer.Fixer) int {
+		if i, ok := idx[f.Name()]; ok {
+			return i
+		}
+		return last
+	}
+	sort.SliceStable(fixers, func(a, b int) bool {
+		return pos(fixers[a]) < pos(fixers[b])
+	})
+}
+
 // fixerPriorityOf returns a fixer's PHP-CS-Fixer priority (0 when unknown).
 func fixerPriorityOf(f fixer.Fixer) int {
 	name := f.Name()
