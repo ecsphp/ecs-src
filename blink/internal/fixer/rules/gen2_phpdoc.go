@@ -70,17 +70,23 @@ func docblockAtLineStart(s *tokens.Stream, i int) bool {
 	return prev.Kind == token.Whitespace && strings.IndexByte(prev.Value, '\n') >= 0
 }
 
-// docblockTargetIndent returns the indentation of the structural element the
-// docblock at i documents - the indent of the line holding the next significant
-// token. ok is false when there is none.
+// docblockTargetIndent returns the indentation PHP aligns the docblock at i to:
+// the trailing indent of the whitespace directly before the next meaningful
+// token (skipping whitespace and comments), matching PhpdocIndentFixer. ok is
+// false when there is no such token or it is a block end `}`.
 func docblockTargetIndent(s *tokens.Stream, i int) (string, bool) {
-	if i+1 >= s.Len() || s.At(i+1).Kind != token.Whitespace {
+	next := nextMeaningfulIndex(s, i)
+	if next < 0 || s.At(next).Value == "}" {
 		return "", false
 	}
-	v := s.At(i + 1).Value
+	prev := next - 1
+	if prev < 0 || s.At(prev).Kind != token.Whitespace {
+		return "", true
+	}
+	v := s.At(prev).Value
 	nl := strings.LastIndexByte(v, '\n')
 	if nl < 0 {
-		return "", false
+		return v, true
 	}
 	return v[nl+1:], true
 }

@@ -28,6 +28,11 @@ func (NoTrailingWhitespaceInComment) Fix(s *tokens.Stream) bool {
 		if t.Kind != token.Comment && t.Kind != token.DocComment {
 			continue
 		}
+		// "#[...]" attributes are captured as comment tokens but are real code in
+		// PHP (and may hold heredoc bodies); this fixer must not touch them
+		if strings.HasPrefix(t.Value, "#[") {
+			continue
+		}
 		lines := strings.Split(t.Value, "\n")
 		touched := false
 		for k, line := range lines {

@@ -33,6 +33,12 @@ func TestGen2PhpdocIndent(t *testing.T) {
 	assertFix(t, f,
 		"<?php\n/** @var int */\nclass A{}",
 		"<?php\n/** @var int */\nclass A{}", false)
+
+	// docblock at column 0 inside an array, followed by an indented comment; the
+	// next meaningful token (`]`) sits at column 0, so PHP leaves it unchanged
+	assertFix(t, f,
+		"<?php\n$a = [\n    'x' => 1,\n\n/**\n * note\n */\n    // 'y' => 2,\n];\n",
+		"<?php\n$a = [\n    'x' => 1,\n\n/**\n * note\n */\n    // 'y' => 2,\n];\n", false)
 }
 
 func TestGen2PhpdocOrderByValue(t *testing.T) {

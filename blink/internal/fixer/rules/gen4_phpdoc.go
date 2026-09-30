@@ -67,7 +67,10 @@ func (f PhpdocLineSpan) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		kind := phpdocLineSpanElementKind(s, i)
-		if kind == "" {
+		if kind == "" || insideFunctionBody(s, i) {
+			// docblocks inside a function/method body are never class members
+			// (PHP's getClassyElements covers class-body elements only); a local
+			// `static $x` is not a property, so it falls through to "other"
 			kind = "other"
 		}
 		setting := f.settings[kind]
@@ -225,6 +228,39 @@ func documentsMember(s *tokens.Stream, i int) bool {
 	}
 	lw := strings.ToLower(next.Value)
 	return visibilityModifiers[lw] || lw == "var"
+}
+
+// insideFunctionBody reports whether the token at index i sits inside the "{...}"
+// body of a function or method. It scans from the start tracking brace nesting
+// and marks the first "{" after a "function" keyword as a body brace. PHP's
+// PhpdocLineSpanFixer treats class members via getClassyElements (class-body
+// scope only), so a docblock inside a method body - e.g. on a local `static $x`
+// - is never a property/method/const and must be handled as "other".
+func insideFunctionBody(s *tokens.Stream, i int) bool {
+	depth := 0
+	pendingBody := false
+	funcDepths := []int{}
+	for j := 0; j < i; j++ {
+		t := s.At(j)
+		switch {
+		case t.Kind == token.Keyword && strings.EqualFold(t.Value, "function"):
+			pendingBody = true
+		case t.Kind == token.Punct && t.Value == ";":
+			pendingBody = false
+		case t.Kind == token.Punct && t.Value == "{":
+			depth++
+			if pendingBody {
+				funcDepths = append(funcDepths, depth)
+				pendingBody = false
+			}
+		case t.Kind == token.Punct && t.Value == "}":
+			if n := len(funcDepths); n > 0 && funcDepths[n-1] == depth {
+				funcDepths = funcDepths[:n-1]
+			}
+			depth--
+		}
+	}
+	return len(funcDepths) > 0
 }
 
 // expandDocblock rewrites a single-line docblock into a multi-line one, keeping

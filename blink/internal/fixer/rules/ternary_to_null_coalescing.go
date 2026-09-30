@@ -29,6 +29,9 @@ func (TernaryToNullCoalescing) Fix(s *tokens.Stream) bool {
 		if t.Kind != token.Keyword || strings.ToLower(t.Value) != "isset" {
 			continue
 		}
+		if p := sigPrev(s, i); p >= 0 && higherPrecedenceBeforeIsset(s.At(p)) {
+			continue // isset is part of a larger expression, e.g. "$x && isset(...)"
+		}
 		b := sigNext(s, i)
 		if b < 0 || s.At(b).Kind != token.Punct || s.At(b).Value != "(" {
 			continue
@@ -71,6 +74,22 @@ func (TernaryToNullCoalescing) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	return changed
+}
+
+// higherPrecedenceBeforeIsset reports whether tok is an operator that binds the
+// isset into a larger expression computed before the ternary (mirrors PHP-CS-Fixer's
+// isHigherPrecedenceAssociativityOperator). When present, "isset(...) ? ... : ..."
+// is not a bare null-coalescing candidate and must be left unchanged.
+func higherPrecedenceBeforeIsset(tok token.Token) bool {
+	if tok.Kind != token.Punct {
+		return false
+	}
+	switch tok.Value {
+	case "&&", "||", "??", "--", "++", "==", ">=", "===", "!=", "<>", "!==", "<=", "**", "<<", ">>", "<=>",
+		"!", "%", "&", "*", "+", "-", "/", ":", "^", "|", "~", ".":
+		return true
+	}
+	return false
 }
 
 // ternaryColon returns the index of the ":" that closes the ternary begun by a

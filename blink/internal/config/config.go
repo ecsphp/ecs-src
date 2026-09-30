@@ -18,6 +18,9 @@ type Config struct {
 	Skip  []string // filepath.Match globs tested against each path
 	Rules []fixer.Fixer
 	Jobs  int // parallel workers
+	// PerPathRuleSkips disables a single rule on a subset of paths, keyed by the
+	// rule's name (its PHP-CS-Fixer FQCN); mirrors ECS's per-path skip config.
+	PerPathRuleSkips map[string][]string
 }
 
 // Configure returns a config seeded with the default psr12 + common sets,

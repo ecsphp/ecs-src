@@ -53,6 +53,23 @@ func TestGen4PhpdocLineSpan(t *testing.T) {
 		"<?php\n/** @var int */\nconst X = 1;", false)
 }
 
+func TestGen4PhpdocLineSpanLocalStatic(t *testing.T) {
+	// mautic parity: configured multi (const/method/property) must leave a
+	// /** @var ... */ on a local `static $x` inside a method body UNCHANGED,
+	// because it is not a class member (PHP getClassyElements skips locals).
+	f := PhpdocLineSpan{}.WithConfig(map[string]any{
+		"const": "multi", "method": "multi", "property": "multi",
+	})
+
+	src := "<?php\nclass A{\n    private function run(): void\n    {\n        /** @var array<string, string|null> $cache */\n        static $cache = [];\n    }\n}"
+	assertFix(t, f, src, src, false)
+
+	// a real class property IS still expanded under the same config
+	assertFix(t, f,
+		"<?php\nclass A{\n    /** @var int */\n    public $x;\n}",
+		"<?php\nclass A{\n    /**\n     * @var int\n     */\n    public $x;\n}", true)
+}
+
 func TestGen4PhpdocLineSpanSourceURL(t *testing.T) {
 	var f fixer.Fixer = PhpdocLineSpan{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {

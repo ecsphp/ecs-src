@@ -86,11 +86,16 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 
 // nspRemoveInheritDoc drops inner lines that are a standalone @inheritDoc /
 // @inheritDocs tag (bare or inline braces), reporting whether anything changed.
+// It mirrors PHP-CS-Fixer's removeSuperfluousInheritDoc regex: the tag is only
+// dropped when it is bounded by the comment start or a tag before it and by a
+// tag or the comment end after it (blank lines aside), so an @inheritDoc mixed
+// with a real description is left in place.
 func nspRemoveInheritDoc(d *docblock) bool {
 	kept := d.inner[:0:0]
 	removed := false
-	for _, l := range d.inner {
-		if nspInheritDocRe.MatchString(strings.TrimSpace(l.content)) {
+	for i, l := range d.inner {
+		if nspInheritDocRe.MatchString(strings.TrimSpace(l.content)) &&
+			nspInheritDocBounded(d.inner, i, -1) && nspInheritDocBounded(d.inner, i, 1) {
 			removed = true
 			continue
 		}
@@ -100,6 +105,19 @@ func nspRemoveInheritDoc(d *docblock) bool {
 		d.inner = kept
 	}
 	return removed
+}
+
+// nspInheritDocBounded reports whether the inner line before (step -1) or after
+// (step +1) idx is absent (comment start/end) or a tag, skipping blank lines.
+func nspInheritDocBounded(inner []docLine, idx, step int) bool {
+	for j := idx + step; j >= 0 && j < len(inner); j += step {
+		content := strings.TrimSpace(inner[j].content)
+		if content == "" {
+			continue
+		}
+		return strings.Contains(content, "@")
+	}
+	return true
 }
 
 type funcSig struct {

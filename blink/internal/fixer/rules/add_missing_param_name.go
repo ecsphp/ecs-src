@@ -126,8 +126,40 @@ func addParamNames(d *docblock, names []string) bool {
 		if pos >= len(names) {
 			continue
 		}
+		// A multi-line array-shape type ("@param array{") ends its name on a
+		// later line; if that name is already present in the docblock the param
+		// is not missing one, so leave it untouched.
+		if docBlockContainsName(d, names[pos]) {
+			continue
+		}
 		d.inner[i].content = strings.TrimRight(l.content, " \t") + " " + names[pos]
 		changed = true
 	}
 	return changed
+}
+
+// docBlockContainsName reports whether the variable name already appears in any
+// docblock line, preceded by whitespace and closed by a non-identifier char.
+func docBlockContainsName(d *docblock, name string) bool {
+	for _, l := range d.inner {
+		s := l.content
+		for {
+			at := strings.Index(s, name)
+			if at < 0 {
+				break
+			}
+			before := at == 0 || s[at-1] == ' ' || s[at-1] == '\t'
+			end := at + len(name)
+			after := end >= len(s) || !isParamNameChar(s[end])
+			if before && after {
+				return true
+			}
+			s = s[at+1:]
+		}
+	}
+	return false
+}
+
+func isParamNameChar(b byte) bool {
+	return b == '_' || (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 }

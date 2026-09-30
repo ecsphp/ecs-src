@@ -15,6 +15,17 @@ func TestTernaryToNullCoalescing(t *testing.T) {
 		{`<?php $d = isset($x, $y) ? $x : $y;`, `<?php $d = isset($x, $y) ? $x : $y;`, false},      // multi-arg
 		{`<?php $e = isset($x) ? $y : $z;`, `<?php $e = isset($x) ? $y : $z;`, false},              // mismatch
 		{`<?php $g = isset($x) ? $x : (isset($y) ? $y : 0);`, `<?php $g = $x ?? ($y ?? 0);`, true}, // nested isset also converts
+		// Compound condition: isset combined with && is part of a larger expression, must not convert.
+		{
+			`<?php return $singleEmail && isset($errors[$singleEmail]) ? $errors[$singleEmail] : $errors;`,
+			`<?php return $singleEmail && isset($errors[$singleEmail]) ? $errors[$singleEmail] : $errors;`,
+			false,
+		},
+		{
+			`<?php $x = isset($options['data']) && isset($options['data']['useremail']) && isset($options['data']['useremail']['email']) ? $options['data']['useremail']['email'] : null;`,
+			`<?php $x = isset($options['data']) && isset($options['data']['useremail']) && isset($options['data']['useremail']['email']) ? $options['data']['useremail']['email'] : null;`,
+			false,
+		},
 	}
 	for _, c := range cases {
 		got, changed := apply(t, f, c.src)

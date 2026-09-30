@@ -26,4 +26,16 @@ func TestStandaloneLineSymfonyAttributeParam(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\n#[Foo(a: 1, b: 2)]\nclass C\n{\n}\n"); changed {
 		t.Fatal("non-allowlisted attribute must stay inline")
 	}
+
+	// a trailing comma in the source is preserved, never added or dropped
+	got, changed = apply(t, f, "<?php\nclass C\n{\n    #[Route('/path', name: 'r',)]\n    public function x() {}\n}\n")
+	if want := "<?php\nclass C\n{\n    #[Route(\n        '/path',\n        name: 'r',\n    )]\n    public function x() {}\n}\n"; !changed || got != want {
+		t.Fatalf("trailing comma preserved: changed=%v got=%q", changed, got)
+	}
+
+	// an already-broken attribute whose heredoc body holds commas stays byte-for-byte
+	already := "<?php\n#[AsCommand(\n    name: 'app:x',\n    help: <<<'TXT'\nfoo, bar and baz\nTXT\n)]\nclass C\n{\n}\n"
+	if _, changed := apply(t, f, already); changed {
+		t.Fatal("heredoc body commas must not split the argument list")
+	}
 }

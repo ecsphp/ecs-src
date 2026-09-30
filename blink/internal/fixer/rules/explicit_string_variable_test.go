@@ -20,6 +20,10 @@ func TestExplicitStringVariable(t *testing.T) {
 		{`<?php $s = "${a}";`, `<?php $s = "${a}";`, false},             // complex, left alone
 		{`<?php $s = 'no $a here';`, `<?php $s = 'no $a here';`, false}, // single-quoted
 		{`<?php $s = "esc \$a";`, `<?php $s = "esc \$a";`, false},       // escaped
+		// a simple var directly after a "{...}" interpolation is left alone (PHP parity)
+		{`<?php $s = "{$a}$b";`, `<?php $s = "{$a}$b";`, false},
+		{`<?php $s = "{$a}$b more $c";`, `<?php $s = "{$a}$b more {$c}";`, true},
+		{`<?php $s = "-u{$this->p()['user']}$password {$this->p()['db']}";`, `<?php $s = "-u{$this->p()['user']}$password {$this->p()['db']}";`, false},
 	}
 	for _, c := range cases {
 		got, changed := apply(t, f, c.src)

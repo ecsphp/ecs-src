@@ -84,7 +84,7 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 		return false
 	}
 
-	nsLower := strings.ToLower(fileNamespace(s))
+	regions := namespaceRegions(s)
 
 	inImport := func(idx int) bool {
 		for _, im := range imports {
@@ -95,25 +95,50 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 		return false
 	}
 
-	changed := false
-	for _, im := range slices.Backward(imports) {
+	regionOf := func(idx int) nsRegion {
+		for _, r := range regions {
+			if idx >= r.start && idx <= r.end {
+				return r
+			}
+		}
+		return nsRegion{start: 0, end: s.Len() - 1}
+	}
+
+	// Decide first, remove after: usage detection ignores import token ranges,
+	// so removals never change another import's used-ness, and deciding on the
+	// pristine stream avoids stale indices from earlier removals.
+	var toRemove []importInfo
+	for _, im := range imports {
+		r := regionOf(im.start)
+		nsLower := r.nameLower
 		// an import of the current namespace ("namespace\Name") is redundant
 		redundant := !im.aliased && nsLower != "" &&
 			strings.HasPrefix(im.fullLower, nsLower+`\`) &&
 			!strings.Contains(im.fullLower[len(nsLower)+1:], `\`)
-		if !redundant && importIsUsed(s, im, inImport) {
+		if !redundant && importIsUsed(s, im, r.start, r.end, inImport) {
 			continue
 		}
-		removeImport(s, im)
-		changed = true
+		toRemove = append(toRemove, im)
 	}
-	return changed
+	if len(toRemove) == 0 {
+		return false
+	}
+	for _, im := range slices.Backward(toRemove) {
+		removeImport(s, im)
+	}
+	return true
 }
 
 // importIsUsed reports whether the import's short name appears as a matching-kind
-// reference or in a comment (word-boundary).
-func importIsUsed(s *tokens.Stream, im importInfo, inImport func(int) bool) bool {
-	for k := 0; k < s.Len(); k++ {
+// reference or in a comment (word-boundary) within its namespace region [lo, hi].
+func importIsUsed(s *tokens.Stream, im importInfo, lo, hi int, inImport func(int) bool) bool {
+	if lo < 0 {
+		lo = 0
+	}
+	if hi >= s.Len() {
+		hi = s.Len() - 1
+	}
+	for k := lo; k <= hi; k++ {
 		t := s.At(k)
 		if t.Kind == token.Ident && !inImport(k) && strings.ToLower(t.Value) == im.shortLower {
 			if usageMatchesKind(s, k, im.kind) {
@@ -260,26 +285,78 @@ func importParts(s *tokens.Stream, useIdx, semi int, kind string) (short, full s
 	return short, full, aliased
 }
 
-// fileNamespace returns the first top-level namespace name, or "".
-func fileNamespace(s *tokens.Stream) string {
+// nsRegion is a namespace scope: the token index range [start, end] that a use
+// statement belongs to and whose usages count, plus the lowercased namespace name.
+type nsRegion struct {
+	start, end int
+	nameLower  string
+}
+
+// namespaceRegions partitions the stream into namespace scopes, mirroring PHP-CS-Fixer's
+// per-namespace handling. A file with no namespace is one global region; brace-style
+// `namespace X { ... }` blocks each scope to their braces (including a global `namespace { ... }`);
+// semicolon-style `namespace X;` scopes to the next namespace declaration or end of file.
+func namespaceRegions(s *tokens.Stream) []nsRegion {
+	var starts []int
 	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind != token.Keyword || strings.ToLower(s.At(i).Value) != "namespace" || memberPrev(s, i) {
-			continue
+		if s.At(i).Kind == token.Keyword && strings.ToLower(s.At(i).Value) == "namespace" && !memberPrev(s, i) {
+			starts = append(starts, i)
 		}
-		var b strings.Builder
-		for k := i + 1; k < s.Len(); k++ {
+	}
+	if len(starts) == 0 {
+		return []nsRegion{{start: 0, end: s.Len() - 1}}
+	}
+
+	var regions []nsRegion
+	for idx, ni := range starts {
+		var name strings.Builder
+		delim, brace := -1, false
+		for k := ni + 1; k < s.Len(); k++ {
 			t := s.At(k)
 			if t.Kind == token.Punct && (t.Value == ";" || t.Value == "{") {
+				delim, brace = k, t.Value == "{"
 				break
 			}
 			if t.Kind == token.Whitespace {
 				continue
 			}
-			b.WriteString(t.Value)
+			name.WriteString(t.Value)
 		}
-		return strings.TrimPrefix(b.String(), `\`)
+		if delim < 0 {
+			continue
+		}
+		nameLower := strings.ToLower(strings.TrimPrefix(name.String(), `\`))
+		if brace {
+			regions = append(regions, nsRegion{start: delim, end: matchCloseBrace(s, delim), nameLower: nameLower})
+			continue
+		}
+		end := s.Len() - 1
+		if idx+1 < len(starts) {
+			end = starts[idx+1] - 1
+		}
+		regions = append(regions, nsRegion{start: ni, end: end, nameLower: nameLower})
 	}
-	return ""
+	return regions
+}
+
+// matchCloseBrace returns the index of the "}" matching the "{" at open.
+func matchCloseBrace(s *tokens.Stream, open int) int {
+	depth := 0
+	for k := open; k < s.Len(); k++ {
+		if s.At(k).Kind != token.Punct {
+			continue
+		}
+		switch s.At(k).Value {
+		case "{":
+			depth++
+		case "}":
+			depth--
+			if depth == 0 {
+				return k
+			}
+		}
+	}
+	return s.Len() - 1
 }
 
 func removeImport(s *tokens.Stream, im importInfo) {

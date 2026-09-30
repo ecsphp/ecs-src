@@ -35,6 +35,72 @@ func (NoEmptyComment) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Comment/NoEmptyCommentFixer.php"
 }
 
+// commentType classifies a comment token the way PHP's getCommentType does:
+// hash ("#"), double-slash ("//") or slash-asterisk ("/* */").
+const (
+	commentHash = iota
+	commentDoubleSlash
+	commentSlashAsterisk
+)
+
+func commentType(v string) int {
+	if strings.HasPrefix(v, "#") {
+		return commentHash
+	}
+	if len(v) > 1 && v[1] == '*' {
+		return commentSlashAsterisk
+	}
+	return commentDoubleSlash
+}
+
+func lineBreakCount(v string) int {
+	n := 0
+	for i := 0; i < len(v); i++ {
+		switch v[i] {
+		case '\n':
+			n++
+		case '\r':
+			n++
+			if i+1 < len(v) && v[i+1] == '\n' {
+				i++
+			}
+		}
+	}
+	return n
+}
+
+// noEmptyCommentBlock walks the // or # comment block starting at index and
+// returns its start, end and whether the whole block is empty, mirroring PHP's
+// getCommentBlock. Consecutive // (or #) lines separated by a single line break
+// form one block; a blank line (>1 line break) or a different comment type ends
+// it. A /* */ comment is always a one-token block.
+func noEmptyCommentBlock(s *tokens.Stream, index int) (start, end int, empty bool) {
+	ct := commentType(s.At(index).Value)
+	empty = commentBody(s.At(index).Value) == ""
+	if ct == commentSlashAsterisk {
+		return index, index, empty
+	}
+
+	start = index
+	i := index + 1
+	for ; i < s.Len(); i++ {
+		t := s.At(i)
+		if t.Kind == token.Comment {
+			if strings.HasPrefix(t.Value, "#[") || commentType(t.Value) != ct {
+				break
+			}
+			if empty {
+				empty = commentBody(t.Value) == ""
+			}
+			continue
+		}
+		if t.Kind != token.Whitespace || lineBreakCount(t.Value) > 1 {
+			break
+		}
+	}
+	return start, i - 1, empty
+}
+
 func (NoEmptyComment) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
@@ -45,17 +111,37 @@ func (NoEmptyComment) Fix(s *tokens.Stream) bool {
 		if strings.HasPrefix(t.Value, "#[") {
 			continue // attribute, not a comment
 		}
-		if commentBody(t.Value) == "" {
-			s.RemoveAt(i)
-			changed = true
-			// merge whitespace left adjacent by the removal, so a now-blank line
-			// is a single token that no_whitespace_in_blank_line can clear.
-			if i-1 >= 0 && i < s.Len() && s.At(i-1).Kind == token.Whitespace && s.At(i).Kind == token.Whitespace {
-				s.SetValue(i-1, s.At(i-1).Value+s.At(i).Value)
-				s.RemoveAt(i)
-			}
-			i--
+
+		start, end, empty := noEmptyCommentBlock(s, i)
+		if !empty {
+			// a block with any non-empty comment line is left untouched, so an
+			// empty // line inside a real // comment block is preserved.
+			i = end
+			continue
 		}
+
+		// clear the block and merge the whitespace around it into one token,
+		// mirroring PHP's clearTokenAndMergeSurroundingWhitespace.
+		lo, hi := start, end
+		if lo > 0 && s.At(lo-1).Kind == token.Whitespace {
+			lo--
+		}
+		if hi+1 < s.Len() && s.At(hi+1).Kind == token.Whitespace {
+			hi++
+		}
+		var b strings.Builder
+		for j := lo; j <= hi; j++ {
+			if s.At(j).Kind == token.Whitespace {
+				b.WriteString(s.At(j).Value)
+			}
+		}
+		if merged := b.String(); merged != "" {
+			s.ReplaceRange(lo, hi, []token.Token{{Kind: token.Whitespace, Value: merged}})
+		} else {
+			s.ReplaceRange(lo, hi, nil)
+		}
+		changed = true
+		i = lo
 	}
 	return changed
 }
