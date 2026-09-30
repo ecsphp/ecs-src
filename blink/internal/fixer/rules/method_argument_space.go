@@ -235,7 +235,7 @@ func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
 		changed = true
 	}
 	for _, c := range slices.Backward(commas) {
-		if editSlotAfter(s, c, argNLAfterComma(s, c, base)) {
+		if reflowAfterComma(s, c, base) {
 			changed = true
 		}
 	}
@@ -243,6 +243,37 @@ func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
 		changed = true
 	}
 	return changed
+}
+
+// reflowAfterComma breaks a multiline argument list after a top-level comma. A
+// trailing line comment ("arg, // note") stays on the argument's line and the
+// break goes after the comment, matching php-cs-fixer; otherwise the break goes
+// right after the comma.
+func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
+	n := comma + 1
+	ws := -1
+	if n < s.Len() && s.At(n).Kind == token.Whitespace && !hasNewline(s.At(n).Value) {
+		ws = n
+		n++
+	}
+	if n < s.Len() && isLineComment(s.At(n)) {
+		changed := false
+		if ws >= 0 {
+			if s.At(ws).Value != " " {
+				s.SetValue(ws, " ")
+				changed = true
+			}
+		} else {
+			s.InsertAt(comma+1, token.Token{Kind: token.Whitespace, Value: " "})
+			n++
+			changed = true
+		}
+		if editSlotAfter(s, n, "\n"+base+"    ") {
+			changed = true
+		}
+		return changed
+	}
+	return editSlotAfter(s, comma, argNLAfterComma(s, comma, base))
 }
 
 // argListIsMultiline reports whether the argument list is split at the top level
