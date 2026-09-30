@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -22,6 +23,12 @@ func (MultilineWhitespaceBeforeSemicolons) Name() string {
 
 func (MultilineWhitespaceBeforeSemicolons) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Semicolon/MultilineWhitespaceBeforeSemicolonsFixer.php"
+}
+
+// WithConfig models the fixer's "strategy" option; only the default
+// "no_multi_line" is implemented, which is exactly what Fix does.
+func (f MultilineWhitespaceBeforeSemicolons) WithConfig(map[string]any) fixer.Fixer {
+	return f
 }
 
 func (MultilineWhitespaceBeforeSemicolons) Fix(s *tokens.Stream) bool {
