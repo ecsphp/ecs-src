@@ -100,6 +100,9 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 	res := FileResult{Path: path}
 
 	for _, rule := range cfg.Rules {
+		if skipPatterns, ok := cfg.PerPathRuleSkips[rule.Name()]; ok && finder.Skipped(path, skipPatterns) {
+			continue
+		}
 		if rule.Fix(stream) {
 			res.AppliedRules = append(res.AppliedRules, rule.Name())
 		}

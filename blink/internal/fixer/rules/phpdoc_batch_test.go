@@ -163,6 +163,13 @@ func TestNoBlankLinesAfterPhpdoc(t *testing.T) {
 	if _, changed := apply(t, NoBlankLinesAfterPhpdoc{}, "<?php\n/**\n * doc\n */\nclass Bar {}"); changed {
 		t.Fatal("docblock directly above code must not change")
 	}
+
+	// a floating @var docblock followed by a blank line then a comment is left
+	// unchanged - PHP skips the fix when the next token is a comment
+	src := "<?php\nif (file_exists($f)) {\n    include $f;\n    /** @var array<string, mixed> $parameters */\n\n    // override default with forced\n    $compiled = array_merge($compiled, $parameters);\n}"
+	if got, changed := apply(t, NoBlankLinesAfterPhpdoc{}, src); changed || got != src {
+		t.Fatalf("blank before comment must not change: changed=%v got=%q", changed, got)
+	}
 }
 
 // TestPhpdocBatchSourceURLs verifies every SourceURL matches SourceURLFor(Name()).

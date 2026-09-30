@@ -1,0 +1,147 @@
+name: Blink Parity (mautic)
+
+# Runs the same ECS config both ways on a real mautic/mautic checkout:
+#   bin/ecs check --fix              (PHP engine)
+#   bin/ecs check --fix --blink      (ecs-go binary, via --ecs-config)
+# on two identical copies, then diffs the resulting trees. Both must produce
+# byte-for-byte identical files. This is the 1:1 parity gate on mautic: it stays
+# red until --blink reproduces the PHP engine exactly.
+
+on:
+    pull_request:
+        paths:
+            - 'blink/**'
+            - 'src/**'
+            - 'packages/**'
+            - 'config/**'
+            - '.github/workflows/blink_parity_mautic.yaml'
+    workflow_dispatch: null
+
+jobs:
+    blink-parity-mautic:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - name: Build blink
+              working-directory: blink
+              run: go build -o /tmp/blink .
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.4"
+                  coverage: none
+
+            # installs this repository's ECS so parity runs against the code being shipped
+            - uses: "ramsey/composer-install@v4"
+
+            - name: Fetch mautic/mautic
+              run: git clone --depth 1 https://github.com/mautic/mautic.git /tmp/mautic
+
+            # the ECS config lives inside the checkout so __DIR__ resolves against it;
+            # mirrors the prepared sets and skips used on the mautic tv-ecs-go branch
+            - name: Write the shared ECS config
+              run: |
+                  cat > /tmp/mautic/ecs.php <<'PHP'
+                  <?php
+
+                  declare(strict_types=1);
+
+                  use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+                  return ECSConfig::configure()
+                      ->withPaths([
+                          __DIR__ . '/app',
+                          __DIR__ . '/plugins',
+                      ])
+                      ->withSkip([
+                          '*/node_modules/*',
+                          '*/Fixture/*',
+                          PhpCsFixer\Fixer\Phpdoc\PhpdocNoEmptyReturnFixer::class => [
+                              __DIR__ . '/app/bundles/CoreBundle/Entity/CommonEntity.php',
+                          ],
+                          PhpCsFixer\Fixer\Phpdoc\GeneralPhpdocAnnotationRemoveFixer::class,
+                          PhpCsFixer\Fixer\Operator\BinaryOperatorSpacesFixer::class,
+                          PhpCsFixer\Fixer\Operator\ConcatSpaceFixer::class,
+                          PhpCsFixer\Fixer\Operator\NotOperatorWithSpaceFixer::class,
+                          PhpCsFixer\Fixer\Operator\NotOperatorWithSuccessorSpaceFixer::class,
+                          PhpCsFixer\Fixer\Whitespace\MethodChainingIndentationFixer::class,
+                          Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer::class,
+                          PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer::class,
+                          PhpCsFixer\Fixer\ControlStructure\NoAlternativeSyntaxFixer::class,
+                      ])
+                      ->withRules([
+                          PhpCsFixer\Fixer\Semicolon\MultilineWhitespaceBeforeSemicolonsFixer::class,
+                      ])
+                      ->withPreparedSets(
+                          comments: true,
+                          docblocks: true,
+                          namespaces: true,
+                          cleanup: true,
+                          controlStructures: true,
+                          standaloneLine: true,
+                      );
+                  PHP
+                  cp /tmp/mautic/ecs.php /tmp/mautic/ecs-copy.php
+
+            - name: Two identical copies of the source
+              run: |
+                  cp -r /tmp/mautic /tmp/ours
+                  cp -r /tmp/mautic /tmp/ecs
+
+            - name: Fix with blink (--blink)
+              env:
+                  ECS_TURBO_BIN: /tmp/blink
+              run: bin/ecs check --fix --no-progress-bar --config /tmp/ours/ecs.php --blink || true
+
+            - name: Fix with the PHP engine
+              run: bin/ecs check --fix --no-progress-bar --config /tmp/ecs/ecs.php || true
+
+            - name: Compare the two trees
+              run: |
+                  total=0
+                  differ=0
+                  differing_files=""
+                  for f in $(cd /tmp/ours && find app plugins -name '*.php' | sort); do
+                      total=$((total + 1))
+                      if ! diff -q "/tmp/ours/$f" "/tmp/ecs/$f" >/dev/null 2>&1; then
+                          differ=$((differ + 1))
+                          differing_files="$differing_files $f"
+                      fi
+                  done
+                  same=$((total - differ))
+                  {
+                      echo "## blink (--blink) vs PHP ECS on mautic/mautic"
+                      echo ""
+                      echo "| metric | value |"
+                      echo "|---|---|"
+                      echo "| files | $total |"
+                      echo "| identical output | $same |"
+                      echo "| differing output | $differ |"
+                      echo ""
+                      echo "1:1 parity gate: fails while any file differs between the two runners."
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  echo "identical=$same differing=$differ of $total"
+
+                  for f in $differing_files; do
+                      {
+                          echo ""
+                          echo "<details><summary>$f</summary>"
+                          echo ""
+                          echo '```diff'
+                          diff "/tmp/ecs/$f" "/tmp/ours/$f" | head -60 || true
+                          echo '```'
+                          echo "</details>"
+                      } >> "$GITHUB_STEP_SUMMARY"
+                      echo "--- $f (< PHP, > blink)"
+                      diff "/tmp/ecs/$f" "/tmp/ours/$f" | sed 's/^/    /' | head -60 || true
+                  done
+
+                  if [ "$differ" -gt 0 ]; then
+                      echo "::error::--blink output differs from the PHP engine on $differ of $total files"
+                      exit 1
+                  fi

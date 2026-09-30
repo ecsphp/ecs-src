@@ -35,3 +35,14 @@ func TestOrderedImportsImportsOrder(t *testing.T) {
 		t.Fatalf("imports_order: changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+func TestOrderedImportsKeepsBlankBetweenGroups(t *testing.T) {
+	// imports_order=null (no grouping): already-sorted imports with a blank line
+	// separating the class group from the function group are left untouched -
+	// the blank line between statements is preserved, not collapsed.
+	src := "<?php\nuse Aaa\\Bbb;\nuse Aaa\\Ccc;\n\nuse function Aaa\\ddd;\n"
+	cfg := OrderedImports{}.WithConfig(map[string]any{"imports_order": nil})
+	if got, changed := apply(t, cfg, src); changed || got != src {
+		t.Fatalf("blank between groups must be preserved: changed=%v got=%q", changed, got)
+	}
+}

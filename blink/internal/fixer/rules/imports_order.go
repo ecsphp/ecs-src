@@ -204,7 +204,18 @@ func (f OrderedImports) Fix(s *tokens.Stream) bool {
 func (f OrderedImports) reorderImports(s *tokens.Stream, run []importStmt) (int, bool) {
 	first := run[0].start
 	last := run[len(run)-1].semi
-	indent := indentBefore(s, first)
+
+	// original whitespace/comment separators between consecutive statements,
+	// kept by slot: PHP reorders only the statement content into these slots, so
+	// blank lines between import groups survive
+	seps := make([][]token.Token, len(run))
+	for p := 1; p < len(run); p++ {
+		var seg []token.Token
+		for k := run[p-1].semi + 1; k < run[p].start; k++ {
+			seg = append(seg, s.At(k))
+		}
+		seps[p] = seg
+	}
 
 	ordered := append([]importStmt(nil), run...)
 	sort.SliceStable(ordered, func(a, b int) bool {
@@ -229,7 +240,7 @@ func (f OrderedImports) reorderImports(s *tokens.Stream, run []importStmt) (int,
 	var repl []token.Token
 	for p, st := range ordered {
 		if p > 0 {
-			repl = append(repl, token.Token{Kind: token.Whitespace, Value: "\n" + indent})
+			repl = append(repl, seps[p]...)
 		}
 		for k := st.start; k <= st.semi; k++ {
 			repl = append(repl, s.At(k))

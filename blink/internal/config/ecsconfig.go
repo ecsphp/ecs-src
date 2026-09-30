@@ -87,9 +87,15 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 		case skip.Class != "" && skip.Path == "" && len(skip.Paths) == 0:
 			skippedClasses[skip.Class] = true
 		case skip.Class != "":
-			// A rule disabled only on some paths: blink cannot skip a single rule
-			// on a subset of files, so note it and let the rule run everywhere
-			// rather than drop it project-wide.
+			// A rule disabled only on some paths: skip that rule on those paths,
+			// mirroring ECS, instead of dropping it project-wide.
+			if config.PerPathRuleSkips == nil {
+				config.PerPathRuleSkips = map[string][]string{}
+			}
+			if skip.Path != "" {
+				config.PerPathRuleSkips[skip.Class] = append(config.PerPathRuleSkips[skip.Class], skip.Path)
+			}
+			config.PerPathRuleSkips[skip.Class] = append(config.PerPathRuleSkips[skip.Class], skip.Paths...)
 			resolution.PerPathSkips = append(resolution.PerPathSkips, skip.Class)
 		default:
 			if skip.Path != "" {

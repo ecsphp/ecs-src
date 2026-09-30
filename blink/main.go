@@ -124,7 +124,7 @@ func reportECSResolution(w io.Writer, resolution *config.ECSResolution) {
 		}
 	}
 	if len(resolution.PerPathSkips) > 0 {
-		_, _ = fmt.Fprintln(w, "  per-path rule skips applied project-wide (not yet honoured per path):")
+		_, _ = fmt.Fprintln(w, "  per-path rule skips honoured (rule disabled on the configured paths):")
 		for _, class := range resolution.PerPathSkips {
 			_, _ = fmt.Fprintf(w, "    - %s\n", class)
 		}

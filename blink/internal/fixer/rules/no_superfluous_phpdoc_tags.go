@@ -61,11 +61,36 @@ func (f NoSuperfluousPhpdocTags) WithConfig(config map[string]any) fixer.Fixer {
 
 func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := range s.Len() {
-		if s.At(i).Kind != token.DocComment {
+	ctx := typeContext{imports: map[string]string{}}
+	symbolEnd := -1
+	for i := 0; i < s.Len(); i++ {
+		if i == symbolEnd {
+			ctx.currentSymbol = ""
+			symbolEnd = -1
+		}
+		t := s.At(i)
+		if t.Kind == token.Keyword {
+			switch strings.ToLower(t.Value) {
+			case "namespace":
+				ctx.namespace = scanNamespace(s, i)
+				continue
+			case "use":
+				if ctx.currentSymbol == "" {
+					collectUseImports(s, i, ctx.imports)
+				}
+				continue
+			case "class", "interface", "trait", "enum":
+				if name, end := scanClassSymbol(s, i); name != "" {
+					ctx.currentSymbol = name
+					symbolEnd = end
+				}
+				continue
+			}
+		}
+		if t.Kind != token.DocComment {
 			continue
 		}
-		d, ok := parseDoc(s.At(i).Value)
+		d, ok := parseDoc(t.Value)
 		if !ok || d.single {
 			continue
 		}
@@ -73,7 +98,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 		if f.removeInheritdoc && nspRemoveInheritDoc(&d) {
 			docChanged = true
 		}
-		if sig, ok := signatureAfter(s, i); ok && f.filterSuperfluous(&d, sig) {
+		if sig, ok := signatureAfter(s, i); ok && f.filterSuperfluous(&d, sig, ctx) {
 			docChanged = true
 		}
 		if docChanged {
@@ -84,13 +109,144 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
+// typeContext resolves class type names to fully-qualified names for comparison,
+// mirroring PHP-CS-Fixer's namespace/use analysis. namespace and currentSymbol
+// are lowercased; imports maps a lowercased short name to its lowercased FQCN.
+type typeContext struct {
+	namespace     string
+	currentSymbol string
+	imports       map[string]string
+}
+
+// scanNamespace reads the namespace path starting at the "namespace" keyword,
+// lowercased, up to ";" or "{".
+func scanNamespace(s *tokens.Stream, kw int) string {
+	var parts []string
+	for k := kw + 1; k < s.Len(); k++ {
+		t := s.At(k)
+		if t.Kind == token.Whitespace {
+			continue
+		}
+		if t.Kind == token.Ident || (t.Kind == token.Punct && t.Value == `\`) {
+			parts = append(parts, t.Value)
+			continue
+		}
+		break
+	}
+	return strings.ToLower(strings.Join(parts, ""))
+}
+
+// collectUseImports records the class imports of a "use" statement (short name ->
+// FQCN, both lowercased). Closure "use (...)" and "use function"/"use const"
+// imports are ignored. Group imports "use A\{B, C};" are skipped.
+func collectUseImports(s *tokens.Stream, kw int, imports map[string]string) {
+	first := nextSignificantIndex(s, kw)
+	if first < 0 {
+		return
+	}
+	if ft := s.At(first); ft.Kind == token.Punct && ft.Value == "(" {
+		return // closure use
+	}
+	if ft := s.At(first); ft.Kind == token.Keyword {
+		lv := strings.ToLower(ft.Value)
+		if lv == "function" || lv == "const" {
+			return
+		}
+	}
+	var path []string
+	var alias string
+	inAlias := false
+	flush := func() {
+		if len(path) == 0 {
+			return
+		}
+		fqcn := strings.ToLower(strings.TrimPrefix(strings.Join(path, ""), `\`))
+		short := alias
+		if short == "" {
+			short = path[len(path)-1]
+		}
+		imports[strings.ToLower(short)] = fqcn
+		path = nil
+		alias = ""
+		inAlias = false
+	}
+	for k := first; k < s.Len(); k++ {
+		t := s.At(k)
+		if t.Kind == token.Whitespace {
+			continue
+		}
+		if t.Kind == token.Keyword && strings.ToLower(t.Value) == "as" {
+			inAlias = true
+			continue
+		}
+		if t.Kind == token.Ident {
+			if inAlias {
+				alias = t.Value
+			} else {
+				path = append(path, t.Value)
+			}
+			continue
+		}
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case `\`:
+				if !inAlias {
+					path = append(path, t.Value)
+				}
+			case ",":
+				flush()
+			case "{":
+				return // group import, unsupported
+			case ";":
+				flush()
+				return
+			}
+			continue
+		}
+		break
+	}
+	flush()
+}
+
+// scanClassSymbol returns the lowercased name of a class/interface/trait/enum
+// declared at kw and the index of its body's closing brace. It returns "" for an
+// anonymous class or a "::class" magic constant.
+func scanClassSymbol(s *tokens.Stream, kw int) (string, int) {
+	if p := prevSignificantIndex(s, kw); p >= 0 && s.At(p).Kind == token.Punct && s.At(p).Value == "::" {
+		return "", -1
+	}
+	name := nextSignificantIndex(s, kw)
+	if name < 0 || s.At(name).Kind != token.Ident {
+		return "", -1
+	}
+	for k := name + 1; k < s.Len(); k++ {
+		t := s.At(k)
+		if t.Kind == token.Punct && t.Value == "{" {
+			end := s.MatchForward(k)
+			if end < 0 {
+				return "", -1
+			}
+			return strings.ToLower(s.At(name).Value), end
+		}
+		if t.Kind == token.Punct && t.Value == ";" {
+			return "", -1
+		}
+	}
+	return "", -1
+}
+
 // nspRemoveInheritDoc drops inner lines that are a standalone @inheritDoc /
 // @inheritDocs tag (bare or inline braces), reporting whether anything changed.
+// It mirrors PHP-CS-Fixer's removeSuperfluousInheritDoc regex: the tag is only
+// dropped when it is bounded by the comment start or a tag before it and by a
+// tag or the comment end after it (blank lines aside), so an @inheritDoc mixed
+// with a real description is left in place.
 func nspRemoveInheritDoc(d *docblock) bool {
 	kept := d.inner[:0:0]
 	removed := false
-	for _, l := range d.inner {
-		if nspInheritDocRe.MatchString(strings.TrimSpace(l.content)) {
+	for i, l := range d.inner {
+		if nspInheritDocRe.MatchString(strings.TrimSpace(l.content)) &&
+			nspInheritDocBounded(d.inner, i, -1) && nspInheritDocBounded(d.inner, i, 1) {
 			removed = true
 			continue
 		}
@@ -102,12 +258,25 @@ func nspRemoveInheritDoc(d *docblock) bool {
 	return removed
 }
 
+// nspInheritDocBounded reports whether the inner line before (step -1) or after
+// (step +1) idx is absent (comment start/end) or a tag, skipping blank lines.
+func nspInheritDocBounded(inner []docLine, idx, step int) bool {
+	for j := idx + step; j >= 0 && j < len(inner); j += step {
+		content := strings.TrimSpace(inner[j].content)
+		if content == "" {
+			continue
+		}
+		return strings.Contains(content, "@")
+	}
+	return true
+}
+
 type funcSig struct {
-	params  map[string]string // $var name (without $) -> normalized native type ("" if none)
+	params  map[string]string // $var name (without $) -> raw native type text ("" if none)
 	hidden  map[string]bool   // param names appearing only in signature comments
-	ret     string            // normalized native return type ("" if none)
+	ret     string            // raw native return type text ("" if none)
 	hasRet  bool
-	varType string // normalized native type of a documented property
+	varType string // raw native type text of a documented property
 	hasVar  bool   // the docblock documents a property
 }
 
@@ -157,7 +326,7 @@ func parseProperty(s *tokens.Stream, start int) (funcSig, bool) {
 		case token.Whitespace, token.Comment:
 			continue
 		case token.Variable:
-			return funcSig{hasVar: true, varType: normalizeType(strings.Join(typeToks, ""))}, true
+			return funcSig{hasVar: true, varType: strings.Join(typeToks, "")}, true
 		case token.Ident, token.Keyword:
 			typeToks = append(typeToks, t.Value)
 		case token.Punct:
@@ -216,7 +385,7 @@ func parseSignature(s *tokens.Stream, fn int) (funcSig, bool) {
 			}
 			parts = append(parts, t.Value)
 		}
-		sig.ret = normalizeType(strings.Join(parts, ""))
+		sig.ret = strings.Join(parts, "")
 		sig.hasRet = true
 	}
 	return sig, true
@@ -231,7 +400,7 @@ func parseParams(s *tokens.Stream, open, close int, sig *funcSig) {
 	inDefault := false
 	flush := func() {
 		if varName != "" {
-			sig.params[varName] = normalizeType(strings.Join(typeToks, ""))
+			sig.params[varName] = strings.Join(typeToks, "")
 		}
 		typeToks = nil
 		varName = ""
@@ -296,13 +465,13 @@ func isParamModifier(v string) bool {
 
 // filterSuperfluous drops @param/@return lines made redundant by sig. Reports
 // whether anything was removed.
-func (f NoSuperfluousPhpdocTags) filterSuperfluous(d *docblock, sig funcSig) bool {
+func (f NoSuperfluousPhpdocTags) filterSuperfluous(d *docblock, sig funcSig, ctx typeContext) bool {
 	kept := make([]docLine, 0, len(d.inner))
 	removed := false
 	for idx := 0; idx < len(d.inner); idx++ {
 		l := d.inner[idx]
 		content := strings.TrimLeft(l.content, " ")
-		if drop, ok := f.superfluousTag(content, sig); ok && drop && !hasContinuation(d.inner, idx) {
+		if drop, ok := f.superfluousTag(content, sig, ctx); ok && drop && !hasContinuation(d.inner, idx) {
 			removed = true
 			continue
 		}
@@ -326,7 +495,7 @@ func hasContinuation(inner []docLine, idx int) bool {
 }
 
 // superfluousTag reports whether a @param/@return line is redundant given sig.
-func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig) (bool, bool) {
+func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig, ctx typeContext) (bool, bool) {
 	if m := nspParamRe.FindStringSubmatch(content); m != nil {
 		phpType, name, desc := m[1], m[2], strings.TrimSpace(m[3])
 		if desc != "" {
@@ -344,14 +513,14 @@ func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig) (bo
 			}
 			return true, true
 		}
-		return f.typeIsSuperfluous(phpType, native), true
+		return f.typeIsSuperfluous(phpType, native, ctx), true
 	}
 	if m := nspReturnRe.FindStringSubmatch(content); m != nil {
 		phpType, desc := m[1], strings.TrimSpace(m[2])
 		if desc != "" {
 			return false, true
 		}
-		return f.typeIsSuperfluous(phpType, sig.ret), true
+		return f.typeIsSuperfluous(phpType, sig.ret, ctx), true
 	}
 	if sig.hasVar {
 		if m := nspVarRe.FindStringSubmatch(content); m != nil {
@@ -359,7 +528,7 @@ func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig) (bo
 			if desc != "" {
 				return false, true
 			}
-			return f.typeIsSuperfluous(phpType, sig.varType), true
+			return f.typeIsSuperfluous(phpType, sig.varType, ctx), true
 		}
 	}
 	return false, false
@@ -369,20 +538,20 @@ func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig) (bo
 // type: it normalizes to exactly the native type and is not more specific (no
 // generics/shapes/callable signatures). On an untyped element only a "mixed" tag
 // can be superfluous, and only when allow_mixed is off (mixedIsSuperfluous).
-func (f NoSuperfluousPhpdocTags) typeIsSuperfluous(phpType, native string) bool {
+func (f NoSuperfluousPhpdocTags) typeIsSuperfluous(phpType, native string, ctx typeContext) bool {
 	if strings.ContainsAny(phpType, "<{(") {
 		return false
 	}
 	if native == "" {
-		return f.mixedIsSuperfluous && normalizeType(phpType) == "mixed"
+		return f.mixedIsSuperfluous && ctx.normalize(phpType) == "mixed"
 	}
-	return normalizeType(phpType) == native
+	return ctx.normalize(phpType) == ctx.normalize(native)
 }
 
-// normalizeType canonicalizes a type for comparison: lowercase, each union member
-// reduced to its short name, "?T" expanded to the "null|t" set, members sorted
-// and de-duplicated.
-func normalizeType(t string) string {
+// normalize canonicalizes a type for comparison: "?T" is expanded to the "null|T"
+// set, union/intersection members are each resolved to a comparable name
+// (namespace-aware for class types), then sorted and de-duplicated.
+func (ctx typeContext) normalize(t string) string {
 	t = strings.TrimSpace(t)
 	if t == "" {
 		return ""
@@ -393,12 +562,8 @@ func normalizeType(t string) string {
 	members := strings.FieldsFunc(t, seps)
 	set := map[string]struct{}{}
 	for _, m := range members {
-		m = strings.ToLower(strings.TrimSpace(m))
-		if i := strings.LastIndex(m, `\`); i >= 0 {
-			m = m[i+1:]
-		}
-		if m != "" {
-			set[m] = struct{}{}
+		if r := ctx.resolve(m); r != "" {
+			set[r] = struct{}{}
 		}
 	}
 	if nullable {
@@ -410,6 +575,40 @@ func normalizeType(t string) string {
 	}
 	sort.Strings(out)
 	return strings.Join(out, "|")
+}
+
+// resolve maps one type member to a comparable name, mirroring PHP-CS-Fixer's
+// toComparableNames: "self" becomes the current class, an imported short name
+// becomes its FQCN, a leading "\" is stripped, and an unqualified non-reserved
+// class name is prefixed with the current namespace. Reserved/scalar types are
+// only lowercased, so they stay comparable as before.
+func (ctx typeContext) resolve(member string) string {
+	name := strings.ToLower(strings.TrimSpace(member))
+	if name == "" {
+		return ""
+	}
+	if name == "self" && ctx.currentSymbol != "" {
+		name = ctx.currentSymbol
+	}
+	if fqcn, ok := ctx.imports[name]; ok {
+		return fqcn
+	}
+	if rest, ok := strings.CutPrefix(name, `\`); ok {
+		return rest
+	}
+	if ctx.namespace != "" && !nspReservedTypes[name] {
+		return ctx.namespace + `\` + name
+	}
+	return name
+}
+
+// nspReservedTypes are the built-in/reserved type names that are never namespace
+// qualified (PHP-CS-Fixer's TypeAnalysis::RESERVED_TYPES).
+var nspReservedTypes = map[string]bool{
+	"array": true, "bool": true, "callable": true, "false": true, "float": true,
+	"int": true, "iterable": true, "list": true, "mixed": true, "never": true,
+	"null": true, "object": true, "parent": true, "resource": true, "self": true,
+	"static": true, "string": true, "true": true, "void": true,
 }
 
 var nspVarNameRe = regexp.MustCompile(`\$[A-Za-z_][A-Za-z0-9_]*`)

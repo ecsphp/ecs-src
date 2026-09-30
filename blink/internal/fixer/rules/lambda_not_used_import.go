@@ -234,6 +234,16 @@ func findNotUsedLambdaImports(s *tokens.Stream, imports []lambdaImport, useClose
 				return nil
 			}
 		}
+		if t.Kind == token.String {
+			for _, name := range interpolatedVarNames(t.Value) {
+				if remaining[name] {
+					delete(remaining, name)
+					if len(remaining) == 0 {
+						return nil
+					}
+				}
+			}
+		}
 		if isClassyKeyword(t) { // anonymous class
 			j := nextPunctOfKind(s, i, "(", "{")
 			if j < 0 {
@@ -333,6 +343,70 @@ func lambdaArgName(s *tokens.Stream, sp [2]int) string {
 		return ""
 	}
 	return s.At(varIdx).Value
+}
+
+// interpolatedVarNames returns the variable names ($name) referenced through
+// interpolation inside a string token value. Single-quoted strings and nowdocs
+// do not interpolate, so they yield nothing. Handles "$name", "{$name...}" and
+// "${name}" forms and respects backslash escaping.
+func interpolatedVarNames(value string) []string {
+	if !stringInterpolates(value) {
+		return nil
+	}
+	var names []string
+	for i := 0; i < len(value); i++ {
+		c := value[i]
+		if c == '\\' {
+			i++ // skip the escaped character
+			continue
+		}
+		if c != '$' {
+			continue
+		}
+		j := i + 1
+		if j < len(value) && value[j] == '{' { // ${name}
+			j++
+		}
+		if j >= len(value) || !isVarNameStart(value[j]) {
+			continue
+		}
+		k := j
+		for k < len(value) && isVarNameByte(value[k]) {
+			k++
+		}
+		names = append(names, "$"+value[j:k])
+		i = k - 1
+	}
+	return names
+}
+
+// stringInterpolates reports whether a string token's raw value uses double
+// quotes, backticks or a heredoc, all of which interpolate variables.
+func stringInterpolates(value string) bool {
+	if value == "" {
+		return false
+	}
+	switch value[0] {
+	case '"', '`':
+		return true
+	case '\'':
+		return false
+	case '<': // <<<LABEL heredoc / <<<'LABEL' nowdoc
+		i := 3
+		for i < len(value) && (value[i] == ' ' || value[i] == '\t') {
+			i++
+		}
+		return i >= len(value) || value[i] != '\''
+	}
+	return false
+}
+
+func isVarNameStart(c byte) bool {
+	return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c >= 0x80
+}
+
+func isVarNameByte(c byte) bool {
+	return isVarNameStart(c) || (c >= '0' && c <= '9')
 }
 
 func isLambdaBailoutKeyword(t token.Token) bool {

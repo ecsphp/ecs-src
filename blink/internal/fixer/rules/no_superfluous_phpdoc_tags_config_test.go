@@ -27,3 +27,14 @@ func TestNoSuperfluousPhpdocTagsConfig(t *testing.T) {
 		t.Fatalf("remove_inheritdoc: changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+func TestNoSuperfluousPhpdocTagsInheritDocWithDescription(t *testing.T) {
+	rm := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"remove_inheritdoc": true}).(fixerRule)
+
+	// an inline {@inheritDoc} followed by a real description is kept: it is not
+	// bounded by a tag or the comment end, so PHP leaves it unchanged too
+	src := "<?php\nclass A {\n    /**\n     * {@inheritDoc}\n     *\n     * Asset-specific override for legacy public asset URLs.\n     *\n     * Backward compatibility rules apply.\n     */\n    public function f() {}\n}\n"
+	if got, changed := apply(t, rm, src); changed || got != src {
+		t.Fatalf("{@inheritDoc} with description must be kept: changed=%v got=%q", changed, got)
+	}
+}

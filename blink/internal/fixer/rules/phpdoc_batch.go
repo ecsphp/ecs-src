@@ -414,6 +414,14 @@ func (PhpdocTrimConsecutiveBlankLineSeparation) Fix(s *tokens.Stream) bool {
 // NoBlankLinesAfterPhpdoc removes blank lines between a docblock and the code it documents.
 type NoBlankLinesAfterPhpdoc struct{}
 
+// Keywords after which PHP keeps the blank line following a docblock.
+var noBlankLinesAfterPhpdocSkipKeywords = map[string]bool{
+	"break": true, "continue": true, "declare": true, "goto": true,
+	"include": true, "include_once": true, "namespace": true,
+	"require": true, "require_once": true, "return": true,
+	"throw": true, "use": true,
+}
+
 func (NoBlankLinesAfterPhpdoc) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\NoBlankLinesAfterPhpdocFixer`
 }
@@ -436,11 +444,16 @@ func (NoBlankLinesAfterPhpdoc) Fix(s *tokens.Stream) bool {
 		if strings.Count(v, "\n") < 2 {
 			continue
 		}
-		// a file-level docblock before "declare" keeps its blank line - ECS only
-		// trims the blank after a docblock attached to a structural element
-		if k := nextSignificantIndex(s, i); k >= 0 &&
-			s.At(k).Kind == token.Keyword && strings.EqualFold(s.At(k).Value, "declare") {
-			continue
+		// PHP skips the fix when the next non-whitespace token is a comment,
+		// another docblock, or one of these keywords - the blank line is kept.
+		if k := nextSignificantIndex(s, i); k >= 0 {
+			kind := s.At(k).Kind
+			if kind == token.Comment || kind == token.DocComment {
+				continue
+			}
+			if kind == token.Keyword && noBlankLinesAfterPhpdocSkipKeywords[strings.ToLower(s.At(k).Value)] {
+				continue
+			}
 		}
 		// Keep the last newline plus the following statement's indentation.
 		nv := v[strings.LastIndexByte(v, '\n'):]

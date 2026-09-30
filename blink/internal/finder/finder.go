@@ -47,6 +47,13 @@ func Find(paths []string, skip []string) ([]string, error) {
 	return out, nil
 }
 
+// Skipped reports whether path matches any of the skip globs, using the same
+// matching as the file walk (full-path glob, basename glob, or a "*fragment*"
+// substring). Reused for per-path rule skips.
+func Skipped(path string, skip []string) bool {
+	return skipped(path, skip)
+}
+
 func skipped(path string, skip []string) bool {
 	for _, pat := range skip {
 		if ok, _ := filepath.Match(pat, path); ok {

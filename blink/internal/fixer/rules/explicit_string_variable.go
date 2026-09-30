@@ -95,8 +95,13 @@ func wrapInterpolations(b string) (string, bool) {
 	out := make([]byte, 0, len(b)+8)
 	changed := false
 	i := 0
+	afterCurly := false
 	for i < len(b) {
 		c := b[i]
+		// A variable directly following a "{...}" interpolation is skipped by
+		// PHP: its preceding token is the closing brace, not a string part.
+		prevAfterCurly := afterCurly
+		afterCurly = false
 		if c == '\\' && i+1 < len(b) {
 			out = append(out, c, b[i+1])
 			i += 2
@@ -120,6 +125,7 @@ func wrapInterpolations(b string) (string, bool) {
 			}
 			out = append(out, b[i:j]...)
 			i = j
+			afterCurly = true
 			continue
 		}
 		if c == '$' && i+1 < len(b) {
@@ -131,6 +137,12 @@ func wrapInterpolations(b string) (string, bool) {
 			}
 			// "$$x" - first $ was literal; do not start an interpolation here
 			if i > 0 && b[i-1] == '$' {
+				out = append(out, c)
+				i++
+				continue
+			}
+			// "{$a}$b" - $b directly follows a curly interpolation; PHP leaves it
+			if prevAfterCurly {
 				out = append(out, c)
 				i++
 				continue
