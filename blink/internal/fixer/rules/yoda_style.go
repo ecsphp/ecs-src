@@ -212,16 +212,15 @@ func leftLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
 		}
 		return 0, 0, false
 	}
-	// "class" of "Name::class"
-	if t.Kind == token.Ident && strings.EqualFold(t.Value, "class") {
-		p := prevSignificantIndex(s, le)
-		if p >= 0 && s.At(p).Value == "::" {
+	// class constant "Name::CONST" or "Name::class", possibly namespaced
+	if t.Kind == token.Ident {
+		if p := prevSignificantIndex(s, le); p >= 0 && s.At(p).Kind == token.Punct && s.At(p).Value == "::" {
 			n := prevSignificantIndex(s, p)
 			if n >= 0 && s.At(n).Kind == token.Ident {
-				return n, le, true
+				return qualifiedNameStart(s, n), le, true
 			}
+			return 0, 0, false
 		}
-		return 0, 0, false
 	}
 	if isYodaLiteral(t) {
 		// signed number "-1"
@@ -237,6 +236,25 @@ func leftLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
 		return le, le, true
 	}
 	return 0, 0, false
+}
+
+// qualifiedNameStart walks left from the last identifier of a qualified name over
+// "\Ident" namespace segments and an optional leading "\", returning the name's
+// first token index.
+func qualifiedNameStart(s *tokens.Stream, end int) int {
+	start := end
+	for {
+		p := prevSignificantIndex(s, start)
+		if p < 0 || s.At(p).Kind != token.Punct || s.At(p).Value != `\` {
+			return start
+		}
+		pp := prevSignificantIndex(s, p)
+		if pp >= 0 && s.At(pp).Kind == token.Ident {
+			start = pp
+			continue
+		}
+		return p // leading "\Foo"
+	}
 }
 
 // rightPrimaryEnd walks right from rs over a primary expression (name/variable,

@@ -39,16 +39,19 @@ func (f StatementIndentation) WithConfig(config map[string]any) fixer.Fixer {
 
 func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 	changed := false
-	brace, paren := 0, 0
+	// braceStack holds one entry per open "{"; true marks a switch brace, whose
+	// case bodies indent one level deeper than the case/default labels.
+	var braceStack []bool
+	paren := 0
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
 		if t.Kind == token.Punct {
 			switch t.Value {
 			case "{":
-				brace++
+				braceStack = append(braceStack, isSwitchBrace(s, i))
 			case "}":
-				if brace > 0 {
-					brace--
+				if len(braceStack) > 0 {
+					braceStack = braceStack[:len(braceStack)-1]
 				}
 			case "(", "[":
 				paren++
@@ -61,17 +64,38 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 		if t.Kind != token.Whitespace || !hasNewline(t.Value) || paren != 0 {
 			continue
 		}
-		prev, ok := prevSignificant(s, i)
-		if !ok || (prev.Value != ";" && prev.Value != "{" && prev.Value != "}") {
+		prevIndex := prevSignificantIndex(s, i)
+		if prevIndex < 0 {
+			continue
+		}
+		prevValue := s.At(prevIndex).Value
+		isBoundary := prevValue == ";" || prevValue == "{" || prevValue == "}"
+		if !isBoundary && prevValue == ":" && isCaseColon(s, prevIndex) {
+			// the first statement after a case/default label starts a new line too
+			isBoundary = true
+		}
+		if !isBoundary {
 			continue // continuation line - leave its alignment alone
 		}
 		if nextSignificantValue(s, i) == "" {
 			continue
 		}
 
-		level := brace
+		switchExtra := 0
+		for _, isSwitch := range braceStack {
+			if isSwitch {
+				switchExtra++ // each enclosing switch indents its case body once
+			}
+		}
+		level := len(braceStack) + switchExtra
+
 		if nextSignificantValue(s, i) == "}" {
 			level-- // a closing brace dedents to the outer level
+			if len(braceStack) > 0 && braceStack[len(braceStack)-1] {
+				level-- // the switch's own "}" sits at the case-label level
+			}
+		} else if isSwitchLabel(s, i) && len(braceStack) > 0 && braceStack[len(braceStack)-1] {
+			level-- // a case/default label sits one level above its body
 		} else if f.stickComment && statementIndentationSticksToNext(s, i) {
 			level-- // trailing comment counts as the next control block's comment
 		}
@@ -88,6 +112,56 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+// isSwitchBrace reports whether the "{" at brace opens a switch block, i.e. it is
+// preceded by "switch (...)".
+func isSwitchBrace(s *tokens.Stream, brace int) bool {
+	closeParen := prevSignificantIndex(s, brace)
+	if closeParen < 0 || s.At(closeParen).Kind != token.Punct || s.At(closeParen).Value != ")" {
+		return false
+	}
+	openParen := s.MatchBackward(closeParen)
+	if openParen < 0 {
+		return false
+	}
+	keyword := prevSignificantIndex(s, openParen)
+	if keyword < 0 || s.At(keyword).Kind != token.Keyword {
+		return false
+	}
+	return strings.EqualFold(s.At(keyword).Value, "switch")
+}
+
+// isSwitchLabel reports whether the line starting after the whitespace at i
+// begins with a case or default keyword.
+func isSwitchLabel(s *tokens.Stream, i int) bool {
+	n := nextSignificantIndex(s, i)
+	if n < 0 || s.At(n).Kind != token.Keyword {
+		return false
+	}
+	lw := strings.ToLower(s.At(n).Value)
+	return lw == "case" || lw == "default"
+}
+
+// isCaseColon reports whether the ":" at colon terminates a case/default label
+// rather than a ternary or other colon.
+func isCaseColon(s *tokens.Stream, colon int) bool {
+	for j := prevSignificantIndex(s, colon); j >= 0; j = prevSignificantIndex(s, j) {
+		t := s.At(j)
+		if t.Kind == token.Keyword {
+			switch strings.ToLower(t.Value) {
+			case "case", "default":
+				return true
+			}
+		}
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case ";", "{", "}", "?", ":":
+				return false
+			}
+		}
+	}
+	return false
 }
 
 // statementIndentationSticksToNext reports whether the line starting after the

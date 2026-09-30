@@ -19,6 +19,16 @@ func TestStatementIndentation(t *testing.T) {
 	}
 }
 
+func TestStatementIndentationSwitch(t *testing.T) {
+	// switch case bodies indent one level deeper than the case/default labels
+	src := "<?php\nswitch ($a) {\ncase 1:\n$x = 1;\nif ($b) {\n$y = 2;\n}\nbreak;\ndefault:\n$x = 3;\nbreak;\n}"
+	want := "<?php\nswitch ($a) {\n    case 1:\n        $x = 1;\n        if ($b) {\n            $y = 2;\n        }\n        break;\n    default:\n        $x = 3;\n        break;\n}"
+	got, changed := apply(t, StatementIndentation{}, src)
+	if !changed || got != want {
+		t.Fatalf("switch: changed=%v got=%q want=%q", changed, got, want)
+	}
+}
+
 func TestBracesPositionMultilineSignature(t *testing.T) {
 	// multiline signature keeps ") {" on one line (PSR-12 4.5)
 	multi := "<?php function foo(\n    $a,\n    $b\n) {\n}"
