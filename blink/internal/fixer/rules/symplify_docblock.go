@@ -133,7 +133,9 @@ func (FixTagTypo) Fix(s *tokens.Stream) bool {
 type TypeToVarTag struct{}
 
 var (
-	typeTagRe                 = regexp.MustCompile(`@type\b`)
+	// only "@type" at the start of a doc line (after an optional /**, /* or *),
+	// never inside a description - mirrors TypeToVarTagFixer #81
+	typeTagRe                 = regexp.MustCompile(`(?m)^(\s*(?:/\*{1,2}|\*)?\s*)@type\b`)
 	typeToVarSingleAsteriskRe = regexp.MustCompile(`^/\*(\n?\s+@var)`)
 )
 
@@ -155,7 +157,7 @@ func (TypeToVarTag) Fix(s *tokens.Stream) bool {
 		if !typeTagRe.MatchString(t.Value) {
 			continue
 		}
-		nc := typeTagRe.ReplaceAllString(t.Value, "@var")
+		nc := typeTagRe.ReplaceAllString(t.Value, "${1}@var")
 		nc = typeToVarSingleAsteriskRe.ReplaceAllString(nc, "/**$1")
 		s.Set(i, token.Token{Kind: token.DocComment, Value: nc})
 		changed = true
