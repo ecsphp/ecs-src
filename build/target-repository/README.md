@@ -83,18 +83,6 @@ return ECSConfig::configure()
 
 <br>
 
-Do you want to check all `*.php` files in your root (`ecs.php`, `rector.php` etc.)? Instead of listing them one by one, use `->withRootFiles()` method:
-
-```php
-use Symplify\EasyCodingStandard\Config\ECSConfig;
-
-return ECSConfig::configure()
-    ->withPaths([__DIR__ . '/src', __DIR__ . '/tests'])
-    ->withRootFiles();
-```
-
-<br>
-
 ### Prepared Sets
 
 `->withPreparedSets()` bundles curated rule sets. Enable the whole `common` set, or pick single topics:
@@ -137,6 +125,20 @@ use Symplify\EasyCodingStandard\Config\ECSConfig;
 return ECSConfig::configure()
     ->withPaths([__DIR__ . '/src', __DIR__ . '/tests'])
     ->withPreparedSets(laravel: true);
+```
+
+<br>
+
+### Check All Root Files
+
+Do you want to check all `*.php` files in your root (`ecs.php`, `rector.php` etc.)? Instead of listing them one by one, use `->withRootFiles()` method:
+
+```php
+use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+return ECSConfig::configure()
+    ->withPaths([__DIR__ . '/src', __DIR__ . '/tests'])
+    ->withRootFiles();
 ```
 
 <br>
