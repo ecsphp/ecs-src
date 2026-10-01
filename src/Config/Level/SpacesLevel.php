@@ -29,7 +29,6 @@ use PhpCsFixer\Fixer\Whitespace\NoSpacesAroundOffsetFixer;
 use PhpCsFixer\Fixer\Whitespace\NoWhitespaceInBlankLineFixer;
 use PhpCsFixer\Fixer\Whitespace\TypeDeclarationSpacesFixer;
 use PhpCsFixer\Fixer\Whitespace\TypesSpacesFixer;
-use Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer;
 use Symplify\CodingStandard\Fixer\Spacing\NoBlankLineBetweenImportsFixer;
 use Symplify\CodingStandard\Fixer\Spacing\SpaceAfterCommaHereNowDocFixer;
 use Symplify\CodingStandard\Fixer\Spacing\StandaloneLinePromotedPropertyFixer;
@@ -83,7 +82,6 @@ final class SpacesLevel
         // newline spacing (from deprecated "symplify" set)
         BlankLineAfterStrictTypesFixer::class,
         SpaceAfterCommaHereNowDocFixer::class,
-        MethodChainingNewlineFixer::class,
     ];
 
     /**

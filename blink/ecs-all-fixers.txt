@@ -186,7 +186,6 @@ Symplify\CodingStandard\Fixer\Commenting\DoubleAsteriskInlineVarFixer
 Symplify\CodingStandard\Fixer\Commenting\FixParamNameTypoFixer
 Symplify\CodingStandard\Fixer\Commenting\FixTagTypoFixer
 Symplify\CodingStandard\Fixer\Commenting\MergeDocBlockStartFixer
-Symplify\CodingStandard\Fixer\Commenting\ParamReturnAndVarTagMalformsFixer
 Symplify\CodingStandard\Fixer\Commenting\RemoveDeadParamFixer
 Symplify\CodingStandard\Fixer\Commenting\RemoveDeadVarThisFixer
 Symplify\CodingStandard\Fixer\Commenting\RemoveParamDescriptionDuplicateNameFixer
@@ -197,7 +196,6 @@ Symplify\CodingStandard\Fixer\Commenting\RemoveUselessDefaultCommentFixer
 Symplify\CodingStandard\Fixer\Commenting\SingleLineInlineVarDocBlockFixer
 Symplify\CodingStandard\Fixer\Commenting\SwitchedTypeAndNameFixer
 Symplify\CodingStandard\Fixer\Commenting\TypeToVarTagFixer
-Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer
 Symplify\CodingStandard\Fixer\Spacing\NoBlankLineBetweenImportsFixer
 Symplify\CodingStandard\Fixer\Spacing\SpaceAfterCommaHereNowDocFixer
 Symplify\CodingStandard\Fixer\Spacing\StandaloneLinePlainConstructorParamFixer

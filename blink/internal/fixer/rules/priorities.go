@@ -79,7 +79,6 @@ var fixerPriority = map[string]int{
 	"MagicConstantCasingFixer":                        0,
 	"MagicMethodCasingFixer":                          0,
 	"MethodArgumentSpaceFixer":                        30,
-	"MethodChainingNewlineFixer":                      39,
 	"MultilineCommentOpeningClosingFixer":             0,
 	"NativeFunctionCasingFixer":                       0,
 	"NativeFunctionTypeDeclarationCasingFixer":        0,
