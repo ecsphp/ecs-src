@@ -78,7 +78,16 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		switch t.Value {
-		case "(", "[", "{":
+		case "(":
+			// only a function/method call or declaration paren has its commas spaced;
+			// "array(...)" and grouping parens are left alone (marked "a")
+			if isCallOrDeclParen(s, i) {
+				stack = append(stack, "(")
+			} else {
+				stack = append(stack, "a")
+			}
+			continue
+		case "[", "{":
 			stack = append(stack, t.Value)
 			continue
 		case ")", "]", "}":
