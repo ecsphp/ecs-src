@@ -27,6 +27,8 @@ func TestYodaStyleNonYodaCompound(t *testing.T) {
 		{"<?php if ('' !== ($a['k'] ?? '')) {}", "<?php if ('' !== ($a['k'] ?? '')) {}"},
 		// a dynamic method call stays put
 		{"<?php if (false === $this->{$m}($x)) {}", "<?php if (false === $this->{$m}($x)) {}"},
+		// a dynamic property access (no call) is a variable and moves
+		{"<?php if (1 === $o->{$p}) {}", "<?php if ($o->{$p} === 1) {}"},
 	}
 	for _, c := range cases {
 		if got, _ := apply(t, YodaStyle{}, c.src); got != c.want {
