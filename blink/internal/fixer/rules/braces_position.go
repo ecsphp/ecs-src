@@ -150,8 +150,11 @@ func (f BracesPosition) wantNextLine(category string, s *tokens.Stream, brace in
 	return !funcSignatureMultiline(s, brace), true
 }
 
-// funcSignatureMultiline reports whether the parameter list of the function
-// whose body opens at brace spans more than one line.
+// funcSignatureMultiline reports whether the parameter list's closing ")" is on
+// its own line (a newline directly precedes it). This is the
+// next_line_unless_newline_at_signature_end exception: only then does the body
+// brace stay on the ")" line. A merely multiline parameter list whose ")" shares
+// a line with the last argument does not qualify.
 func funcSignatureMultiline(s *tokens.Stream, brace int) bool {
 	closeParen := -1
 	for j := brace - 1; j >= 0; j-- {
@@ -167,17 +170,9 @@ func funcSignatureMultiline(s *tokens.Stream, brace int) bool {
 			return false
 		}
 	}
-	if closeParen < 0 {
+	if closeParen <= 0 {
 		return false
 	}
-	open := s.MatchBackward(closeParen)
-	if open < 0 {
-		return false
-	}
-	for k := open; k <= closeParen; k++ {
-		if s.At(k).Kind == token.Whitespace && hasNewline(s.At(k).Value) {
-			return true
-		}
-	}
-	return false
+	prev := s.At(closeParen - 1)
+	return prev.Kind == token.Whitespace && hasNewline(prev.Value)
 }
