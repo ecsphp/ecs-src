@@ -59,7 +59,7 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 	case "ignore":
 		// leave multiline argument lists as they are
 	case "ensure_single_line":
-		if methodArgSpaceCollapse(s) {
+		if methodArgSpaceCollapse(s, f.keepMultipleSpacesAfterComma) {
 			changed = true
 		}
 	case "ensure_single_line_for_single_argument":
@@ -152,7 +152,7 @@ func methodArgSpacePrevIsHeredoc(s *tokens.Stream, wsIdx int) bool {
 // methodArgSpaceCollapse joins every already-multiline call/declaration argument
 // list onto a single line. Only top-level newlines are removed; a newline kept
 // inside a nested array or closure argument is left in place.
-func methodArgSpaceCollapse(s *tokens.Stream) bool {
+func methodArgSpaceCollapse(s *tokens.Stream, keepMultiple bool) bool {
 	changed := false
 	for open := 0; open < s.Len(); open++ {
 		if s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
@@ -165,7 +165,7 @@ func methodArgSpaceCollapse(s *tokens.Stream) bool {
 		if !isCallOrDeclParen(s, open) {
 			continue
 		}
-		if methodArgSpaceCollapseParen(s, open, closeIdx) {
+		if methodArgSpaceCollapseParen(s, open, closeIdx, keepMultiple) {
 			changed = true
 		}
 	}
@@ -174,7 +174,7 @@ func methodArgSpaceCollapse(s *tokens.Stream) bool {
 
 // methodArgSpaceCollapseParen removes top-level newlines within the paren at open,
 // dropping the whitespace next to "(" and ")" and collapsing the rest to a space.
-func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int) bool {
+func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int, keepMultiple bool) bool {
 	changed := false
 	depth := 0
 	for j := closeIdx - 1; j > open; j-- {
@@ -191,8 +191,14 @@ func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int) bool {
 		if depth != 0 || t.Kind != token.Whitespace || !hasNewline(t.Value) {
 			continue
 		}
-		if prevSignificantIndex(s, j) == open || nextSignificantIndex(s, j) == closeIdx {
+		prev := prevSignificantIndex(s, j)
+		if prev == open || nextSignificantIndex(s, j) == closeIdx {
 			s.RemoveAt(j)
+		} else if keepMultiple && prev >= 0 && s.At(prev).Value == "," {
+			// keep_multiple_spaces_after_comma: drop the newline but keep the indent
+			if nl := strings.LastIndexByte(t.Value, '\n'); nl >= 0 {
+				s.SetValue(j, t.Value[nl+1:])
+			}
 		} else {
 			s.SetValue(j, " ")
 		}
