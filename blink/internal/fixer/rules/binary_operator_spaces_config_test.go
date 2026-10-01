@@ -17,6 +17,7 @@ func TestBinaryOperatorSpacesConfigCases(t *testing.T) {
 		{"extra operator via map", BinaryOperatorSpaces{}.WithConfig(map[string]any{"operators": map[string]any{"+=": "single_space"}}).(fixerRule), "<?php $a+=1;", "<?php $a += 1;"},
 		{"collapse aligned arrow inside attribute", BinaryOperatorSpaces{}, "<?php #[X([\n    'a'   => 1,\n    'bb'  => 2,\n])]\nclass C {}", "<?php #[X([\n    'a' => 1,\n    'bb' => 2,\n])]\nclass C {}"},
 		{"arrow inside attribute string left alone", BinaryOperatorSpaces{}, "<?php #[X('a   => b')]\nclass C {}", "<?php #[X('a   => b')]\nclass C {}"},
+		{"reference assignment is spaced around =", BinaryOperatorSpaces{}, "<?php $a   =&$b;", "<?php $a = &$b;"},
 	}
 	for _, c := range cases {
 		got, _ := apply(t, c.rule, c.src)

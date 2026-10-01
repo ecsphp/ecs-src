@@ -199,8 +199,9 @@ func binaryOperatorSpacesDefaultTarget(s *tokens.Stream, i int) bool {
 		return false
 	}
 	if t.Value == "=" {
-		// leave reference assignment ("=& $x") and declare(...) headers alone
-		return nextSignificantValue(s, i) != "&" && !insideDeclareArgs(s, i)
+		// a reference assignment "$a =& $b" is still spaced around "=" (unary "&"
+		// keeps the variable); only declare(...) headers are left alone
+		return !insideDeclareArgs(s, i)
 	}
 	return binaryOperators[t.Value]
 }
