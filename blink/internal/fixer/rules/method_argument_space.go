@@ -402,9 +402,9 @@ func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
 }
 
 // reflowAfterComma breaks a multiline argument list after a top-level comma. A
-// trailing line comment ("arg, // note") stays on the argument's line and the
-// break goes after the comment, matching php-cs-fixer; otherwise the break goes
-// right after the comma.
+// comment that sits on the comma's line ("arg, // note" or "arg, /* note */")
+// stays there and the break goes after the comment, matching php-cs-fixer;
+// otherwise the break goes right after the comma.
 func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
 	n := comma + 1
 	ws := -1
@@ -412,7 +412,7 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
 		ws = n
 		n++
 	}
-	if n < s.Len() && isLineComment(s.At(n)) {
+	if n < s.Len() && (isLineComment(s.At(n)) || s.At(n).Kind == token.Comment || s.At(n).Kind == token.DocComment) {
 		changed := false
 		if ws >= 0 {
 			if s.At(ws).Value != " " {
