@@ -146,5 +146,10 @@ func isComment(t token.Token) bool {
 }
 
 func isLineComment(t token.Token) bool {
-	return t.Kind == token.Comment && (strings.HasPrefix(t.Value, "//") || strings.HasPrefix(t.Value, "#"))
+	if t.Kind != token.Comment {
+		return false
+	}
+	// "#[...]" is an attribute, not a line comment
+	return strings.HasPrefix(t.Value, "//") ||
+		(strings.HasPrefix(t.Value, "#") && !strings.HasPrefix(t.Value, "#["))
 }

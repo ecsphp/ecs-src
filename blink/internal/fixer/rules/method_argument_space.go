@@ -286,7 +286,7 @@ func countTopLevelArgs(s *tokens.Stream, open, closeIdx int) int {
 func argumentContentIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
 	for i := open + 1; i < closeIdx; i++ {
 		t := s.At(i)
-		if t.Kind == token.Comment || t.Kind == token.DocComment {
+		if (t.Kind == token.Comment || t.Kind == token.DocComment) && !isAttributeComment(t) {
 			return true
 		}
 		if i == open+1 || i == closeIdx-1 {
@@ -514,8 +514,9 @@ func reflowBreakAfterComments(s *tokens.Stream, open, closeIdx int, base string)
 			}
 			continue
 		}
-		if depth != 0 || (t.Kind != token.Comment && t.Kind != token.DocComment) || isLineComment(t) {
-			continue
+		if depth != 0 || (t.Kind != token.Comment && t.Kind != token.DocComment) ||
+			isLineComment(t) || isAttributeComment(t) {
+			continue // attributes are placed by applyAttributePlacement, not here
 		}
 		// the comment must start its own line (preceded by a newline) to count as a
 		// standalone leading comment rather than a trailing one on an argument's line
