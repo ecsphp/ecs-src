@@ -99,25 +99,29 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			if len(stack) == 0 || stack[len(stack)-1] != "(" {
 				continue
 			}
-			// No space before the comma, unless after_heredoc is off and a heredoc
-			// precedes the comma. Applies even when the comma ends a line.
+			// No space before the comma, unless the previous token is a comment or
+			// comma, or after_heredoc is off and a heredoc precedes it.
 			if i > 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
-				if !f.keepSpaceAfterHeredoc || !methodArgSpacePrevIsHeredoc(s, i-1) {
+				p := prevSignificantIndex(s, i)
+				prevComment := p >= 0 && (s.At(p).Kind == token.Comment || s.At(p).Kind == token.DocComment)
+				prevComma := p >= 0 && s.At(p).Value == ","
+				if !prevComment && !prevComma && (!f.keepSpaceAfterHeredoc || !methodArgSpacePrevIsHeredoc(s, i-1)) {
 					s.RemoveAt(i - 1)
 					i--
 					changed = true
 				}
 			}
 			// After the comma: a newline keeps its multiline alignment; otherwise
-			// exactly one space, except a trailing comma right before ")".
+			// exactly one space, except a trailing comma before ")" or a comment that
+			// ends its line.
 			if i+1 < s.Len() {
 				next := s.At(i + 1)
 				if next.Kind == token.Whitespace {
-					if !hasNewline(next.Value) && next.Value != " " && !f.keepMultipleSpacesAfterComma {
+					if !hasNewline(next.Value) && next.Value != " " && !f.keepMultipleSpacesAfterComma && !masCommentLastLine(s, i+2) {
 						s.SetValue(i+1, " ")
 						changed = true
 					}
-				} else if next.Kind != token.Punct || next.Value != ")" {
+				} else if (next.Kind != token.Punct || next.Value != ")") && !masCommentLastLine(s, i+1) {
 					s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
 					i++
 					changed = true
@@ -524,4 +528,22 @@ func editSlotBefore(s *tokens.Stream, idx int, val string) bool {
 	}
 	s.InsertAt(idx, token.Token{Kind: token.Whitespace, Value: val})
 	return true
+}
+
+// masCommentLastLine reports whether the token at idx is a comment that ends its
+// line (the following whitespace starts with a line break), matching php-cs-fixer's
+// isCommentLastLineToken.
+func masCommentLastLine(s *tokens.Stream, idx int) bool {
+	if idx < 0 || idx >= s.Len() {
+		return false
+	}
+	t := s.At(idx)
+	if t.Kind != token.Comment && t.Kind != token.DocComment {
+		return false
+	}
+	if idx+1 >= s.Len() {
+		return false
+	}
+	nx := s.At(idx + 1)
+	return nx.Kind == token.Whitespace && len(nx.Value) > 0 && (nx.Value[0] == '\n' || nx.Value[0] == '\r')
 }
