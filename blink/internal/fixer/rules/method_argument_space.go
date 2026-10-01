@@ -24,6 +24,9 @@ type MethodArgumentSpace struct {
 	// keepSpaceAfterHeredoc is set from after_heredoc=false; the zero value keeps
 	// today's behaviour of always removing a space before a comma.
 	keepSpaceAfterHeredoc bool
+	// pullCommaAfterHeredoc is set only by an explicit after_heredoc=true, which
+	// pulls a comma on its own line up onto the heredoc-closing line.
+	pullCommaAfterHeredoc bool
 }
 
 func (MethodArgumentSpace) Name() string {
@@ -43,6 +46,7 @@ func (f MethodArgumentSpace) WithConfig(config map[string]any) fixer.Fixer {
 	}
 	if v, ok := config["after_heredoc"].(bool); ok {
 		f.keepSpaceAfterHeredoc = !v
+		f.pullCommaAfterHeredoc = v
 	}
 	// attribute_placement is accepted but not applied: blink folds attributes into
 	// a single comment token, so it cannot reposition them.
@@ -110,6 +114,12 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 					i--
 					changed = true
 				}
+			} else if f.pullCommaAfterHeredoc && i > 0 && s.At(i-1).Kind == token.Whitespace &&
+				hasNewline(s.At(i-1).Value) && methodArgSpacePrevIsHeredoc(s, i-1) {
+				// after_heredoc=true pulls the comma onto the heredoc-closing line
+				s.RemoveAt(i - 1)
+				i--
+				changed = true
 			}
 			// After the comma: a newline keeps its multiline alignment; otherwise
 			// exactly one space, including a trailing comma before ")" (php-cs-fixer
