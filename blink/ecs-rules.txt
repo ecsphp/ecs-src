@@ -2,9 +2,10 @@ ECS rules NOT yet implemented in blink
 =======================================
 
 Source: every Fixer/Sniff referenced across ecs-src config/set/* and
-src/Config/Level/*, listed in ecs-all-fixers.txt.
+src/Config/Level/*, listed in ecs-all-fixers.txt. Fixers that implement
+PHP-CS-Fixer's DeprecatedFixerInterface are excluded (not counted, not ported).
 
-209 rules configured in ECS. The live implemented/missing counts are in the
+207 rules configured in ECS. The live implemented/missing counts are in the
 README (bin/rule-counts.sh keeps them current). Regenerate the list below with:
 
   comm -23 <(sort -u blink/ecs-all-fixers.txt) \
@@ -29,8 +30,7 @@ functions:           LambdaNotUsedImport
 class:               ModifierKeywords
 operators:           OperatorLinebreak
 types:               FullyQualifiedStrictTypes
-phpdoc:              PhpdocSeparation, PhpdocToComment, GeneralPhpdocTagRename,
-                     ParamReturnAndVarTagMalforms
+phpdoc:              PhpdocSeparation, PhpdocToComment, GeneralPhpdocTagRename
 doctrine annotations: DoctrineAnnotationArrayAssignment, DoctrineAnnotationIndentation
                       (need an annotation parser)
 symplify custom:     StandaloneLinePlainConstructorParam, StandaloneLineRequiredParam,
