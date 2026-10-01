@@ -190,11 +190,38 @@ func methodArgSpaceCollapse(s *tokens.Stream, keepMultiple bool) bool {
 		if !isCallOrDeclParen(s, open) {
 			continue
 		}
+		// a top-level line comment cannot be collapsed onto one line - the code after
+		// it would be commented out - so the list is left as is
+		if parenHasTopLevelLineComment(s, open, closeIdx) {
+			continue
+		}
 		if methodArgSpaceCollapseParen(s, open, closeIdx, keepMultiple) {
 			changed = true
 		}
 	}
 	return changed
+}
+
+// parenHasTopLevelLineComment reports whether the paren at open contains a "//" or
+// "#" line comment at the top level (not nested inside an inner bracket).
+func parenHasTopLevelLineComment(s *tokens.Stream, open, closeIdx int) bool {
+	depth := 0
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case "(", "[", "{":
+				depth++
+			case ")", "]", "}":
+				depth--
+			}
+			continue
+		}
+		if depth == 0 && isLineComment(t) {
+			return true
+		}
+	}
+	return false
 }
 
 // methodArgSpaceCollapseParen removes top-level newlines within the paren at open,
