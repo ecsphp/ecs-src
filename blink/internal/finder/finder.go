@@ -62,7 +62,9 @@ func skipped(path string, skip []string) bool {
 		if ok, _ := filepath.Match(pat, filepath.Base(path)); ok {
 			return true
 		}
-		if strings.Contains(path, strings.Trim(pat, "*/")) && strings.Contains(pat, "*") {
+		// "*/Fixture/*" matches the path segment "/Fixture/", not the substring
+		// "Fixture" (which would wrongly skip e.g. "DataFixtures")
+		if inner := strings.Trim(pat, "*"); inner != "" && strings.Contains(pat, "*") && strings.Contains(path, inner) {
 			return true
 		}
 	}

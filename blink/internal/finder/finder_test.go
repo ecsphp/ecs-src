@@ -48,3 +48,19 @@ func TestFindSkipsDependencyDirs(t *testing.T) {
 		}
 	}
 }
+
+func TestSkippedSegmentNotSubstring(t *testing.T) {
+	skip := []string{"*/Fixture/*", "*/node_modules/*"}
+	cases := map[string]bool{
+		"/app/Fixture/X.php":          true, // real Fixture segment
+		"/app/node_modules/pkg/a.php": true,
+		"/app/DataFixtures/ORM/X.php": false, // "Fixture" only as a substring
+		"/app/InstallFixtures/X.php":  false,
+		"/app/src/Fixtures.php":       false,
+	}
+	for path, want := range cases {
+		if got := Skipped(path, skip); got != want {
+			t.Errorf("Skipped(%q) = %v, want %v", path, got, want)
+		}
+	}
+}
