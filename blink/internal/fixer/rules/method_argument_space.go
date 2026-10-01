@@ -58,9 +58,14 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 		if methodArgSpaceCollapse(s) {
 			changed = true
 		}
+	case "ensure_single_line_for_single_argument":
+		// a multiline call with a single argument collapses to one line (unless the
+		// argument itself is multiline); with several arguments it goes fully multiline
+		if reflowSingleArgOrMultiline(s) {
+			changed = true
+		}
 	default:
-		// "", "ensure_fully_multiline" and "ensure_single_line_for_single_argument"
-		// (approximated as fully multiline): a call/declaration argument list that
+		// "" and "ensure_fully_multiline": a call/declaration argument list that
 		// already spans lines gets one argument per line.
 		if reflowMultilineArgs(s) {
 			changed = true
@@ -85,12 +90,8 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			if len(stack) == 0 || stack[len(stack)-1] != "(" {
 				continue
 			}
-			// Multiline arg list: leave alignment untouched.
-			if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && hasNewline(s.At(i+1).Value) {
-				continue
-			}
-			// No space before the comma (single-line only), unless after_heredoc is
-			// off and a heredoc precedes the comma.
+			// No space before the comma, unless after_heredoc is off and a heredoc
+			// precedes the comma. Applies even when the comma ends a line.
 			if i > 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
 				if !f.keepSpaceAfterHeredoc || !methodArgSpacePrevIsHeredoc(s, i-1) {
 					s.RemoveAt(i - 1)
@@ -98,11 +99,12 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 					changed = true
 				}
 			}
-			// Exactly one space after the comma, except a trailing comma before ")".
+			// After the comma: a newline keeps its multiline alignment; otherwise
+			// exactly one space, except a trailing comma right before ")".
 			if i+1 < s.Len() {
 				next := s.At(i + 1)
 				if next.Kind == token.Whitespace {
-					if next.Value != " " && !f.keepMultipleSpacesAfterComma {
+					if !hasNewline(next.Value) && next.Value != " " && !f.keepMultipleSpacesAfterComma {
 						s.SetValue(i+1, " ")
 						changed = true
 					}
@@ -174,6 +176,137 @@ func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int) bool {
 		changed = true
 	}
 	return changed
+}
+
+// reflowSingleArgOrMultiline handles on_multiline=ensure_single_line_for_single_argument:
+// a multiline call with one argument collapses to a single line, one with several
+// goes fully multiline.
+func reflowSingleArgOrMultiline(s *tokens.Stream) bool {
+	changed := false
+	for open := 0; open < s.Len(); open++ {
+		if s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+			continue
+		}
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 || !argListIsMultiline(s, open, closeIdx) || !isCallOrDeclParen(s, open) {
+			continue
+		}
+		if sigNext(s, open) == closeIdx {
+			continue // empty ()
+		}
+		if countTopLevelArgs(s, open, closeIdx) == 1 {
+			if ensureSingleLineForParen(s, open, closeIdx) {
+				changed = true
+			}
+		} else if reflowParen(s, open, closeIdx) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// countTopLevelArgs counts the arguments between open and close, ignoring a
+// trailing comma and nested brackets.
+func countTopLevelArgs(s *tokens.Stream, open, closeIdx int) int {
+	if sigNext(s, open) == closeIdx {
+		return 0
+	}
+	count := 1
+	depth := 0
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch t.Value {
+		case "(", "[", "{":
+			depth++
+		case ")", "]", "}":
+			depth--
+		case ",":
+			if depth == 0 && sigNext(s, j) != closeIdx {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+// argumentContentIsMultiline reports whether the single argument between open and
+// close spans multiple lines at the top level (a comment, or a newline that is not
+// the edge whitespace right after "(" or before ")"), skipping nested brackets.
+func argumentContentIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
+	for i := open + 1; i < closeIdx; i++ {
+		t := s.At(i)
+		if t.Kind == token.Comment || t.Kind == token.DocComment {
+			return true
+		}
+		if i == open+1 || i == closeIdx-1 {
+			continue
+		}
+		if t.Kind == token.Punct && (t.Value == "(" || t.Value == "[" || t.Value == "{") {
+			if c := s.MatchForward(i); c > 0 {
+				i = c
+			}
+			continue
+		}
+		if t.Kind == token.Whitespace && hasNewline(t.Value) {
+			return true
+		}
+	}
+	return false
+}
+
+// ensureSingleLineForParen collapses the outer newlines of a single-argument
+// call to one line, leaving a multiline argument (or one carrying a line comment)
+// untouched.
+func ensureSingleLineForParen(s *tokens.Stream, open, closeIdx int) bool {
+	if argumentContentIsMultiline(s, open, closeIdx) {
+		return false
+	}
+	changed := false
+	for i := closeIdx - 1; i > open; i-- {
+		t := s.At(i)
+		if t.Kind == token.Punct && (t.Value == ")" || t.Value == "]" || t.Value == "}") {
+			if c := s.MatchBackward(i); c >= 0 {
+				i = c
+			}
+			continue
+		}
+		if t.Kind == token.Whitespace {
+			if i > 0 {
+				prev := s.At(i - 1)
+				if prev.Kind == token.Comment && !strings.HasPrefix(prev.Value, "/*") {
+					continue
+				}
+			}
+			if nv := collapseNewlineHspace(t.Value); nv != t.Value {
+				s.SetValue(i, nv)
+				changed = true
+			}
+		}
+	}
+	return changed
+}
+
+// collapseNewlineHspace removes every line break and the horizontal whitespace
+// that follows it, matching php-cs-fixer's /\R\h*/ replacement.
+func collapseNewlineHspace(v string) string {
+	var b strings.Builder
+	for i := 0; i < len(v); i++ {
+		if v[i] == '\n' || v[i] == '\r' {
+			for i < len(v) && (v[i] == '\n' || v[i] == '\r') {
+				i++
+			}
+			for i < len(v) && (v[i] == ' ' || v[i] == '\t') {
+				i++
+			}
+			i--
+			continue
+		}
+		b.WriteByte(v[i])
+	}
+	return b.String()
 }
 
 // reflowMultilineArgs makes every already-multiline call/declaration argument
