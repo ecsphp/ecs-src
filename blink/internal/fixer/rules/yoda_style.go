@@ -142,12 +142,21 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if rs < 0 {
 				continue
 			}
-			re := rightPrimaryEnd(s, rs)
+			// with always_move_variable=false an operand wrapped in "(" is not
+			// treated as a variable, so a grouped/assigned right side stays put (a
+			// leading cast like "(int) $x" is not a grouping paren)
+			if s.At(rs).Kind == token.Punct && s.At(rs).Value == "(" && !isCastParen(s, rs) {
+				continue
+			}
+			re := rightComparisonOperandEnd(s, rs)
 			if re < 0 {
 				continue
 			}
-			if rs == re && isYodaLiteral(s.At(rs)) {
+			if spanIsConstant(s, rs, re) {
 				continue // both sides constant
+			}
+			if yodaOperandHasDynamicCall(s, rs, re) {
+				continue // "$a->{$b}(...)" is not treated as a simple variable
 			}
 			if !isRightBoundary(s, nextSignificantIndex(s, re)) {
 				continue
@@ -257,53 +266,103 @@ func qualifiedNameStart(s *tokens.Stream, end int) int {
 	}
 }
 
-// rightPrimaryEnd walks right from rs over a primary expression (name/variable,
-// member and static access, matched call/index groups) and returns its last
-// token index, or -1.
-func rightPrimaryEnd(s *tokens.Stream, rs int) int {
-	if !isPrimaryStart(s.At(rs)) {
-		return -1
-	}
-	end := rs
-	for {
-		n := nextSignificantIndex(s, end)
-		if n < 0 {
-			return end
+// rightComparisonOperandEnd walks right from rs over a full comparison operand -
+// a primary plus any higher-precedence operators (arithmetic, casts, unary,
+// concatenation) and matched bracket groups - stopping before a lower-precedence
+// boundary (logical/ternary/assignment operator, another comparison, ",", ";" or
+// an unmatched closing bracket). Returns the operand's last significant index.
+func rightComparisonOperandEnd(s *tokens.Stream, rs int) int {
+	end := -1
+	for i := rs; i < s.Len(); i++ {
+		t := s.At(i)
+		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
+			continue
 		}
-		nt := s.At(n)
-		if nt.Kind == token.Punct {
-			switch nt.Value {
-			case "->", "?->", "::", `\`:
-				m := nextSignificantIndex(s, n)
-				if m < 0 {
-					return end
-				}
-				end = m
-				continue
-			case "(", "[":
-				c := s.MatchForward(n)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case "(", "[", "{":
+				c := s.MatchForward(i)
 				if c < 0 {
-					return end
+					return -1
 				}
 				end = c
+				i = c
 				continue
+			case ")", "]", "}", ";", ",", "=>", "&&", "||", "?", "??", ":", "=",
+				"==", "===", "!=", "!==", "<", ">", "<=", ">=", "<=>":
+				return end
+			}
+			end = i
+			continue
+		}
+		if t.Kind == token.Keyword {
+			switch strings.ToLower(t.Value) {
+			case "and", "or", "xor":
+				return end
 			}
 		}
-		return end
+		end = i
 	}
+	return end
 }
 
-// isPrimaryStart reports whether t can begin a primary (variable) expression.
-func isPrimaryStart(t token.Token) bool {
-	switch t.Kind {
-	case token.Variable, token.Ident:
-		return true
-	case token.Keyword:
-		return isPrimaryKeyword(t.Value)
-	case token.Punct:
-		return t.Value == `\`
+// yodaOperandHasDynamicCall reports whether the operand in [from, to] contains a
+// dynamic property/method brace followed by a call ("$a->{$b}(...)"), which
+// php-cs-fixer does not treat as a simple variable.
+func yodaOperandHasDynamicCall(s *tokens.Stream, from, to int) bool {
+	for i := from; i <= to && i < s.Len(); i++ {
+		t := s.At(i)
+		if t.Kind == token.Punct && t.Value == "{" {
+			if p := prevSignificantIndex(s, i); p >= 0 {
+				if pt := s.At(p); pt.Kind == token.Punct && (pt.Value == "->" || pt.Value == "?->") {
+					return true
+				}
+			}
+		}
 	}
 	return false
+}
+
+// spanIsConstant reports whether the operand in [from, to] is a pure constant
+// expression - no variable and no function/method call. Such an operand is not a
+// "variable" side and must not be swapped.
+func spanIsConstant(s *tokens.Stream, from, to int) bool {
+	for i := from; i <= to && i < s.Len(); i++ {
+		t := s.At(i)
+		if t.Kind == token.Variable {
+			return false
+		}
+		if t.Kind == token.Punct && t.Value == "(" {
+			if p := prevSignificantIndex(s, i); p >= 0 {
+				pt := s.At(p)
+				if pt.Kind == token.Ident || (pt.Kind == token.Punct && (pt.Value == ")" || pt.Value == "]")) {
+					return false // function/method call
+				}
+			}
+		}
+	}
+	return true
+}
+
+// isCastParen reports whether the "(" at i opens a cast like "(int)", "(string)"
+// rather than a grouping parenthesis.
+func isCastParen(s *tokens.Stream, i int) bool {
+	n := nextSignificantIndex(s, i)
+	if n < 0 {
+		return false
+	}
+	t := s.At(n)
+	if t.Kind != token.Ident && t.Kind != token.Keyword {
+		return false
+	}
+	switch strings.ToLower(t.Value) {
+	case "int", "integer", "bool", "boolean", "float", "double", "real",
+		"string", "array", "object", "unset", "binary":
+	default:
+		return false
+	}
+	c := nextSignificantIndex(s, n)
+	return c >= 0 && s.At(c).Kind == token.Punct && s.At(c).Value == ")"
 }
 
 func isPrimaryKeyword(v string) bool {

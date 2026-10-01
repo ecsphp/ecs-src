@@ -15,6 +15,26 @@ func TestYodaStyleClassConstant(t *testing.T) {
 	}
 }
 
+func TestYodaStyleNonYodaCompound(t *testing.T) {
+	cases := []struct{ src, want string }{
+		// compound arithmetic / cast right operands are moved to the left
+		{"<?php if (0 === $i % 2) {}", "<?php if ($i % 2 === 0) {}"},
+		{"<?php if (1 === (int) $x) {}", "<?php if ((int) $x === 1) {}"},
+		// a function call right operand is moved
+		{"<?php if (NONE === json_last_error()) {}", "<?php if (json_last_error() === NONE) {}"},
+		// a "(" wrapped operand (assignment/coalesce) stays put
+		{"<?php if (false !== ($h = fopen($f, 'r'))) {}", "<?php if (false !== ($h = fopen($f, 'r'))) {}"},
+		{"<?php if ('' !== ($a['k'] ?? '')) {}", "<?php if ('' !== ($a['k'] ?? '')) {}"},
+		// a dynamic method call stays put
+		{"<?php if (false === $this->{$m}($x)) {}", "<?php if (false === $this->{$m}($x)) {}"},
+	}
+	for _, c := range cases {
+		if got, _ := apply(t, YodaStyle{}, c.src); got != c.want {
+			t.Errorf("src=%q\n got=%q\nwant=%q", c.src, got, c.want)
+		}
+	}
+}
+
 func TestYodaStyleConfig(t *testing.T) {
 	// default: non-yoda, the variable moves to the left
 	got, changed := apply(t, YodaStyle{}, "<?php if (null === $x) {}")
