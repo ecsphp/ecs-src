@@ -281,7 +281,12 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
 // only occur inside a nested array/closure argument do not count, matching ECS's
 // ensure_fully_multiline trigger.
 func argListIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
+	// a newline directly after "(" or directly before ")" means the list is split
+	// (php-cs-fixer's first/last-whitespace check)
 	if n := open + 1; n < closeIdx && s.At(n).Kind == token.Whitespace && hasNewline(s.At(n).Value) {
+		return true
+	}
+	if p := closeIdx - 1; p > open && s.At(p).Kind == token.Whitespace && hasNewline(s.At(p).Value) {
 		return true
 	}
 	depth := 0
