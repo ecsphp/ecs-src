@@ -48,6 +48,11 @@ func (ProtectedToPrivate) Fix(s *tokens.Stream) bool {
 		if closeIdx < 0 {
 			continue
 		}
+		// a class that uses a trait may expose protected members to it; ECS leaves
+		// those alone
+		if classUsesTrait(s, open, closeIdx) {
+			continue
+		}
 		depth := 0
 		for k := open; k < closeIdx; k++ {
 			if s.At(k).Kind == token.Punct {
@@ -108,6 +113,28 @@ func isModifierKeyword(v string) bool {
 	switch strings.ToLower(v) {
 	case "public", "private", "protected", "static", "final", "abstract", "readonly", "var":
 		return true
+	}
+	return false
+}
+
+// classUsesTrait reports whether the class body (open..close) contains a
+// top-level "use Trait;" import, which makes protected members reachable.
+func classUsesTrait(s *tokens.Stream, open, close int) bool {
+	depth := 0
+	for k := open; k < close; k++ {
+		t := s.At(k)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case "{":
+				depth++
+			case "}":
+				depth--
+			}
+			continue
+		}
+		if depth == 1 && t.Kind == token.Keyword && strings.EqualFold(t.Value, "use") {
+			return true
+		}
 	}
 	return false
 }

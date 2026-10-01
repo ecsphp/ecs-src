@@ -40,4 +40,23 @@ func TestBracesPositionMultilineSignature(t *testing.T) {
 	if want := "<?php function foo()\n{\n}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
+	// multiline params whose ")" shares a line with the last argument still move
+	// the brace to the next line
+	got, changed = apply(t, BracesPosition{}, "<?php function foo(array $a = [\n    1,\n]): array {\n}")
+	if want := "<?php function foo(array $a = [\n    1,\n]): array\n{\n}"; !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
+}
+
+func TestProtectedToPrivateTraitLeftAlone(t *testing.T) {
+	// a final class that uses a trait keeps protected (the trait may need it)
+	src := "<?php final class A {\n    use T;\n    protected $x;\n}"
+	if _, changed := apply(t, ProtectedToPrivate{}, src); changed {
+		t.Fatal("final class using a trait must keep protected")
+	}
+	// a plain final class converts protected to private
+	got, changed := apply(t, ProtectedToPrivate{}, "<?php final class A {\n    protected $x;\n}")
+	if want := "<?php final class A {\n    private $x;\n}"; !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
 }
