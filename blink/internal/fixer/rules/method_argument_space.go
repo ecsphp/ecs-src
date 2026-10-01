@@ -75,10 +75,16 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 		if methodArgSpaceCollapse(s, f.keepMultipleSpacesAfterComma) {
 			changed = true
 		}
+		if collapseAttributeArgs(s, false) {
+			changed = true
+		}
 	case "ensure_single_line_for_single_argument":
 		// a multiline call with a single argument collapses to one line (unless the
 		// argument itself is multiline); with several arguments it goes fully multiline
 		if reflowSingleArgOrMultiline(s) {
+			changed = true
+		}
+		if collapseAttributeArgs(s, true) {
 			changed = true
 		}
 		if applyAttributePlacement(s, f.resolvedAttributePlacement()) {
@@ -387,6 +393,50 @@ func reflowMultilineArgs(s *tokens.Stream) bool {
 // it as one comment token), as opposed to a "//" or "#" line comment.
 func isAttributeComment(t token.Token) bool {
 	return t.Kind == token.Comment && strings.HasPrefix(t.Value, "#[")
+}
+
+// collapseAttributeArgs collapses a multiline argument list inside an attribute
+// (e.g. "#[Attr(\n    'foo'\n)]" -> "#[Attr('foo')]") on the attribute's token
+// text. With singleArgOnly it only collapses a call that has a single argument,
+// matching on_multiline=ensure_single_line_for_single_argument.
+func collapseAttributeArgs(s *tokens.Stream, singleArgOnly bool) bool {
+	changed := false
+	for i := 0; i < s.Len(); i++ {
+		t := s.At(i)
+		if !isAttributeComment(t) || !strings.ContainsRune(t.Value, '\n') {
+			continue
+		}
+		if nv, ok := collapseAttributeText(t.Value, singleArgOnly); ok && nv != t.Value {
+			s.SetValue(i, nv)
+			changed = true
+		}
+	}
+	return changed
+}
+
+// collapseAttributeText rewrites the first top-level "(...)" in an attribute onto
+// one line. It returns the rewritten text and whether a collapse applied.
+func collapseAttributeText(attr string, singleArgOnly bool) (string, bool) {
+	open := strings.IndexByte(attr, '(')
+	if open < 0 {
+		return attr, false
+	}
+	closeIdx := matchParen(attr, open)
+	if closeIdx < 0 {
+		return attr, false
+	}
+	args, trailingComma := splitTopLevelArgs(attr[open+1 : closeIdx])
+	if len(args) == 0 {
+		return attr, false
+	}
+	if singleArgOnly && len(args) != 1 {
+		return attr, false
+	}
+	inner := strings.Join(args, ", ")
+	if trailingComma {
+		inner += ","
+	}
+	return attr[:open+1] + inner + attr[closeIdx:], true
 }
 
 // applyAttributePlacement enforces attribute_placement inside every multiline
