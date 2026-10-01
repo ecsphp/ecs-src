@@ -470,8 +470,9 @@ func isCallOrDeclParen(s *tokens.Stream, open int) bool {
 		return t.Value == ")" || t.Value == "]"
 	case token.Keyword:
 		lv := strings.ToLower(t.Value)
-		// "class" matches an anonymous class constructor: `new class (...)`
-		return lv == "function" || lv == "fn" || lv == "class"
+		// "class" matches an anonymous class constructor: `new class (...)`;
+		// "use" matches a closure binding list; "list" matches list() destructuring
+		return lv == "function" || lv == "fn" || lv == "class" || lv == "use" || lv == "list"
 	}
 	return false
 }
