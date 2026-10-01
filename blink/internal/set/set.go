@@ -194,7 +194,6 @@ var commonMembers = map[string]bool{
 	"MergeDocBlockStartFixer":                         true,
 	"MethodArgumentSpaceFixer":                        true,
 	"MethodChainingIndentationFixer":                  true,
-	"MethodChainingNewlineFixer":                      true,
 	"MultilineCommentOpeningClosingFixer":             true,
 	"NativeFunctionCasingFixer":                       true,
 	"NativeTypeDeclarationCasingFixer":                true,
