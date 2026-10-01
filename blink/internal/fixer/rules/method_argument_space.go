@@ -112,8 +112,8 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 				}
 			}
 			// After the comma: a newline keeps its multiline alignment; otherwise
-			// exactly one space, except a trailing comma before ")" or a comment that
-			// ends its line.
+			// exactly one space, including a trailing comma before ")" (php-cs-fixer
+			// adds it), except before a comment that ends its line.
 			if i+1 < s.Len() {
 				next := s.At(i + 1)
 				if next.Kind == token.Whitespace {
@@ -121,7 +121,7 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 						s.SetValue(i+1, " ")
 						changed = true
 					}
-				} else if (next.Kind != token.Punct || next.Value != ")") && !masCommentLastLine(s, i+1) {
+				} else if !masCommentLastLine(s, i+1) {
 					s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
 					i++
 					changed = true
