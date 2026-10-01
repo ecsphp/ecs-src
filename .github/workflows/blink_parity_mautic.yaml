@@ -92,7 +92,7 @@ jobs:
             - name: Compare the two trees
               run: |
                   # ratchet gate: fail once the differing share crosses this; lower it as parity improves
-                  MAX_DIFF_PERCENT=4
+                  MAX_DIFF_PERCENT=1.7
                   total=0
                   differ=0
                   differing_files=""
@@ -106,7 +106,10 @@ jobs:
                   same=$((total - differ))
                   pct=0
                   diff_pct=0
-                  [ "$total" -gt 0 ] && pct=$((same * 100 / total)) && diff_pct=$((differ * 100 / total))
+                  if [ "$total" -gt 0 ]; then
+                      pct=$(awk "BEGIN{printf \"%.2f\", $same * 100 / $total}")
+                      diff_pct=$(awk "BEGIN{printf \"%.2f\", $differ * 100 / $total}")
+                  fi
                   {
                       echo "## blink (--blink) vs PHP ECS on mautic/mautic (all sets)"
                       echo ""
@@ -138,7 +141,7 @@ jobs:
                       diff "/tmp/ecs/$f" "/tmp/ours/$f" | sed 's/^/    /' | head -60 || true
                   done
 
-                  if [ "$diff_pct" -gt "$MAX_DIFF_PERCENT" ]; then
+                  if awk "BEGIN{exit !($differ * 100 / $total > $MAX_DIFF_PERCENT)}"; then
                       echo "::error::--blink differs from the PHP engine on ${diff_pct}% of files ($differ of $total), over the ${MAX_DIFF_PERCENT}% limit"
                       exit 1
                   fi
