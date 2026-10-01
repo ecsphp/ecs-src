@@ -36,4 +36,15 @@ func TestMethodArgumentSpaceConfig(t *testing.T) {
 	if want := "<?php foo(\n    1, // one\n    2, // two\n);"; got != want {
 		t.Fatalf("trailing comment: got=%q", got)
 	}
+
+	// a newline directly before ")" makes the call multiline: break every argument
+	got, _ = apply(t, fully, "<?php foo('a', [\n    1,\n]\n);")
+	if want := "<?php foo(\n    'a',\n    [\n    1,\n]\n);"; got != want {
+		t.Fatalf("newline before close: got=%q", got)
+	}
+	// ")" on the same line as the last argument is not multiline: left alone
+	got, _ = apply(t, fully, "<?php foo('a', [\n    1,\n]);")
+	if want := "<?php foo('a', [\n    1,\n]);"; got != want {
+		t.Fatalf("close shares line: got=%q", got)
+	}
 }
