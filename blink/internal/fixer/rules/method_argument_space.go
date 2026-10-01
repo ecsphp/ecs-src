@@ -27,6 +27,9 @@ type MethodArgumentSpace struct {
 	// pullCommaAfterHeredoc is set only by an explicit after_heredoc=true, which
 	// pulls a comma on its own line up onto the heredoc-closing line.
 	pullCommaAfterHeredoc bool
+	// attributePlacement is "standalone" (each attribute and the parameter on its
+	// own line) or "same_line"; "" resolves to the php-cs-fixer default "standalone".
+	attributePlacement string
 }
 
 func (MethodArgumentSpace) Name() string {
@@ -48,9 +51,19 @@ func (f MethodArgumentSpace) WithConfig(config map[string]any) fixer.Fixer {
 		f.keepSpaceAfterHeredoc = !v
 		f.pullCommaAfterHeredoc = v
 	}
-	// attribute_placement is accepted but not applied: blink folds attributes into
-	// a single comment token, so it cannot reposition them.
+	if v, ok := config["attribute_placement"].(string); ok {
+		f.attributePlacement = v
+	}
 	return f
+}
+
+// resolvedAttributePlacement returns the effective attribute_placement, defaulting
+// to php-cs-fixer's "standalone".
+func (f MethodArgumentSpace) resolvedAttributePlacement() string {
+	if f.attributePlacement == "" {
+		return "standalone"
+	}
+	return f.attributePlacement
 }
 
 func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
@@ -68,10 +81,16 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 		if reflowSingleArgOrMultiline(s) {
 			changed = true
 		}
+		if applyAttributePlacement(s, f.resolvedAttributePlacement()) {
+			changed = true
+		}
 	default:
 		// "" and "ensure_fully_multiline": a call/declaration argument list that
 		// already spans lines gets one argument per line.
 		if reflowMultilineArgs(s) {
+			changed = true
+		}
+		if applyAttributePlacement(s, f.resolvedAttributePlacement()) {
 			changed = true
 		}
 	}
@@ -364,6 +383,73 @@ func reflowMultilineArgs(s *tokens.Stream) bool {
 	return changed
 }
 
+// isAttributeComment reports whether t is a "#[...]" attribute (the lexer keeps
+// it as one comment token), as opposed to a "//" or "#" line comment.
+func isAttributeComment(t token.Token) bool {
+	return t.Kind == token.Comment && strings.HasPrefix(t.Value, "#[")
+}
+
+// applyAttributePlacement enforces attribute_placement inside every multiline
+// call/declaration paren. "standalone" puts each attribute, and the parameter it
+// decorates, on its own line; "same_line" keeps them on one line.
+func applyAttributePlacement(s *tokens.Stream, placement string) bool {
+	if placement == "ignore" {
+		return false
+	}
+	changed := false
+	for open := 0; open < s.Len(); open++ {
+		if s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+			continue
+		}
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 || !isCallOrDeclParen(s, open) || !argListIsMultiline(s, open, closeIdx) {
+			continue
+		}
+		if placeAttributesInParen(s, open, closeIdx, placement) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// placeAttributesInParen rewrites the whitespace after each top-level attribute
+// in the paren at open per placement. Applied right-to-left so indices stay valid.
+func placeAttributesInParen(s *tokens.Stream, open, closeIdx int, placement string) bool {
+	var attrs []int
+	depth := 0
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if isAttributeComment(t) {
+			if depth == 0 {
+				attrs = append(attrs, j)
+			}
+			continue
+		}
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch t.Value {
+		case "(", "[", "{":
+			depth++
+		case ")", "]", "}":
+			depth--
+		}
+	}
+	changed := false
+	for _, a := range slices.Backward(attrs) {
+		var want string
+		if placement == "same_line" {
+			want = " "
+		} else {
+			want = "\n" + lineIndentBefore(s, a)
+		}
+		if editSlotAfter(s, a, want) {
+			changed = true
+		}
+	}
+	return changed
+}
+
 // reflowParen puts each top-level argument of the paren at open on its own line,
 // with "(" and ")" on their own lines, indented one level past the call.
 func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
@@ -468,7 +554,8 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
 		ws = n
 		n++
 	}
-	if n < s.Len() && (isLineComment(s.At(n)) || s.At(n).Kind == token.Comment || s.At(n).Kind == token.DocComment) {
+	if n < s.Len() && !isAttributeComment(s.At(n)) &&
+		(isLineComment(s.At(n)) || s.At(n).Kind == token.Comment || s.At(n).Kind == token.DocComment) {
 		changed := false
 		if ws >= 0 {
 			if s.At(ws).Value != " " {
@@ -504,6 +591,10 @@ func argListIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
 	depth := 0
 	for j := open + 1; j < closeIdx; j++ {
 		t := s.At(j)
+		// a top-level attribute that itself spans lines makes the list multiline
+		if depth == 0 && isAttributeComment(t) && hasNewline(t.Value) {
+			return true
+		}
 		if t.Kind != token.Punct {
 			continue
 		}
