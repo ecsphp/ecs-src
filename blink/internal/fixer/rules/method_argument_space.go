@@ -395,8 +395,58 @@ func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
 			changed = true
 		}
 	}
+	if reflowBreakAfterComments(s, open, closeIdx, base) {
+		changed = true
+	}
 	if editSlotAfter(s, open, argNL) {
 		changed = true
+	}
+	return changed
+}
+
+// reflowBreakAfterComments puts a top-level block comment that is followed by
+// argument code on the same line onto its own line, matching php-cs-fixer. A
+// comment trailing another token ("$e/* c */") or sitting before a comma/closer
+// is left in place. Applied right-to-left so indices stay valid.
+func reflowBreakAfterComments(s *tokens.Stream, open, closeIdx int, base string) bool {
+	changed := false
+	depth := 0
+	for j := closeIdx - 1; j > open; j-- {
+		t := s.At(j)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case ")", "]", "}":
+				depth++
+			case "(", "[", "{":
+				depth--
+			}
+			continue
+		}
+		if depth != 0 || (t.Kind != token.Comment && t.Kind != token.DocComment) || isLineComment(t) {
+			continue
+		}
+		// the comment must start its own line (preceded by a newline) to count as a
+		// standalone leading comment rather than a trailing one on an argument's line
+		if p := j - 1; p < 0 || s.At(p).Kind != token.Whitespace || !hasNewline(s.At(p).Value) {
+			continue
+		}
+		nx := j + 1
+		if nx < s.Len() && s.At(nx).Kind == token.Whitespace {
+			if hasNewline(s.At(nx).Value) {
+				continue
+			}
+			nx++
+		}
+		if nx >= closeIdx {
+			continue
+		}
+		if c := s.At(nx); c.Kind == token.Comment || c.Kind == token.DocComment ||
+			(c.Kind == token.Punct && (c.Value == "," || c.Value == ")" || c.Value == "]" || c.Value == "}")) {
+			continue
+		}
+		if editSlotAfter(s, j, "\n"+base+"    ") {
+			changed = true
+		}
 	}
 	return changed
 }
