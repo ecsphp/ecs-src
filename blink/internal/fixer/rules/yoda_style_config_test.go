@@ -29,6 +29,8 @@ func TestYodaStyleNonYodaCompound(t *testing.T) {
 		{"<?php if (false === $this->{$m}($x)) {}", "<?php if (false === $this->{$m}($x)) {}"},
 		// a dynamic property access (no call) is a variable and moves
 		{"<?php if (1 === $o->{$p}) {}", "<?php if ($o->{$p} === 1) {}"},
+		// a trailing comment after the operand does not block the swap
+		{"<?php if (1069 === $e->getCode() /* x */) {}", "<?php if ($e->getCode() === 1069 /* x */) {}"},
 	}
 	for _, c := range cases {
 		if got, _ := apply(t, YodaStyle{}, c.src); got != c.want {

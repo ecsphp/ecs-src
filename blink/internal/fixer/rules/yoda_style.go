@@ -134,7 +134,7 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 		case yodaNonYoda:
 			// left must be a bounded constant
 			ls, le, ok := leftLiteralOperand(s, i)
-			if !ok || !isLeftBoundary(s, prevSignificantIndex(s, ls)) {
+			if !ok || !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
 				continue
 			}
 			// right must be a variable expression (not itself a constant), bounded
@@ -158,14 +158,14 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if yodaOperandHasDynamicCall(s, rs, re) {
 				continue // "$a->{$b}(...)" is not treated as a simple variable
 			}
-			if !isRightBoundary(s, nextSignificantIndex(s, re)) {
+			if !isRightBoundary(s, nextMeaningfulIndex(s, re)) {
 				continue
 			}
 			swaps = append(swaps, swap{ls, le, rs, re})
 		case yodaYoda:
 			// right must be a bounded constant
 			rs, re, ok := yodaRightLiteralOperand(s, i)
-			if !ok || !isRightBoundary(s, nextSignificantIndex(s, re)) {
+			if !ok || !isRightBoundary(s, nextMeaningfulIndex(s, re)) {
 				continue
 			}
 			// left must be a variable expression (not itself a constant), bounded
@@ -180,7 +180,7 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if ls == le && isYodaLiteral(s.At(ls)) {
 				continue // both sides constant
 			}
-			if !isLeftBoundary(s, prevSignificantIndex(s, ls)) {
+			if !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
 				continue
 			}
 			swaps = append(swaps, swap{ls, le, rs, re})
@@ -237,7 +237,7 @@ func leftLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
 			p := prevSignificantIndex(s, le)
 			if p >= 0 && s.At(p).Kind == token.Punct && (s.At(p).Value == "-" || s.At(p).Value == "+") {
 				// only treat as sign when what precedes the sign is a boundary
-				if isLeftBoundary(s, prevSignificantIndex(s, p)) {
+				if isLeftBoundary(s, prevMeaningfulIndex(s, p)) {
 					return p, le, true
 				}
 			}
