@@ -266,12 +266,29 @@ func All() []fixer.Fixer {
 		RemoveParamDescriptionDuplicateName{},
 		FixParamNameTypo{})
 	all = append(all, NoClosingTag{})
-	// run in PHP-CS-Fixer priority order (descending); ties keep the curated
-	// order above so parity with ECS's execution order is preserved
+	// run in PHP-CS-Fixer execution order: priority descending, then by rule name
+	// ascending - exactly how PHP-CS-Fixer's Utils::sortFixers breaks ties
 	sort.SliceStable(all, func(a, b int) bool {
-		return fixerPriorityOf(all[a]) > fixerPriorityOf(all[b])
+		pa, pb := fixerPriorityOf(all[a]), fixerPriorityOf(all[b])
+		if pa != pb {
+			return pa > pb
+		}
+		return fixerSortName(all[a]) < fixerSortName(all[b])
 	})
 	return all
+}
+
+// fixerSortName returns the name PHP-CS-Fixer sorts a fixer by: a core fixer's
+// snake_case rule name (its class short name minus "Fixer"), or the full class
+// name for a non-core (e.g. Symplify) fixer, whose getName() returns static::class.
+func fixerSortName(f fixer.Fixer) string {
+	name := f.Name()
+	if !strings.HasPrefix(name, `PhpCsFixer\`) {
+		return name
+	}
+	short := name[strings.LastIndexByte(name, '\\')+1:]
+	short = strings.TrimSuffix(short, "Fixer")
+	return camelCaseToUnderscore(short)
 }
 
 // CanonicalOrder sorts fixers in place to match All()'s execution order

@@ -312,11 +312,17 @@ func rightComparisonOperandEnd(s *tokens.Stream, rs int) int {
 func yodaOperandHasDynamicCall(s *tokens.Stream, from, to int) bool {
 	for i := from; i <= to && i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind == token.Punct && t.Value == "{" {
-			if p := prevSignificantIndex(s, i); p >= 0 {
-				if pt := s.At(p); pt.Kind == token.Punct && (pt.Value == "->" || pt.Value == "?->") {
-					return true
-				}
+		if t.Kind != token.Punct || t.Value != "{" {
+			continue
+		}
+		p := prevSignificantIndex(s, i)
+		if p < 0 || s.At(p).Kind != token.Punct || (s.At(p).Value != "->" && s.At(p).Value != "?->") {
+			continue
+		}
+		// a dynamic property "$a->{$b}" is a variable; only a following call makes it not one
+		if c := s.MatchForward(i); c >= 0 {
+			if n := nextSignificantIndex(s, c); n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "(" {
+				return true
 			}
 		}
 	}
