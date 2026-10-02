@@ -423,7 +423,9 @@ func isLeftBoundary(s *tokens.Stream, p int) bool {
 	t := s.At(p)
 	if t.Kind == token.Punct {
 		switch t.Value {
-		case "(", "[", "{", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>", ".":
+		// "." (concat) binds tighter than comparison, so an operand next to it is
+		// part of a larger concat expression, not a standalone comparison operand
+		case "(", "[", "{", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>":
 			return true
 		}
 		return false
@@ -444,7 +446,7 @@ func isRightBoundary(s *tokens.Stream, j int) bool {
 	t := s.At(j)
 	if t.Kind == token.Punct {
 		switch t.Value {
-		case ")", "]", "}", ";", ",", ":", "&&", "||", "?", "??", ".", "=>":
+		case ")", "]", "}", ";", ",", ":", "&&", "||", "?", "??", "=>":
 			return true
 		}
 		return false
