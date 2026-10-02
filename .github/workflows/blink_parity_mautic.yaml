@@ -72,7 +72,10 @@ jobs:
                           common: true,
                           standaloneLine: true,
                           cleanCode: true,
-                      );
+                      )
+                      // single process: parallel workers overflow the NDJSON buffer on
+                      // large mautic files and abort the PHP run (blink ignores this)
+                      ->withoutParallel();
                   PHP
                   cp /tmp/mautic/ecs.php /tmp/mautic/ecs-copy.php
 
@@ -92,7 +95,7 @@ jobs:
             - name: Compare the two trees
               run: |
                   # ratchet gate: fail once the differing share crosses this; lower it as parity improves
-                  MAX_DIFF_PERCENT=1.7
+                  MAX_DIFF_PERCENT=1.6
                   total=0
                   differ=0
                   differing_files=""
