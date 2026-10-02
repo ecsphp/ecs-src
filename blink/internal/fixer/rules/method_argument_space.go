@@ -24,6 +24,12 @@ type MethodArgumentSpace struct {
 	// keepSpaceAfterHeredoc is set from after_heredoc=false; the zero value keeps
 	// today's behaviour of always removing a space before a comma.
 	keepSpaceAfterHeredoc bool
+	// pullCommaAfterHeredoc is set only by an explicit after_heredoc=true, which
+	// pulls a comma on its own line up onto the heredoc-closing line.
+	pullCommaAfterHeredoc bool
+	// attributePlacement is "standalone" (each attribute and the parameter on its
+	// own line) or "same_line"; "" resolves to the php-cs-fixer default "standalone".
+	attributePlacement string
 }
 
 func (MethodArgumentSpace) Name() string {
@@ -43,10 +49,21 @@ func (f MethodArgumentSpace) WithConfig(config map[string]any) fixer.Fixer {
 	}
 	if v, ok := config["after_heredoc"].(bool); ok {
 		f.keepSpaceAfterHeredoc = !v
+		f.pullCommaAfterHeredoc = v
 	}
-	// attribute_placement is accepted but not applied: blink folds attributes into
-	// a single comment token, so it cannot reposition them.
+	if v, ok := config["attribute_placement"].(string); ok {
+		f.attributePlacement = v
+	}
 	return f
+}
+
+// resolvedAttributePlacement returns the effective attribute_placement, defaulting
+// to php-cs-fixer's "standalone".
+func (f MethodArgumentSpace) resolvedAttributePlacement() string {
+	if f.attributePlacement == "" {
+		return "standalone"
+	}
+	return f.attributePlacement
 }
 
 func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
@@ -55,14 +72,31 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 	case "ignore":
 		// leave multiline argument lists as they are
 	case "ensure_single_line":
-		if methodArgSpaceCollapse(s) {
+		if methodArgSpaceCollapse(s, f.keepMultipleSpacesAfterComma) {
+			changed = true
+		}
+		if collapseAttributeArgs(s, false) {
+			changed = true
+		}
+	case "ensure_single_line_for_single_argument":
+		// a multiline call with a single argument collapses to one line (unless the
+		// argument itself is multiline); with several arguments it goes fully multiline
+		if reflowSingleArgOrMultiline(s) {
+			changed = true
+		}
+		if collapseAttributeArgs(s, true) {
+			changed = true
+		}
+		if applyAttributePlacement(s, f.resolvedAttributePlacement()) {
 			changed = true
 		}
 	default:
-		// "", "ensure_fully_multiline" and "ensure_single_line_for_single_argument"
-		// (approximated as fully multiline): a call/declaration argument list that
+		// "" and "ensure_fully_multiline": a call/declaration argument list that
 		// already spans lines gets one argument per line.
 		if reflowMultilineArgs(s) {
+			changed = true
+		}
+		if applyAttributePlacement(s, f.resolvedAttributePlacement()) {
 			changed = true
 		}
 	}
@@ -73,7 +107,16 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		switch t.Value {
-		case "(", "[", "{":
+		case "(":
+			// only a function/method call or declaration paren has its commas spaced;
+			// "array(...)" and grouping parens are left alone (marked "a")
+			if isCommaSpacedParen(s, i) {
+				stack = append(stack, "(")
+			} else {
+				stack = append(stack, "a")
+			}
+			continue
+		case "[", "{":
 			stack = append(stack, t.Value)
 			continue
 		case ")", "]", "}":
@@ -85,28 +128,35 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			if len(stack) == 0 || stack[len(stack)-1] != "(" {
 				continue
 			}
-			// Multiline arg list: leave alignment untouched.
-			if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && hasNewline(s.At(i+1).Value) {
-				continue
-			}
-			// No space before the comma (single-line only), unless after_heredoc is
-			// off and a heredoc precedes the comma.
+			// No space before the comma, unless the previous token is a comment or
+			// comma, or after_heredoc is off and a heredoc precedes it.
 			if i > 0 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
-				if !f.keepSpaceAfterHeredoc || !methodArgSpacePrevIsHeredoc(s, i-1) {
+				p := prevSignificantIndex(s, i)
+				prevComment := p >= 0 && (s.At(p).Kind == token.Comment || s.At(p).Kind == token.DocComment)
+				prevComma := p >= 0 && s.At(p).Value == ","
+				if !prevComment && !prevComma && (!f.keepSpaceAfterHeredoc || !methodArgSpacePrevIsHeredoc(s, i-1)) {
 					s.RemoveAt(i - 1)
 					i--
 					changed = true
 				}
+			} else if f.pullCommaAfterHeredoc && i > 0 && s.At(i-1).Kind == token.Whitespace &&
+				hasNewline(s.At(i-1).Value) && methodArgSpacePrevIsHeredoc(s, i-1) {
+				// after_heredoc=true pulls the comma onto the heredoc-closing line
+				s.RemoveAt(i - 1)
+				i--
+				changed = true
 			}
-			// Exactly one space after the comma, except a trailing comma before ")".
+			// After the comma: a newline keeps its multiline alignment; otherwise
+			// exactly one space, including a trailing comma before ")" (php-cs-fixer
+			// adds it), except before a comment that ends its line.
 			if i+1 < s.Len() {
 				next := s.At(i + 1)
 				if next.Kind == token.Whitespace {
-					if next.Value != " " && !f.keepMultipleSpacesAfterComma {
+					if !hasNewline(next.Value) && next.Value != " " && !f.keepMultipleSpacesAfterComma && !masCommentLastLine(s, i+2) {
 						s.SetValue(i+1, " ")
 						changed = true
 					}
-				} else if next.Kind != token.Punct || next.Value != ")" {
+				} else if !masCommentLastLine(s, i+1) {
 					s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
 					i++
 					changed = true
@@ -127,7 +177,7 @@ func methodArgSpacePrevIsHeredoc(s *tokens.Stream, wsIdx int) bool {
 // methodArgSpaceCollapse joins every already-multiline call/declaration argument
 // list onto a single line. Only top-level newlines are removed; a newline kept
 // inside a nested array or closure argument is left in place.
-func methodArgSpaceCollapse(s *tokens.Stream) bool {
+func methodArgSpaceCollapse(s *tokens.Stream, keepMultiple bool) bool {
 	changed := false
 	for open := 0; open < s.Len(); open++ {
 		if s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
@@ -140,16 +190,43 @@ func methodArgSpaceCollapse(s *tokens.Stream) bool {
 		if !isCallOrDeclParen(s, open) {
 			continue
 		}
-		if methodArgSpaceCollapseParen(s, open, closeIdx) {
+		// a top-level line comment cannot be collapsed onto one line - the code after
+		// it would be commented out - so the list is left as is
+		if parenHasTopLevelLineComment(s, open, closeIdx) {
+			continue
+		}
+		if methodArgSpaceCollapseParen(s, open, closeIdx, keepMultiple) {
 			changed = true
 		}
 	}
 	return changed
 }
 
+// parenHasTopLevelLineComment reports whether the paren at open contains a "//" or
+// "#" line comment at the top level (not nested inside an inner bracket).
+func parenHasTopLevelLineComment(s *tokens.Stream, open, closeIdx int) bool {
+	depth := 0
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case "(", "[", "{":
+				depth++
+			case ")", "]", "}":
+				depth--
+			}
+			continue
+		}
+		if depth == 0 && isLineComment(t) {
+			return true
+		}
+	}
+	return false
+}
+
 // methodArgSpaceCollapseParen removes top-level newlines within the paren at open,
 // dropping the whitespace next to "(" and ")" and collapsing the rest to a space.
-func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int) bool {
+func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int, keepMultiple bool) bool {
 	changed := false
 	depth := 0
 	for j := closeIdx - 1; j > open; j-- {
@@ -166,14 +243,151 @@ func methodArgSpaceCollapseParen(s *tokens.Stream, open, closeIdx int) bool {
 		if depth != 0 || t.Kind != token.Whitespace || !hasNewline(t.Value) {
 			continue
 		}
-		if prevSignificantIndex(s, j) == open || nextSignificantIndex(s, j) == closeIdx {
+		prev := prevSignificantIndex(s, j)
+		if prev == open || nextSignificantIndex(s, j) == closeIdx {
 			s.RemoveAt(j)
+		} else if keepMultiple && prev >= 0 && s.At(prev).Value == "," {
+			// keep_multiple_spaces_after_comma: drop the newline but keep the indent
+			if nl := strings.LastIndexByte(t.Value, '\n'); nl >= 0 {
+				s.SetValue(j, t.Value[nl+1:])
+			}
 		} else {
 			s.SetValue(j, " ")
 		}
 		changed = true
 	}
 	return changed
+}
+
+// reflowSingleArgOrMultiline handles on_multiline=ensure_single_line_for_single_argument:
+// a multiline call with one argument collapses to a single line, one with several
+// goes fully multiline.
+func reflowSingleArgOrMultiline(s *tokens.Stream) bool {
+	changed := false
+	for open := 0; open < s.Len(); open++ {
+		if s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+			continue
+		}
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 || !argListIsMultiline(s, open, closeIdx) || !isCallOrDeclParen(s, open) {
+			continue
+		}
+		if sigNext(s, open) == closeIdx {
+			continue // empty ()
+		}
+		if countTopLevelArgs(s, open, closeIdx) == 1 {
+			if ensureSingleLineForParen(s, open, closeIdx) {
+				changed = true
+			}
+		} else if reflowParen(s, open, closeIdx) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// countTopLevelArgs counts the arguments between open and close, ignoring a
+// trailing comma and nested brackets.
+func countTopLevelArgs(s *tokens.Stream, open, closeIdx int) int {
+	if sigNext(s, open) == closeIdx {
+		return 0
+	}
+	count := 1
+	depth := 0
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch t.Value {
+		case "(", "[", "{":
+			depth++
+		case ")", "]", "}":
+			depth--
+		case ",":
+			if depth == 0 && sigNext(s, j) != closeIdx {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+// argumentContentIsMultiline reports whether the single argument between open and
+// close spans multiple lines at the top level (a comment, or a newline that is not
+// the edge whitespace right after "(" or before ")"), skipping nested brackets.
+func argumentContentIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
+	for i := open + 1; i < closeIdx; i++ {
+		t := s.At(i)
+		if (t.Kind == token.Comment || t.Kind == token.DocComment) && !isAttributeComment(t) {
+			return true
+		}
+		if i == open+1 || i == closeIdx-1 {
+			continue
+		}
+		if t.Kind == token.Punct && (t.Value == "(" || t.Value == "[" || t.Value == "{") {
+			if c := s.MatchForward(i); c > 0 {
+				i = c
+			}
+			continue
+		}
+		if t.Kind == token.Whitespace && hasNewline(t.Value) {
+			return true
+		}
+	}
+	return false
+}
+
+// ensureSingleLineForParen collapses the outer newlines of a single-argument
+// call to one line, leaving a multiline argument (or one carrying a line comment)
+// untouched.
+func ensureSingleLineForParen(s *tokens.Stream, open, closeIdx int) bool {
+	if argumentContentIsMultiline(s, open, closeIdx) {
+		return false
+	}
+	changed := false
+	for i := closeIdx - 1; i > open; i-- {
+		t := s.At(i)
+		if t.Kind == token.Punct && (t.Value == ")" || t.Value == "]" || t.Value == "}") {
+			if c := s.MatchBackward(i); c >= 0 {
+				i = c
+			}
+			continue
+		}
+		if t.Kind == token.Whitespace {
+			if i > 0 {
+				prev := s.At(i - 1)
+				if prev.Kind == token.Comment && !strings.HasPrefix(prev.Value, "/*") {
+					continue
+				}
+			}
+			if nv := collapseNewlineHspace(t.Value); nv != t.Value {
+				s.SetValue(i, nv)
+				changed = true
+			}
+		}
+	}
+	return changed
+}
+
+// collapseNewlineHspace removes every line break and the horizontal whitespace
+// that follows it, matching php-cs-fixer's /\R\h*/ replacement.
+func collapseNewlineHspace(v string) string {
+	var b strings.Builder
+	for i := 0; i < len(v); i++ {
+		if v[i] == '\n' || v[i] == '\r' {
+			for i < len(v) && (v[i] == '\n' || v[i] == '\r') {
+				i++
+			}
+			for i < len(v) && (v[i] == ' ' || v[i] == '\t') {
+				i++
+			}
+			i--
+			continue
+		}
+		b.WriteByte(v[i])
+	}
+	return b.String()
 }
 
 // reflowMultilineArgs makes every already-multiline call/declaration argument
@@ -196,6 +410,117 @@ func reflowMultilineArgs(s *tokens.Stream) bool {
 			continue // empty ()
 		}
 		if reflowParen(s, open, closeIdx) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// isAttributeComment reports whether t is a "#[...]" attribute (the lexer keeps
+// it as one comment token), as opposed to a "//" or "#" line comment.
+func isAttributeComment(t token.Token) bool {
+	return t.Kind == token.Comment && strings.HasPrefix(t.Value, "#[")
+}
+
+// collapseAttributeArgs collapses a multiline argument list inside an attribute
+// (e.g. "#[Attr(\n    'foo'\n)]" -> "#[Attr('foo')]") on the attribute's token
+// text. With singleArgOnly it only collapses a call that has a single argument,
+// matching on_multiline=ensure_single_line_for_single_argument.
+func collapseAttributeArgs(s *tokens.Stream, singleArgOnly bool) bool {
+	changed := false
+	for i := 0; i < s.Len(); i++ {
+		t := s.At(i)
+		if !isAttributeComment(t) || !strings.ContainsRune(t.Value, '\n') {
+			continue
+		}
+		if nv, ok := collapseAttributeText(t.Value, singleArgOnly); ok && nv != t.Value {
+			s.SetValue(i, nv)
+			changed = true
+		}
+	}
+	return changed
+}
+
+// collapseAttributeText rewrites the first top-level "(...)" in an attribute onto
+// one line. It returns the rewritten text and whether a collapse applied.
+func collapseAttributeText(attr string, singleArgOnly bool) (string, bool) {
+	open := strings.IndexByte(attr, '(')
+	if open < 0 {
+		return attr, false
+	}
+	closeIdx := matchParen(attr, open)
+	if closeIdx < 0 {
+		return attr, false
+	}
+	args, trailingComma := splitTopLevelArgs(attr[open+1 : closeIdx])
+	if len(args) == 0 {
+		return attr, false
+	}
+	if singleArgOnly && len(args) != 1 {
+		return attr, false
+	}
+	inner := strings.Join(args, ", ")
+	if trailingComma {
+		inner += ","
+	}
+	return attr[:open+1] + inner + attr[closeIdx:], true
+}
+
+// applyAttributePlacement enforces attribute_placement inside every multiline
+// call/declaration paren. "standalone" puts each attribute, and the parameter it
+// decorates, on its own line; "same_line" keeps them on one line.
+func applyAttributePlacement(s *tokens.Stream, placement string) bool {
+	if placement == "ignore" {
+		return false
+	}
+	changed := false
+	for open := 0; open < s.Len(); open++ {
+		if s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+			continue
+		}
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 || !isCallOrDeclParen(s, open) || !argListIsMultiline(s, open, closeIdx) {
+			continue
+		}
+		if placeAttributesInParen(s, open, closeIdx, placement) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// placeAttributesInParen rewrites the whitespace after each top-level attribute
+// in the paren at open per placement. Applied right-to-left so indices stay valid.
+func placeAttributesInParen(s *tokens.Stream, open, closeIdx int, placement string) bool {
+	var attrs []int
+	depth := 0
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if isAttributeComment(t) {
+			if depth == 0 {
+				attrs = append(attrs, j)
+			}
+			continue
+		}
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch t.Value {
+		case "(", "[", "{":
+			depth++
+		case ")", "]", "}":
+			depth--
+		}
+	}
+	changed := false
+	for _, a := range slices.Backward(attrs) {
+		var want string
+		if placement == "same_line" {
+			want = " "
+		} else {
+			want = "\n" + lineIndentBefore(s, a)
+		}
+		if editSlotAfter(s, a, want) {
 			changed = true
 		}
 	}
@@ -239,16 +564,67 @@ func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
 			changed = true
 		}
 	}
+	if reflowBreakAfterComments(s, open, closeIdx, base) {
+		changed = true
+	}
 	if editSlotAfter(s, open, argNL) {
 		changed = true
 	}
 	return changed
 }
 
+// reflowBreakAfterComments puts a top-level block comment that is followed by
+// argument code on the same line onto its own line, matching php-cs-fixer. A
+// comment trailing another token ("$e/* c */") or sitting before a comma/closer
+// is left in place. Applied right-to-left so indices stay valid.
+func reflowBreakAfterComments(s *tokens.Stream, open, closeIdx int, base string) bool {
+	changed := false
+	depth := 0
+	for j := closeIdx - 1; j > open; j-- {
+		t := s.At(j)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case ")", "]", "}":
+				depth++
+			case "(", "[", "{":
+				depth--
+			}
+			continue
+		}
+		if depth != 0 || (t.Kind != token.Comment && t.Kind != token.DocComment) ||
+			isLineComment(t) || isAttributeComment(t) {
+			continue // attributes are placed by applyAttributePlacement, not here
+		}
+		// the comment must start its own line (preceded by a newline) to count as a
+		// standalone leading comment rather than a trailing one on an argument's line
+		if p := j - 1; p < 0 || s.At(p).Kind != token.Whitespace || !hasNewline(s.At(p).Value) {
+			continue
+		}
+		nx := j + 1
+		if nx < s.Len() && s.At(nx).Kind == token.Whitespace {
+			if hasNewline(s.At(nx).Value) {
+				continue
+			}
+			nx++
+		}
+		if nx >= closeIdx {
+			continue
+		}
+		if c := s.At(nx); c.Kind == token.Comment || c.Kind == token.DocComment ||
+			(c.Kind == token.Punct && (c.Value == "," || c.Value == ")" || c.Value == "]" || c.Value == "}")) {
+			continue
+		}
+		if editSlotAfter(s, j, "\n"+base+"    ") {
+			changed = true
+		}
+	}
+	return changed
+}
+
 // reflowAfterComma breaks a multiline argument list after a top-level comma. A
-// trailing line comment ("arg, // note") stays on the argument's line and the
-// break goes after the comment, matching php-cs-fixer; otherwise the break goes
-// right after the comma.
+// comment that sits on the comma's line ("arg, // note" or "arg, /* note */")
+// stays there and the break goes after the comment, matching php-cs-fixer;
+// otherwise the break goes right after the comma.
 func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
 	n := comma + 1
 	ws := -1
@@ -256,7 +632,8 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
 		ws = n
 		n++
 	}
-	if n < s.Len() && isLineComment(s.At(n)) {
+	if n < s.Len() && !isAttributeComment(s.At(n)) &&
+		(isLineComment(s.At(n)) || s.At(n).Kind == token.Comment || s.At(n).Kind == token.DocComment) {
 		changed := false
 		if ws >= 0 {
 			if s.At(ws).Value != " " {
@@ -292,6 +669,10 @@ func argListIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
 	depth := 0
 	for j := open + 1; j < closeIdx; j++ {
 		t := s.At(j)
+		// a top-level attribute that itself spans lines makes the list multiline
+		if depth == 0 && isAttributeComment(t) && hasNewline(t.Value) {
+			return true
+		}
 		if t.Kind != token.Punct {
 			continue
 		}
@@ -324,9 +705,23 @@ func isCallOrDeclParen(s *tokens.Stream, open int) bool {
 		return t.Value == ")" || t.Value == "]"
 	case token.Keyword:
 		lv := strings.ToLower(t.Value)
-		return lv == "function" || lv == "fn"
+		// "class" matches an anonymous class constructor: `new class (...)`;
+		// "use" matches a closure binding list
+		return lv == "function" || lv == "fn" || lv == "class" || lv == "use"
 	}
 	return false
+}
+
+// isCommaSpacedParen reports whether the "(" at open has its commas spaced on a
+// single line. This is every call/declaration paren plus list() destructuring;
+// list() gets comma spacing but is not reflown to fully multiline (php-cs-fixer
+// leaves a partially multiline list() alone).
+func isCommaSpacedParen(s *tokens.Stream, open int) bool {
+	if isCallOrDeclParen(s, open) {
+		return true
+	}
+	p := sigPrev(s, open)
+	return p >= 0 && s.At(p).Kind == token.Keyword && strings.ToLower(s.At(p).Value) == "list"
 }
 
 // lineIndentBefore returns the indentation of the line containing token idx.
@@ -382,4 +777,22 @@ func editSlotBefore(s *tokens.Stream, idx int, val string) bool {
 	}
 	s.InsertAt(idx, token.Token{Kind: token.Whitespace, Value: val})
 	return true
+}
+
+// masCommentLastLine reports whether the token at idx is a comment that ends its
+// line (the following whitespace starts with a line break), matching php-cs-fixer's
+// isCommentLastLineToken.
+func masCommentLastLine(s *tokens.Stream, idx int) bool {
+	if idx < 0 || idx >= s.Len() {
+		return false
+	}
+	t := s.At(idx)
+	if t.Kind != token.Comment && t.Kind != token.DocComment {
+		return false
+	}
+	if idx+1 >= s.Len() {
+		return false
+	}
+	nx := s.At(idx + 1)
+	return nx.Kind == token.Whitespace && len(nx.Value) > 0 && (nx.Value[0] == '\n' || nx.Value[0] == '\r')
 }

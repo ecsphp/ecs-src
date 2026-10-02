@@ -21,7 +21,7 @@ func TestMethodArgumentSpace(t *testing.T) {
 		{"array inside call", "<?php foo([1,2],$b);", "<?php foo([1,2], $b);", true},
 		{"multiline arg list becomes fully multiline", "<?php foo($a,\n    $b);", "<?php foo(\n    $a,\n    $b\n);", true},
 		{"newline only inside a nested arg is left alone", "<?php foo($a, [\n    1,\n]);", "<?php foo($a, [\n    1,\n]);", false},
-		{"trailing comma before paren", "<?php foo($a,);", "<?php foo($a,);", false},
+		{"trailing comma before paren", "<?php foo($a,);", "<?php foo($a, );", true},
 		{"blank line between multiline args is preserved", "<?php foo(\n    $a,\n\n    $b\n);", "<?php foo(\n    $a,\n\n    $b\n);", false},
 	}
 
