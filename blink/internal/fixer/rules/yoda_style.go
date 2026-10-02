@@ -105,10 +105,31 @@ func yodaMirror(v string) string {
 	return v
 }
 
+// isInterpolatedString reports whether t is a double-quoted string that contains
+// a variable interpolation, making it a runtime value rather than a constant.
+func isInterpolatedString(t token.Token) bool {
+	if t.Kind != token.String || len(t.Value) == 0 || t.Value[0] != '"' {
+		return false
+	}
+	for i := 1; i < len(t.Value); i++ {
+		if t.Value[i] == '\\' {
+			i++
+			continue
+		}
+		if t.Value[i] == '$' || (t.Value[i] == '{' && i+1 < len(t.Value) && t.Value[i+1] == '$') {
+			return true
+		}
+	}
+	return false
+}
+
 func isYodaLiteral(t token.Token) bool {
 	switch t.Kind {
-	case token.Number, token.String:
+	case token.Number:
 		return true
+	case token.String:
+		// a double-quoted string with interpolation ("...{$x}...") is not a constant
+		return !isInterpolatedString(t)
 	case token.Ident:
 		return true
 	case token.Keyword:
@@ -189,6 +210,22 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 	if len(swaps) == 0 {
 		return false
 	}
+	// drop any swap whose operand span overlaps an earlier (inner) one; applying
+	// overlapping ranges would interleave tokens and corrupt the output
+	kept := swaps[:0:0]
+	for _, sw := range swaps {
+		overlaps := false
+		for _, k := range kept {
+			if sw.ls <= k.re && k.ls <= sw.re {
+				overlaps = true
+				break
+			}
+		}
+		if !overlaps {
+			kept = append(kept, sw)
+		}
+	}
+	swaps = kept
 	for _, sw := range slices.Backward(swaps) {
 		left := append([]token.Token(nil), s.Tokens()[sw.ls:sw.le+1]...)
 		mid := append([]token.Token(nil), s.Tokens()[sw.le+1:sw.rs]...)
