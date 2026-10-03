@@ -118,11 +118,14 @@ func (TrimArraySpaces) Fix(s *tokens.Stream) bool {
 		if closeIdx < 0 {
 			continue
 		}
-		if closeIdx-1 > i && s.At(closeIdx-1).Kind == token.Whitespace && !hasNewline(s.At(closeIdx-1).Value) {
+		// a space kept next to a comment is left alone ("[ // note" / "/* note */ ]")
+		if closeIdx-1 > i && s.At(closeIdx-1).Kind == token.Whitespace && !hasNewline(s.At(closeIdx-1).Value) &&
+			!(closeIdx-2 > i && isComment(s.At(closeIdx-2))) {
 			s.RemoveAt(closeIdx - 1)
 			changed = true
 		}
-		if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) {
+		if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) &&
+			!(i+2 < s.Len() && isComment(s.At(i+2))) {
 			s.RemoveAt(i + 1)
 			changed = true
 		}
