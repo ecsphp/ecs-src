@@ -250,6 +250,17 @@ func topBracketIsArray(stack []string) bool {
 	return len(stack) > 0 && stack[len(stack)-1] == "["
 }
 
+// isDestructuringAssignOpen reports whether the "[" at open is a short-list
+// destructuring target - its matching "]" is directly followed by a single "=".
+func isDestructuringAssignOpen(s *tokens.Stream, open int) bool {
+	c := s.MatchForward(open)
+	if c < 0 {
+		return false
+	}
+	n := nextSignificantIndex(s, c)
+	return n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "="
+}
+
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ArrayNotation/NoWhitespaceBeforeCommaInArrayFixer.php
 //
 // NoWhitespaceBeforeCommaInArray removes single-line whitespace before a comma
@@ -340,7 +351,15 @@ func (f WhitespaceAfterCommaInArray) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		switch t.Value {
-		case "(", "[", "{":
+		case "[":
+			// a destructuring target ("[$a,$b] = ...", or nested in one) is not an
+			// array literal, so php-cs-fixer does not space its commas
+			if (len(stack) > 0 && stack[len(stack)-1] == "d[") || isDestructuringAssignOpen(s, i) {
+				stack = append(stack, "d[")
+			} else {
+				stack = append(stack, "[")
+			}
+		case "(", "{":
 			stack = append(stack, t.Value)
 		case ")", "]", "}":
 			if len(stack) > 0 {
