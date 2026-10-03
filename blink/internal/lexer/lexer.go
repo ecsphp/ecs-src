@@ -137,7 +137,8 @@ func (l *lexer) lexPHP() {
 		l.lexString(start, '\'')
 	case c == '"':
 		l.lexString(start, '"')
-	case isDigit(c):
+	case isDigit(c) || (c == '.' && l.pos+1 < len(l.src) && isDigit(l.src[l.pos+1])):
+		// a leading-dot float (".1") is one DNUMBER in PHP's context-free scanner
 		for l.pos < len(l.src) && isNumber(l.src[l.pos]) {
 			l.pos++
 		}
