@@ -202,6 +202,13 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if ls == le && isYodaLiteral(s.At(ls)) {
 				continue // both sides constant
 			}
+			// a unary prefix ("!!$a", "@$a") is part of the operand; blink's primary
+			// start does not span it, so leave the comparison rather than swap only
+			// the variable and strand the prefix
+			if p := prevMeaningfulIndex(s, ls); p >= 0 && s.At(p).Kind == token.Punct &&
+				(s.At(p).Value == "!" || s.At(p).Value == "@") {
+				continue
+			}
 			if !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
 				continue
 			}
@@ -315,6 +322,9 @@ func rightComparisonOperandEnd(s *tokens.Stream, rs int) int {
 		t := s.At(i)
 		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
 			continue
+		}
+		if t.Kind == token.CloseTag {
+			return end // "?>" ends the operand; never pull the close tag in
 		}
 		if t.Kind == token.Punct {
 			switch t.Value {
@@ -445,6 +455,9 @@ func isRightBoundary(s *tokens.Stream, j int) bool {
 		return true
 	}
 	t := s.At(j)
+	if t.Kind == token.CloseTag {
+		return true
+	}
 	if t.Kind == token.Punct {
 		switch t.Value {
 		case ")", "]", "}", ";", ",", ":", "&&", "||", "?", "??", "=>":
