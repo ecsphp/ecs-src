@@ -105,10 +105,31 @@ func yodaMirror(v string) string {
 	return v
 }
 
+// isInterpolatedString reports whether t is a double-quoted string that contains
+// a variable interpolation, making it a runtime value rather than a constant.
+func isInterpolatedString(t token.Token) bool {
+	if t.Kind != token.String || len(t.Value) == 0 || t.Value[0] != '"' {
+		return false
+	}
+	for i := 1; i < len(t.Value); i++ {
+		if t.Value[i] == '\\' {
+			i++
+			continue
+		}
+		if t.Value[i] == '$' || (t.Value[i] == '{' && i+1 < len(t.Value) && t.Value[i+1] == '$') {
+			return true
+		}
+	}
+	return false
+}
+
 func isYodaLiteral(t token.Token) bool {
 	switch t.Kind {
-	case token.Number, token.String:
+	case token.Number:
 		return true
+	case token.String:
+		// a double-quoted string with interpolation ("...{$x}...") is not a constant
+		return !isInterpolatedString(t)
 	case token.Ident:
 		return true
 	case token.Keyword:
@@ -137,8 +158,9 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if !ok || !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
 				continue
 			}
-			// right must be a variable expression (not itself a constant), bounded
-			rs := nextSignificantIndex(s, i)
+			// right must be a variable expression (not itself a constant), bounded;
+			// skip a comment between the operator and the operand ("=== /* c */ $x")
+			rs := nextMeaningfulIndex(s, i)
 			if rs < 0 {
 				continue
 			}
@@ -169,7 +191,7 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 				continue
 			}
 			// left must be a variable expression (not itself a constant), bounded
-			le := prevSignificantIndex(s, i)
+			le := prevMeaningfulIndex(s, i)
 			if le < 0 {
 				continue
 			}
@@ -180,6 +202,13 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if ls == le && isYodaLiteral(s.At(ls)) {
 				continue // both sides constant
 			}
+			// a unary prefix ("!!$a", "@$a") is part of the operand; blink's primary
+			// start does not span it, so leave the comparison rather than swap only
+			// the variable and strand the prefix
+			if p := prevMeaningfulIndex(s, ls); p >= 0 && s.At(p).Kind == token.Punct &&
+				(s.At(p).Value == "!" || s.At(p).Value == "@") {
+				continue
+			}
 			if !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
 				continue
 			}
@@ -189,6 +218,22 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 	if len(swaps) == 0 {
 		return false
 	}
+	// drop any swap whose operand span overlaps an earlier (inner) one; applying
+	// overlapping ranges would interleave tokens and corrupt the output
+	kept := swaps[:0:0]
+	for _, sw := range swaps {
+		overlaps := false
+		for _, k := range kept {
+			if sw.ls <= k.re && k.ls <= sw.re {
+				overlaps = true
+				break
+			}
+		}
+		if !overlaps {
+			kept = append(kept, sw)
+		}
+	}
+	swaps = kept
 	for _, sw := range slices.Backward(swaps) {
 		left := append([]token.Token(nil), s.Tokens()[sw.ls:sw.le+1]...)
 		mid := append([]token.Token(nil), s.Tokens()[sw.le+1:sw.rs]...)
@@ -208,7 +253,7 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 // before the comparison at op: a plain literal, signed number, empty array,
 // bare constant, or "Name::class".
 func leftLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
-	le := prevSignificantIndex(s, op)
+	le := prevMeaningfulIndex(s, op)
 	if le < 0 {
 		return 0, 0, false
 	}
@@ -277,6 +322,9 @@ func rightComparisonOperandEnd(s *tokens.Stream, rs int) int {
 		t := s.At(i)
 		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
 			continue
+		}
+		if t.Kind == token.CloseTag {
+			return end // "?>" ends the operand; never pull the close tag in
 		}
 		if t.Kind == token.Punct {
 			switch t.Value {
@@ -386,7 +434,9 @@ func isLeftBoundary(s *tokens.Stream, p int) bool {
 	t := s.At(p)
 	if t.Kind == token.Punct {
 		switch t.Value {
-		case "(", "[", "{", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>", ".":
+		// "." (concat) binds tighter than comparison, so an operand next to it is
+		// part of a larger concat expression, not a standalone comparison operand
+		case "(", "[", "{", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>":
 			return true
 		}
 		return false
@@ -405,9 +455,12 @@ func isRightBoundary(s *tokens.Stream, j int) bool {
 		return true
 	}
 	t := s.At(j)
+	if t.Kind == token.CloseTag {
+		return true
+	}
 	if t.Kind == token.Punct {
 		switch t.Value {
-		case ")", "]", "}", ";", ",", ":", "&&", "||", "?", "??", ".", "=>":
+		case ")", "]", "}", ";", ",", ":", "&&", "||", "?", "??", "=>":
 			return true
 		}
 		return false
@@ -425,7 +478,7 @@ func isRightBoundary(s *tokens.Stream, j int) bool {
 // just after the comparison at op: a plain literal, signed number, empty array,
 // bare constant, or "Name::class". It mirrors leftLiteralOperand.
 func yodaRightLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
-	rs := nextSignificantIndex(s, op)
+	rs := nextMeaningfulIndex(s, op)
 	if rs < 0 {
 		return 0, 0, false
 	}
