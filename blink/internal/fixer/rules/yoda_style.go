@@ -158,8 +158,9 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if !ok || !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
 				continue
 			}
-			// right must be a variable expression (not itself a constant), bounded
-			rs := nextSignificantIndex(s, i)
+			// right must be a variable expression (not itself a constant), bounded;
+			// skip a comment between the operator and the operand ("=== /* c */ $x")
+			rs := nextMeaningfulIndex(s, i)
 			if rs < 0 {
 				continue
 			}
@@ -190,7 +191,7 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 				continue
 			}
 			// left must be a variable expression (not itself a constant), bounded
-			le := prevSignificantIndex(s, i)
+			le := prevMeaningfulIndex(s, i)
 			if le < 0 {
 				continue
 			}
@@ -245,7 +246,7 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 // before the comparison at op: a plain literal, signed number, empty array,
 // bare constant, or "Name::class".
 func leftLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
-	le := prevSignificantIndex(s, op)
+	le := prevMeaningfulIndex(s, op)
 	if le < 0 {
 		return 0, 0, false
 	}
@@ -464,7 +465,7 @@ func isRightBoundary(s *tokens.Stream, j int) bool {
 // just after the comparison at op: a plain literal, signed number, empty array,
 // bare constant, or "Name::class". It mirrors leftLiteralOperand.
 func yodaRightLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
-	rs := nextSignificantIndex(s, op)
+	rs := nextMeaningfulIndex(s, op)
 	if rs < 0 {
 		return 0, 0, false
 	}
