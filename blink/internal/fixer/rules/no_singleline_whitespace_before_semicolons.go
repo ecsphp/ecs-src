@@ -30,6 +30,11 @@ func (NoSinglelineWhitespaceBeforeSemicolons) Fix(s *tokens.Stream) bool {
 		}
 		prev := s.At(i - 1)
 		if prev.Kind == token.Whitespace && !strings.ContainsAny(prev.Value, "\n\r") {
+			// keep the space before a ";" that follows another ";" - the empty
+			// condition of a for() header ("for ($i = 0; ; ++$i)")
+			if p, ok := prevSignificant(s, i-1); ok && p.Kind == token.Punct && p.Value == ";" {
+				continue
+			}
 			s.RemoveAt(i - 1)
 			changed = true
 		}

@@ -56,7 +56,9 @@ func (f SpaceAfterSemicolon) Fix(s *tokens.Stream) bool {
 		if next.Kind == token.Whitespace || next.Kind == token.CloseTag {
 			continue
 		}
-		if next.Kind == token.Punct && (next.Value == ")" || next.Value == ";") {
+		// a space is still inserted before a following ";" (empty for condition:
+		// "for (;; )" -> "for (; ; )"); only ")" suppresses it
+		if next.Kind == token.Punct && next.Value == ")" {
 			continue
 		}
 		s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
