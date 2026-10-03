@@ -261,7 +261,8 @@ func (f NoSpacesInsideParenthesis) Fix(s *tokens.Stream) bool {
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
 		if t.Kind == token.Punct && t.Value == "(" &&
-			i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) {
+			i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) &&
+			!(i+2 < s.Len() && isComment(s.At(i+2))) { // keep the space before a trailing comment
 			s.RemoveAt(i + 1)
 			changed = true
 		}

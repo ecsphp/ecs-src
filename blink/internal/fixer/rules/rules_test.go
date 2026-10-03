@@ -33,9 +33,10 @@ func TestSpaceAfterSemicolon(t *testing.T) {
 	if want := "<?php $a=1; $b=2;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
-	// empty for-loop head must not gain spaces
-	if _, changed := apply(t, SpaceAfterSemicolon{}, "<?php for(;;){}"); changed {
-		t.Fatal("';' before ')' should be left alone")
+	// a ";" followed by ")" is left alone, but one followed by ";" (empty for
+	// condition) still gains a space, matching php-cs-fixer
+	if got, changed := apply(t, SpaceAfterSemicolon{}, "<?php for(;;){}"); !changed || got != "<?php for(; ;){}" {
+		t.Fatalf("empty for head: changed=%v got=%q", changed, got)
 	}
 }
 
