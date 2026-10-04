@@ -165,7 +165,14 @@ func isArrayLiteralOpen(s *tokens.Stream, open int) bool {
 		return false
 	case token.Punct:
 		switch t.Value {
-		case ")", "]", "}":
+		case ")":
+			// a cast before "[" ("(object) [...]") opens an array literal, not an
+			// access on a call result
+			if o := s.MatchBackward(p); o >= 0 && isCastParen(s, o) {
+				return true
+			}
+			return false
+		case "]", "}":
 			return false
 		}
 	}
