@@ -346,6 +346,17 @@ func TestSingleLineAfterImports(t *testing.T) {
 	if want := "<?php\nuse A;\nuse B;\n\nclass C {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
+
+	// inside a braced namespace the following line keeps its indentation
+	got, changed = apply(t, SingleLineAfterImports{}, "<?php\nnamespace N {\n    use A;\n    class C {}\n}")
+	if want := "<?php\nnamespace N {\n    use A;\n\n    class C {}\n}"; !changed || got != want {
+		t.Fatalf("braced: changed=%v got=%q want=%q", changed, got, want)
+	}
+
+	// a blank line that already exists is left untouched
+	if _, changed := apply(t, SingleLineAfterImports{}, "<?php\nnamespace N {\n    use A;\n\n    class C {}\n}"); changed {
+		t.Fatal("existing blank line after import must be a no-op")
+	}
 }
 
 func TestNoTrailingWhitespace(t *testing.T) {
