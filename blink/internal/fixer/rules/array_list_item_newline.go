@@ -30,6 +30,9 @@ func (ArrayListItemNewline) Fix(s *tokens.Stream) bool {
 		if !isArrayLiteralOpen(s, open) {
 			continue
 		}
+		if isDestructuringAssignOpen(s, open) {
+			continue // "[$a, $b] = ..." is a destructuring target, not an array literal
+		}
 		closeIdx := s.MatchForward(open)
 		if closeIdx < 0 || sigNext(s, open) == closeIdx {
 			continue // empty []
