@@ -43,4 +43,17 @@ func TestArrayListItemNewline(t *testing.T) {
 	if want := "<?php\n$a = [\n    'x' => 1,\n    'y' => [\n        'z' => 2,\n    ],\n'w' => 3,\n];"; !changed || got != want {
 		t.Fatalf("multiline split: changed=%v got=%q", changed, got)
 	}
+
+	// a list array whose last element is a single-line associative array: expanding
+	// the inner array also breaks the outer list's opener (not its closer)
+	got, changed = apply(t, f, "<?php\nreturn [$a, $b, ['k' => 1, 'm' => 2]];")
+	if want := "<?php\nreturn [\n$a, $b, [\n    'k' => 1,\n    'm' => 2,\n]];"; !changed || got != want {
+		t.Fatalf("outer opener break: changed=%v got=%q", changed, got)
+	}
+
+	// but when that inner associative array is already multiline, the outer list
+	// opener is left alone (no upstream position shift happens)
+	if _, changed := apply(t, f, "<?php\nreturn [$a, $b, [\n    'k' => 1,\n    'm' => 2,\n]];"); changed {
+		t.Fatal("already-multiline inner must not break the outer opener")
+	}
 }
