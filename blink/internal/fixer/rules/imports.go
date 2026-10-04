@@ -215,10 +215,18 @@ func (SingleLineAfterImports) Fix(s *tokens.Stream) bool {
 		if next.Kind == token.Punct && next.Value == "}" {
 			continue
 		}
-		if s.At(semi+1).Kind == token.Whitespace &&
-			hasNewline(s.At(semi+1).Value) && s.At(semi+1).Value != "\n\n" {
-			s.SetValue(semi+1, "\n\n")
-			changed = true
+		ws := s.At(semi + 1)
+		if ws.Kind == token.Whitespace && hasNewline(ws.Value) {
+			// preserve the import line's own indentation after the blank line, so a
+			// braced-namespace body keeps its level; a whitespace that already holds
+			// exactly one blank line (two newlines) is left untouched, as php-cs-fixer
+			if strings.Count(ws.Value, "\n") != 2 {
+				target := "\n\n" + indentBefore(s, i)
+				if ws.Value != target {
+					s.SetValue(semi+1, target)
+					changed = true
+				}
+			}
 		}
 	}
 	return changed
