@@ -37,4 +37,10 @@ func TestArrayListItemNewline(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\n$a = foo()['x'];"); changed {
 		t.Fatal("call-result index access must stay inline")
 	}
+
+	// a multiline array whose top-level comma still shares a line gets split
+	got, changed = apply(t, f, "<?php\n$a = [\n    'x' => 1,\n    'y' => [\n        'z' => 2,\n    ], 'w' => 3,\n];")
+	if want := "<?php\n$a = [\n    'x' => 1,\n    'y' => [\n        'z' => 2,\n    ],\n'w' => 3,\n];"; !changed || got != want {
+		t.Fatalf("multiline split: changed=%v got=%q", changed, got)
+	}
 }
