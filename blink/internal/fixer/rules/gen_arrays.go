@@ -145,6 +145,11 @@ func isComment(t token.Token) bool {
 	return t.Kind == token.Comment || t.Kind == token.DocComment
 }
 
+// commentAt reports whether index i is in range and holds a comment token.
+func commentAt(s *tokens.Stream, i int) bool {
+	return i >= 0 && i < s.Len() && isComment(s.At(i))
+}
+
 func isLineComment(t token.Token) bool {
 	if t.Kind != token.Comment {
 		return false
