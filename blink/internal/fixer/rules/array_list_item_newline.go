@@ -37,11 +37,17 @@ func (ArrayListItemNewline) Fix(s *tokens.Stream) bool {
 		if closeIdx < 0 || sigNext(s, open) == closeIdx {
 			continue // empty []
 		}
-		if arrayTopLevelMultiline(s, open, closeIdx) {
-			continue // items already on their own lines: array_indentation aligns it
-		}
 		if !arrayHasTopLevelArrow(s, open, closeIdx) {
 			continue // plain list array: leave inline
+		}
+		if arrayTopLevelMultiline(s, open, closeIdx) {
+			// already spread over lines, but a top-level comma may still share its
+			// line with the next item ("], 'attr' => ["); break each such comma and
+			// let array_indentation align the result
+			if splitTopLevelCommas(s, open, closeIdx) {
+				changed = true
+			}
+			continue
 		}
 		// a multiline array carries a trailing comma; add it before reflowing so
 		// the last item ends up on its own line with the comma
@@ -52,6 +58,41 @@ func (ArrayListItemNewline) Fix(s *tokens.Stream) bool {
 		}
 		if reflowParen(s, open, closeIdx) {
 			changed = true
+		}
+	}
+	return changed
+}
+
+// splitTopLevelCommas breaks every top-level comma of a multiline array onto a
+// new line when it still shares its line with the next item, mirroring Symplify's
+// ArrayItemNewliner. A comma already followed by a newline, by a comment, or by a
+// "{" is left alone; array_indentation then aligns the inserted breaks.
+func splitTopLevelCommas(s *tokens.Stream, open, closeIdx int) bool {
+	changed := false
+	for i := open + 1; i < closeIdx; i++ {
+		t := s.At(i)
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch t.Value {
+		case "(", "[", "{":
+			if c := s.MatchForward(i); c > 0 && c < closeIdx {
+				i = c
+			}
+		case ",":
+			if i+1 < closeIdx && s.At(i+1).Kind == token.Whitespace && hasNewline(s.At(i+1).Value) {
+				continue // already on its own line
+			}
+			ns := nextSignificantIndex(s, i)
+			if ns < 0 || ns >= closeIdx {
+				continue // trailing comma before "]"
+			}
+			if isComment(s.At(ns)) || (s.At(ns).Kind == token.Punct && s.At(ns).Value == "{") {
+				continue
+			}
+			if editSlotAfter(s, i, "\n") {
+				changed = true
+			}
 		}
 	}
 	return changed
