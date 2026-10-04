@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -78,7 +79,7 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 
 	changed := false
 
-	for index := 0; index < n; index++ {
+	for index := range n {
 		t := s.At(index)
 		cur := len(scopes) - 1
 
@@ -428,9 +429,38 @@ func stmtIsBlockSignatureFirst(s *tokens.Stream, index int) bool {
 	if t.Kind != token.Keyword {
 		return false
 	}
-	return stmtKwIn(t.Value, "use", "if", "else", "elseif", "for", "foreach", "while",
+	if !stmtKwIn(t.Value, "use", "if", "else", "elseif", "for", "foreach", "while",
 		"do", "switch", "case", "default", "try", "class", "interface", "trait",
-		"extends", "implements", "const", "match", "enum")
+		"extends", "implements", "const", "match", "enum") {
+		return false
+	}
+	// a contextual keyword used as a name ("Enum::X", "new Match", "$o->enum")
+	// is an identifier, not a block signature
+	return !stmtKeywordIsIdentifierUse(s, index)
+}
+
+// stmtKeywordIsIdentifierUse reports whether the keyword at index is actually a
+// class/member name reference rather than a language construct.
+func stmtKeywordIsIdentifierUse(s *tokens.Stream, index int) bool {
+	if p := prevMeaningfulIndex(s, index); p >= 0 {
+		pt := s.At(p)
+		if pt.Kind == token.Keyword && stmtKwIn(pt.Value, "new", "function", "const", "instanceof") {
+			return true
+		}
+		if pt.Kind == token.Punct && (pt.Value == "::" || pt.Value == "->" || pt.Value == "?->" || pt.Value == `\`) {
+			return true
+		}
+	}
+	// a "::" directly after marks a class-name reference ("Enum::X"); a following
+	// "\" is a namespace prefix on an operand (e.g. "case \Foo::BAR:") and does not
+	// make the keyword itself a name
+	if nmi := nextMeaningfulIndex(s, index); nmi >= 0 {
+		nt := s.At(nmi)
+		if nt.Kind == token.Punct && nt.Value == "::" {
+			return true
+		}
+	}
+	return false
 }
 
 func stmtIsControlWithoutBracesKw(s *tokens.Stream, index int) bool {
@@ -439,13 +469,7 @@ func stmtIsControlWithoutBracesKw(s *tokens.Stream, index int) bool {
 }
 
 func stmtKwIn(v string, set ...string) bool {
-	lv := strings.ToLower(v)
-	for _, w := range set {
-		if lv == w {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(set, strings.ToLower(v))
 }
 
 // stmtIsComment reports whether token i is a comment (line/block/doc), excluding
