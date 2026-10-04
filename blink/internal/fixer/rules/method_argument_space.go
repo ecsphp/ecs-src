@@ -702,7 +702,9 @@ func isCallOrDeclParen(s *tokens.Stream, open int) bool {
 	case token.Ident, token.Variable:
 		return true
 	case token.Punct:
-		return t.Value == ")" || t.Value == "]"
+		// ")" and "]" end a prior call/subscript; "}" ends a dynamic name like
+		// "->{$method}(" or "${$var}("
+		return t.Value == ")" || t.Value == "]" || t.Value == "}"
 	case token.Keyword:
 		lv := strings.ToLower(t.Value)
 		// "class" matches an anonymous class constructor: `new class (...)`;
