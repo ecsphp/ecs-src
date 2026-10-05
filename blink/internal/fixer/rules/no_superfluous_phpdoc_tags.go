@@ -91,7 +91,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		d, ok := parseDoc(t.Value)
-		if !ok || d.single {
+		if !ok {
 			continue
 		}
 		docChanged := false
