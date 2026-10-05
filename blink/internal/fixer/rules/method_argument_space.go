@@ -757,13 +757,23 @@ func lineIndentBefore(s *tokens.Stream, idx int) string {
 // only normalizes the indentation), so a comma whose following whitespace holds a
 // blank line keeps that blank rather than collapsing to a single newline.
 func argNLAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks bool) string {
-	// a call/declaration argument list collapses a blank line between arguments
-	// (php-cs-fixer); an array literal keeps a blank line a user put between items
-	if !collapseBlanks && comma+1 < s.Len() {
+	// an array literal keeps a blank line a user put between items; a call or
+	// declaration list collapses it, except before a comment that annotates the
+	// next argument, which php-cs-fixer keeps
+	if comma+1 < s.Len() {
 		ws := s.At(comma + 1)
 		if ws.Kind == token.Whitespace {
 			if newlines := strings.Count(ws.Value, "\n"); newlines >= 2 {
-				return strings.Repeat("\n", newlines) + base + "    "
+				keep := !collapseBlanks
+				if collapseBlanks {
+					if nx := nextSignificantIndex(s, comma); nx >= 0 &&
+						isComment(s.At(nx)) && !isAttributeComment(s.At(nx)) {
+						keep = true
+					}
+				}
+				if keep {
+					return strings.Repeat("\n", newlines) + base + "    "
+				}
 			}
 		}
 	}
