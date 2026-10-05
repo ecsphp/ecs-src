@@ -37,7 +37,12 @@ func (NoEmptyPhpdoc) Fix(s *tokens.Stream) bool {
 		changed = true
 		// Drop one newline of the following whitespace, like removing a blank line.
 		if i < s.Len() && s.At(i).Kind == token.Whitespace && strings.HasPrefix(s.At(i).Value, "\n") {
-			if v := s.At(i).Value[1:]; v == "" {
+			// The preceding whitespace already carries the newline + indent for the
+			// next line, so remove the docblock's trailing whitespace outright;
+			// de-newlining it would leave a dangling indent that doubles up.
+			if i > 0 && s.At(i-1).Kind == token.Whitespace && hasNewline(s.At(i-1).Value) {
+				s.RemoveAt(i)
+			} else if v := s.At(i).Value[1:]; v == "" {
 				s.RemoveAt(i)
 			} else {
 				s.SetValue(i, v)
