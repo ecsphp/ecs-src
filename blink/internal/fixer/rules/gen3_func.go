@@ -46,6 +46,23 @@ func fnEnsureSingleSpaceBefore(s *tokens.Stream, i int) bool {
 
 // fnGlueAfter removes a single-line whitespace token immediately after i, gluing
 // the token at i to the following significant token. A newline is left intact.
+// fnIsArrowFn reports whether the "fn" keyword at i opens an arrow function - its
+// parameter "(" follows directly or after a by-reference "&".
+func fnIsArrowFn(s *tokens.Stream, i int) bool {
+	n := nextSignificantIndex(s, i)
+	if n < 0 || s.At(n).Kind != token.Punct {
+		return false
+	}
+	if s.At(n).Value == "(" {
+		return true
+	}
+	if s.At(n).Value == "&" {
+		nn := nextSignificantIndex(s, n)
+		return nn >= 0 && s.At(nn).Kind == token.Punct && s.At(nn).Value == "("
+	}
+	return false
+}
+
 func fnGlueAfter(s *tokens.Stream, i int) bool {
 	if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) {
 		s.RemoveAt(i + 1)
@@ -134,9 +151,9 @@ func (f FunctionDeclaration) Fix(s *tokens.Stream) bool {
 				changed = true
 			}
 		case "fn":
-			// arrow function: spacing between "fn" and "(" (closure_fn_spacing)
-			if n := nextSignificantIndex(s, i); n >= 0 &&
-				s.At(n).Kind == token.Punct && s.At(n).Value == "(" {
+			// arrow function: spacing after "fn" (closure_fn_spacing). The "("
+			// follows directly, or after a by-reference "&" ("fn &() => ...").
+			if fnIsArrowFn(s, i) {
 				if f.closureFnSpacingNone {
 					if fnGlueAfter(s, i) {
 						changed = true
