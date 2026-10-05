@@ -279,7 +279,7 @@ func reflowSingleArgOrMultiline(s *tokens.Stream) bool {
 			if ensureSingleLineForParen(s, open, closeIdx) {
 				changed = true
 			}
-		} else if reflowParen(s, open, closeIdx) {
+		} else if reflowParen(s, open, closeIdx, true) {
 			changed = true
 		}
 	}
@@ -409,7 +409,7 @@ func reflowMultilineArgs(s *tokens.Stream) bool {
 		if sigNext(s, open) == closeIdx {
 			continue // empty ()
 		}
-		if reflowParen(s, open, closeIdx) {
+		if reflowParen(s, open, closeIdx, true) {
 			changed = true
 		}
 	}
@@ -542,7 +542,7 @@ func placeAttributesInParen(s *tokens.Stream, open, closeIdx int, placement stri
 
 // reflowParen puts each top-level argument of the paren at open on its own line,
 // with "(" and ")" on their own lines, indented one level past the call.
-func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
+func reflowParen(s *tokens.Stream, open, closeIdx int, collapseBlanks bool) bool {
 	changed := false
 	base := lineIndentBefore(s, open)
 	argNL := "\n" + base + "    "
@@ -573,7 +573,7 @@ func reflowParen(s *tokens.Stream, open, closeIdx int) bool {
 		changed = true
 	}
 	for _, c := range slices.Backward(commas) {
-		if reflowAfterComma(s, c, base) {
+		if reflowAfterComma(s, c, base, collapseBlanks) {
 			changed = true
 		}
 	}
@@ -638,7 +638,7 @@ func reflowBreakAfterComments(s *tokens.Stream, open, closeIdx int, base string)
 // comment that sits on the comma's line ("arg, // note" or "arg, /* note */")
 // stays there and the break goes after the comment, matching php-cs-fixer;
 // otherwise the break goes right after the comma.
-func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
+func reflowAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks bool) bool {
 	n := comma + 1
 	ws := -1
 	if n < s.Len() && s.At(n).Kind == token.Whitespace && !hasNewline(s.At(n).Value) {
@@ -663,7 +663,7 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string) bool {
 		}
 		return changed
 	}
-	return editSlotAfter(s, comma, argNLAfterComma(s, comma, base))
+	return editSlotAfter(s, comma, argNLAfterComma(s, comma, base, collapseBlanks))
 }
 
 // argListIsMultiline reports whether the argument list is split at the top level
@@ -756,12 +756,24 @@ func lineIndentBefore(s *tokens.Stream, idx int) string {
 // arguments is preserved (ECS keeps blank lines in a multiline argument list and
 // only normalizes the indentation), so a comma whose following whitespace holds a
 // blank line keeps that blank rather than collapsing to a single newline.
-func argNLAfterComma(s *tokens.Stream, comma int, base string) string {
+func argNLAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks bool) string {
+	// an array literal keeps a blank line a user put between items; a call or
+	// declaration list collapses it, except before a comment that annotates the
+	// next argument, which php-cs-fixer keeps
 	if comma+1 < s.Len() {
 		ws := s.At(comma + 1)
 		if ws.Kind == token.Whitespace {
 			if newlines := strings.Count(ws.Value, "\n"); newlines >= 2 {
-				return strings.Repeat("\n", newlines) + base + "    "
+				keep := !collapseBlanks
+				if collapseBlanks {
+					if nx := nextSignificantIndex(s, comma); nx >= 0 &&
+						isComment(s.At(nx)) && !isAttributeComment(s.At(nx)) {
+						keep = true
+					}
+				}
+				if keep {
+					return strings.Repeat("\n", newlines) + base + "    "
+				}
 			}
 		}
 	}

@@ -50,7 +50,7 @@ func (StandaloneLineRequiredParam) Fix(s *tokens.Stream) bool {
 		if closeIdx < 0 || sigNext(s, open) == closeIdx {
 			continue // no parameters
 		}
-		if reflowParen(s, open, closeIdx) {
+		if reflowParen(s, open, closeIdx, true) {
 			changed = true
 		}
 	}
