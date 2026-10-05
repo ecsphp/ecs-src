@@ -403,7 +403,7 @@ func reflowMultilineArgs(s *tokens.Stream) bool {
 		if closeIdx < 0 || !argListIsMultiline(s, open, closeIdx) {
 			continue
 		}
-		if !isCallOrDeclParen(s, open) {
+		if !isCallOrDeclParen(s, open) && !isGroupingReflowParen(s, open) {
 			continue
 		}
 		if sigNext(s, open) == closeIdx {
@@ -414,6 +414,19 @@ func reflowMultilineArgs(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+// isGroupingReflowParen reports whether the "(" at open is a grouping parenthesis
+// after a boolean operator ("!(", "&& (", "|| ("). php-cs-fixer's MethodArgumentSpace
+// processes such parens like an argument list and, when multiline, breaks the first
+// operand onto its own line.
+func isGroupingReflowParen(s *tokens.Stream, open int) bool {
+	p := sigPrev(s, open)
+	if p < 0 {
+		return false
+	}
+	t := s.At(p)
+	return t.Kind == token.Punct && (t.Value == "!" || t.Value == "&&" || t.Value == "||")
 }
 
 // isAttributeComment reports whether t is a "#[...]" attribute (the lexer keeps
