@@ -26,6 +26,20 @@ func TestNoSuperfluousPhpdocTagsConfig(t *testing.T) {
 	if want := "<?php\nclass A {\n    /**\n     */\n    public function f() {}\n}\n"; !changed || got != want {
 		t.Fatalf("remove_inheritdoc: changed=%v got=%q want=%q", changed, got, want)
 	}
+
+	// a single-line docblock is processed too: remove_inheritdoc drops the tag,
+	// leaving "/** */" for NoEmptyPhpdoc to clear (php-cs-fixer behavior)
+	single := "<?php\nclass A {\n    /** @inheritDoc */\n    public function f() {}\n}\n"
+	got, changed = apply(t, rm.(fixerRule), single)
+	if want := "<?php\nclass A {\n    /** */\n    public function f() {}\n}\n"; !changed || got != want {
+		t.Fatalf("single-line remove_inheritdoc: changed=%v got=%q want=%q", changed, got, want)
+	}
+	// a single-line superfluous @param is removed with allow_mixed=false
+	singleParam := "<?php\nclass A {\n    /** @param int $x */\n    public function f(int $x) {}\n}\n"
+	got, changed = apply(t, noMixed.(fixerRule), singleParam)
+	if want := "<?php\nclass A {\n    /** */\n    public function f(int $x) {}\n}\n"; !changed || got != want {
+		t.Fatalf("single-line superfluous @param: changed=%v got=%q want=%q", changed, got, want)
+	}
 }
 
 func TestNoSuperfluousPhpdocTagsInheritDocWithDescription(t *testing.T) {
