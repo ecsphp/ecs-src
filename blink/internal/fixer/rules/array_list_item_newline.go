@@ -68,7 +68,7 @@ func (ArrayListItemNewline) Fix(s *tokens.Stream) bool {
 			closeIdx++
 			changed = true
 		}
-		if reflowParen(s, open, closeIdx) {
+		if reflowParen(s, open, closeIdx, false) {
 			changed = true
 		}
 	}

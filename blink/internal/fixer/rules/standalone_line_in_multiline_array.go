@@ -41,7 +41,7 @@ func (StandaloneLineInMultilineArray) Fix(s *tokens.Stream) bool {
 		if standaloneArrayShouldSkip(s, open, closeIdx) {
 			return changed // upstream fix() returns on the first skipped array
 		}
-		if reflowParen(s, open, closeIdx) {
+		if reflowParen(s, open, closeIdx, false) {
 			changed = true
 		}
 	}
