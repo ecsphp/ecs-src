@@ -21,6 +21,11 @@ type BracesPosition struct {
 	anonymousClassesOpeningBrace   string
 	anonymousFunctionsOpeningBrace string
 	controlStructuresOpeningBrace  string
+	// allowSingleLineAnonFnsSet records whether the option was given; the value
+	// defaults to true (php-cs-fixer default), so a false value expands a
+	// single-line closure body onto its own lines.
+	allowSingleLineAnonFns    bool
+	allowSingleLineAnonFnsSet bool
 }
 
 const (
@@ -44,9 +49,12 @@ func (f BracesPosition) WithConfig(config map[string]any) fixer.Fixer {
 	if v, ok := config["control_structures_opening_brace"].(string); ok {
 		f.controlStructuresOpeningBrace = v
 	}
-	// allow_single_line_empty_anonymous_classes and
-	// allow_single_line_anonymous_functions are accepted but not applied: blink
+	// allow_single_line_empty_anonymous_classes is accepted but not applied: blink
 	// already keeps single-line empty bodies (matching the default true).
+	if v, ok := config["allow_single_line_anonymous_functions"].(bool); ok {
+		f.allowSingleLineAnonFns = v
+		f.allowSingleLineAnonFnsSet = true
+	}
 	return f
 }
 
@@ -60,6 +68,13 @@ func (BracesPosition) SourceURL() string {
 
 func (f BracesPosition) Fix(s *tokens.Stream) bool {
 	changed := false
+	// allow_single_line_anonymous_functions=false expands a single-line closure
+	// body onto its own lines (statement_indentation then aligns it)
+	if f.allowSingleLineAnonFnsSet && !f.allowSingleLineAnonFns {
+		if f.expandSingleLineClosureBodies(s) {
+			changed = true
+		}
+	}
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
 			continue
@@ -116,6 +131,59 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+// expandSingleLineClosureBodies puts the body of a single-line anonymous function
+// ("function () { ... }") on its own lines, matching php-cs-fixer with
+// allow_single_line_anonymous_functions=false. An empty body or one that already
+// starts on a new line is left alone; statement_indentation aligns the rest.
+func (f BracesPosition) expandSingleLineClosureBodies(s *tokens.Stream) bool {
+	changed := false
+	for i := s.Len() - 1; i >= 0; i-- {
+		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
+			continue
+		}
+		if kind, _ := classifyBrace(s, i); kind != braceClosure {
+			continue
+		}
+		closeIdx := s.MatchForward(i)
+		if closeIdx < 0 || sigNext(s, i) == closeIdx {
+			continue // empty body
+		}
+		if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && hasNewline(s.At(i+1).Value) {
+			continue // body already starts on its own line
+		}
+		if braceHasCommentOnOpenLine(s, i, closeIdx) {
+			continue // a comment shares the "{" line; php-cs-fixer leaves it
+		}
+		depth := braceDepthAt(s, i)
+		if editSlotBefore(s, closeIdx, "\n"+strings.Repeat("    ", depth)) {
+			changed = true
+		}
+		if editSlotAfter(s, i, "\n"+strings.Repeat("    ", depth+1)) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// braceHasCommentOnOpenLine reports whether a comment appears between the "{" at
+// open and the first newline (i.e. on the same line as the brace).
+func braceHasCommentOnOpenLine(s *tokens.Stream, open, closeIdx int) bool {
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if t.Kind == token.Whitespace {
+			if hasNewline(t.Value) {
+				return false
+			}
+			continue
+		}
+		if t.Kind == token.Comment || t.Kind == token.DocComment {
+			return true
+		}
+		return false
+	}
+	return false
 }
 
 // wantNextLine resolves the configured position for a brace category to whether

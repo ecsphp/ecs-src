@@ -16,7 +16,8 @@ import (
 // argument, switch case, goto label or alternative-syntax colon is left alone; a
 // "?" that is a nullable type marker is left alone; a "|"/"&" that is a union or
 // intersection type separator is left alone; and a "&" that is a return-ref or a
-// reference is left alone. Object operators "->"/"?->" are not operators here.
+// reference is left alone. Object operators "->"/"?->" and "::" are moved too,
+// matching php-cs-fixer's getObjectOperatorKinds() + T_PAAMAYIM_NEKUDOTAYIM.
 type OperatorLinebreak struct{}
 
 // operatorLinebreakPunct are the always-unambiguous operator tokens.
@@ -28,6 +29,7 @@ var operatorLinebreakPunct = map[string]bool{
 	"-=": true, "*=": true, "/=": true, "%=": true, "**=": true, "&=": true,
 	"|=": true, "^=": true, "<<=": true, ">>=": true, "??=": true, "^": true,
 	"<<": true, ">>": true, "|": true, "&": true, ":": true, "?": true,
+	"->": true, "?->": true, "::": true,
 }
 
 func (OperatorLinebreak) Name() string {

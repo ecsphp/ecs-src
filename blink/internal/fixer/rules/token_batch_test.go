@@ -49,6 +49,10 @@ func TestTrimArraySpaces(t *testing.T) {
 	if _, changed := apply(t, TrimArraySpaces{}, "<?php $a = [\n    1,\n];"); changed {
 		t.Fatal("multi-line array must be kept")
 	}
+	// a space after a trailing comma before "]" is kept ("1, ]"), matching php-cs-fixer
+	if _, changed := apply(t, TrimArraySpaces{}, "<?php $a = [1, 2, ];"); changed {
+		t.Fatal("space after trailing comma must be kept")
+	}
 	idempotent(t, TrimArraySpaces{}, "<?php $a = [1, 2];")
 }
 
