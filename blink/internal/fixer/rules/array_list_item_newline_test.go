@@ -61,4 +61,23 @@ func TestArrayListItemNewline(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\n$x = [\n    'a' => 1,\n\n    'b' => 2,\n];"); changed {
 		t.Fatal("blank line between array items must be preserved")
 	}
+
+	// the assoc is wrapped in a call that is the list's last element: the list
+	// opener still breaks
+	got, changed = apply(t, f, "<?php\nreturn foo([bar(['k' => 1])]);")
+	if want := "<?php\nreturn foo([\nbar([\n    'k' => 1,\n])]);"; !changed || got != want {
+		t.Fatalf("call-wrapped: changed=%v got=%q", changed, got)
+	}
+
+	// wrapped in "new" with other array args before the assoc
+	got, changed = apply(t, f, "<?php\nreturn foo([new Bar([], ['k' => 1])]);")
+	if want := "<?php\nreturn foo([\nnew Bar([], [\n    'k' => 1,\n])]);"; !changed || got != want {
+		t.Fatalf("new-wrapped: changed=%v got=%q", changed, got)
+	}
+
+	// the enclosing list's first element is itself an array: its opener is left alone
+	got, changed = apply(t, f, "<?php\nreturn [['k' => 1]];")
+	if want := "<?php\nreturn [[\n    'k' => 1,\n]];"; !changed || got != want {
+		t.Fatalf("first-element-array: changed=%v got=%q", changed, got)
+	}
 }

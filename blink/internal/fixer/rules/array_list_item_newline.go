@@ -58,9 +58,7 @@ func (ArrayListItemNewline) Fix(s *tokens.Stream) bool {
 		// (as its last element) also breaks the list's opener upstream - the two
 		// inserts shift the list's stored end so ArrayOpenerAndCloserNewline treats
 		// it as indexed for the opener. Decide before reflowing shifts indices.
-		if enc := enclosingListForLastAssoc(s, open, closeIdx); enc >= 0 {
-			outerOpenerBreaks = append(outerOpenerBreaks, enc)
-		}
+		outerOpenerBreaks = append(outerOpenerBreaks, enclosingListsForExpandedAssoc(s, open, closeIdx)...)
 		// a multiline array carries a trailing comma; add it before reflowing so
 		// the last item ends up on its own line with the comma
 		if last := sigPrev(s, closeIdx); last > open && s.At(last).Value != "," {
@@ -83,15 +81,47 @@ func (ArrayListItemNewline) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
-// enclosingListForLastAssoc returns the opener of the array that directly encloses
-// the associative array [open, closeIdx] as its last element, when that enclosing
-// array is a plain list (no top-level "=>"), its first element is not an array,
-// and its opener is not already on its own line. Otherwise -1.
-func enclosingListForLastAssoc(s *tokens.Stream, open, closeIdx int) int {
-	// nearest enclosing bracket of open
+// enclosingListsForExpandedAssoc returns the openers of the plain list arrays that
+// enclose the associative array [open, closeIdx] as their last content, walking out
+// through calls, "new" and nested arrays ("[createFilter([assoc])]",
+// "[new Request(..., [assoc])]"). Expanding the nested assoc shifts each such list's
+// stored end so the upstream fixer breaks its opener (but not its closer). A list
+// qualifies only when its first element is not itself an array and its opener is not
+// already on its own line.
+func enclosingListsForExpandedAssoc(s *tokens.Stream, open, closeIdx int) []int {
+	var result []int
+	innerOpen, innerClose := open, closeIdx
+	for {
+		enc := directlyEnclosingOpen(s, innerOpen)
+		if enc < 0 {
+			break
+		}
+		encClose := s.MatchForward(enc)
+		if encClose < 0 || !assocIsLastContent(s, innerClose, encClose) {
+			break
+		}
+		if s.At(enc).Value == "{" {
+			break // a block, not an expression wrapper
+		}
+		if s.At(enc).Value == "[" && isArrayLiteralOpen(s, enc) && !isDestructuringAssignOpen(s, enc) &&
+			!arrayHasTopLevelArrow(s, enc, encClose) {
+			first := sigNext(s, enc)
+			firstIsArray := first >= 0 && s.At(first).Kind == token.Punct && s.At(first).Value == "[" && isArrayLiteralOpen(s, first)
+			openerOwnLine := enc+1 < s.Len() && s.At(enc+1).Kind == token.Whitespace && hasNewline(s.At(enc+1).Value)
+			if !firstIsArray && !openerOwnLine {
+				result = append(result, enc)
+			}
+		}
+		innerOpen, innerClose = enc, encClose
+	}
+	return result
+}
+
+// directlyEnclosingOpen returns the index of the bracket that directly encloses the
+// opener at idx ("(", "[" or "{"), or -1 when idx is at the top level.
+func directlyEnclosingOpen(s *tokens.Stream, idx int) int {
 	depth := 0
-	enc := -1
-	for j := open - 1; j >= 0; j-- {
+	for j := idx - 1; j >= 0; j-- {
 		t := s.At(j)
 		if t.Kind != token.Punct {
 			continue
@@ -99,46 +129,28 @@ func enclosingListForLastAssoc(s *tokens.Stream, open, closeIdx int) int {
 		switch t.Value {
 		case ")", "]", "}":
 			depth++
-		case "(", "{":
+		case "(", "[", "{":
 			if depth == 0 {
-				return -1 // directly inside a call/block, not an array
+				return j
 			}
 			depth--
-		case "[":
-			if depth == 0 {
-				enc = j
-			} else {
-				depth--
-			}
-		}
-		if enc >= 0 {
-			break
 		}
 	}
-	if enc < 0 || !isArrayLiteralOpen(s, enc) || isDestructuringAssignOpen(s, enc) {
-		return -1
+	return -1
+}
+
+// assocIsLastContent reports whether the token closing at innerClose is the last
+// content inside the bracket closing at encClose - only an optional trailing comma
+// separates it from the enclosing closer.
+func assocIsLastContent(s *tokens.Stream, innerClose, encClose int) bool {
+	n := sigNext(s, innerClose)
+	if n == encClose {
+		return true
 	}
-	encClose := s.MatchForward(enc)
-	if encClose <= closeIdx || arrayHasTopLevelArrow(s, enc, encClose) {
-		return -1 // not an enclosing list
+	if n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "," && sigNext(s, n) == encClose {
+		return true
 	}
-	// the assoc must be the last element of the enclosing list
-	lastEnd := sigPrev(s, encClose)
-	if lastEnd >= 0 && s.At(lastEnd).Kind == token.Punct && s.At(lastEnd).Value == "," {
-		lastEnd = sigPrev(s, lastEnd)
-	}
-	if lastEnd != closeIdx {
-		return -1
-	}
-	// first element must not itself be an array opener
-	first := sigNext(s, enc)
-	if first == closeIdx || (s.At(first).Kind == token.Punct && s.At(first).Value == "[" && isArrayLiteralOpen(s, first)) {
-		return -1
-	}
-	if enc+1 < s.Len() && s.At(enc+1).Kind == token.Whitespace && hasNewline(s.At(enc+1).Value) {
-		return -1 // opener already on its own line
-	}
-	return enc
+	return false
 }
 
 // splitTopLevelCommas breaks every top-level comma of a multiline array onto a
