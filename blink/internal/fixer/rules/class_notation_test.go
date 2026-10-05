@@ -56,6 +56,31 @@ func TestOrderedClassElementsSimple(t *testing.T) {
 	}
 }
 
+func TestOrderedClassElementsOrderUseTraitOnly(t *testing.T) {
+	// order ["use_trait"] groups trait uses first and leaves every other member
+	// in its source order (const stays after the property here)
+	src := "<?php class A {\n" +
+		"    public $prop;\n" +
+		"    const X = 1;\n" +
+		"    use SomeTrait;\n" +
+		"}"
+	want := "<?php class A {\n" +
+		"    use SomeTrait;\n" +
+		"    public $prop;\n" +
+		"    const X = 1;\n" +
+		"}"
+	f := OrderedClassElements{}.WithConfig(map[string]any{"order": []any{"use_trait"}}).(fixerRule)
+	got, changed := apply(t, f, src)
+	if !changed || got != want {
+		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
+	}
+	// a class with the property before the const and no trait is left untouched
+	noTrait := "<?php class B {\n    public $prop;\n    const X = 1;\n}"
+	if out, changed := apply(t, f, noTrait); changed || out != noTrait {
+		t.Fatalf("no-trait class must be a no-op: changed=%v got=%q", changed, out)
+	}
+}
+
 func TestOrderedClassElementsAlreadyOrdered(t *testing.T) {
 	src := "<?php class A {\n" +
 		"    const X = 1;\n" +
