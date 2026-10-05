@@ -150,6 +150,15 @@ func commentAt(s *tokens.Stream, i int) bool {
 	return i >= 0 && i < s.Len() && isComment(s.At(i))
 }
 
+// isBlockOrDocComment reports whether t is a "/* */" block comment or a "/** */"
+// doc comment (not a "//"/"#" line comment and not a "#[...]" attribute).
+func isBlockOrDocComment(t token.Token) bool {
+	if t.Kind == token.DocComment {
+		return true
+	}
+	return t.Kind == token.Comment && strings.HasPrefix(t.Value, "/*")
+}
+
 func isLineComment(t token.Token) bool {
 	if t.Kind != token.Comment {
 		return false
