@@ -23,6 +23,10 @@ func TestMethodArgumentSpace(t *testing.T) {
 		{"newline only inside a nested arg is left alone", "<?php foo($a, [\n    1,\n]);", "<?php foo($a, [\n    1,\n]);", false},
 		{"trailing comma before paren", "<?php foo($a,);", "<?php foo($a, );", true},
 		{"blank line between multiline args is preserved", "<?php foo(\n    $a,\n\n    $b\n);", "<?php foo(\n    $a,\n\n    $b\n);", false},
+		{"grouping paren after ! breaks after (", "<?php return !($a\n|| $b\n);", "<?php return !(\n    $a\n|| $b\n);", true},
+		{"grouping paren after && breaks after (", "<?php $x = $a && ($b\n|| $c\n);", "<?php $x = $a && (\n    $b\n|| $c\n);", true},
+		{"single-line grouping paren left alone", "<?php return !($a || $b);", "<?php return !($a || $b);", false},
+		{"control-structure paren is not reflowed", "<?php if ($a\n|| $b\n) {}", "<?php if ($a\n|| $b\n) {}", false},
 	}
 
 	for _, tc := range cases {
