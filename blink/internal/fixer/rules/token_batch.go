@@ -118,9 +118,11 @@ func (TrimArraySpaces) Fix(s *tokens.Stream) bool {
 		if closeIdx < 0 {
 			continue
 		}
-		// a space kept next to a comment is left alone ("[ // note" / "/* note */ ]")
+		// a space kept next to a comment is left alone ("[ // note" / "/* note */ ]");
+		// a space after a trailing comma ("1, ]") is also kept, matching php-cs-fixer
+		prevComma := closeIdx-2 > i && s.At(closeIdx-2).Kind == token.Punct && s.At(closeIdx-2).Value == ","
 		if closeIdx-1 > i && s.At(closeIdx-1).Kind == token.Whitespace && !hasNewline(s.At(closeIdx-1).Value) &&
-			!commentAt(s, closeIdx-2) {
+			!commentAt(s, closeIdx-2) && !prevComma {
 			s.RemoveAt(closeIdx - 1)
 			changed = true
 		}
