@@ -15,6 +15,18 @@ func TestOperatorLinebreak(t *testing.T) {
 		t.Fatalf(". move: changed=%v got=%q", changed, got)
 	}
 
+	// an object operator "->" at the end of a line moves to the start of the next
+	got, changed = apply(t, f, "<?php\n$x = $this->model->\n    call($a);\n")
+	if want := "<?php\n$x = $this->model\n    ->call($a);\n"; !changed || got != want {
+		t.Fatalf("-> move: changed=%v got=%q", changed, got)
+	}
+
+	// "::" at the end of a line moves too
+	got, changed = apply(t, f, "<?php\n$x = Foo::\n    BAR;\n")
+	if want := "<?php\n$x = Foo\n    ::BAR;\n"; !changed || got != want {
+		t.Fatalf(":: move: changed=%v got=%q", changed, got)
+	}
+
 	if _, changed := apply(t, f, "<?php\n$a = $b\n    || $c;\n"); changed {
 		t.Fatal("already-correct must be a no-op")
 	}
