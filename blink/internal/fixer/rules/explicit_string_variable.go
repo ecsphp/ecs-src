@@ -36,7 +36,10 @@ func (ExplicitStringVariable) Fix(s *tokens.Stream) bool {
 		if end < start {
 			continue
 		}
-		body, hit := wrapInterpolations(v[start:end])
+		// a chunk of a split interpolated string begins with "}" (right after a
+		// "{$...}" close), so a variable adjacent to it is a continuation PHP leaves
+		// alone
+		body, hit := wrapInterpolations(v[start:end], v[0] == '}')
 		if hit {
 			s.SetValue(i, v[:start]+body+v[end:])
 			changed = true
@@ -50,6 +53,11 @@ func (ExplicitStringVariable) Fix(s *tokens.Stream) bool {
 // whether the token is one that interpolates at all.
 func interpolatedBody(v string) (int, bool) {
 	if len(v) > 0 && v[0] == '"' {
+		return 1, true
+	}
+	// a continuation chunk of a split interpolated string starts just after the
+	// "}" that closed the previous "{$...}"
+	if len(v) > 0 && v[0] == '}' {
 		return 1, true
 	}
 	if len(v) >= 3 && v[0] == '<' && v[1] == '<' && v[2] == '<' {
@@ -74,7 +82,9 @@ func interpolatedBody(v string) (int, bool) {
 // suffixLen is the length of the trailing delimiter after the body: 1 for the
 // closing quote of a double-quoted string, or the closing heredoc label line.
 func suffixLen(v string, bodyStart int) int {
-	if v[0] == '"' {
+	// a double-quoted string ends with the quote; a split-string chunk ends with
+	// the closing quote or with the "{" that opens the next "{$...}" - all length 1
+	if v[0] == '"' || v[0] == '}' {
 		return 1
 	}
 	// heredoc: the closing label sits on the last line; the body ends at the
@@ -91,11 +101,11 @@ func suffixLen(v string, bodyStart int) int {
 	return len(v) - last // include the newline and the closing label
 }
 
-func wrapInterpolations(b string) (string, bool) {
+func wrapInterpolations(b string, initialAfterCurly bool) (string, bool) {
 	out := make([]byte, 0, len(b)+8)
 	changed := false
 	i := 0
-	afterCurly := false
+	afterCurly := initialAfterCurly
 	for i < len(b) {
 		c := b[i]
 		// A variable directly following a "{...}" interpolation is skipped by

@@ -238,6 +238,14 @@ func (l *lexer) lexBlockComment(start int) {
 }
 
 func (l *lexer) lexString(start int, quote byte) {
+	// double-quoted strings may carry a complex "{$...}" interpolation whose inner
+	// expression is split out as real tokens (so array fixers can reflow it); the
+	// literal chunks keep the quote, the "{" and the "}" so Render stays lossless.
+	if quote == '"' {
+		if l.lexInterpolatedString(start) {
+			return
+		}
+	}
 	l.pos++ // opening quote
 	for l.pos < len(l.src) {
 		c := l.src[l.pos]
@@ -252,6 +260,81 @@ func (l *lexer) lexString(start int, quote byte) {
 		l.pos++
 	}
 	l.emit(token.String, start)
+}
+
+// lexInterpolatedString splits a double-quoted string that contains a complex
+// "{$...}" interpolation into: a literal chunk ending with "{", the inner
+// expression's real tokens, then a chunk starting with "}", repeated, then the
+// closing chunk. It returns false (emitting nothing) when the string has no "{$"
+// so the caller lexes it as one opaque token.
+func (l *lexer) lexInterpolatedString(start int) bool {
+	// first pass: does the string contain a top-level "{$" before its close?
+	p := l.pos + 1
+	hasInterp := false
+	for p < len(l.src) {
+		c := l.src[p]
+		if c == '\\' && p+1 < len(l.src) {
+			p += 2
+			continue
+		}
+		if c == '"' {
+			break
+		}
+		if c == '{' && p+1 < len(l.src) && l.src[p+1] == '$' {
+			hasInterp = true
+			break
+		}
+		p++
+	}
+	if !hasInterp {
+		return false
+	}
+
+	l.pos++ // opening quote
+	chunkStart := start
+	for l.pos < len(l.src) {
+		c := l.src[l.pos]
+		if c == '\\' && l.pos+1 < len(l.src) {
+			l.pos += 2
+			continue
+		}
+		if c == '"' {
+			l.pos++ // closing quote
+			break
+		}
+		if c == '{' && l.pos+1 < len(l.src) && l.src[l.pos+1] == '$' {
+			l.pos++ // consume "{", keeping it in this chunk
+			l.emit(token.String, chunkStart)
+			// lex the inner expression as real tokens up to the matching "}"
+			depth := 1
+			for l.pos < len(l.src) {
+				if l.src[l.pos] == '}' && depth == 1 {
+					break // interpolation close; starts the next chunk
+				}
+				before := len(l.toks)
+				l.lexPHP()
+				if len(l.toks) == before {
+					break // defensive: no progress
+				}
+				tk := l.toks[len(l.toks)-1]
+				if tk.Kind == token.Punct {
+					switch tk.Value {
+					case "{":
+						depth++
+					case "}":
+						depth--
+					}
+				}
+			}
+			chunkStart = l.pos // the "}" begins the next literal chunk
+			continue
+		}
+		l.pos++
+	}
+	if l.pos > chunkStart {
+		l.emit(token.String, chunkStart)
+	}
+	return true
 }
 
 func (l *lexer) hasPrefix(s string) bool {
