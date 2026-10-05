@@ -26,6 +26,11 @@ func (SingleBlankLineAtEndOfFile) Fix(s *tokens.Stream) bool {
 	}
 	last := s.Len() - 1
 	t := s.At(last)
+	// a file ending in inline HTML or a tag is left alone (php-cs-fixer skips
+	// T_INLINE_HTML / T_CLOSE_TAG / T_OPEN_TAG), so a template keeps its ending
+	if t.Kind == token.InlineHTML || t.Kind == token.CloseTag || t.Kind == token.OpenTag {
+		return false
+	}
 	if t.Kind == token.Whitespace {
 		// the final whitespace token is entirely trailing; collapse to one \n
 		if t.Value != "\n" {

@@ -381,4 +381,12 @@ func TestSingleBlankLineAtEndOfFile(t *testing.T) {
 	if _, changed := apply(t, SingleBlankLineAtEndOfFile{}, "<?php echo 1;\n"); changed {
 		t.Fatal("single newline should not change")
 	}
+	// a file ending in inline HTML gets no trailing newline added (php-cs-fixer
+	// skips T_INLINE_HTML / T_CLOSE_TAG endings)
+	if _, changed := apply(t, SingleBlankLineAtEndOfFile{}, "<?php echo 1; ?>\n</html>"); changed {
+		t.Fatal("inline-HTML ending must be left alone")
+	}
+	if _, changed := apply(t, SingleBlankLineAtEndOfFile{}, "<?php echo 1; ?>"); changed {
+		t.Fatal("close-tag ending must be left alone")
+	}
 }
