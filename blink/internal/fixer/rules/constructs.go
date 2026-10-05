@@ -134,7 +134,15 @@ func (f SingleSpaceAroundConstruct) fixPreceded(s *tokens.Stream) bool {
 		}
 		prev := s.At(i - 1)
 		if prev.Kind == token.Whitespace {
-			if !hasNewline(prev.Value) && prev.Value != " " {
+			if !hasNewline(prev.Value) {
+				if prev.Value != " " {
+					s.SetValue(i-1, " ")
+					changed = true
+				}
+			} else if p := i - 2; p >= 0 && isBlockOrDocComment(s.At(p)) {
+				// a block/doc comment directly before the construct joins it onto the
+				// comment's closing line ("*/ elseif"); php-cs-fixer collapses the
+				// whitespace unless a "//"/"#" line comment precedes (code cannot follow)
 				s.SetValue(i-1, " ")
 				changed = true
 			}
