@@ -24,6 +24,18 @@ func TestFunctionDeclarationClosureFnSpacing(t *testing.T) {
 	if want := "<?php $f = fn() => 1;"; !changed || got != want {
 		t.Fatalf("closure_fn_spacing=none: changed=%v got=%q want=%q", changed, got, want)
 	}
+
+	// a by-reference arrow function ("fn &() => ...") also glues the space after fn
+	got, changed = apply(t, cfg, "<?php $f = fn &() => $x;")
+	if want := "<?php $f = fn&() => $x;"; !changed || got != want {
+		t.Fatalf("by-ref fn: changed=%v got=%q want=%q", changed, got, want)
+	}
+
+	// closure_fn_spacing=one keeps a single space for the by-reference form
+	one := FunctionDeclaration{}.WithConfig(map[string]any{"closure_fn_spacing": "one"})
+	if _, changed := apply(t, one, "<?php $f = fn &() => $x;"); changed {
+		t.Fatal("closure_fn_spacing=one must keep the single space in fn &()")
+	}
 }
 
 func TestFunctionDeclarationTrailingCommaSingleLine(t *testing.T) {
