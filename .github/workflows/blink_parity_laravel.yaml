@@ -1,0 +1,151 @@
+name: Blink Parity (laravel)
+
+# Runs the same ECS config both ways on a real laravel/framework checkout:
+#   bin/ecs check --fix              (PHP engine)
+#   bin/ecs check --fix --blink      (ecs-go binary, via --ecs-config)
+# on two identical copies, then diffs the resulting trees. This applies every
+# prepared set (psr12 + perCs + common + standaloneLine + cleanCode) to measure
+# how far blink parity reaches on laravel under the full rule surface.
+#
+# Ratchet gate: it reports the parity table and per-file divergences to the job
+# summary, and fails once the differing share crosses MAX_DIFF_PERCENT. Lower the
+# threshold as blink parity improves.
+
+on:
+    pull_request:
+        paths:
+            - 'blink/**'
+            - 'src/**'
+            - 'packages/**'
+            - 'config/**'
+            - '.github/workflows/blink_parity_laravel.yaml'
+    workflow_dispatch: null
+
+jobs:
+    blink-parity-laravel:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.6"
+
+            - name: Build blink
+              working-directory: blink
+              run: go build -o /tmp/blink .
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.4"
+                  coverage: none
+
+            # installs this repository's ECS so parity runs against the code being shipped
+            - uses: "ramsey/composer-install@v4"
+
+            - name: Fetch laravel/framework
+              run: git clone --depth 1 https://github.com/laravel/framework.git /tmp/laravel
+
+            # the ECS config lives inside the checkout so __DIR__ resolves against it;
+            # applies every prepared set, no per-fixer skips, to exercise the full surface
+            - name: Write the shared ECS config
+              run: |
+                  cat > /tmp/laravel/ecs.php <<'PHP'
+                  <?php
+
+                  declare(strict_types=1);
+
+                  use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+                  return ECSConfig::configure()
+                      ->withPaths([
+                          __DIR__ . '/src',
+                          __DIR__ . '/tests',
+                      ])
+                      ->withSkip([
+                          '*/node_modules/*',
+                          '*/Fixture/*',
+                      ])
+                      ->withPreparedSets(
+                          psr12: true,
+                          perCs: true,
+                          common: true,
+                          standaloneLine: true,
+                          cleanCode: true,
+                      )
+                      // single process: parallel workers overflow the NDJSON buffer on
+                      // large files and abort the PHP run (blink ignores this)
+                      ->withoutParallel();
+                  PHP
+                  cp /tmp/laravel/ecs.php /tmp/laravel/ecs-copy.php
+
+            - name: Two identical copies of the source
+              run: |
+                  cp -r /tmp/laravel /tmp/ours
+                  cp -r /tmp/laravel /tmp/ecs
+
+            - name: Fix with blink (--blink)
+              env:
+                  ECS_BLINK_BIN: /tmp/blink
+              run: bin/ecs check --fix --no-progress-bar --config /tmp/ours/ecs.php --blink || true
+
+            - name: Fix with the PHP engine
+              run: bin/ecs check --fix --no-progress-bar --config /tmp/ecs/ecs.php || true
+
+            - name: Compare the two trees
+              run: |
+                  # ratchet gate: fail once the differing share crosses this; lower it as parity improves
+                  MAX_DIFF_PERCENT=7.3
+                  total=0
+                  differ=0
+                  differing_files=""
+                  for f in $(cd /tmp/ours && find src tests -name '*.php' | sort); do
+                      total=$((total + 1))
+                      if ! diff -q "/tmp/ours/$f" "/tmp/ecs/$f" >/dev/null 2>&1; then
+                          differ=$((differ + 1))
+                          differing_files="$differing_files $f"
+                      fi
+                  done
+                  same=$((total - differ))
+                  pct=0
+                  diff_pct=0
+                  if [ "$total" -gt 0 ]; then
+                      pct=$(awk "BEGIN{printf \"%.2f\", $same * 100 / $total}")
+                      diff_pct=$(awk "BEGIN{printf \"%.2f\", $differ * 100 / $total}")
+                  fi
+                  {
+                      echo "## blink (--blink) vs PHP ECS on laravel/framework (all sets)"
+                      echo ""
+                      echo "Sets applied: psr12 + perCs + common + standaloneLine + cleanCode."
+                      echo ""
+                      echo "| metric | value |"
+                      echo "|---|---|"
+                      echo "| files | $total |"
+                      echo "| identical output | $same |"
+                      echo "| differing output | $differ |"
+                      echo "| parity | ${pct}% |"
+                      echo "| diff | ${diff_pct}% (max ${MAX_DIFF_PERCENT}%) |"
+                      echo ""
+                      echo "Ratchet gate: fails once the differing share exceeds ${MAX_DIFF_PERCENT}%."
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  echo "identical=$same differing=$differ of $total (${pct}% parity, ${diff_pct}% diff, max ${MAX_DIFF_PERCENT}%)"
+
+                  for f in $differing_files; do
+                      {
+                          echo ""
+                          echo "<details><summary>$f</summary>"
+                          echo ""
+                          echo '```diff'
+                          diff "/tmp/ecs/$f" "/tmp/ours/$f" | head -60 || true
+                          echo '```'
+                          echo "</details>"
+                      } >> "$GITHUB_STEP_SUMMARY"
+                      echo "--- $f (< PHP, > blink)"
+                      diff "/tmp/ecs/$f" "/tmp/ours/$f" | sed 's/^/    /' | head -60 || true
+                  done
+
+                  if awk "BEGIN{exit !($differ * 100 / $total > $MAX_DIFF_PERCENT)}"; then
+                      echo "::error::--blink differs from the PHP engine on ${diff_pct}% of files ($differ of $total), over the ${MAX_DIFF_PERCENT}% limit"
+                      exit 1
+                  fi
+                  echo "::notice::--blink differs on ${diff_pct}% of files ($differ of $total), within the ${MAX_DIFF_PERCENT}% limit"
