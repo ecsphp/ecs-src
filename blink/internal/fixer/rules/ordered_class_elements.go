@@ -1,8 +1,10 @@
 package rules
 
 import (
+	"sort"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -20,7 +22,15 @@ const (
 // constants, properties, then methods - keeping the original order within each
 // group. It is deliberately conservative: any comment, doc comment or attribute
 // in the body makes it skip the whole class so leading trivia is never detached.
-type OrderedClassElements struct{}
+//
+// The "order" option is honoured at group granularity: a listed group keeps its
+// configured index and every unlisted group shares the next index, so a stable
+// sort moves only the listed groups and leaves the rest in source order (e.g.
+// order ["use_trait"] groups trait uses first and touches nothing else).
+type OrderedClassElements struct {
+	ranks      [4]int
+	configured bool
+}
 
 func (OrderedClassElements) Name() string {
 	return `PhpCsFixer\Fixer\ClassNotation\OrderedClassElementsFixer`
@@ -30,14 +40,48 @@ func (OrderedClassElements) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/OrderedClassElementsFixer.php"
 }
 
-func (OrderedClassElements) Fix(s *tokens.Stream) bool {
+func (f OrderedClassElements) WithConfig(config map[string]any) fixer.Fixer {
+	raw, ok := config["order"].([]any)
+	if !ok {
+		return f
+	}
+	for i := range f.ranks {
+		f.ranks[i] = len(raw) // unlisted groups sort after all listed ones
+	}
+	nameGroup := map[string]int{
+		"use_trait": groupTraitUse,
+		"constant":  groupConst,
+		"property":  groupProperty,
+		"method":    groupMethod,
+	}
+	for pos, v := range raw {
+		if name, ok := v.(string); ok {
+			if g, ok := nameGroup[strings.ToLower(name)]; ok {
+				f.ranks[g] = pos
+			}
+		}
+	}
+	f.configured = true
+	return f
+}
+
+// groupRank is the configured sort rank of a group, or the default group order
+// (trait use, constants, properties, methods) when unconfigured.
+func (f OrderedClassElements) groupRank(g int) int {
+	if f.configured {
+		return f.ranks[g]
+	}
+	return g
+}
+
+func (f OrderedClassElements) Fix(s *tokens.Stream) bool {
 	changed := false
 	i := 0
 	for i < s.Len() {
 		t := s.At(i)
 		if t.Kind == token.Punct && t.Value == "{" {
 			if kind, _ := classifyBrace(s, i); kind == braceClassLike {
-				if reorderClassBody(s, i) {
+				if f.reorderClassBody(s, i) {
 					changed = true
 					i = 0 // members moved; restart - each class sorts once so this ends
 					continue
@@ -49,7 +93,7 @@ func (OrderedClassElements) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
-func reorderClassBody(s *tokens.Stream, open int) bool {
+func (f OrderedClassElements) reorderClassBody(s *tokens.Stream, open int) bool {
 	closeIdx := s.MatchForward(open)
 	if closeIdx < 0 {
 		return false
@@ -87,14 +131,13 @@ func reorderClassBody(s *tokens.Stream, open int) bool {
 			}
 		}
 	}
-	order := make([]int, 0, len(starts))
-	for g := groupTraitUse; g <= groupMethod; g++ {
-		for idx, gg := range groups {
-			if gg == g {
-				order = append(order, idx)
-			}
-		}
+	order := make([]int, len(starts))
+	for i := range order {
+		order[i] = i
 	}
+	sort.SliceStable(order, func(a, b int) bool {
+		return f.groupRank(groups[order[a]]) < f.groupRank(groups[order[b]])
+	})
 	if isIdentityOrder(order) {
 		return false
 	}
