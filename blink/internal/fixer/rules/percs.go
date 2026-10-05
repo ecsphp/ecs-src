@@ -139,8 +139,8 @@ func isStaticRef(v string) bool {
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Basic/SingleLineEmptyBodyFixer.php
 //
-// SingleLineEmptyBody collapses an empty class or function body to "{}" on the
-// declaration line ("function f()\n{\n}" -> "function f() {}").
+// SingleLineEmptyBody collapses an empty class, function or closure body to "{}"
+// on the declaration line ("function f()\n{\n}" -> "function f() {}").
 type SingleLineEmptyBody struct{}
 
 func (SingleLineEmptyBody) Name() string {
@@ -158,7 +158,7 @@ func (SingleLineEmptyBody) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		switch kind, _ := classifyBrace(s, i); kind {
-		case braceClassLike, braceFunctionDecl:
+		case braceClassLike, braceFunctionDecl, braceClosure:
 		default:
 			continue
 		}

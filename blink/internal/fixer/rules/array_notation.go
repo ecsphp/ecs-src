@@ -10,7 +10,8 @@ import (
 )
 
 // convertLongArray rewrites a long "name(...)" construct to "[...]", where name
-// is "array" or "list". Method/constant uses (after -> ?-> ::) are skipped.
+// is "array" or "list". Method/constant uses (after -> ?-> ::) and a method
+// declared with that name (after "function") are skipped.
 func convertLongArray(s *tokens.Stream, name string) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
@@ -23,7 +24,7 @@ func convertLongArray(s *tokens.Stream, name string) bool {
 		}
 		if prev, ok := prevSignificant(s, i); ok {
 			switch prev.Value {
-			case "->", "?->", "::":
+			case "->", "?->", "::", "function":
 				continue
 			}
 		}
