@@ -24,7 +24,6 @@ final class LineLengthAndPositionFactory
                 throw new TokenNotFoundException($currentPosition);
             }
 
-            /** @var Token $currentToken */
             $currentToken = $tokens[$currentPosition];
 
             $explode = explode("\n", $currentToken->getContent());

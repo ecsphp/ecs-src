@@ -105,7 +105,6 @@ final class LineLengthResolver
                 break;
             }
 
-            /** @var Token $currentToken */
             $currentToken = $tokens[$end];
         }
 
