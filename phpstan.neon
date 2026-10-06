@@ -1,3 +1,6 @@
+includes:
+    - phpstan-baseline.neon
+
 parameters:
     level: 8
 
@@ -29,12 +32,6 @@ parameters:
         phpunit: true
         mocks: true
         ctor: true
-
-    # see https://github.com/tomasVotruba/unused-public
-    unused_public:
-        methods: true
-        properties: true
-        constants: true
 
     # see https://github.com/TomasVotruba/type-coverage
     type_coverage:

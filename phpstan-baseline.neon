@@ -1,0 +1,427 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Annotation\\RemoveEventSubscriberDescriptionFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Annotation/RemoveEventSubscriberDescriptionFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Annotation\\RemoveMethodNameDuplicateDescriptionFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Annotation/RemoveMethodNameDuplicateDescriptionFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Annotation\\RemovePHPStormAnnotationFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Annotation/RemovePHPStormAnnotationFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Annotation\\RemovePropertyVariableNameDescriptionFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Annotation/RemovePropertyVariableNameDescriptionFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\ArrayNotation\\ArrayListItemNewlineFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/ArrayNotation/ArrayListItemNewlineFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\ArrayNotation\\ArrayOpenerAndCloserNewlineFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/ArrayNotation/ArrayOpenerAndCloserNewlineFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\ArrayNotation\\StandaloneLineInMultilineArrayFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/ArrayNotation/StandaloneLineInMultilineArrayFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Commenting\\AddMissingParamNameFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Commenting/AddMissingParamNameFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Commenting\\FixParamNameTypoFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Commenting/FixParamNameTypoFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Commenting\\RemoveUselessDefaultCommentFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Commenting/RemoveUselessDefaultCommentFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Commenting\\TypeToVarTagFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Commenting/TypeToVarTagFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\LineLength\\LineLengthFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/LineLength/LineLengthFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Spacing\\MethodChainingNewlineFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Spacing/MethodChainingNewlineFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Spacing\\StandaloneLineConstructorParamFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Spacing/StandaloneLineConstructorParamFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Spacing\\StandaloneLinePlainConstructorParamFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Spacing/StandaloneLinePlainConstructorParamFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Spacing\\StandaloneLinePromotedPropertyFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Spacing/StandaloneLinePromotedPropertyFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Spacing\\StandaloneLineRequiredParamFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Spacing/StandaloneLineRequiredParamFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Spacing\\StandaloneLineSymfonyAttributeParamFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Spacing/StandaloneLineSymfonyAttributeParamFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\Fixer\\Strict\\BlankLineAfterStrictTypesFixer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/Fixer/Strict/BlankLineAfterStrictTypesFixer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenAnalyzer\\ChainMethodCallAnalyzer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenAnalyzer/ChainMethodCallAnalyzer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenAnalyzer\\DocblockRelatedParamNamesResolver\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenAnalyzer/DocblockRelatedParamNamesResolver.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenAnalyzer\\ParamNewliner\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenAnalyzer/ParamNewliner.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Analyzer\\FixerAnalyzer\\ArrayAnalyzer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Analyzer/FixerAnalyzer/ArrayAnalyzer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Analyzer\\FixerAnalyzer\\IndentDetector\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Analyzer/FixerAnalyzer/IndentDetector.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Analyzer\\FixerAnalyzer\\TokenSkipper\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Analyzer/FixerAnalyzer/TokenSkipper.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Arrays\\ArrayItemNewliner\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Arrays/ArrayItemNewliner.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Transformer\\FixerTransformer\\FirstLineLengthResolver\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Transformer/FixerTransformer/FirstLineLengthResolver.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Transformer\\FixerTransformer\\LineLengthCloserTransformer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Transformer/FixerTransformer/LineLengthCloserTransformer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Transformer\\FixerTransformer\\LineLengthOpenerTransformer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Transformer/FixerTransformer/LineLengthOpenerTransformer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Transformer\\FixerTransformer\\LineLengthTransformer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Transformer/FixerTransformer/LineLengthTransformer.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Transformer\\FixerTransformer\\TokensInliner\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Transformer/FixerTransformer/TokensInliner.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Transformer\\FixerTransformer\\TokensNewliner\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Transformer/FixerTransformer/TokensNewliner.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Traverser\\ArrayBlockInfoFinder\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Traverser/ArrayBlockInfoFinder.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Whitespace\\IndentResolver\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Whitespace/IndentResolver.php
+
+		-
+			message: '#^Unused Symplify\\CodingStandard\\TokenRunner\\Wrapper\\FixerWrapper\\ArrayWrapperFactory\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: packages/coding-standard/src/TokenRunner/Wrapper/FixerWrapper/ArrayWrapperFactory.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Application\\EasyCodingStandardApplication\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Application/EasyCodingStandardApplication.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Application\\FileProcessorCollector\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Application/FileProcessorCollector.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Application\\SingleFileProcessor\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Application/SingleFileProcessor.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Blink\\BlinkConfigDumper\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Blink/BlinkConfigDumper.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Caching\\ChangedFilesDetector\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Caching/ChangedFilesDetector.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Configuration\\ConfigInitializer\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Configuration/ConfigInitializer.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Configuration\\ConfigurationFactory\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Configuration/ConfigurationFactory.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Command\\CheckCommand\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Command/CheckCommand.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Command\\DumpConfigCommand\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Command/DumpConfigCommand.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Command\\ListCheckersCommand\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Command/ListCheckersCommand.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Command\\WorkerCommand\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Command/WorkerCommand.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Output\\ConsoleOutputFormatter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Output/ConsoleOutputFormatter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Output\\JsonOutputFormatter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Output/JsonOutputFormatter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Output\\OutputFormatterCollector\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Output/OutputFormatterCollector.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Console\\Reporter\\CheckerListReporter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Console/Reporter/CheckerListReporter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Contract\\Application\\FileProcessorInterface\:\:processFileToString$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Contract/Application/FileProcessorInterface.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Error\\FileDiffFactory\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Error/FileDiffFactory.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\FileSystem\\FileFilter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/FileSystem/FileFilter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Finder\\SourceFinder\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Finder/SourceFinder.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\FixerRunner\\Application\\FixerFileProcessor\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/FixerRunner/Application/FixerFileProcessor.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Parallel\\Application\\ParallelFileProcessor\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Parallel/Application/ParallelFileProcessor.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Parallel\\Contract\\SerializableInterface\:\:decode$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Parallel/Contract/SerializableInterface.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Parallel\\WorkerRunner\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Parallel/WorkerRunner.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Reporter\\ProcessedFileReporter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Reporter/ProcessedFileReporter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\Contract\\SkipVoterInterface\:\:match$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/Contract/SkipVoterInterface.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\Contract\\SkipVoterInterface\:\:shouldSkip$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/Contract/SkipVoterInterface.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\Matcher\\FileInfoMatcher\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/Matcher/FileInfoMatcher.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\SkipCriteriaResolver\\SkippedPathsResolver\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/SkipCriteriaResolver/SkippedPathsResolver.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\SkipVoter\\ClassAndCodeSkipVoter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/SkipVoter/ClassAndCodeSkipVoter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\SkipVoter\\ClassSkipVoter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/SkipVoter/ClassSkipVoter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\SkipVoter\\MessageSkipVoter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/SkipVoter/MessageSkipVoter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\SkipVoter\\PathSkipVoter\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/SkipVoter/PathSkipVoter.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\Skipper\\SkipSkipper\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Skipper/Skipper/SkipSkipper.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\SniffRunner\\Application\\SniffFileProcessor\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/SniffRunner/Application/SniffFileProcessor.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\SniffRunner\\File\\FileFactory\:\:__construct$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/SniffRunner/File/FileFactory.php
+
+		-
+			message: '#^Unused Symplify\\EasyCodingStandard\\Utils\\ParametersMerger\:\:mergeWithCombine$#'
+			identifier: shipmonk.deadMethod
+			count: 1
+			path: src/Utils/ParametersMerger.php
