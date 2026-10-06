@@ -22,9 +22,13 @@ func TestGenOpsIncStandardizeIncrement(t *testing.T) {
 		{"<?php $i += 2;", "<?php $i += 2;", false},
 		// chained right side must not be touched (precedence)
 		{"<?php $i += 1 + 2;", "<?php $i += 1 + 2;", false},
-		// complex lvalue is out of scope
-		{"<?php $obj->x += 1;", "<?php $obj->x += 1;", false},
-		{"<?php $arr[0] += 1;", "<?php $arr[0] += 1;", false},
+		// variable-rooted lvalue chains: increment at the chain root
+		{"<?php $obj->x += 1;", "<?php ++$obj->x;", true},
+		{"<?php $this->index -= 1;", "<?php --$this->index;", true},
+		{"<?php $arr[0] += 1;", "<?php ++$arr[0];", true},
+		{"<?php $arr[$k] += 1;", "<?php ++$arr[$k];", true},
+		// static-property access stays with the upstream fixer
+		{"<?php $a::$b += 1;", "<?php $a::$b += 1;", false},
 	}
 	for _, c := range cases {
 		got, changed := apply(t, StandardizeIncrement{}, c.src)
@@ -72,8 +76,16 @@ func TestGenOpsIncLongToShorthand(t *testing.T) {
 		{"<?php $a = $a * $b;", "<?php $a *= $b;", true},
 		{"<?php $s = $s . $x;", "<?php $s .= $x;", true},
 		{"<?php $a=$a+1;", "<?php $a+=1;", true},
+		// variable-rooted lvalue chains collapse when both sides are identical
+		{"<?php $this->index = $this->index + 2;", "<?php $this->index += 2;", true},
+		{"<?php $arr[$k] = $arr[$k] + $b;", "<?php $arr[$k] += $b;", true},
 		// already shorthand: no-op
 		{"<?php $a += 1;", "<?php $a += 1;", false},
+		// mismatched chains must not collapse
+		{"<?php $this->x = $this->y + 1;", "<?php $this->x = $this->y + 1;", false},
+		{"<?php $arr[$k] = $arr[$j] + 1;", "<?php $arr[$k] = $arr[$j] + 1;", false},
+		// static-property chain is left to the upstream fixer
+		{"<?php $a::$b = $a::$b + 1;", "<?php $a::$b = $a::$b + 1;", false},
 		// different variable on the right
 		{"<?php $a = $b + 1;", "<?php $a = $b + 1;", false},
 		// chained right side (precedence risk) must not collapse

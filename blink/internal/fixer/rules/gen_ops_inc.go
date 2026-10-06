@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"strings"
+
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -70,12 +72,130 @@ func lvaluePrefix(v string) bool {
 	return false
 }
 
+// lvChainForward walks a variable-rooted lvalue chain starting at `start`
+// ("$x", "$x->prop", "$x[sub]", and nestings), returning the index of the
+// chain's last token or -1 if `start` is not a variable or the chain is
+// malformed. A "::" static access stops the chain (returned before it), so
+// static-property lvalues fall out of the match and are left untouched.
+func lvChainForward(s *tokens.Stream, start int) int {
+	if start < 0 || s.At(start).Kind != token.Variable {
+		return -1
+	}
+	k := start
+	for {
+		n := sigNext(s, k)
+		if n < 0 {
+			return k
+		}
+		nt := s.At(n)
+		if nt.Kind == token.Punct && (nt.Value == "->" || nt.Value == "?->") {
+			m := sigNext(s, n)
+			if m < 0 {
+				return -1
+			}
+			if mk := s.At(m).Kind; mk == token.Ident || mk == token.Variable {
+				k = m
+				continue
+			}
+			return -1
+		}
+		if nt.Kind == token.Punct && nt.Value == "[" {
+			cl := s.MatchForward(n)
+			if cl < 0 {
+				return -1
+			}
+			k = cl
+			continue
+		}
+		return k
+	}
+}
+
+// opAssignBoundary reports whether t ends the expression to the left of an
+// lvalue, so the next significant token begins a fresh lvalue.
+func opAssignBoundary(t token.Token) bool {
+	if t.Kind == token.OpenTag {
+		return true
+	}
+	if t.Kind == token.Keyword && strings.EqualFold(t.Value, "return") {
+		return true
+	}
+	if t.Kind == token.Punct {
+		switch t.Value {
+		case ";", "{", "}", "(", ")", "[", ",", ":":
+			return true
+		}
+	}
+	return false
+}
+
+// lvChainRootBack scans backward from `end` (the last token of an lvalue that
+// sits just before an operator) to the chain's root variable, jumping matched
+// "[...]" subscripts. It returns the root index, or -1 when the span is not a
+// clean variable-rooted chain bounded by a statement boundary.
+func lvChainRootBack(s *tokens.Stream, end int) int {
+	k := end
+	last := end
+	for k >= 0 {
+		t := s.At(k)
+		if isTrivia(s, k) {
+			k--
+			continue
+		}
+		if opAssignBoundary(t) {
+			break
+		}
+		if t.Kind == token.Punct && t.Value == "]" {
+			op := s.MatchBackward(k)
+			if op < 0 {
+				return -1
+			}
+			last = op
+			k = op - 1
+			continue
+		}
+		if t.Kind == token.Punct && t.Value == ")" {
+			return -1
+		}
+		last = k
+		k--
+	}
+	if s.At(last).Kind == token.Variable {
+		return last
+	}
+	return -1
+}
+
+// sameSigRange reports whether the significant tokens of [a1,a2] equal those of
+// [b1,b2] by kind and value.
+func sameSigRange(s *tokens.Stream, a1, a2, b1, b2 int) bool {
+	ai, bi := a1, b1
+	for {
+		for ai <= a2 && isTrivia(s, ai) {
+			ai++
+		}
+		for bi <= b2 && isTrivia(s, bi) {
+			bi++
+		}
+		aDone, bDone := ai > a2, bi > b2
+		if aDone || bDone {
+			return aDone && bDone
+		}
+		if s.At(ai).Kind != s.At(bi).Kind || s.At(ai).Value != s.At(bi).Value {
+			return false
+		}
+		ai++
+		bi++
+	}
+}
+
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/StandardizeIncrementFixer.php
 //
 // StandardizeIncrement rewrites `$i += 1` to `++$i` and `$i -= 1` to `--$i`.
 // The pre-increment form is value-equivalent to the compound assignment, so the
-// rewrite is safe in any expression position. Only a single plain variable on
-// the left is handled; complex lvalues are left to the upstream fixer.
+// rewrite is safe in any expression position. A variable-rooted lvalue chain
+// ("$this->index", "$arr[$k]") is handled; "::" static access is left to the
+// upstream fixer.
 type StandardizeIncrement struct{}
 
 func (StandardizeIncrement) Name() string {
@@ -103,12 +223,13 @@ func (StandardizeIncrement) Fix(s *tokens.Stream) bool {
 			continue
 		}
 
-		// Left side: exactly one plain variable.
+		// Left side: a variable-rooted lvalue chain ending just before "+=".
 		lv := sigPrev(s, i)
-		if lv < 0 || s.At(lv).Kind != token.Variable {
+		if lv < 0 {
 			continue
 		}
-		if p := sigPrev(s, lv); p >= 0 && lvaluePrefix(s.At(p).Value) {
+		start := lvChainRootBack(s, lv)
+		if start < 0 || lvChainForward(s, start) != lv {
 			continue
 		}
 
@@ -123,7 +244,7 @@ func (StandardizeIncrement) Fix(s *tokens.Stream) bool {
 		}
 
 		// Refuse if a comment sits inside the rewritten span.
-		if !spanClean(s, lv, numIdx) {
+		if !spanClean(s, start, numIdx) {
 			continue
 		}
 
@@ -133,16 +254,16 @@ func (StandardizeIncrement) Fix(s *tokens.Stream) bool {
 		}
 
 		// Drop `<op> 1` (operator..number), then the inline gap before it, then
-		// prepend the increment operator to the variable.
+		// prepend the increment operator at the chain root.
 		for k := numIdx; k >= i; k-- {
 			s.RemoveAt(k)
 		}
 		if lv+1 < s.Len() && s.At(lv+1).Kind == token.Whitespace && !hasNewline(s.At(lv+1).Value) {
 			s.RemoveAt(lv + 1)
 		}
-		s.InsertAt(lv, token.Token{Kind: token.Punct, Value: op})
+		s.InsertAt(start, token.Token{Kind: token.Punct, Value: op})
 		changed = true
-		i = lv
+		i = start
 	}
 	return changed
 }
@@ -214,10 +335,11 @@ func (IncrementStyle) Fix(s *tokens.Stream) bool {
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/LongToShorthandOperatorFixer.php
 //
 // LongToShorthandOperator rewrites `$a = $a <op> <operand>;` to
-// `$a <op>= <operand>;`. Only the single-variable, single-operand,
-// semicolon-terminated form is handled; a lone right operand plus the `;`
-// terminator removes any operator-precedence ambiguity. Anything with a chained
-// or complex right side is left to the upstream fixer.
+// `$a <op>= <operand>;`. The lvalue may be a variable-rooted chain
+// ("$this->index", "$arr[$k]") as long as both sides are token-identical; only
+// the single-operand, semicolon-terminated right side is handled, where the
+// lone operand plus the ";" terminator removes any precedence ambiguity.
+// Anything with a chained or complex right side is left to the upstream fixer.
 type LongToShorthandOperator struct{}
 
 func (LongToShorthandOperator) Name() string {
@@ -254,23 +376,28 @@ func (LongToShorthandOperator) Fix(s *tokens.Stream) bool {
 			continue
 		}
 
-		// Left side: a single plain variable.
+		// Left side: a variable-rooted lvalue chain ending just before "=".
 		lv := sigPrev(s, i)
-		if lv < 0 || s.At(lv).Kind != token.Variable {
+		if lv < 0 {
 			continue
 		}
-		if p := sigPrev(s, lv); p >= 0 && lvaluePrefix(s.At(p).Value) {
+		lhsStart := lvChainRootBack(s, lv)
+		if lhsStart < 0 || lvChainForward(s, lhsStart) != lv {
 			continue
 		}
 
-		// Right side must start with the same variable.
+		// Right side must repeat the identical chain.
 		rv := sigNext(s, i)
-		if rv < 0 || s.At(rv).Kind != token.Variable || s.At(rv).Value != s.At(lv).Value {
+		if rv < 0 || s.At(rv).Kind != token.Variable {
+			continue
+		}
+		rhsEnd := lvChainForward(s, rv)
+		if rhsEnd < 0 || !sameSigRange(s, lhsStart, lv, rv, rhsEnd) {
 			continue
 		}
 
 		// Then a compound-capable operator.
-		opIdx := sigNext(s, rv)
+		opIdx := sigNext(s, rhsEnd)
 		if opIdx < 0 || s.At(opIdx).Kind != token.Punct || !shortOp(s.At(opIdx).Value) {
 			continue
 		}
