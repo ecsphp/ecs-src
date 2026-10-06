@@ -1,6 +1,3 @@
-includes:
-    - phpstan-baseline.neon
-
 parameters:
     level: 8
 
@@ -96,3 +93,26 @@ parameters:
         -
             identifier: symplify.noNullableServiceInConstructor
             path: packages/coding-standard/src/Fixer/LineLength/LineLengthFixer.php
+
+        # constructors are invoked via DI autowiring, not detectable by dead-code-detector
+        -
+            identifier: shipmonk.deadMethod
+            message: '#::__construct$#'
+
+        # interface contracts and util method called dynamically
+        -
+            message: '#^Unused Symplify\\EasyCodingStandard\\Parallel\\Contract\\SerializableInterface\:\:decode$#'
+            identifier: shipmonk.deadMethod
+            path: src/Parallel/Contract/SerializableInterface.php
+        -
+            message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\Contract\\SkipVoterInterface\:\:match$#'
+            identifier: shipmonk.deadMethod
+            path: src/Skipper/Contract/SkipVoterInterface.php
+        -
+            message: '#^Unused Symplify\\EasyCodingStandard\\Skipper\\Contract\\SkipVoterInterface\:\:shouldSkip$#'
+            identifier: shipmonk.deadMethod
+            path: src/Skipper/Contract/SkipVoterInterface.php
+        -
+            message: '#^Unused Symplify\\EasyCodingStandard\\Utils\\ParametersMerger\:\:mergeWithCombine$#'
+            identifier: shipmonk.deadMethod
+            path: src/Utils/ParametersMerger.php
