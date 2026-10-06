@@ -29,7 +29,6 @@ final readonly class LineLengthOpenerTransformer
             throw new TokenNotFoundException($blockStartIndex + 1);
         }
 
-        /** @var Token $nextToken */
         $nextToken = $tokens[$blockStartIndex + 1];
 
         if ($nextToken->isGivenKind(T_WHITESPACE)) {
