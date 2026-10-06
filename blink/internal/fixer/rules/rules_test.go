@@ -210,6 +210,10 @@ func TestNoLeadingImportSlash(t *testing.T) {
 	if want := "<?php use Foo\\Bar; use function ns\\f;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
+	// a trait use inside a class keeps its leading backslash (not a namespace import)
+	if _, changed := apply(t, NoLeadingImportSlash{}, "<?php class C {\n    use \\Foo\\Bar;\n}"); changed {
+		t.Fatal("trait use must keep its leading backslash")
+	}
 }
 
 func TestDeclareEqualNormalize(t *testing.T) {
