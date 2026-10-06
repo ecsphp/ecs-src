@@ -20,3 +20,6 @@ php-scoper.phar
 /blink/blink.exe
 *.test
 *.out
+
+# blink parity divergent-file lists
+/blink/parity.*.txt
