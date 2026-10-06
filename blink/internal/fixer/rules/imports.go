@@ -28,7 +28,13 @@ func (NoLeadingImportSlash) Fix(s *tokens.Stream) bool {
 		if t.Kind != token.Keyword || strings.ToLower(t.Value) != "use" {
 			continue
 		}
+		if inClassLikeBody(s, i) {
+			continue // trait use keeps its leading backslash
+		}
 		j := skipWhitespace(s, i+1)
+		if j < s.Len() && s.At(j).Kind == token.Punct && s.At(j).Value == "(" {
+			continue // closure use
+		}
 		if j < s.Len() && s.At(j).Kind == token.Keyword {
 			if lw := strings.ToLower(s.At(j).Value); lw == "function" || lw == "const" {
 				j = skipWhitespace(s, j+1)

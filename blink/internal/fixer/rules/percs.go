@@ -91,6 +91,10 @@ func (f NewWithParentheses) Fix(s *tokens.Stream) bool {
 			}
 			break
 		}
+		// a dynamic class name continues through "::member" / "[subscript]"
+		// ("new static::$builder(...)"), so the "(" belongs to that call, not a
+		// bare "new static" needing "()"
+		k = consumeNewStaticTail(s, k)
 		if nextSignificantValue(s, k-1) == "(" {
 			continue // already has parentheses
 		}
@@ -99,6 +103,33 @@ func (f NewWithParentheses) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	return changed
+}
+
+// consumeNewStaticTail advances past the "::member" and "[subscript]" tail of a
+// dynamic class name ("static::$builder", "self::$map[0]"), starting at k just
+// after the leading name. It stops before a "(", leaving an existing call intact.
+func consumeNewStaticTail(s *tokens.Stream, k int) int {
+	for k < s.Len() {
+		c := s.At(k)
+		if c.Kind == token.Punct && c.Value == "::" {
+			m := skipWhitespace(s, k+1)
+			if m < s.Len() && (s.At(m).Kind == token.Ident || s.At(m).Kind == token.Variable) {
+				k = m + 1
+				continue
+			}
+			break
+		}
+		if c.Kind == token.Punct && c.Value == "[" {
+			cl := s.MatchForward(k)
+			if cl < 0 {
+				break
+			}
+			k = cl + 1
+			continue
+		}
+		break
+	}
+	return k
 }
 
 // consumeNewVarRef returns the index just past a dynamic class reference that
