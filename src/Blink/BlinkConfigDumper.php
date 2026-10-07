@@ -9,8 +9,7 @@ use PhpCsFixer\Fixer\FixerInterface;
 use ReflectionProperty;
 use stdClass;
 use Symplify\EasyCodingStandard\FixerRunner\Application\FixerFileProcessor;
-use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedClassResolver;
-use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedPathsResolver;
+use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedCriteriaResolver;
 use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
 
 /**
@@ -23,8 +22,7 @@ final readonly class BlinkConfigDumper
     public function __construct(
         private SniffFileProcessor $sniffFileProcessor,
         private FixerFileProcessor $fixerFileProcessor,
-        private SkippedPathsResolver $skippedPathsResolver,
-        private SkippedClassResolver $skippedClassResolver,
+        private SkippedCriteriaResolver $skippedCriteriaResolver,
     ) {
     }
 
@@ -73,13 +71,13 @@ final readonly class BlinkConfigDumper
     {
         $skips = [];
 
-        foreach ($this->skippedPathsResolver->resolve() as $path) {
+        foreach ($this->skippedCriteriaResolver->resolvePaths() as $path) {
             $skips[] = [
                 'path' => $path,
             ];
         }
 
-        foreach ($this->skippedClassResolver->resolve() as $checkerClass => $paths) {
+        foreach ($this->skippedCriteriaResolver->resolveClasses() as $checkerClass => $paths) {
             if ($paths === null) {
                 $skips[] = [
                     'class' => $checkerClass,

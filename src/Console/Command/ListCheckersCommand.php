@@ -12,7 +12,7 @@ use Symplify\EasyCodingStandard\Console\ExitCode;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 use Symplify\EasyCodingStandard\Console\Reporter\CheckerListReporter;
 use Symplify\EasyCodingStandard\FixerRunner\Application\FixerFileProcessor;
-use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedClassResolver;
+use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedCriteriaResolver;
 use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
 
 final readonly class ListCheckersCommand implements CommandInterface
@@ -21,7 +21,7 @@ final readonly class ListCheckersCommand implements CommandInterface
         private SniffFileProcessor $sniffFileProcessor,
         private FixerFileProcessor $fixerFileProcessor,
         private CheckerListReporter $checkerListReporter,
-        private SkippedClassResolver $skippedClassResolver
+        private SkippedCriteriaResolver $skippedCriteriaResolver
     ) {
     }
 
@@ -107,7 +107,7 @@ final readonly class ListCheckersCommand implements CommandInterface
     private function getSkippedCheckers(): array
     {
         $skippedCheckers = [];
-        foreach ($this->skippedClassResolver->resolve() as $checkerClass => $fileList) {
+        foreach ($this->skippedCriteriaResolver->resolveClasses() as $checkerClass => $fileList) {
             // ignore specific skips
             if ($fileList !== null) {
                 continue;
