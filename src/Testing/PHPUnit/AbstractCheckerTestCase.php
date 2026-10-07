@@ -12,6 +12,7 @@ use Symplify\EasyCodingStandard\Exception\ShouldNotHappenException;
 use Symplify\EasyCodingStandard\FixerRunner\Application\FixerFileProcessor;
 use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
 use Symplify\EasyCodingStandard\Testing\Contract\ConfigAwareInterface;
+use Symplify\EasyCodingStandard\ValueObject\Configuration;
 use Webmozart\Assert\Assert;
 
 // needed for scoped version to load unprefixed classes; does not have any effect inside the class
@@ -72,15 +73,18 @@ abstract class AbstractCheckerTestCase extends AbstractTestCase implements Confi
         $inputFilePath = sys_get_temp_dir() . '/ecs_tests/' . md5($inputContents) . '.php';
         FileSystem::write($inputFilePath, $inputContents, null);
 
+        $configuration = new Configuration(isFixer: true);
+
         // 1. process php-cs-fixer
         if ($this->fixerFileProcessor->getCheckers() !== []) {
-            $processedFileContent = $this->fixerFileProcessor->processFileToString($inputFilePath);
-            $this->assertEquals($expectedContents, $processedFileContent);
-            // 2. process php coce sniffer
+            $this->fixerFileProcessor->processFile($inputFilePath, $configuration);
+            // 2. process php code sniffer
         } elseif ($this->sniffFileProcessor->getCheckers() !== []) {
-            $processedFileContent = $this->sniffFileProcessor->processFileToString($inputFilePath);
-            $this->assertEquals($expectedContents, $processedFileContent);
+            $this->sniffFileProcessor->processFile($inputFilePath, $configuration);
         }
+
+        $processedFileContent = FileSystem::read($inputFilePath);
+        $this->assertEquals($expectedContents, $processedFileContent);
     }
 
     protected static function yieldFiles(string $directory, string $suffix = '*.php.inc'): Iterator

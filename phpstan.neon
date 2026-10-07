@@ -30,12 +30,6 @@ parameters:
         mocks: true
         ctor: true
 
-    # see https://github.com/tomasVotruba/unused-public
-    unused_public:
-        methods: true
-        properties: true
-        constants: true
-
     # see https://github.com/TomasVotruba/type-coverage
     type_coverage:
         return: 99
@@ -99,3 +93,14 @@ parameters:
         -
             identifier: symplify.noNullableServiceInConstructor
             path: packages/coding-standard/src/Fixer/LineLength/LineLengthFixer.php
+
+        # constructors are invoked via DI autowiring, not detectable by dead-code-detector
+        -
+            identifier: shipmonk.deadMethod
+            message: '#::__construct$#'
+
+        # interface contracts and util method called dynamically
+        -
+            message: '#^Unused Symplify\\EasyCodingStandard\\Parallel\\Contract\\SerializableInterface\:\:decode$#'
+            identifier: shipmonk.deadMethod
+            path: src/Parallel/Contract/SerializableInterface.php

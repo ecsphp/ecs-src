@@ -40,7 +40,7 @@
         "symplify/vendor-patches": "^11.5",
         "tomasvotruba/class-leak": "^2.3",
         "tomasvotruba/type-coverage": "^2.5",
-        "tomasvotruba/unused-public": "^2.2",
+        "shipmonk/dead-code-detector": "^1.4",
         "tracy/tracy": "^2.12"
     },
     "autoload": {
