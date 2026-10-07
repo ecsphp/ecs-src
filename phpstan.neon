@@ -108,7 +108,3 @@ parameters:
             message: '#^Unused Symplify\\EasyCodingStandard\\Parallel\\Contract\\SerializableInterface\:\:decode$#'
             identifier: shipmonk.deadMethod
             path: src/Parallel/Contract/SerializableInterface.php
-        -
-            message: '#^Unused Symplify\\EasyCodingStandard\\Utils\\ParametersMerger\:\:mergeWithCombine$#'
-            identifier: shipmonk.deadMethod
-            path: src/Utils/ParametersMerger.php
