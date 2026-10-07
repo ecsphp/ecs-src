@@ -66,6 +66,10 @@ final readonly class TokensNewliner
                     continue;
                 }
 
+                if ($this->isFollowedByEmptyLine($tokens, $i)) {
+                    continue;
+                }
+
                 $tokens->ensureWhitespaceAtIndex($i + 1, 0, $newlineIndentWhitespace);
             }
         }
@@ -112,5 +116,21 @@ final readonly class TokensNewliner
         }
 
         return $nextNextToken->isComment();
+    }
+
+    /**
+     * Keep author-added empty line between items
+     *
+     * @param Tokens<Token> $tokens
+     */
+    private function isFollowedByEmptyLine(Tokens $tokens, int $i): bool
+    {
+        $nextToken = $tokens[$i + 1];
+        if (! $nextToken->isWhitespace()) {
+            return false;
+        }
+
+        $lineEnding = $this->whitespacesFixerConfig->getLineEnding();
+        return \substr_count($nextToken->getContent(), $lineEnding) >= 2;
     }
 }
