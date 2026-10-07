@@ -101,10 +101,6 @@ parameters:
 
         # interface contracts and util method called dynamically
         -
-            message: '#^Unused Symplify\\EasyCodingStandard\\Contract\\Application\\FileProcessorInterface\:\:processFileToString$#'
-            identifier: shipmonk.deadMethod
-            path: src/Contract/Application/FileProcessorInterface.php
-        -
             message: '#^Unused Symplify\\EasyCodingStandard\\Parallel\\Contract\\SerializableInterface\:\:decode$#'
             identifier: shipmonk.deadMethod
             path: src/Parallel/Contract/SerializableInterface.php
