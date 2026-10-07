@@ -57,7 +57,7 @@ func TestArrayListItemNewline(t *testing.T) {
 		t.Fatal("already-multiline inner must not break the outer opener")
 	}
 
-	// a blank line a user put between array items is preserved
+	// a blank line a user put between array items is preserved (unlike call args)
 	if _, changed := apply(t, f, "<?php\n$x = [\n    'a' => 1,\n\n    'b' => 2,\n];"); changed {
 		t.Fatal("blank line between array items must be preserved")
 	}
