@@ -43,7 +43,7 @@ final readonly class EasyCodingStandardApplication
     }
 
     /**
-     * @return array{coding_standard_errors?: CodingStandardError[], file_diffs?: FileDiff[], system_errors?: SystemError[]|string[], system_errors_count?: int}
+     * @return array{coding_standard_errors?: CodingStandardError[], file_diffs?: FileDiff[], system_errors?: SystemError[]|string[], system_errors_count?: int, files_count?: int}
      */
     public function run(Configuration $configuration): array
     {
@@ -66,7 +66,9 @@ final readonly class EasyCodingStandardApplication
         $filesCount = count($filePaths);
 
         if ($filesCount === 0) {
-            return [];
+            return [
+                Bridge::FILES_COUNT => 0,
+            ];
         }
 
         if ($configuration->isParallel()) {
@@ -105,17 +107,21 @@ final readonly class EasyCodingStandardApplication
             }
 
             // mimics see https://github.com/phpstan/phpstan-src/commit/9124c66dcc55a222e21b1717ba5f60771f7dda92#diff-387b8f04e0db7a06678eb52ce0c0d0aff73e0d7d8fc5df834d0a5fbec198e5daR139
-            return $this->parallelFileProcessor->check(
+            $errorsAndDiffs = $this->parallelFileProcessor->check(
                 $schedule,
                 $mainScript,
                 $postFileCallback,
                 $configuration->getConfig(),
                 $configuration
             );
+        } else {
+            // process found files by each processors
+            $errorsAndDiffs = $this->processFoundFiles($filePaths, $configuration);
         }
 
-        // process found files by each processors
-        return $this->processFoundFiles($filePaths, $configuration);
+        $errorsAndDiffs[Bridge::FILES_COUNT] = $filesCount;
+
+        return $errorsAndDiffs;
     }
 
     /**

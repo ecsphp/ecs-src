@@ -13,7 +13,9 @@ use Symplify\EasyCodingStandard\Configuration\ConfigInitializer;
 use Symplify\EasyCodingStandard\Configuration\ConfigurationFactory;
 use Symplify\EasyCodingStandard\Console\ExitCode;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
+use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\MemoryLimitter;
+use Symplify\EasyCodingStandard\Parallel\ValueObject\Bridge;
 use Symplify\EasyCodingStandard\Reporter\ProcessedFileReporter;
 
 final readonly class CheckCommand implements CommandInterface, DefaultCommandInterface
@@ -26,6 +28,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         private ConfigurationFactory $configurationFactory,
         private BlinkRunner $blinkRunner,
         private BlinkConfigDumper $blinkConfigDumper,
+        private EasyCodingStandardStyle $easyCodingStandardStyle,
     ) {
     }
 
@@ -106,7 +109,25 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
 
         $this->memoryLimitter->adjust($configuration);
 
+        $startTime = microtime(true);
         $errorsAndDiffs = $this->easyCodingStandardApplication->run($configuration);
-        return $this->processedFileReporter->report($errorsAndDiffs, $configuration);
+        $exitCode = $this->processedFileReporter->report($errorsAndDiffs, $configuration);
+
+        if ($configuration->getOutputFormat() === ConsoleOutputFormatter::NAME) {
+            $this->printRunFooter($errorsAndDiffs[Bridge::FILES_COUNT] ?? 0, $startTime);
+        }
+
+        return $exitCode;
+    }
+
+    private function printRunFooter(int $filesCount, float $startTime): void
+    {
+        $elapsedMilliseconds = (int) round((microtime(true) - $startTime) * 1000);
+        $peakMemoryMegabytes = (int) round(memory_get_peak_usage(true) / 1024 / 1024);
+
+        $this->easyCodingStandardStyle->newLine();
+        $this->easyCodingStandardStyle->writeln(
+            sprintf(' // %d files · %dms · %d MB', $filesCount, $elapsedMilliseconds, $peakMemoryMegabytes)
+        );
     }
 }
