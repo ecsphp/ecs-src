@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveReturnTagIncompatibleWithNativeTypeRector;
+use Rector\DeadCode\Rector\ClassMethod\RemoveUnusedPublicMethodParameterRector;
 use Rector\DeadCode\Rector\ConstFetch\RemovePhpVersionIdCheckRector;
 
 return RectorConfig::configure()
@@ -34,5 +35,10 @@ return RectorConfig::configure()
         // as incompatible with the native "array" return type and strips the tag
         RemoveReturnTagIncompatibleWithNativeTypeRector::class => [
             __DIR__ . '/src/Console/Output/GitlabOutputFormatter.php',
+        ],
+
+        // deprecated withPhpCsFixerSets() keeps a variadic to swallow legacy args without crashing
+        RemoveUnusedPublicMethodParameterRector::class => [
+            __DIR__ . '/src/Configuration/ECSConfigBuilder.php',
         ],
     ]);
