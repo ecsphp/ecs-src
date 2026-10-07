@@ -20,4 +20,11 @@ func TestStandaloneLinePromotedProperty(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\nclass A {\n    public function make(protected int $x)\n    {\n    }\n}"); changed {
 		t.Fatal("only __construct is targeted")
 	}
+
+	// a blank line the author left between promoted properties is preserved,
+	// including before an attribute (matches StandaloneLinePromotedPropertyFixer)
+	blank := "<?php\nclass A {\n    public function __construct(\n        private int $age,\n\n        #[Autowire]\n        private string $name = 'x',\n    ) {\n    }\n}"
+	if _, changed := apply(t, f, blank); changed {
+		t.Fatal("blank line between promoted properties must be preserved")
+	}
 }

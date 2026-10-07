@@ -44,7 +44,7 @@ func (StandaloneLinePromotedProperty) Fix(s *tokens.Stream) bool {
 		if !hasPromotedParam(s, open, closeIdx) {
 			continue // only constructor property promotion is split out
 		}
-		if reflowParen(s, open, closeIdx, true) {
+		if reflowParen(s, open, closeIdx) {
 			changed = true
 		}
 	}

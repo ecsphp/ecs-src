@@ -48,7 +48,7 @@ func (StandaloneLinePlainConstructorParam) Fix(s *tokens.Stream) bool {
 		if hasPromotedParam(s, open, closeIdx) {
 			continue // promoted constructors are handled by StandaloneLinePromotedProperty
 		}
-		if reflowParen(s, open, closeIdx, true) {
+		if reflowParen(s, open, closeIdx) {
 			changed = true
 		}
 	}
