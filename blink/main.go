@@ -106,26 +106,23 @@ func loadConfig(configPath string) (*config.Config, error) {
 	return config.Configure(), nil
 }
 
-// reportECSResolution prints, to w, how an ECS blink config mapped: how many
-// rules resolved to blink fixers and everything that could not, so a blink run
-// is never silently narrower than the ECS config it stands in for.
+// reportECSResolution prints, to w, only the ECS rules blink could not fully
+// honour: rules with no blink fixer, and rules whose configuration blink does
+// not model. A fully mapped config prints nothing. Per-path skips are
+// intentional and not reported.
 func reportECSResolution(w io.Writer, resolution *config.ECSResolution) {
-	_, _ = fmt.Fprintf(w, "blink: mapped %d of %d ECS rules to blink fixers\n", resolution.Mapped, resolution.Total)
+	if len(resolution.Unsupported) == 0 && len(resolution.ConfigIgnored) == 0 {
+		return
+	}
 	if len(resolution.Unsupported) > 0 {
-		_, _ = fmt.Fprintf(w, "  %d unsupported (no blink fixer), skipped:\n", len(resolution.Unsupported))
+		_, _ = fmt.Fprintf(w, "blink: %d unsupported ECS rule(s) (no blink fixer), skipped:\n", len(resolution.Unsupported))
 		for _, class := range resolution.Unsupported {
 			_, _ = fmt.Fprintf(w, "    - %s\n", class)
 		}
 	}
 	if len(resolution.ConfigIgnored) > 0 {
-		_, _ = fmt.Fprintf(w, "  %d configured rule(s) applied with blink's built-in behaviour (config not modelled):\n", len(resolution.ConfigIgnored))
+		_, _ = fmt.Fprintf(w, "blink: %d configured ECS rule(s) applied with blink's built-in behaviour (config not modelled):\n", len(resolution.ConfigIgnored))
 		for _, class := range resolution.ConfigIgnored {
-			_, _ = fmt.Fprintf(w, "    - %s\n", class)
-		}
-	}
-	if len(resolution.PerPathSkips) > 0 {
-		_, _ = fmt.Fprintln(w, "  per-path rule skips honoured (rule disabled on the configured paths):")
-		for _, class := range resolution.PerPathSkips {
 			_, _ = fmt.Fprintf(w, "    - %s\n", class)
 		}
 	}
