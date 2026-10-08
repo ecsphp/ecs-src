@@ -173,6 +173,13 @@ func keywordUsedAsIdentifier(s *tokens.Stream, i int) bool {
 				"class", "interface", "trait", "enum", "function", "const",
 				"namespace", "use", "as", "goto", "insteadof":
 				return true
+			case "case":
+				// an enum case name ("case Default;", "case Match = 1;") is an
+				// identifier; a switch case value ends with ":" and is not matched here
+				if n := nextSignificantIndex(s, i); n >= 0 && s.At(n).Kind == token.Punct &&
+					(s.At(n).Value == ";" || s.At(n).Value == "=") {
+					return true
+				}
 			}
 		}
 	}

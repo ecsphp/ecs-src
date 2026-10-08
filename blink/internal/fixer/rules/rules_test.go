@@ -123,6 +123,10 @@ func TestLowercaseKeywords(t *testing.T) {
 	if want := "<?php function foo() { return 1; }"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
+	// an enum case name spelled like a keyword must not be lowercased
+	if _, changed := apply(t, LowercaseKeywords{}, "<?php enum E { case Default; case Match = 1; }"); changed {
+		t.Fatal("enum case name must keep its case")
+	}
 }
 
 func TestConstantCase(t *testing.T) {
