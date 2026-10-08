@@ -164,15 +164,19 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 			if rs < 0 {
 				continue
 			}
-			// with always_move_variable=false an operand wrapped in "(" is not
-			// treated as a variable, so a grouped/assigned right side stays put (a
-			// leading cast like "(int) $x" is not a grouping paren)
-			if s.At(rs).Kind == token.Punct && s.At(rs).Value == "(" && !isCastParen(s, rs) {
-				continue
-			}
 			re := rightComparisonOperandEnd(s, rs)
 			if re < 0 {
 				continue
+			}
+			// with always_move_variable=false a right side that is purely a
+			// parenthesized group "(...)" is not treated as a variable and stays put
+			// (a leading cast like "(int) $x" is not a grouping paren). A group that
+			// is only the base of a larger primary, e.g. "(new X())->y()", is a
+			// variable expression and is still swapped.
+			if s.At(rs).Kind == token.Punct && s.At(rs).Value == "(" && !isCastParen(s, rs) {
+				if c := s.MatchForward(rs); c < 0 || c == re {
+					continue
+				}
 			}
 			if spanIsConstant(s, rs, re) {
 				continue // both sides constant
