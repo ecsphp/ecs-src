@@ -305,6 +305,11 @@ func (f NoWhitespaceBeforeCommaInArray) Fix(s *tokens.Stream) bool {
 					if f.SkipAfterHeredoc && i > 1 && arrayNotationIsHeredoc(s.At(i-2)) {
 						continue
 					}
+					// an empty element ("[, , $x]") keeps its space: the token before
+					// the whitespace is itself a comma, matching php-cs-fixer
+					if i > 1 && s.At(i-2).Kind == token.Punct && s.At(i-2).Value == "," {
+						continue
+					}
 					s.RemoveAt(i - 1)
 					i--
 					changed = true
