@@ -159,3 +159,40 @@ func TestLoadECSErrors(t *testing.T) {
 		t.Error("want error for invalid json")
 	}
 }
+
+func TestLoadECSRejectsConflictingCheckers(t *testing.T) {
+	const yoda = `PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer`
+	const noYoda = `SlevomatCodingStandard\Sniffs\ControlStructures\DisallowYodaComparisonSniff`
+
+	// both halves of a conflicting group loaded -> rejected
+	_, _, err := LoadECS(writeECS(t, `{
+		"rules": [
+			{"class": "`+esc(yoda)+`", "config": {}},
+			{"class": "`+esc(noYoda)+`", "config": {}}
+		]
+	}`))
+	if err == nil {
+		t.Fatal("expected conflicting checkers to be rejected")
+	}
+	if !strings.Contains(err.Error(), "mutually exclude") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// skipping one half resolves the conflict
+	if _, _, err := LoadECS(writeECS(t, `{
+		"rules": [
+			{"class": "`+esc(yoda)+`", "config": {}},
+			{"class": "`+esc(noYoda)+`", "config": {}}
+		],
+		"skips": [{"class": "`+esc(noYoda)+`"}]
+	}`)); err != nil {
+		t.Fatalf("skipping one half should resolve the conflict, got %v", err)
+	}
+
+	// only one half loaded -> fine
+	if _, _, err := LoadECS(writeECS(t, `{
+		"rules": [{"class": "`+esc(yoda)+`", "config": {}}]
+	}`)); err != nil {
+		t.Fatalf("single checker should load, got %v", err)
+	}
+}
