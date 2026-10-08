@@ -78,8 +78,8 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         string $identifier = '',
         string ...$paths,
     ): int {
-        // create ecs.php config file if does not exist yet
-        if (! $this->configInitializer->areSomeCheckersRegistered()) {
+        // create ecs.php config file if does not exist yet, unless an explicit --config was provided
+        if ($config === '' && ! $this->configInitializer->areSomeCheckersRegistered()) {
             $this->configInitializer->createConfig((string) getcwd());
             return ExitCode::SUCCESS;
         }
