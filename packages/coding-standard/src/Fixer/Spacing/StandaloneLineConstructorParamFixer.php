@@ -24,8 +24,7 @@ final class StandaloneLineConstructorParamFixer extends AbstractSymplifyFixer
     public function __construct(
         private readonly ParamNewliner $paramNewliner,
         private readonly MethodNameResolver $methodNameResolver
-    ) {
-    }
+    ) {}
 
     /**
      * Must run before

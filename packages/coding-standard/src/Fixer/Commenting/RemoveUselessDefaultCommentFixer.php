@@ -26,8 +26,7 @@ final class RemoveUselessDefaultCommentFixer extends AbstractSymplifyFixer
         private readonly UselessDocBlockCleaner $uselessDocBlockCleaner,
         private readonly TokenReverser $tokenReverser,
         private readonly ClassNameResolver $classNameResolver,
-    ) {
-    }
+    ) {}
 
     public function getDefinition(): FixerDefinitionInterface
     {

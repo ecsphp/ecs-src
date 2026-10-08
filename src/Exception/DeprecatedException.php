@@ -9,6 +9,4 @@ use Exception;
 /**
  * @api to be used
  */
-final class DeprecatedException extends Exception
-{
-}
+final class DeprecatedException extends Exception {}

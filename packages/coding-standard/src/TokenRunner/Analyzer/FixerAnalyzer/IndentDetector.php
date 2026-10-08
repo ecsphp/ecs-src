@@ -12,8 +12,7 @@ final readonly class IndentDetector
 {
     public function __construct(
         private WhitespacesFixerConfig $whitespacesFixerConfig
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

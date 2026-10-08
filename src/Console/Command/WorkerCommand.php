@@ -32,8 +32,7 @@ final readonly class WorkerCommand implements CommandInterface, HiddenCommandInt
         private WorkerRunner $workerRunner,
         private MemoryLimitter $memoryLimitter,
         private ConfigurationFactory $configurationFactory,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

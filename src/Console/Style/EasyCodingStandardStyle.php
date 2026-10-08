@@ -21,8 +21,7 @@ final readonly class EasyCodingStandardStyle
         private OutputPrinter $outputPrinter,
         private ProgressBar $progressBar,
         private bool $isDebug = false,
-    ) {
-    }
+    ) {}
 
     public function writeln(string $message): void
     {

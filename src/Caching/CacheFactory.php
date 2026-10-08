@@ -16,8 +16,7 @@ final readonly class CacheFactory
 {
     public function __construct(
         private Filesystem $fileSystem
-    ) {
-    }
+    ) {}
 
     /**
      * @api

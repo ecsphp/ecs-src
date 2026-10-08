@@ -19,8 +19,7 @@ final class FileDiff implements SerializableInterface
         private readonly string $diff,
         private readonly string $consoleFormattedDiff,
         private array $appliedCheckers
-    ) {
-    }
+    ) {}
 
     public function getDiff(): string
     {

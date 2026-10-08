@@ -16,8 +16,7 @@ final readonly class Schedule
     public function __construct(
         private int $numberOfProcesses,
         private array $jobs
-    ) {
-    }
+    ) {}
 
     public function getNumberOfProcesses(): int
     {

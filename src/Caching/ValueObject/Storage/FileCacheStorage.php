@@ -19,8 +19,7 @@ final readonly class FileCacheStorage
     public function __construct(
         private string $directory,
         private Filesystem $fileSystem
-    ) {
-    }
+    ) {}
 
     public function load(string $key, string $variableKey): ?string
     {

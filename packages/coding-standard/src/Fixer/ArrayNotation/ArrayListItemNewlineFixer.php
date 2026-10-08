@@ -27,8 +27,7 @@ final class ArrayListItemNewlineFixer extends AbstractSymplifyFixer
         private readonly ArrayItemNewliner $arrayItemNewliner,
         private readonly ArrayAnalyzer $arrayAnalyzer,
         private readonly ArrayBlockInfoFinder $arrayBlockInfoFinder,
-    ) {
-    }
+    ) {}
 
     public function getDefinition(): FixerDefinitionInterface
     {

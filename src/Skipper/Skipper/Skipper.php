@@ -19,8 +19,7 @@ final readonly class Skipper
         private SkippedCriteriaResolver $skippedCriteriaResolver,
         private SkipSkipper $skipSkipper,
         private FileInfoMatcher $fileInfoMatcher,
-    ) {
-    }
+    ) {}
 
     public function shouldSkipElement(string|object $element): bool
     {

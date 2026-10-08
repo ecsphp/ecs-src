@@ -16,8 +16,7 @@ final readonly class ParamNewliner
     public function __construct(
         private BlockFinder $blockFinder,
         private TokensNewliner $tokensNewliner,
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

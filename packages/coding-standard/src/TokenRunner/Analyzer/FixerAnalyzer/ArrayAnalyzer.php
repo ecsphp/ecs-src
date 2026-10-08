@@ -13,8 +13,7 @@ final readonly class ArrayAnalyzer
 {
     public function __construct(
         private TokenSkipper $tokenSkipper
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

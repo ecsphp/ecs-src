@@ -21,8 +21,7 @@ final readonly class FileFactory
         private Skipper $skipper,
         private SniffMetadataCollector $sniffMetadataCollector,
         private EasyCodingStandardStyle $easyCodingStandardStyle
-    ) {
-    }
+    ) {}
 
     public function createFromFile(string $filePath): File
     {

@@ -47,8 +47,7 @@ final class ParallelProcess
         private readonly string $command,
         private readonly LoopInterface $loop,
         private readonly int $timetoutInSeconds
-    ) {
-    }
+    ) {}
 
     /**
      * @param callable(mixed[] $onData) : void $onData

@@ -22,8 +22,7 @@ final readonly class ListCheckersCommand implements CommandInterface
         private FixerFileProcessor $fixerFileProcessor,
         private CheckerListReporter $checkerListReporter,
         private SkippedCriteriaResolver $skippedCriteriaResolver
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
@@ -95,7 +94,7 @@ final readonly class ListCheckersCommand implements CommandInterface
      */
     private function getObjectClasses(array $checkers): array
     {
-        $objectClasses = array_map(static fn (object $fixer): string => $fixer::class, $checkers);
+        $objectClasses = array_map(static fn(object $fixer): string => $fixer::class, $checkers);
         sort($objectClasses);
 
         return $objectClasses;

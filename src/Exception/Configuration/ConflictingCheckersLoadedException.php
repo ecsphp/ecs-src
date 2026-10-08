@@ -6,6 +6,4 @@ namespace Symplify\EasyCodingStandard\Exception\Configuration;
 
 use Exception;
 
-final class ConflictingCheckersLoadedException extends Exception
-{
-}
+final class ConflictingCheckersLoadedException extends Exception {}

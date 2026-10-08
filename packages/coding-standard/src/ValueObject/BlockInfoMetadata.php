@@ -11,8 +11,7 @@ final readonly class BlockInfoMetadata
     public function __construct(
         private string $blockType,
         private BlockInfo $blockInfo
-    ) {
-    }
+    ) {}
 
     public function getBlockType(): string
     {

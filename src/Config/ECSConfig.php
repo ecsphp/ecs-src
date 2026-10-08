@@ -309,7 +309,7 @@ final class ECSConfig extends Container
 
         $matchingCheckers = array_filter(
             $checkerInstances,
-            static fn (object $instance): bool => $instance instanceof $contractClass
+            static fn(object $instance): bool => $instance instanceof $contractClass
         );
 
         return [...$instances, ...array_values($matchingCheckers)];
@@ -324,7 +324,7 @@ final class ECSConfig extends Container
     {
         return array_values(array_filter(
             array_keys($this->checkerConfiguration),
-            fn (string $checkerClass): bool => ! isset($this->removedCheckers[$checkerClass])
+            fn(string $checkerClass): bool => ! isset($this->removedCheckers[$checkerClass])
         ));
     }
 
@@ -416,7 +416,7 @@ final class ECSConfig extends Container
     {
         // ensure all rules are registered exactly once
         $checkerClassToCount = array_count_values($checkerClasses);
-        $duplicatedCheckerClassToCount = array_filter($checkerClassToCount, static fn (int $count): bool => $count > 1);
+        $duplicatedCheckerClassToCount = array_filter($checkerClassToCount, static fn(int $count): bool => $count > 1);
 
         if ($duplicatedCheckerClassToCount === []) {
             return;

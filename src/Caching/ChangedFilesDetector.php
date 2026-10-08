@@ -19,8 +19,7 @@ final readonly class ChangedFilesDetector
     public function __construct(
         private FileHashComputer $fileHashComputer,
         private Cache $cache
-    ) {
-    }
+    ) {}
 
     /**
      * @api For tests

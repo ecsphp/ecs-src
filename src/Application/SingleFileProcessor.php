@@ -16,8 +16,7 @@ final readonly class SingleFileProcessor
         private Skipper $skipper,
         private ChangedFilesDetector $changedFilesDetector,
         private FileProcessorCollector $fileProcessorCollector
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{file_diffs?: FileDiff[], coding_standard_errors?: CodingStandardError[]}

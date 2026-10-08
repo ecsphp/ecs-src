@@ -16,13 +16,12 @@ final readonly class ConfigInitializer
         private EasyCodingStandardStyle $easyCodingStandardStyle,
         private InitPathsResolver $initPathsResolver,
         private \Symfony\Component\Filesystem\Filesystem $filesystem,
-    ) {
-    }
+    ) {}
 
     public function areSomeCheckersRegistered(): bool
     {
         $fileProcessors = $this->fileProcessorCollector->getFileProcessors();
-        return array_any($fileProcessors, fn (FileProcessorInterface $fileProcessor): bool => $fileProcessor->getCheckers() !== []);
+        return array_any($fileProcessors, fn(FileProcessorInterface $fileProcessor): bool => $fileProcessor->getCheckers() !== []);
     }
 
     public function createConfig(string $projectDirectory): void

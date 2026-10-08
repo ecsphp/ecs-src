@@ -9,5 +9,5 @@ return RectorConfig::configure()
     ->withSkip([
         '*/Tests/*',
         '*/tests/*',
-        '*/Fixtures/DirectoryExpansion/.hiddenAbove/*'
+        '*/Fixtures/DirectoryExpansion/.hiddenAbove/*',
     ]);

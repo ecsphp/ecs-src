@@ -18,7 +18,5 @@ final class AnotherSniff implements Sniff
         return [T_WHILE];
     }
 
-    public function process(File $phpcsFile, $stackPtr)
-    {
-    }
+    public function process(File $phpcsFile, $stackPtr) {}
 }

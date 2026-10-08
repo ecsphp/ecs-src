@@ -139,7 +139,7 @@ final class RemoveEventSubscriberDescriptionFixer extends AbstractSymplifyFixer
 
         $descriptionWords = array_filter(
             $descriptionWords,
-            static fn (string $word): bool => $word !== 'event'
+            static fn(string $word): bool => $word !== 'event'
         );
 
         if ($descriptionWords === []) {
@@ -149,7 +149,7 @@ final class RemoveEventSubscriberDescriptionFixer extends AbstractSymplifyFixer
         $methodWords = array_filter(
             $this->resolveWords($methodName),
             // event subscriber handlers are commonly prefixed with "on"
-            static fn (string $word): bool => $word !== 'on'
+            static fn(string $word): bool => $word !== 'on'
         );
 
         sort($descriptionWords);

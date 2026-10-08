@@ -10,8 +10,7 @@ final readonly class Cache
 {
     public function __construct(
         private FileCacheStorage $fileCacheStorage
-    ) {
-    }
+    ) {}
 
     /**
      * @api

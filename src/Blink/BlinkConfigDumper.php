@@ -23,8 +23,7 @@ final readonly class BlinkConfigDumper
         private SniffFileProcessor $sniffFileProcessor,
         private FixerFileProcessor $fixerFileProcessor,
         private SkippedCriteriaResolver $skippedCriteriaResolver,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string[] $paths

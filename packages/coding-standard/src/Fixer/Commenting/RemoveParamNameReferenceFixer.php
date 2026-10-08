@@ -35,7 +35,7 @@ final class RemoveParamNameReferenceFixer extends AbstractDocBlockFixer
         return Regex::replace(
             $docContent,
             self::PARAM_NAME_REGEX,
-            static fn ($match): string => $match['param'] . $match['paramName']
+            static fn($match): string => $match['param'] . $match['paramName']
         );
     }
 }

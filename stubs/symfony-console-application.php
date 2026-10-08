@@ -16,7 +16,5 @@ namespace Symfony\Component\Console;
  */
 class Application
 {
-    public function __construct(string $name = 'UNKNOWN', string $version = 'UNKNOWN')
-    {
-    }
+    public function __construct(string $name = 'UNKNOWN', string $version = 'UNKNOWN') {}
 }

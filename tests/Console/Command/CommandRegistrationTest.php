@@ -40,7 +40,7 @@ final class CommandRegistrationTest extends AbstractTestCase
     public function testWorkerCommandIsHidden(): void
     {
         $visibleCommandClasses = array_map(
-            static fn (object $command): string => $command::class,
+            static fn(object $command): string => $command::class,
             $this->commandRegistry->getVisible()
         );
 

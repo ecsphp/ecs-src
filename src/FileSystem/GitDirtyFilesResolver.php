@@ -21,7 +21,7 @@ final class GitDirtyFilesResolver
 
         return array_values(array_filter(
             $filePaths,
-            static fn (string $filePath): bool => in_array(realpath($filePath) ?: $filePath, $dirtyFilePaths, true)
+            static fn(string $filePath): bool => in_array(realpath($filePath) ?: $filePath, $dirtyFilePaths, true)
         ));
     }
 

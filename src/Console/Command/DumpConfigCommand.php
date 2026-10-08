@@ -20,8 +20,7 @@ final readonly class DumpConfigCommand implements CommandInterface
     public function __construct(
         private ConfigurationFactory $configurationFactory,
         private BlinkConfigDumper $blinkConfigDumper,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

@@ -9,8 +9,7 @@ final readonly class BlockInfo
     public function __construct(
         private int $start,
         private int $end
-    ) {
-    }
+    ) {}
 
     public function getStart(): int
     {

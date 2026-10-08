@@ -14,8 +14,7 @@ final readonly class IndentResolver
     public function __construct(
         private IndentDetector $indentDetector,
         private WhitespacesFixerConfig $whitespacesFixerConfig
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

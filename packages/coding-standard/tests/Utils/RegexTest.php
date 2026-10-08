@@ -44,7 +44,7 @@ final class RegexTest extends TestCase
 
     public function testReplaceWithCallable(): void
     {
-        $result = Regex::replace('a1b', '#\d#', static fn (array $match): string => '[' . $match[0] . ']');
+        $result = Regex::replace('a1b', '#\d#', static fn(array $match): string => '[' . $match[0] . ']');
 
         $this->assertSame('a[1]b', $result);
     }

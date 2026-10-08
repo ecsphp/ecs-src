@@ -61,7 +61,7 @@ final class BlinkConfigDumperTest extends AbstractTestCase
 
         $this->assertContains(LowercaseKeywordsFixer::class, $skipClasses);
 
-        $matchedGlob = array_filter($skipPaths, static fn (string $path): bool => str_contains($path, 'legacy'));
+        $matchedGlob = array_filter($skipPaths, static fn(string $path): bool => str_contains($path, 'legacy'));
         $this->assertNotEmpty($matchedGlob, 'expected the legacy/* path skip to be dumped');
     }
 }

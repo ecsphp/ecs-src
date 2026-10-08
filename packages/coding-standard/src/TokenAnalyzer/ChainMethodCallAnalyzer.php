@@ -14,8 +14,7 @@ final class ChainMethodCallAnalyzer
 
     public function __construct(
         private readonly NewlineAnalyzer $newlineAnalyzer
-    ) {
-    }
+    ) {}
 
     /**
      * Matches e.g: return app()->some(), app()->some(), (clone app)->some()

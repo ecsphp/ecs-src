@@ -14,7 +14,7 @@ use Symplify\EasyCodingStandard\Application\Version\StaticVersionResolver;
 // @see https://github.com/humbug/php-scoper/blob/cb23986d9309a10eaa284242f2169723af4e4a7e/docs/further-reading.md#further-reading
 
 $polyfillsBootstraps = array_map(
-    static fn (SplFileInfo $fileInfo) => $fileInfo->getPathname(),
+    static fn(SplFileInfo $fileInfo) => $fileInfo->getPathname(),
     iterator_to_array(
         Finder::create()
             ->files()
@@ -25,7 +25,7 @@ $polyfillsBootstraps = array_map(
 );
 
 $polyfillsStubs = array_map(
-    static fn (SplFileInfo $fileInfo) => $fileInfo->getPathname(),
+    static fn(SplFileInfo $fileInfo) => $fileInfo->getPathname(),
     iterator_to_array(
         Finder::create()
             ->files()
@@ -112,9 +112,9 @@ return [
         // fixes https://github.com/easy-coding-standard/ecs-src/issues/4
         function (string $filePath, string $prefix, string $content): string {
             if (
-                ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractCheckerTestCase.php') &&
-                ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractTestCase.php') &&
-                ! str_ends_with($filePath, 'src/Fixer/PhpUnit/PhpUnitTestClassRequiresCoversFixer.php')
+                ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractCheckerTestCase.php')
+                && ! str_ends_with($filePath, 'src/Testing/PHPUnit/AbstractTestCase.php')
+                && ! str_ends_with($filePath, 'src/Fixer/PhpUnit/PhpUnitTestClassRequiresCoversFixer.php')
             ) {
                 return $content;
             }

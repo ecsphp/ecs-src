@@ -6,6 +6,4 @@ namespace Symplify\EasyCodingStandard\Parallel\Exception;
 
 use Exception;
 
-final class ParallelShouldNotHappenException extends Exception
-{
-}
+final class ParallelShouldNotHappenException extends Exception {}

@@ -73,8 +73,7 @@ final class LineLengthFixer extends AbstractSymplifyFixer implements Configurabl
         private readonly MethodNameResolver $methodNameResolver,
         private readonly HeredocAnalyzer $heredocAnalyzer,
         private readonly ?StandaloneLineConstructorParamFixer $standaloneLineConstructorParamFixer = null
-    ) {
-    }
+    ) {}
 
     public function getDefinition(): FixerDefinitionInterface
     {

@@ -20,8 +20,7 @@ final readonly class TokensNewliner
         private LineLengthOpenerTransformer $lineLengthOpenerTransformer,
         private WhitespacesFixerConfig $whitespacesFixerConfig,
         private IndentResolver $indentResolver
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

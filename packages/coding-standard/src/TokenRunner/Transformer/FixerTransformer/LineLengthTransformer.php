@@ -17,8 +17,7 @@ final readonly class LineLengthTransformer
         private TokensInliner $tokensInliner,
         private FirstLineLengthResolver $firstLineLengthResolver,
         private TokensNewliner $tokensNewliner
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

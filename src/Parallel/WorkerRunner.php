@@ -22,8 +22,7 @@ final readonly class WorkerRunner
     public function __construct(
         private SingleFileProcessor $singleFileProcessor,
         private ParametersMerger $parametersMerger
-    ) {
-    }
+    ) {}
 
     public function run(Encoder $encoder, Decoder $decoder, Configuration $configuration): void
     {

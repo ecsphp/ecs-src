@@ -15,8 +15,7 @@ final readonly class TokenSkipper
 {
     public function __construct(
         private BlockFinder $blockFinder
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

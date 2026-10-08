@@ -15,8 +15,7 @@ final readonly class FirstLineLengthResolver
 {
     public function __construct(
         private LineLengthAndPositionFactory $lineLengthAndPositionFactory
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

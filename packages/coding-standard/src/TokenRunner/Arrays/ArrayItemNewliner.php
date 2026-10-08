@@ -15,8 +15,7 @@ final readonly class ArrayItemNewliner
     public function __construct(
         private ArrayAnalyzer $arrayAnalyzer,
         private WhitespacesFixerConfig $whitespacesFixerConfig
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

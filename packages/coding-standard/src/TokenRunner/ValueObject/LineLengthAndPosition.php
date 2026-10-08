@@ -9,8 +9,7 @@ final readonly class LineLengthAndPosition
     public function __construct(
         private int $lineLength,
         private int $currentPosition
-    ) {
-    }
+    ) {}
 
     public function getLineLength(): int
     {

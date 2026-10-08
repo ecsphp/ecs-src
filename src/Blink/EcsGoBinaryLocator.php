@@ -18,8 +18,7 @@ final readonly class EcsGoBinaryLocator
     public function __construct(
         // filled with per-platform blink binaries by the release build, see .github/workflows/buid_release.yaml
         private string $bundledDirectory = __DIR__ . '/../../bin',
-    ) {
-    }
+    ) {}
 
     public function locate(): string
     {

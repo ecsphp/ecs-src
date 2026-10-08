@@ -38,8 +38,7 @@ final class SkippedCriteriaResolver
 
     public function __construct(
         private readonly PathNormalizer $pathNormalizer
-    ) {
-    }
+    ) {}
 
     /**
      * @return string[]

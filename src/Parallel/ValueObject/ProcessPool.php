@@ -19,8 +19,7 @@ final class ProcessPool
 
     public function __construct(
         private readonly TcpServer $tcpServer
-    ) {
-    }
+    ) {}
 
     public function getProcess(string $identifier): ParallelProcess
     {

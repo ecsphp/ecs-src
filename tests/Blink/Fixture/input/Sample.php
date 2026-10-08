@@ -1,3 +1,3 @@
 <?php
 
-$values = array(1, 2);
+$values = [1, 2];

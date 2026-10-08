@@ -44,7 +44,7 @@ final class AddMissingVarNameFixer extends AbstractDocBlockFixer
         return Regex::replace(
             $docContent,
             self::VAR_WITHOUT_NAME_REGEX,
-            static fn (array $match): string => $match['open'] . $match['type'] . ' ' . $nextVariableToken->getContent() . $match['close']
+            static fn(array $match): string => $match['open'] . $match['type'] . ' ' . $nextVariableToken->getContent() . $match['close']
         );
     }
 

@@ -79,7 +79,7 @@ final readonly class ErrorAndDiffResult
     {
         usort(
             $errorMessages,
-            static fn (CodingStandardError $firstCodingStandardError, CodingStandardError $secondCodingStandardError): int => [
+            static fn(CodingStandardError $firstCodingStandardError, CodingStandardError $secondCodingStandardError): int => [
                 $firstCodingStandardError->getRelativeFilePath(),
                 $firstCodingStandardError->getLine(),
             ]
@@ -97,7 +97,7 @@ final readonly class ErrorAndDiffResult
     {
         uasort(
             $fileDiffs,
-            static fn (FileDiff $firstFileDiff, FileDiff $secondFileDiff): int => $firstFileDiff->getRelativeFilePath() <=> $secondFileDiff->getRelativeFilePath()
+            static fn(FileDiff $firstFileDiff, FileDiff $secondFileDiff): int => $firstFileDiff->getRelativeFilePath() <=> $secondFileDiff->getRelativeFilePath()
         );
 
         return $fileDiffs;

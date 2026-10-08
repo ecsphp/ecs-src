@@ -24,9 +24,9 @@ final class File extends BaseFile
 {
     private string $relativePath;
 
-    private string|null $activeSniffClass = null;
+    private ?string $activeSniffClass = null;
 
-    private string|null $previousActiveSniffClass = null;
+    private ?string $previousActiveSniffClass = null;
 
     /**
      * @var array<int|string, Sniff[]>

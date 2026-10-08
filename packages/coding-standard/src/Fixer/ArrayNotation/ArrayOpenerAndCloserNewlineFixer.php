@@ -29,8 +29,7 @@ final class ArrayOpenerAndCloserNewlineFixer extends AbstractSymplifyFixer
         private readonly ArrayBlockInfoFinder $arrayBlockInfoFinder,
         private readonly WhitespacesFixerConfig $whitespacesFixerConfig,
         private readonly ArrayAnalyzer $arrayAnalyzer
-    ) {
-    }
+    ) {}
 
     public function getDefinition(): FixerDefinitionInterface
     {

@@ -10,8 +10,7 @@ final readonly class FileFilter
 {
     public function __construct(
         private ChangedFilesDetector $changedFilesDetector
-    ) {
-    }
+    ) {}
 
     /**
      * @param string[] $filePaths

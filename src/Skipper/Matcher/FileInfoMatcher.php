@@ -11,8 +11,7 @@ final readonly class FileInfoMatcher
 {
     public function __construct(
         private FnMatchPathNormalizer $fnMatchPathNormalizer,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string[] $filePatterns
@@ -21,7 +20,7 @@ final readonly class FileInfoMatcher
     {
         return array_any(
             $filePatterns,
-            fn (string $filePattern): bool => $this->doesFileInfoMatchPattern($fileInfo, $filePattern)
+            fn(string $filePattern): bool => $this->doesFileInfoMatchPattern($fileInfo, $filePattern)
         );
     }
 

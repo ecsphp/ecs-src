@@ -60,8 +60,7 @@ final class StandaloneLineSymfonyAttributeParamFixer extends AbstractSymplifyFix
 
     public function __construct(
         private readonly TokensNewliner $tokensNewliner
-    ) {
-    }
+    ) {}
 
     /**
      * Must run before

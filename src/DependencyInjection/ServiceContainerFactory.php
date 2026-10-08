@@ -58,7 +58,7 @@ final class ServiceContainerFactory
         });
 
         // diffing
-        $ecsConfig->service(DifferInterface::class, static fn (): DifferInterface => new UnifiedDiffer());
+        $ecsConfig->service(DifferInterface::class, static fn(): DifferInterface => new UnifiedDiffer());
 
         // output formatters - autodiscovered, then collected by contract for OutputFormatterCollector
         $ecsConfig->autodiscover(__DIR__ . '/../Console/Output');

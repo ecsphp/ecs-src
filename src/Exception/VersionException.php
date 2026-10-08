@@ -6,6 +6,4 @@ namespace Symplify\EasyCodingStandard\Exception;
 
 use Exception;
 
-final class VersionException extends Exception
-{
-}
+final class VersionException extends Exception {}

@@ -167,10 +167,10 @@ final class SniffFileProcessor implements FileProcessorInterface
                 $appliedCheckers = $this->sniffMetadataCollector->getAppliedSniffs();
 
                 throw new RuntimeException(sprintf(
-                    "Contents of file \"%s\" did not stabilize after %d fix iterations.\nLast diff was:\n%s\n" .
-                    "There are probably checkers that cancel changes of each other. Try to reconfigure the checkers.\n" .
-                    "Applied checkers:\n" .
-                    "- %s\n",
+                    "Contents of file \"%s\" did not stabilize after %d fix iterations.\nLast diff was:\n%s\n"
+                    . "There are probably checkers that cancel changes of each other. Try to reconfigure the checkers.\n"
+                    . "Applied checkers:\n"
+                    . "- %s\n",
                     $filePath,
                     $this->fixer->loops,
                     $diff,

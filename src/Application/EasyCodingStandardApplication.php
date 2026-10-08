@@ -39,8 +39,7 @@ final readonly class EasyCodingStandardApplication
         private ParallelFileProcessor $parallelFileProcessor,
         private CpuCoreCountProvider $cpuCoreCountProvider,
         private ParametersMerger $parametersMerger
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{coding_standard_errors?: CodingStandardError[], file_diffs?: FileDiff[], system_errors?: SystemError[]|string[], system_errors_count?: int, files_count?: int}

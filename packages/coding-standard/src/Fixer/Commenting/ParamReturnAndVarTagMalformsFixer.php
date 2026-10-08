@@ -36,9 +36,7 @@ final class ParamReturnAndVarTagMalformsFixer extends AbstractSymplifyFixer impl
     /**
      * @param Tokens<Token> $tokens
      */
-    public function fix(SplFileInfo $fileInfo, Tokens $tokens): void
-    {
-    }
+    public function fix(SplFileInfo $fileInfo, Tokens $tokens): void {}
 
     /**
      * @return list<string>

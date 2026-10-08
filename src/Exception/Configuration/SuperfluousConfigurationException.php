@@ -6,6 +6,4 @@ namespace Symplify\EasyCodingStandard\Exception\Configuration;
 
 use Exception;
 
-final class SuperfluousConfigurationException extends Exception
-{
-}
+final class SuperfluousConfigurationException extends Exception {}

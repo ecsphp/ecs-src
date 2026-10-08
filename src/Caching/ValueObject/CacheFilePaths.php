@@ -10,8 +10,7 @@ final readonly class CacheFilePaths
         private string $firstDirectory,
         private string $secondDirectory,
         private string $filePath
-    ) {
-    }
+    ) {}
 
     public function getFirstDirectory(): string
     {

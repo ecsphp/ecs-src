@@ -29,8 +29,7 @@ final class StandaloneLineInMultilineArrayFixer extends AbstractSymplifyFixer
         private readonly ArrayWrapperFactory $arrayWrapperFactory,
         private readonly TokensNewliner $tokensNewliner,
         private readonly BlockFinder $blockFinder
-    ) {
-    }
+    ) {}
 
     public function getDefinition(): FixerDefinitionInterface
     {

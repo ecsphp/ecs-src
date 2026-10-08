@@ -6,6 +6,4 @@ namespace Symplify\EasyCodingStandard\Blink\Exception;
 
 use Exception;
 
-final class EcsGoBinaryNotFoundException extends Exception
-{
-}
+final class EcsGoBinaryNotFoundException extends Exception {}

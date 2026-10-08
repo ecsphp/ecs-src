@@ -13,8 +13,7 @@ final readonly class SystemError implements SerializableInterface
         private int $line,
         private string $message,
         private string $relativeFilePath
-    ) {
-    }
+    ) {}
 
     public function getMessage(): string
     {

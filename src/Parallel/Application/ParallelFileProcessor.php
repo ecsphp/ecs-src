@@ -40,8 +40,7 @@ final readonly class ParallelFileProcessor
 
     public function __construct(
         private WorkerCommandLineFactory $workerCommandLineFactory,
-    ) {
-    }
+    ) {}
 
     /**
      * @api

@@ -13,8 +13,7 @@ final readonly class CacheItem
     public function __construct(
         private string $variableKey,
         private mixed $data
-    ) {
-    }
+    ) {}
 
     /**
      * @param mixed[] $properties

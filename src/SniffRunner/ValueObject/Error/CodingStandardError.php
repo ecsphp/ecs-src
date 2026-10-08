@@ -14,8 +14,7 @@ final readonly class CodingStandardError implements SerializableInterface
         private string $message,
         private string $checkerClass,
         private string $relativeFilePath
-    ) {
-    }
+    ) {}
 
     public function getLine(): int
     {

@@ -21,8 +21,7 @@ final readonly class JsonOutputFormatter implements OutputFormatterInterface
     public function __construct(
         private EasyCodingStandardStyle $easyCodingStandardStyle,
         private ExitCodeResolver $exitCodeResolver
-    ) {
-    }
+    ) {}
 
     /**
      * @return ExitCode::*

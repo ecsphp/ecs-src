@@ -28,8 +28,7 @@ final class MethodChainingNewlineFixer extends AbstractSymplifyFixer implements 
         private readonly WhitespacesFixerConfig $whitespacesFixerConfig,
         private readonly BlockFinder $blockFinder,
         private readonly ChainMethodCallAnalyzer $chainMethodCallAnalyzer
-    ) {
-    }
+    ) {}
 
     public function getDefinition(): FixerDefinitionInterface
     {

@@ -14,8 +14,7 @@ final readonly class SkipSkipper
 {
     public function __construct(
         private FileInfoMatcher $fileInfoMatcher
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<string, string[]|null> $skippedClasses

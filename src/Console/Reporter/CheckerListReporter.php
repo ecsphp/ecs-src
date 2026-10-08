@@ -10,8 +10,7 @@ final readonly class CheckerListReporter
 {
     public function __construct(
         private EasyCodingStandardStyle $easyCodingStandardStyle
-    ) {
-    }
+    ) {}
 
     /**
      * @param string[] $checkerClasses

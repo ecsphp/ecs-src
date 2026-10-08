@@ -25,8 +25,7 @@ abstract class AbstractDocBlockFixer extends AbstractSymplifyFixer
 
     public function __construct(
         protected readonly TokenReverser $tokenReverser
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

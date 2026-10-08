@@ -46,8 +46,7 @@ final class StandaloneLineRequiredParamFixer extends AbstractSymplifyFixer
 
     public function __construct(
         private readonly ParamNewliner $paramNewliner
-    ) {
-    }
+    ) {}
 
     /**
      * Must run before

@@ -14,8 +14,7 @@ final readonly class ArrayBlockInfoFinder
 {
     public function __construct(
         private BlockFinder $blockFinder
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

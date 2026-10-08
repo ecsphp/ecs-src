@@ -20,8 +20,7 @@ final readonly class BlinkRunner
 {
     public function __construct(
         private EcsGoBinaryLocator $ecsGoBinaryLocator,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array{paths: string[], rules: array<mixed>, skips: array<mixed>} $configData

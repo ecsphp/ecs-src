@@ -14,8 +14,7 @@ final readonly class ArrayWrapperFactory
 {
     public function __construct(
         private TokenSkipper $tokenSkipper
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

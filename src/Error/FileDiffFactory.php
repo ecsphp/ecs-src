@@ -14,8 +14,7 @@ final readonly class FileDiffFactory
 {
     public function __construct(
         private ColorConsoleDiffFormatter $colorConsoleDiffFormatter
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<class-string<FixerInterface|Sniff>|string> $appliedCheckers

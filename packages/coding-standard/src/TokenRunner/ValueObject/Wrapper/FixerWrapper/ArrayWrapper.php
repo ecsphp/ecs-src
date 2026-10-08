@@ -24,8 +24,7 @@ final readonly class ArrayWrapper
         private Tokens $tokens,
         private BlockInfo $blockInfo,
         private TokenSkipper $tokenSkipper
-    ) {
-    }
+    ) {}
 
     public function isAssociativeArray(): bool
     {

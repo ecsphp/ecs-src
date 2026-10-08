@@ -17,8 +17,7 @@ final readonly class ProcessedFileReporter
 {
     public function __construct(
         private OutputFormatterCollector $outputFormatterCollector,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array{system_errors?: SystemError[]|string[], file_diffs?: FileDiff[], coding_standard_errors?: CodingStandardError[], system_errors_count?: int, files_count?: int} $errorsAndDiffs

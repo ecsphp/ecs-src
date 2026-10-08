@@ -34,8 +34,7 @@ final class TypeToVarTagFixer extends AbstractSymplifyFixer
 
     public function __construct(
         private readonly TokenReverser $tokenReverser
-    ) {
-    }
+    ) {}
 
     public function getDefinition(): FixerDefinitionInterface
     {

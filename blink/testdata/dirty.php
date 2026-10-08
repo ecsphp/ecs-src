@@ -1,12 +1,12 @@
 <?php
-    namespace App;
+
+namespace App;
 
 function greet($name)
-{  
-    $greeting = 'Hello ' . $name ;
+{
+    $greeting = 'Hello ' . $name;
 
-    $count=1;$total=2;
+    $count = 1;
+    $total = 2;
     return $greeting;
 }
-
-

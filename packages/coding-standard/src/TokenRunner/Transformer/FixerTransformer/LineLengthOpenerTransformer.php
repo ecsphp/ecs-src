@@ -14,8 +14,7 @@ final readonly class LineLengthOpenerTransformer
 {
     public function __construct(
         private CallAnalyzer $callAnalyzer
-    ) {
-    }
+    ) {}
 
     /**
      * @param Tokens<Token> $tokens

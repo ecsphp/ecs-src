@@ -29,8 +29,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         private BlinkRunner $blinkRunner,
         private BlinkConfigDumper $blinkConfigDumper,
         private EasyCodingStandardStyle $easyCodingStandardStyle,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
