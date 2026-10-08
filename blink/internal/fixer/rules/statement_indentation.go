@@ -385,6 +385,20 @@ func (f StatementIndentation) indentDecision(s *tokens.Stream, index int, sc stm
 	return true
 }
 
+// stmtIsDynamicMemberBrace reports whether the "{" at index opens a dynamic
+// member access ("$a->{$k}", "$a?->{$k}", "Foo::{$k}") rather than a block.
+func stmtIsDynamicMemberBrace(s *tokens.Stream, index int) bool {
+	p := prevMeaningfulIndex(s, index)
+	if p < 0 || s.At(p).Kind != token.Punct {
+		return false
+	}
+	switch s.At(p).Value {
+	case "->", "?->", "::":
+		return true
+	}
+	return false
+}
+
 // stmtIsBlockFirst reports whether the token at index opens a block scope: "{",
 // a destructuring "[", or a "(" that is not an array(...) opener.
 func stmtIsBlockFirst(s *tokens.Stream, index int) bool {
@@ -394,7 +408,8 @@ func stmtIsBlockFirst(s *tokens.Stream, index int) bool {
 	}
 	switch t.Value {
 	case "{":
-		return true
+		// a dynamic member access ("$a->{$k}", "Foo::{$k}") is not a block scope
+		return !stmtIsDynamicMemberBrace(s, index)
 	case "[":
 		return isDestructuringAssignOpen(s, index)
 	case "(":
@@ -599,8 +614,13 @@ func stmtFindStatementEndIndex(s *tokens.Stream, index, parentScopeEndIndex int)
 			continue
 		}
 		if et.Kind == token.Punct && (et.Value == "(" || et.Value == "{" || (et.Value == "[" && isArrayLiteralOpen(s, se))) {
-			c := s.MatchForward(se)
-			if c >= 0 {
+			if c := s.MatchForward(se); c >= 0 {
+				// a dynamic member access ("$a->{$k}") is not a statement: skip the
+				// whole group so its closing "}" is not read as a statement terminator
+				if et.Value == "{" && stmtIsDynamicMemberBrace(s, se) {
+					se = c
+					continue
+				}
 				se = c
 				et = s.At(se)
 			}
