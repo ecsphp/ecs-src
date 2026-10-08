@@ -16,6 +16,9 @@ func TestYodaStyle(t *testing.T) {
 	assertFix(t, f, "<?php\nif (null === static::$r) {}", "<?php\nif (static::$r === null) {}", true)
 	assertFix(t, f, "<?php\nif (null !== $this->pending) {}", "<?php\nif ($this->pending !== null) {}", true)
 	assertFix(t, f, "<?php\nif (true === $app->resolved($a)) {}", "<?php\nif ($app->resolved($a) === true) {}", true)
+	// right side is a parenthesized group that is the base of a larger primary,
+	// e.g. "(new X())->y()": still a variable expression, so it is de-yoda'd
+	assertFix(t, f, "<?php\nif (null !== (new static($a))->user()) {}", "<?php\nif ((new static($a))->user() !== null) {}", true)
 
 	// constant name, ::class, signed number, empty array on the left
 	assertFix(t, f, "<?php\nif (JSON_ERROR_NONE === json_last_error()) {}", "<?php\nif (json_last_error() === JSON_ERROR_NONE) {}", true)
