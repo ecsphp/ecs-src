@@ -26,6 +26,24 @@ func TestGen3ClassSepMethods(t *testing.T) {
 	}
 }
 
+func TestGen3ClassSepKeywordTypedProperty(t *testing.T) {
+	// a property typed with a keyword type ("array") is still a property and must
+	// be separated from the previous member by a blank line
+	src := "<?php class A {\n" +
+		"    private int $a;\n" +
+		"    private array $b = [];\n" +
+		"}"
+	want := "<?php class A {\n" +
+		"    private int $a;\n" +
+		"\n" +
+		"    private array $b = [];\n" +
+		"}"
+	got, changed := apply(t, ClassAttributesSeparation{}, src)
+	if !changed || got != want {
+		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
+	}
+}
+
 func TestGen3ClassSepPropertiesAndConsts(t *testing.T) {
 	src := "<?php class A {\n" +
 		"    const X = 1;\n" +

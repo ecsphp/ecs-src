@@ -224,9 +224,9 @@ func classSepMemberType(s *tokens.Stream, m int) int {
 			return sepMethod
 		case "case":
 			return sepCase
-		default:
-			return sepUnknown
 		}
+		// otherwise a keyword type ("array", "int", "string", ...) opens a typed
+		// property; fall through to the variable scan below
 	}
 	for x := k; x <= end; x++ {
 		t := s.At(x)
