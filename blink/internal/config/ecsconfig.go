@@ -56,6 +56,51 @@ type ECSResolution struct {
 	PerPathSkips []string
 }
 
+// conflictingCheckerGroups are checker pairs that do the opposite of each other
+// (e.g. Yoda vs no-Yoda). A config that loads both is contradictory, so blink
+// rejects it, mirroring ECS's ConflictingCheckersCompilerPass. Classes are named
+// exactly as ECS reports them in the dump-config "class" field.
+var conflictingCheckerGroups = [][]string{
+	{`Symplify\CodingStandard\Fixer\Spacing\StandaloneLineConstructorParamFixer`, `Symplify\CodingStandard\Fixer\Spacing\StandaloneLinePromotedPropertyFixer`},
+	{`SlevomatCodingStandard\Sniffs\ControlStructures\DisallowYodaComparisonSniff`, `PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer`},
+	{`PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\LowerCaseConstantSniff`, `PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\UpperCaseConstantSniff`},
+	{`PhpCsFixer\Fixer\Casing\ConstantCaseFixer`, `PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\UpperCaseConstantSniff`},
+	{`SlevomatCodingStandard\Sniffs\TypeHints\DeclareStrictTypesSniff`, `PhpCsFixer\Fixer\LanguageConstruct\DeclareEqualNormalizeFixer`},
+	{`SlevomatCodingStandard\Sniffs\TypeHints\DeclareStrictTypesSniff`, `PhpCsFixer\Fixer\PhpTag\BlankLineAfterOpeningTagFixer`},
+	{`PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\FileHeaderSniff`, `PhpCsFixer\Fixer\Phpdoc\NoBlankLinesAfterPhpdocFixer`},
+	{`PHP_CodeSniffer\Standards\PSR2\Sniffs\Files\EndFileNewlineSniff`, `PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNoNewlineSniff`},
+	{`PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNewlineSniff`, `PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNoNewlineSniff`},
+	{`PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowTabIndentSniff`, `PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowSpaceIndentSniff`},
+}
+
+// checkConflictingCheckers rejects a config that loads both halves of any
+// conflicting group, mirroring ECS's ConflictingCheckersCompilerPass. A class
+// disabled via skip is not loaded and so does not count.
+func checkConflictingCheckers(f ecsFile, skippedClasses map[string]bool) error {
+	active := map[string]bool{}
+	for _, rule := range f.Rules {
+		if !skippedClasses[rule.Class] {
+			active[rule.Class] = true
+		}
+	}
+	for _, group := range conflictingCheckerGroups {
+		both := true
+		for _, class := range group {
+			if !active[class] {
+				both = false
+				break
+			}
+		}
+		if both {
+			return fmt.Errorf(
+				`checkers "%s" and "%s" mutually exclude each other; use only one of them or exclude the unwanted one with ->withSkip(...)`,
+				group[0], group[1],
+			)
+		}
+	}
+	return nil
+}
+
 // LoadECS reads an `ecs dump-config` JSON file and resolves it to a blink
 // config, returning a report of what could not be mapped.
 func LoadECS(path string) (*Config, *ECSResolution, error) {
@@ -103,6 +148,10 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 			}
 			config.Skip = append(config.Skip, skip.Paths...)
 		}
+	}
+
+	if err := checkConflictingCheckers(f, skippedClasses); err != nil {
+		return nil, nil, err
 	}
 
 	seen := map[string]bool{}
