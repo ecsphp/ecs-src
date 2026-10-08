@@ -465,6 +465,13 @@ func stmtKeywordIsIdentifierUse(s *tokens.Stream, index int) bool {
 		if pt.Kind == token.Punct && (pt.Value == "::" || pt.Value == "->" || pt.Value == "?->" || pt.Value == `\`) {
 			return true
 		}
+		// a named argument label ("foo(default: 1)", "foo($a, case: 2)") is an
+		// identifier: a reserved word directly before ":" and after "(" or ","
+		if pt.Kind == token.Punct && (pt.Value == "(" || pt.Value == ",") {
+			if nmi := nextMeaningfulIndex(s, index); nmi >= 0 && s.At(nmi).Kind == token.Punct && s.At(nmi).Value == ":" {
+				return true
+			}
+		}
 	}
 	// a "::" directly after marks a class-name reference ("Enum::X"); a following
 	// "\" is a namespace prefix on an operand (e.g. "case \Foo::BAR:") and does not
