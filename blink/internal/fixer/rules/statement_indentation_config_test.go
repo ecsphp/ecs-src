@@ -18,3 +18,13 @@ func TestStatementIndentationConfig(t *testing.T) {
 		t.Fatalf("stick: changed=%v got=%q", changed, got)
 	}
 }
+
+func TestStatementIndentationTernaryDynamicMember(t *testing.T) {
+	// a dynamic member access ("->{$key}") in a multiline ternary must not be read
+	// as a block/statement end; the ":" line stays aligned with the "?" line
+	src := "<?php\nclass A\n{\n    public function x($key)\n    {\n        return $this->condition\n            ? $this->target->{$key}\n            : $this->target;\n    }\n}\n"
+	got, changed := apply(t, StatementIndentation{}, src)
+	if changed || got != src {
+		t.Fatalf("ternary with dynamic member must stay aligned: changed=%v got=%q", changed, got)
+	}
+}
