@@ -1,0 +1,8 @@
+{
+    "name": "rector",
+    "repo": "https://github.com/rectorphp/rector.git",
+    "paths": ["src", "rules", "tests", "packages"],
+    "skip": ["*/node_modules/*", "*/Fixture/*"],
+    "sets": ["psr12", "perCs", "common", "standaloneLine", "cleanCode"],
+    "max_diff_percent": 1.0
+}
