@@ -172,6 +172,15 @@ func TestSingleSpaceAroundConstruct(t *testing.T) {
 	if _, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php $o = new class($a) {};"); changed {
 		t.Fatal("new class( should not gain a space")
 	}
+	// "new Enum(" is a class reference; "enum" never opens a "(" as a construct,
+	// even when "enum" is in the followed list (as ECS configures it)
+	withEnum := SingleSpaceAroundConstruct{}.WithConfig(map[string]any{"constructs_followed_by_a_single_space": []any{"new", "enum"}}).(fixerRule)
+	if _, changed := apply(t, withEnum, "<?php $r = new Enum($type);"); changed {
+		t.Fatal("new Enum( should not gain a space")
+	}
+	if got, changed := apply(t, withEnum, "<?php $r = new Enum ($type);"); !changed || got != "<?php $r = new Enum($type);" {
+		t.Fatalf("new Enum (: changed=%v got=%q", changed, got)
+	}
 }
 
 func TestNoSpacesAfterFunctionName(t *testing.T) {
@@ -181,6 +190,10 @@ func TestNoSpacesAfterFunctionName(t *testing.T) {
 	}
 	if _, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php if ($a) {}"); changed {
 		t.Fatal("control keyword is not a function name")
+	}
+	// "from" in "yield from (expr)" is part of the construct, not a call
+	if _, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php function g() { yield from (new Foo())->all(); }"); changed {
+		t.Fatal("yield from ( must keep its space")
 	}
 }
 

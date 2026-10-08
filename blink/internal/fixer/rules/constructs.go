@@ -168,10 +168,11 @@ func (f SingleSpaceAroundConstruct) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		next := s.At(i + 1)
-		// "static" and "class" directly before "(" are a class reference, not a
-		// construct: "new static(...)", "new class(...)". They take no space.
+		// "static", "class" and "enum" directly before "(" are a class reference,
+		// not a construct: "new static(...)", "new class(...)", "new Enum(...)".
+		// They take no space ("enum" never opens a "(" as a declaration keyword).
 		kw := strings.ToLower(t.Value)
-		classRef := kw == "static" || kw == "class"
+		classRef := kw == "static" || kw == "class" || kw == "enum"
 		if next.Kind == token.Whitespace {
 			if classRef && !hasNewline(next.Value) && i+2 < s.Len() &&
 				s.At(i+2).Kind == token.Punct && s.At(i+2).Value == "(" {
@@ -225,6 +226,12 @@ func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Ident {
 			continue
+		}
+		// "from" in "yield from (expr)" is part of the construct, not a call
+		if strings.EqualFold(s.At(i).Value, "from") {
+			if p := sigPrev(s, i); p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "yield") {
+				continue
+			}
 		}
 		if i+2 < s.Len() &&
 			s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) &&
