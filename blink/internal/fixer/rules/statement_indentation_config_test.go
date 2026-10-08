@@ -28,3 +28,13 @@ func TestStatementIndentationTernaryDynamicMember(t *testing.T) {
 		t.Fatalf("ternary with dynamic member must stay aligned: changed=%v got=%q", changed, got)
 	}
 }
+
+func TestStatementIndentationNamedArgumentKeyword(t *testing.T) {
+	// a reserved word used as a named-argument label ("default:", "case:") is not
+	// a switch case; it must not indent the statements that follow the call
+	src := "<?php\nclass A\n{\n    public function f($x)\n    {\n        $c = confirm($x, default: false);\n        if ($c) {\n            return 1;\n        }\n        return 0;\n    }\n}\n"
+	got, changed := apply(t, StatementIndentation{}, src)
+	if changed || got != src {
+		t.Fatalf("named-argument keyword must not over-indent: changed=%v got=%q", changed, got)
+	}
+}
