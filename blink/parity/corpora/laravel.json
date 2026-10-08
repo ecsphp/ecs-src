@@ -1,0 +1,8 @@
+{
+    "name": "laravel",
+    "repo": "https://github.com/laravel/framework.git",
+    "paths": ["src", "tests"],
+    "skip": ["*/node_modules/*", "*/Fixture/*"],
+    "sets": ["psr12", "perCs", "common", "standaloneLine", "cleanCode"],
+    "max_diff_percent": 2.0
+}
