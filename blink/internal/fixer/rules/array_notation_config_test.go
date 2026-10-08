@@ -14,6 +14,7 @@ func TestArrayNotationConfigCases(t *testing.T) {
 		{"list default short", ListSyntax{}, "<?php list($a, $b) = $x;", "<?php [$a, $b] = $x;"},
 		{"list long", ListSyntax{}.WithConfig(map[string]any{"syntax": "long"}).(fixerRule), "<?php [$a, [$b]] = $x; $c = [1]; foreach ($y as [$d]) {}", "<?php list($a, list($b)) = $x; $c = [1]; foreach ($y as list($d)) {}"},
 		{"before comma default", NoWhitespaceBeforeCommaInArray{}, "<?php $a = [1 , 2];", "<?php $a = [1, 2];"},
+		{"before comma keeps empty element space", NoWhitespaceBeforeCommaInArray{}, "<?php [, , $c] = $x;", "<?php [, , $c] = $x;"},
 		{"before comma heredoc kept", NoWhitespaceBeforeCommaInArray{}.WithConfig(map[string]any{"after_heredoc": false}).(fixerRule), "<?php $a = [<<<EOT\nx\nEOT , 2];", "<?php $a = [<<<EOT\nx\nEOT , 2];"},
 		{"before comma heredoc fixed", NoWhitespaceBeforeCommaInArray{}.WithConfig(map[string]any{"after_heredoc": true}).(fixerRule), "<?php $a = [<<<EOT\nx\nEOT , 2];", "<?php $a = [<<<EOT\nx\nEOT, 2];"},
 		{"after comma default", WhitespaceAfterCommaInArray{}, "<?php $a = [1,  2,3];", "<?php $a = [1,  2, 3];"},
