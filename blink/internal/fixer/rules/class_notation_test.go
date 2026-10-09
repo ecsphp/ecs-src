@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestClassDefinitionNormalizesSpaces(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ClassDefinition{}, "<?php class  A  extends  B  implements  C {}")
 	want := "<?php class A extends B implements C {}"
 	if !changed || got != want {
@@ -11,6 +12,7 @@ func TestClassDefinitionNormalizesSpaces(t *testing.T) {
 }
 
 func TestClassDefinitionLeavesCorrectHeader(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A extends B implements C {}"
 	got, changed := apply(t, ClassDefinition{}, src)
 	if changed || got != src {
@@ -19,6 +21,7 @@ func TestClassDefinitionLeavesCorrectHeader(t *testing.T) {
 }
 
 func TestClassDefinitionKeepsNewlines(t *testing.T) {
+	t.Parallel()
 	// a multiline implements list keeps its layout
 	src := "<?php class A implements\n    B,\n    C\n{}"
 	got, changed := apply(t, ClassDefinition{}, src)
@@ -28,12 +31,14 @@ func TestClassDefinitionKeepsNewlines(t *testing.T) {
 }
 
 func TestClassDefinitionIgnoresClassConstant(t *testing.T) {
+	t.Parallel()
 	if _, changed := apply(t, ClassDefinition{}, "<?php $x = Foo::class;"); changed {
 		t.Fatal("::class must not be treated as a class header")
 	}
 }
 
 func TestOrderedClassElementsSimple(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    public function run() {}\n" +
 		"    public $prop;\n" +
@@ -57,6 +62,7 @@ func TestOrderedClassElementsSimple(t *testing.T) {
 }
 
 func TestOrderedClassElementsOrderUseTraitOnly(t *testing.T) {
+	t.Parallel()
 	// order ["use_trait"] groups trait uses first and leaves every other member
 	// in its source order (const stays after the property here)
 	src := "<?php class A {\n" +
@@ -82,6 +88,7 @@ func TestOrderedClassElementsOrderUseTraitOnly(t *testing.T) {
 }
 
 func TestOrderedClassElementsAlreadyOrdered(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    const X = 1;\n" +
 		"    public $prop;\n" +
@@ -94,6 +101,7 @@ func TestOrderedClassElementsAlreadyOrdered(t *testing.T) {
 }
 
 func TestOrderedClassElementsSkipsCommentsAndAttributes(t *testing.T) {
+	t.Parallel()
 	// a doc comment between members is trivia we do not move; skip the class
 	docSrc := "<?php class A {\n" +
 		"    public function run() {}\n" +
@@ -115,6 +123,7 @@ func TestOrderedClassElementsSkipsCommentsAndAttributes(t *testing.T) {
 }
 
 func TestOrderedClassElementsSkipsEnumCases(t *testing.T) {
+	t.Parallel()
 	src := "<?php enum Suit {\n" +
 		"    public function label() {}\n" +
 		"    case Hearts;\n" +

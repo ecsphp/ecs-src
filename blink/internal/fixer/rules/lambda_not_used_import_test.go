@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestLambdaNotUsedImport(t *testing.T) {
+	t.Parallel()
 	f := LambdaNotUsedImport{}
 
 	// a single unused import removes the whole use()

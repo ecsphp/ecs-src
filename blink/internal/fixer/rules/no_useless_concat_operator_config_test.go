@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoUselessConcatOperatorConfig(t *testing.T) {
+	t.Parallel()
 	src := `<?php $a = "a" . 'b';`
 	if _, changed := apply(t, NoUselessConcatOperator{}, src); changed {
 		t.Fatal("default should not juggle quotes")

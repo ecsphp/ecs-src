@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestDoctrineAnnotationIndentation(t *testing.T) {
+	t.Parallel()
 	f := DoctrineAnnotationIndentation{}
 
 	// annotation continuation lines get four-space indentation

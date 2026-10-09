@@ -8,6 +8,7 @@ import "testing"
 // #38/#54 (args delimited only by "#" line comments - pathological input no real
 // code produces), and #97 (inline-HTML indent blink cannot read across the tag).
 func TestMethodArgumentSpacePhpCsFixerCases(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		cfg  map[string]any

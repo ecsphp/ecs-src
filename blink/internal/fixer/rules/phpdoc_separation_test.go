@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocSeparation(t *testing.T) {
+	t.Parallel()
 	f := PhpdocSeparation{}
 
 	// different unlisted tags get a blank line; same-name tags stay together

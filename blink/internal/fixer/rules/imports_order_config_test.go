@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestOrderedImportsSortAlgorithm(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nuse B;\nuse A;\n"
 
 	// default: alpha sort within the class group
@@ -19,6 +20,7 @@ func TestOrderedImportsSortAlgorithm(t *testing.T) {
 }
 
 func TestOrderedImportsImportsOrder(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nuse A;\nuse function a;\n"
 
 	// default imports_order [class, function, const]: class group stays first
@@ -37,6 +39,7 @@ func TestOrderedImportsImportsOrder(t *testing.T) {
 }
 
 func TestOrderedImportsKeepsBlankBetweenGroups(t *testing.T) {
+	t.Parallel()
 	// imports_order=null (no grouping): already-sorted imports with a blank line
 	// separating the class group from the function group are left untouched -
 	// the blank line between statements is preserved, not collapsed.

@@ -7,6 +7,7 @@ import (
 )
 
 func TestGenArraysNoWhitespaceInEmptyArray(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoWhitespaceInEmptyArray{}, "<?php $a = [ ];")
 	if want := "<?php $a = [];"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -31,6 +32,7 @@ func TestGenArraysNoWhitespaceInEmptyArray(t *testing.T) {
 }
 
 func TestGenArraysNormalizeIndexBrace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NormalizeIndexBrace{}, "<?php echo $sample{$index};")
 	if want := "<?php echo $sample[$index];"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -63,6 +65,7 @@ func TestGenArraysNormalizeIndexBrace(t *testing.T) {
 }
 
 func TestGenArraysNoMultilineWhitespaceAroundDoubleArrow(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoMultilineWhitespaceAroundDoubleArrow{}, "<?php $a = [\n    'x' =>\n    1,\n];")
 	if want := "<?php $a = [\n    'x' => 1,\n];"; !changed || got != want {
 		t.Fatalf("after: changed=%v got=%q want=%q", changed, got, want)
@@ -88,6 +91,7 @@ func TestGenArraysNoMultilineWhitespaceAroundDoubleArrow(t *testing.T) {
 
 // TestGenArraysSourceURLs verifies every SourceURL matches SourceURLFor(Name()).
 func TestGenArraysSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixerpkg.Fixer{
 		NoWhitespaceInEmptyArray{},
 		NormalizeIndexBrace{},
@@ -102,6 +106,7 @@ func TestGenArraysSourceURLs(t *testing.T) {
 
 // TestGenArraysIdempotent guarantees a second pass is a no-op.
 func TestGenArraysIdempotent(t *testing.T) {
+	t.Parallel()
 	fixers := []fixerRule{
 		NoWhitespaceInEmptyArray{},
 		NormalizeIndexBrace{},

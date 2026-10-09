@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestVisibilityRequired(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, VisibilityRequired{}, "<?php class A {\n    function run() {}\n    const X = 1;\n    static $s;\n    var $old;\n    public $ok;\n}")
 	want := "<?php class A {\n    public function run() {}\n    public const X = 1;\n    public static $s;\n    public $old;\n    public $ok;\n}"
 	if !changed || got != want {
@@ -15,6 +16,7 @@ func TestVisibilityRequired(t *testing.T) {
 }
 
 func TestVisibilityRequiredTypedProperty(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, VisibilityRequired{}, "<?php class A {\n    int $count;\n    ?string $name;\n}")
 	want := "<?php class A {\n    public int $count;\n    public ?string $name;\n}"
 	if !changed || got != want {
@@ -23,6 +25,7 @@ func TestVisibilityRequiredTypedProperty(t *testing.T) {
 }
 
 func TestVisibilityRequiredSkipsTraitAndEnumCase(t *testing.T) {
+	t.Parallel()
 	if _, changed := apply(t, VisibilityRequired{}, "<?php class A {\n    use SomeTrait;\n}"); changed {
 		t.Fatal("trait use must not get visibility")
 	}
@@ -32,6 +35,7 @@ func TestVisibilityRequiredSkipsTraitAndEnumCase(t *testing.T) {
 }
 
 func TestVisibilityRequiredIgnoresPromotedParams(t *testing.T) {
+	t.Parallel()
 	// constructor property promotion lives inside (), not the class body
 	src := "<?php class A {\n    public function __construct(private int $x) {}\n}"
 	if _, changed := apply(t, VisibilityRequired{}, src); changed {
@@ -40,6 +44,7 @@ func TestVisibilityRequiredIgnoresPromotedParams(t *testing.T) {
 }
 
 func TestSingleTraitInsertPerStatement(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleTraitInsertPerStatement{}, "<?php class A {\n    use TraitB, TraitC;\n}")
 	want := "<?php class A {\n    use TraitB;\n    use TraitC;\n}"
 	if !changed || got != want {

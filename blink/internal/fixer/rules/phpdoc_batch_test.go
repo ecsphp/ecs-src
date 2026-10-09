@@ -15,6 +15,7 @@ func idempotent(t *testing.T, r fixerRule, once string) {
 }
 
 func TestNoEmptyPhpdoc(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoEmptyPhpdoc{}, "<?php\n/**\n */\nfunction f() {}")
 	if want := "<?php\nfunction f() {}"; !changed || got != want {
 		t.Fatalf("multi: changed=%v got=%q want=%q", changed, got, want)
@@ -34,6 +35,7 @@ func TestNoEmptyPhpdoc(t *testing.T) {
 }
 
 func TestPhpdocTypes(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @param Array $a\n * @param NULL|STRING $b\n * @return VOID\n */\nfunction f($a, $b) {}"
 	got, changed := apply(t, PhpdocTypes{}, src)
 	want := "<?php\n/**\n * @param array $a\n * @param null|string $b\n * @return void\n */\nfunction f($a, $b) {}"
@@ -65,6 +67,7 @@ func TestPhpdocTypes(t *testing.T) {
 }
 
 func TestPhpdocNoAliasTag(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @type int $a\n * @link https://example.com docs\n */\nfunction f() {}"
 	got, changed := apply(t, PhpdocNoAliasTag{}, src)
 	want := "<?php\n/**\n * @var int $a\n * @see https://example.com docs\n */\nfunction f() {}"
@@ -80,6 +83,7 @@ func TestPhpdocNoAliasTag(t *testing.T) {
 }
 
 func TestPhpdocNoPackage(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @package App\n * @subpackage Sub\n * @var int\n */\nfunction f() {}"
 	got, changed := apply(t, PhpdocNoPackage{}, src)
 	want := "<?php\n/**\n * @var int\n */\nfunction f() {}"
@@ -94,6 +98,7 @@ func TestPhpdocNoPackage(t *testing.T) {
 }
 
 func TestPhpdocNoAccess(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @access private\n * @var int\n */\nfunction f() {}"
 	got, changed := apply(t, PhpdocNoAccess{}, src)
 	want := "<?php\n/**\n * @var int\n */\nfunction f() {}"
@@ -104,6 +109,7 @@ func TestPhpdocNoAccess(t *testing.T) {
 }
 
 func TestPhpdocSingleLineVarSpacing(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, PhpdocSingleLineVarSpacing{}, "<?php\n/**@var int$x*/\n$x = 1;")
 	if want := "<?php\n/** @var int $x */\n$x = 1;"; !changed || got != want {
 		t.Fatalf("glued: changed=%v got=%q want=%q", changed, got, want)
@@ -132,6 +138,7 @@ func TestPhpdocSingleLineVarSpacing(t *testing.T) {
 }
 
 func TestPhpdocTrimConsecutiveBlankLineSeparation(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * Summary.\n *\n *\n *\n * @param int $a\n */\nfunction f($a) {}"
 	got, changed := apply(t, PhpdocTrimConsecutiveBlankLineSeparation{}, src)
 	want := "<?php\n/**\n * Summary.\n *\n * @param int $a\n */\nfunction f($a) {}"
@@ -147,6 +154,7 @@ func TestPhpdocTrimConsecutiveBlankLineSeparation(t *testing.T) {
 }
 
 func TestNoBlankLinesAfterPhpdoc(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoBlankLinesAfterPhpdoc{}, "<?php\n/**\n * Bar.\n */\n\n\nclass Bar {}")
 	if want := "<?php\n/**\n * Bar.\n */\nclass Bar {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -174,6 +182,7 @@ func TestNoBlankLinesAfterPhpdoc(t *testing.T) {
 
 // TestPhpdocBatchSourceURLs verifies every SourceURL matches SourceURLFor(Name()).
 func TestPhpdocBatchSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		NoEmptyPhpdoc{},
 		PhpdocTypes{},

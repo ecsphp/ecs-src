@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestMethodArgumentSpaceConfig(t *testing.T) {
+	t.Parallel()
 	// default: one space after each comma
 	got, changed := apply(t, MethodArgumentSpace{}, "<?php foo(1,2);")
 	if want := "<?php foo(1, 2);"; !changed || got != want {

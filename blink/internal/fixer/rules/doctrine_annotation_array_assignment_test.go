@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestDoctrineAnnotationArrayAssignment(t *testing.T) {
+	t.Parallel()
 	f := DoctrineAnnotationArrayAssignment{}
 
 	// a colon inside an annotation array becomes an equals

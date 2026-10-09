@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen2TypesTypesSpaces(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -55,6 +56,7 @@ func TestGen2TypesTypesSpaces(t *testing.T) {
 }
 
 func TestGen2TypesSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		TypesSpaces{},
 	}

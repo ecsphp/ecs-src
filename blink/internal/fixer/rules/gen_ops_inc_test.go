@@ -7,6 +7,7 @@ import (
 )
 
 func TestGenOpsIncStandardizeIncrement(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -39,6 +40,7 @@ func TestGenOpsIncStandardizeIncrement(t *testing.T) {
 }
 
 func TestGenOpsIncIncrementStyle(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -67,6 +69,7 @@ func TestGenOpsIncIncrementStyle(t *testing.T) {
 }
 
 func TestGenOpsIncLongToShorthand(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -108,6 +111,7 @@ func TestGenOpsIncLongToShorthand(t *testing.T) {
 // TestGenOpsIncSourceURLs pins each fixer's SourceURL to the canonical form
 // derived from its Name. The three blob URLs were verified to return HTTP 200.
 func TestGenOpsIncSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		StandardizeIncrement{},
 		IncrementStyle{},
@@ -122,6 +126,7 @@ func TestGenOpsIncSourceURLs(t *testing.T) {
 
 // TestGenOpsIncIdempotent guarantees a second pass is a no-op for each fixer.
 func TestGenOpsIncIdempotent(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		StandardizeIncrement{},
 		IncrementStyle{},

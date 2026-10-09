@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestArraySyntax(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ArraySyntax{}, "<?php $a = array(1, array(2, 3));")
 	if want := "<?php $a = [1, [2, 3]];"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -18,6 +19,7 @@ func TestArraySyntax(t *testing.T) {
 }
 
 func TestListSyntax(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ListSyntax{}, "<?php list($a, $b) = $c;")
 	if want := "<?php [$a, $b] = $c;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -25,6 +27,7 @@ func TestListSyntax(t *testing.T) {
 }
 
 func TestArrayCommaSpacing(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, WhitespaceAfterCommaInArray{}, "<?php $a = [1,2,3];")
 	if want := "<?php $a = [1, 2, 3];"; !changed || got != want {
 		t.Fatalf("after: changed=%v got=%q want=%q", changed, got, want)
@@ -40,6 +43,7 @@ func TestArrayCommaSpacing(t *testing.T) {
 }
 
 func TestSingleQuote(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleQuote{}, `<?php $a = "plain"; $b = "with $var"; $c = "tab\t";`)
 	if want := `<?php $a = 'plain'; $b = "with $var"; $c = "tab\t";`; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -47,6 +51,7 @@ func TestSingleQuote(t *testing.T) {
 }
 
 func TestStandardizeNotEquals(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, StandardizeNotEquals{}, "<?php if ($a <> $b) {}")
 	if want := "<?php if ($a != $b) {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -54,6 +59,7 @@ func TestStandardizeNotEquals(t *testing.T) {
 }
 
 func TestNoEmptyStatement(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoEmptyStatement{}, "<?php $a = 1;; $b = 2;;;")
 	if want := "<?php $a = 1; $b = 2;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -65,6 +71,7 @@ func TestNoEmptyStatement(t *testing.T) {
 }
 
 func TestLineEnding(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, LineEnding{}, "<?php\r\n$a = 1;\r\n")
 	if want := "<?php\n$a = 1;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -72,6 +79,7 @@ func TestLineEnding(t *testing.T) {
 }
 
 func TestMagicCasing(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, MagicConstantCasing{}, "<?php echo __line__, __dir__;")
 	if want := "<?php echo __LINE__, __DIR__;"; !changed || got != want {
 		t.Fatalf("const: changed=%v got=%q want=%q", changed, got, want)

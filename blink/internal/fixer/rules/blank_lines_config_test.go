@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoExtraBlankLinesConfig(t *testing.T) {
+	t.Parallel()
 	// default: collapse runs of blank lines only
 	got, changed := apply(t, NoExtraBlankLines{}, "<?php\n$a = 1;\n\n\n\n$b = 2;\n")
 	if want := "<?php\n$a = 1;\n\n$b = 2;\n"; !changed || got != want {

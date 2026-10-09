@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestStandaloneLinePromotedProperty(t *testing.T) {
+	t.Parallel()
 	f := StandaloneLinePromotedProperty{}
 
 	// a promoted property: each parameter on its own line

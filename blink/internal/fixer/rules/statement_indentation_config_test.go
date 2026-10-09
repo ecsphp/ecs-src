@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestStatementIndentationConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nif ($foo) {\n    echo \"foo\";\n        // c\n} else {\n    $a = 1;\n}\n"
 
 	// default: the trailing comment keeps the inner block indentation
@@ -20,6 +21,7 @@ func TestStatementIndentationConfig(t *testing.T) {
 }
 
 func TestStatementIndentationTernaryDynamicMember(t *testing.T) {
+	t.Parallel()
 	// a dynamic member access ("->{$key}") in a multiline ternary must not be read
 	// as a block/statement end; the ":" line stays aligned with the "?" line
 	src := "<?php\nclass A\n{\n    public function x($key)\n    {\n        return $this->condition\n            ? $this->target->{$key}\n            : $this->target;\n    }\n}\n"
@@ -30,6 +32,7 @@ func TestStatementIndentationTernaryDynamicMember(t *testing.T) {
 }
 
 func TestStatementIndentationNamedArgumentKeyword(t *testing.T) {
+	t.Parallel()
 	// a reserved word used as a named-argument label ("default:", "case:") is not
 	// a switch case; it must not indent the statements that follow the call
 	src := "<?php\nclass A\n{\n    public function f($x)\n    {\n        $c = confirm($x, default: false);\n        if ($c) {\n            return 1;\n        }\n        return 0;\n    }\n}\n"

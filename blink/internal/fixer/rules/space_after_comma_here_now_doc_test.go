@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestSpaceAfterCommaHereNowDoc(t *testing.T) {
+	t.Parallel()
 	f := SpaceAfterCommaHereNowDoc{}
 
 	got, changed := apply(t, f, "<?php\nfoo(<<<EOT\nbody\nEOT, $x);\n")

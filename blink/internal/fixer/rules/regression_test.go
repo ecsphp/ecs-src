@@ -4,6 +4,7 @@ import "testing"
 
 // keyword-spelled class-constant names must not be lowercased (sweep finding)
 func TestLowercaseKeywordsKeepsConstantName(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n    public const string ARRAY = 'x';\n}"
 	if got, changed := apply(t, LowercaseKeywords{}, src); changed || got != src {
 		t.Fatalf("constant name ARRAY must not change: %q", got)
@@ -13,6 +14,7 @@ func TestLowercaseKeywordsKeepsConstantName(t *testing.T) {
 // ECS/PHP-CS-Fixer lowercases a keyword-spelled const name only when the same
 // keyword reappears after :: in its value; blink mirrors that quirk for parity
 func TestLowercaseKeywordsConstNameSelfReference(t *testing.T) {
+	t.Parallel()
 	self := "<?php class A {\n    public const int PUBLIC = Modifiers::PUBLIC;\n}"
 	wantSelf := "<?php class A {\n    public const int public = Modifiers::PUBLIC;\n}"
 	if got, changed := apply(t, LowercaseKeywords{}, self); !changed || got != wantSelf {
@@ -27,6 +29,7 @@ func TestLowercaseKeywordsConstNameSelfReference(t *testing.T) {
 
 // a method named like a keyword ("match") is a function decl, not a control body
 func TestBracesPositionKeywordNamedMethod(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BracesPosition{}, "<?php class A\n{\n    public function match($x): bool {\n    }\n}")
 	want := "<?php class A\n{\n    public function match($x): bool\n    {\n    }\n}"
 	if !changed || got != want {
@@ -36,6 +39,7 @@ func TestBracesPositionKeywordNamedMethod(t *testing.T) {
 
 // nullable return/param types must not be treated as ternaries (sweep finding)
 func TestTernaryLeavesNullableTypes(t *testing.T) {
+	t.Parallel()
 	for _, src := range []string{
 		"<?php function f(): ?string\n{\n}",
 		"<?php function f(?int $x): ?array\n{\n}",

@@ -7,6 +7,7 @@ import (
 )
 
 func TestGenImportsNoUnneededImportAlias(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoUnneededImportAlias{}, "<?php use App\\Foo as Foo;")
 	if want := "<?php use App\\Foo;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -45,6 +46,7 @@ func TestGenImportsNoUnneededImportAlias(t *testing.T) {
 }
 
 func TestGenImportsCleanNamespace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, CleanNamespace{}, "<?php namespace A \\ B \\ C;")
 	if want := "<?php namespace A\\B\\C;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -79,6 +81,7 @@ func TestGenImportsCleanNamespace(t *testing.T) {
 
 // TestGenImportsSourceURLs verifies each SourceURL matches SourceURLFor(Name()).
 func TestGenImportsSourceURLs(t *testing.T) {
+	t.Parallel()
 	for _, f := range []fixer.Fixer{NoUnneededImportAlias{}, CleanNamespace{}} {
 		if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 			t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)

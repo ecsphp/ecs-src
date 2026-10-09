@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen2Comment(t *testing.T) {
+	t.Parallel()
 	// misaligned docblock at column 0 -> aligned under the first "*"
 	got, changed := apply(t, AlignMultilineComment{}, "<?php\n/**\n     * Foo\n   */\n")
 	if want := "<?php\n/**\n * Foo\n */\n"; !changed || got != want {
@@ -53,6 +54,7 @@ func TestGen2Comment(t *testing.T) {
 
 // TestGen2CommentSourceURL verifies the SourceURL matches SourceURLFor(Name()).
 func TestGen2CommentSourceURL(t *testing.T) {
+	t.Parallel()
 	var f fixer.Fixer = AlignMultilineComment{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 		t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)

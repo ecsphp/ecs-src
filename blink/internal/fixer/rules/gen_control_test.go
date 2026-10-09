@@ -7,6 +7,7 @@ import (
 )
 
 func TestGenControlSwitchContinueToBreak(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string
@@ -106,6 +107,7 @@ func TestGenControlSwitchContinueToBreak(t *testing.T) {
 
 // TestGenControlSourceURLs verifies each SourceURL matches SourceURLFor(Name()).
 func TestGenControlSourceURLs(t *testing.T) {
+	t.Parallel()
 	for _, f := range []fixer.Fixer{SwitchContinueToBreak{}} {
 		if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 			t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)

@@ -20,6 +20,7 @@ func firstBrace(s *tokens.Stream) int {
 }
 
 func TestBracesPositionClassAndFunction(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BracesPosition{}, "<?php class A {\n    public function run() {\n        return 1;\n    }\n}")
 	want := "<?php class A\n{\n    public function run()\n    {\n        return 1;\n    }\n}"
 	if !changed || got != want {
@@ -31,6 +32,7 @@ func TestBracesPositionClassAndFunction(t *testing.T) {
 }
 
 func TestBracesPositionControl(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BracesPosition{}, "<?php if ($a)\n{\n}\nwhile ($b){\n}")
 	want := "<?php if ($a) {\n}\nwhile ($b) {\n}"
 	if !changed || got != want {
@@ -39,12 +41,14 @@ func TestBracesPositionControl(t *testing.T) {
 }
 
 func TestBracesPositionClosureLeftAlone(t *testing.T) {
+	t.Parallel()
 	if _, changed := apply(t, BracesPosition{}, "<?php $f = function () {\n};"); changed {
 		t.Fatal("closure brace must not move")
 	}
 }
 
 func TestBracesPositionDynamicAccessLeftAlone(t *testing.T) {
+	t.Parallel()
 	// "->{$prop}" is dynamic access, not a control block: no space inserted
 	if _, changed := apply(t, BracesPosition{}, "<?php if ($this->{$prop} != $v) {\n}"); changed {
 		t.Fatal("dynamic property access brace must not get a space")
@@ -52,6 +56,7 @@ func TestBracesPositionDynamicAccessLeftAlone(t *testing.T) {
 }
 
 func TestClassifyBrace(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src  string
 		want braceKind
@@ -80,6 +85,7 @@ func TestClassifyBrace(t *testing.T) {
 
 // a trait adaptation block "use T { ... }" is not a class/function body
 func TestClassifyTraitBlockIsOther(t *testing.T) {
+	t.Parallel()
 	s := lexStream("<?php class A { use T { m as n; } }")
 	// the SECOND "{" is the trait adaptation block
 	var braces []int

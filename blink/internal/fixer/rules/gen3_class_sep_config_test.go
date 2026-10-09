@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestClassAttributesSeparationElements(t *testing.T) {
+	t.Parallel()
 	// two properties separated by two blank lines
 	src := "<?php\nclass C\n{\n    public $a;\n\n\n    public $b;\n}\n"
 

@@ -10,6 +10,7 @@ import "testing"
 // The single tab-indent case cannot be expressed through blink's test harness
 // (no WhitespacesFixerConfig), so it is a permanent known gap.
 func TestStatementIndentationPhpCsFixerCases(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name     string
 		cfg      map[string]any

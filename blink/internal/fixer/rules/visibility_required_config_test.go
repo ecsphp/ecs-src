@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestVisibilityRequiredElements(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nclass C\n{\n    function f() {}\n    const A = 1;\n}\n"
 
 	// default: visibility added to methods and constants alike

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestOperatorLinebreak(t *testing.T) {
+	t.Parallel()
 	f := OperatorLinebreak{}
 
 	got, changed := apply(t, f, "<?php\n$a = $b ||\n    $c;\n")

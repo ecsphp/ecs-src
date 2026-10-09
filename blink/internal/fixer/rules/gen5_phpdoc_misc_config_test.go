@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocReturnSelfReferenceConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @return this\n */\n"
 	got, changed := apply(t, PhpdocReturnSelfReference{}, src)
 	if want := "<?php\n/**\n * @return $this\n */\n"; !changed || got != want {

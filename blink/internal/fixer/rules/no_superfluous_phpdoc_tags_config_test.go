@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoSuperfluousPhpdocTagsConfig(t *testing.T) {
+	t.Parallel()
 	// default keeps "@param mixed" on an untyped parameter (allow_mixed behavior)
 	mixed := "<?php\nclass A {\n    /**\n     * @param mixed $x\n     */\n    public function f($x) {}\n}\n"
 	if _, changed := apply(t, NoSuperfluousPhpdocTags{}, mixed); changed {
@@ -43,6 +44,7 @@ func TestNoSuperfluousPhpdocTagsConfig(t *testing.T) {
 }
 
 func TestNoSuperfluousPhpdocTagsInheritDocWithDescription(t *testing.T) {
+	t.Parallel()
 	rm := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"remove_inheritdoc": true}).(fixerRule)
 
 	// an inline {@inheritDoc} followed by a real description is kept: it is not

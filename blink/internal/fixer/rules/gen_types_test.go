@@ -7,6 +7,7 @@ import (
 )
 
 func TestGenTypesCompactNullableTypeDeclaration(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -35,6 +36,7 @@ func TestGenTypesCompactNullableTypeDeclaration(t *testing.T) {
 }
 
 func TestGenTypesNativeFunctionTypeDeclarationCasing(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -61,6 +63,7 @@ func TestGenTypesNativeFunctionTypeDeclarationCasing(t *testing.T) {
 }
 
 func TestGenTypesSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		CompactNullableTypeDeclaration{},
 		NativeFunctionTypeDeclarationCasing{},

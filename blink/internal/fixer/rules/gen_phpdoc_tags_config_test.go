@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocTagCasingConfig(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, PhpdocTagCasing{}, "<?php\n/**\n * @inheritdoc\n */\n")
 	if want := "<?php\n/**\n * @inheritDoc\n */\n"; !changed || got != want {
 		t.Fatalf("default: changed=%v got=%q want=%q", changed, got, want)
@@ -20,6 +21,7 @@ func TestPhpdocTagCasingConfig(t *testing.T) {
 }
 
 func TestPhpdocInlineTagNormalizerConfig(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, PhpdocInlineTagNormalizer{}, "<?php\n/**\n * @{see}\n */\n")
 	if want := "<?php\n/**\n * {@see}\n */\n"; !changed || got != want {
 		t.Fatalf("default: changed=%v got=%q want=%q", changed, got, want)

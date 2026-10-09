@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen4ASingleLineCommentStyle(t *testing.T) {
+	t.Parallel()
 	f := SingleLineCommentStyle{}
 
 	// hash comment -> // comment
@@ -62,6 +63,7 @@ func TestGen4ASingleLineCommentStyle(t *testing.T) {
 }
 
 func TestGen4ANoNullPropertyInitialization(t *testing.T) {
+	t.Parallel()
 	f := NoNullPropertyInitialization{}
 
 	// untyped property loses its null default
@@ -126,6 +128,7 @@ func TestGen4ANoNullPropertyInitialization(t *testing.T) {
 
 // TestGen4ASourceURL verifies each SourceURL matches SourceURLFor(Name()).
 func TestGen4ASourceURL(t *testing.T) {
+	t.Parallel()
 	for _, f := range []fixer.Fixer{SingleLineCommentStyle{}, NoNullPropertyInitialization{}} {
 		if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 			t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)

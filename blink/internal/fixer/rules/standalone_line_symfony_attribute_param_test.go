@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestStandaloneLineSymfonyAttributeParam(t *testing.T) {
+	t.Parallel()
 	f := StandaloneLineSymfonyAttributeParam{}
 
 	// AsCommand always breaks, even with a single argument set

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestArrayIndentation(t *testing.T) {
+	t.Parallel()
 	f := ArrayIndentation{}
 
 	// nested array under-indented: each level indented exactly once

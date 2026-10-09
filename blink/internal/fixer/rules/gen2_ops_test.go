@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen2OpsAssignNullCoalescing(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -40,6 +41,7 @@ func TestGen2OpsAssignNullCoalescing(t *testing.T) {
 // TestGen2OpsSourceURLs pins each fixer's SourceURL to the canonical form
 // derived from its Name. The blob URL was verified to return HTTP 200.
 func TestGen2OpsSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		AssignNullCoalescingToCoalesceEqual{},
 	}
@@ -52,6 +54,7 @@ func TestGen2OpsSourceURLs(t *testing.T) {
 
 // TestGen2OpsIdempotent guarantees a second pass is a no-op for each fixer.
 func TestGen2OpsIdempotent(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		AssignNullCoalescingToCoalesceEqual{},
 	}

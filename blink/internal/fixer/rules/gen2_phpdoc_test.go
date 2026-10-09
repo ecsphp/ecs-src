@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen2PhpdocIndent(t *testing.T) {
+	t.Parallel()
 	f := PhpdocIndent{}
 
 	// misaligned continuation "*" and closing "*/" inside a class (4-space indent)
@@ -42,6 +43,7 @@ func TestGen2PhpdocIndent(t *testing.T) {
 }
 
 func TestGen2PhpdocOrderByValue(t *testing.T) {
+	t.Parallel()
 	f := PhpdocOrderByValue{}
 
 	// two @covers lines sorted by value
@@ -76,6 +78,7 @@ func TestGen2PhpdocOrderByValue(t *testing.T) {
 }
 
 func TestGen2PhpdocSourceURLs(t *testing.T) {
+	t.Parallel()
 	for _, r := range []fixer.Fixer{PhpdocIndent{}, PhpdocOrderByValue{}} {
 		if got, want := r.SourceURL(), fixer.SourceURLFor(r.Name()); got != want {
 			t.Fatalf("%T SourceURL %q, want %q", r, got, want)

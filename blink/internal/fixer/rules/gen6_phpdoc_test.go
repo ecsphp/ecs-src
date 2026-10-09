@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoAliasLanguageConstructCall(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoAliasLanguageConstructCall{}, "<?php die('x'); DIE; Die();")
 	if want := "<?php exit('x'); exit; exit();"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -14,6 +15,7 @@ func TestNoAliasLanguageConstructCall(t *testing.T) {
 }
 
 func TestBlankLineBeforeStatement(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BlankLineBeforeStatement{}, "<?php\nfunction f($a)\n{\n    $b = 1;\n    return $b;\n}\n")
 	if want := "<?php\nfunction f($a)\n{\n    $b = 1;\n\n    return $b;\n}\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -29,6 +31,7 @@ func TestBlankLineBeforeStatement(t *testing.T) {
 }
 
 func TestPhpdocSummary(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, PhpdocSummary{}, "<?php\n/**\n * Summary without period\n */\nfunction f() {}")
 	if want := "<?php\n/**\n * Summary without period.\n */\nfunction f() {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -44,6 +47,7 @@ func TestPhpdocSummary(t *testing.T) {
 }
 
 func TestPhpdocTagType(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, PhpdocTagType{}, "<?php\n/**\n * {@inheritdoc}\n */\nfunction f() {}")
 	if want := "<?php\n/**\n * @inheritdoc\n */\nfunction f() {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -55,6 +59,7 @@ func TestPhpdocTagType(t *testing.T) {
 }
 
 func TestPhpdocOrder(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @param int $a\n * @return int\n * @throws \\Exception\n */\nfunction f($a) {}"
 	got, changed := apply(t, PhpdocOrder{}, src)
 	want := "<?php\n/**\n * @param int $a\n * @throws \\Exception\n * @return int\n */\nfunction f($a) {}"

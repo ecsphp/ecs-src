@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocNoUselessInheritdoc(t *testing.T) {
+	t.Parallel()
 	f := PhpdocNoUselessInheritdoc{}
 
 	// a sole {@inheritDoc}: the whole block and its indentation are removed

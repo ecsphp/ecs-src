@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoMixedEchoPrint(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoMixedEchoPrint{}, `<?php print "a";`)
 	if want := `<?php echo "a";`; !changed || got != want {
 		t.Fatalf("statement: changed=%v got=%q want=%q", changed, got, want)
@@ -25,6 +26,7 @@ func TestNoMixedEchoPrint(t *testing.T) {
 }
 
 func TestNoAliasFunctions(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoAliasFunctions{}, `<?php sizeof($a); join($x); is_double($n);`)
 	if want := `<?php count($a); implode($x); is_float($n);`; !changed || got != want {
 		t.Fatalf("aliases: changed=%v got=%q want=%q", changed, got, want)
@@ -44,6 +46,7 @@ func TestNoAliasFunctions(t *testing.T) {
 }
 
 func TestMultilineWhitespaceBeforeSemicolons(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, MultilineWhitespaceBeforeSemicolons{}, "<?php $a = foo()\n    ;")
 	if want := "<?php $a = foo();"; !changed || got != want {
 		t.Fatalf("plain: changed=%v got=%q want=%q", changed, got, want)
@@ -70,6 +73,7 @@ func TestMultilineWhitespaceBeforeSemicolons(t *testing.T) {
 }
 
 func TestSingleLineEmptyBodyRegistered(t *testing.T) {
+	t.Parallel()
 	// smoke test that the collapse runs (the fixer already had unit coverage)
 	got, changed := apply(t, SingleLineEmptyBody{}, "<?php class A\n{\n}")
 	if want := "<?php class A {}"; !changed || got != want {

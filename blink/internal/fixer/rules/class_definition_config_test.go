@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestClassDefinitionSingleLine(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nclass Foo\nextends Bar\n{\n}\n"
 
 	// default: a multiline header is left untouched
@@ -19,6 +20,7 @@ func TestClassDefinitionSingleLine(t *testing.T) {
 }
 
 func TestClassDefinitionSpaceBeforeParenthesis(t *testing.T) {
+	t.Parallel()
 	src := "<?php $x = new class() {};"
 
 	// default: anonymous class left untouched

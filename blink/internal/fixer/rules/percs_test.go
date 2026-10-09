@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNewWithParentheses(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NewWithParentheses{}, "<?php $a = new Foo; throw new App\\Bar; $c = new self;")
 	if want := "<?php $a = new Foo(); throw new App\\Bar(); $c = new self();"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -26,6 +27,7 @@ func TestNewWithParentheses(t *testing.T) {
 }
 
 func TestSingleLineEmptyBody(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleLineEmptyBody{}, "<?php class A\n{\n}")
 	if want := "<?php class A {}"; !changed || got != want {
 		t.Fatalf("class: changed=%v got=%q want=%q", changed, got, want)

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestStandaloneLineInMultilineArray(t *testing.T) {
+	t.Parallel()
 	f := StandaloneLineInMultilineArray{}
 
 	// a single-line associative array is broken to one item per line

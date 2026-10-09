@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoBlankLineBetweenImports(t *testing.T) {
+	t.Parallel()
 	f := NoBlankLineBetweenImports{}
 
 	// blank lines between consecutive imports collapse; the namespace gap stays

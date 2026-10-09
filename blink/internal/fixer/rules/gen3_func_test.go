@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen3FuncFunctionDeclaration(t *testing.T) {
+	t.Parallel()
 	f := FunctionDeclaration{}
 	cases := []struct {
 		src, want string
@@ -58,6 +59,7 @@ func TestGen3FuncFunctionDeclaration(t *testing.T) {
 }
 
 func TestGen3FuncSourceURL(t *testing.T) {
+	t.Parallel()
 	f := FunctionDeclaration{}
 	if want := fixer.SourceURLFor(f.Name()); f.SourceURL() != want {
 		t.Fatalf("%T SourceURL()=%q want %q", f, f.SourceURL(), want)

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestSimplifiedNullReturn(t *testing.T) {
+	t.Parallel()
 	// no return type -> simplified
 	got, changed := apply(t, SimplifiedNullReturn{}, "<?php function a() {\n    return null;\n}")
 	if want := "<?php function a() {\n    return;\n}"; !changed || got != want {

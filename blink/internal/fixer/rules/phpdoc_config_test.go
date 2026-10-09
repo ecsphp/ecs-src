@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocScalarConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @param integer $a\n * @param boolean $b\n */\n"
 
 	// default converts every scalar alias

@@ -7,6 +7,7 @@ import (
 )
 
 func TestIsNull(t *testing.T) {
+	t.Parallel()
 	f := IsNull{}
 
 	assertFix(t, f, "<?php\nif (is_null($x)) {}", "<?php\nif (null === $x) {}", true)
@@ -26,6 +27,7 @@ func TestIsNull(t *testing.T) {
 }
 
 func TestIsNullSourceURL(t *testing.T) {
+	t.Parallel()
 	f := IsNull{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 		t.Fatalf("SourceURL %q, want %q", got, want)

@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen5LangInclude(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string
@@ -42,6 +43,7 @@ func TestGen5LangInclude(t *testing.T) {
 }
 
 func TestGen5LangEmptyLoopBody(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string
@@ -79,6 +81,7 @@ func TestGen5LangEmptyLoopBody(t *testing.T) {
 }
 
 func TestGen5LangEmptyLoopCondition(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string
@@ -114,6 +117,7 @@ func TestGen5LangEmptyLoopCondition(t *testing.T) {
 
 // TestGen5LangSourceURLs verifies each SourceURL matches SourceURLFor(Name()).
 func TestGen5LangSourceURLs(t *testing.T) {
+	t.Parallel()
 	for _, f := range []fixer.Fixer{Include{}, EmptyLoopBody{}, EmptyLoopCondition{}} {
 		if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 			t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)

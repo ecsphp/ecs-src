@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestArrowFnSpacing(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, FunctionDeclaration{}, "<?php $f = fn(int $x) => $x;")
 	if want := "<?php $f = fn (int $x) => $x;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -13,6 +14,7 @@ func TestArrowFnSpacing(t *testing.T) {
 }
 
 func TestPhpdocTypesGenericsAndConst(t *testing.T) {
+	t.Parallel()
 	// a pseudo-type keyword inside generics is lowercased
 	got, changed := apply(t, PhpdocTypes{}, "<?php\n/**\n * @implements Foo<Scalar>\n */\nclass A {}")
 	if want := "<?php\n/**\n * @implements Foo<scalar>\n */\nclass A {}"; !changed || got != want {
@@ -25,6 +27,7 @@ func TestPhpdocTypesGenericsAndConst(t *testing.T) {
 }
 
 func TestNoBlankLinesAfterPhpdocKeepsFileDocblock(t *testing.T) {
+	t.Parallel()
 	// a file-level docblock before "declare" keeps its blank line
 	src := "<?php\n\n/**\n * file header\n */\n\ndeclare(strict_types=1);\n"
 	if got, changed := apply(t, NoBlankLinesAfterPhpdoc{}, src); changed || got != src {
@@ -38,6 +41,7 @@ func TestNoBlankLinesAfterPhpdocKeepsFileDocblock(t *testing.T) {
 }
 
 func TestPhpdocIndentAlignsToDocumentedElement(t *testing.T) {
+	t.Parallel()
 	// docblock mis-indented deeper than its method is realigned to the method
 	src := "<?php\nclass A\n{\n        /**\n     * @return int\n     */\n    public function f(): int\n    {\n        return 1;\n    }\n}"
 	want := "<?php\nclass A\n{\n    /**\n     * @return int\n     */\n    public function f(): int\n    {\n        return 1;\n    }\n}"

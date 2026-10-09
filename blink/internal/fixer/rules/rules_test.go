@@ -19,6 +19,7 @@ func apply(t *testing.T, r fixerRule, src string) (string, bool) {
 }
 
 func TestNoSinglelineWhitespaceBeforeSemicolons(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoSinglelineWhitespaceBeforeSemicolons{}, "<?php $x = 1 ; $y = 2  ;")
 	if want := "<?php $x = 1; $y = 2;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -29,6 +30,7 @@ func TestNoSinglelineWhitespaceBeforeSemicolons(t *testing.T) {
 }
 
 func TestSpaceAfterSemicolon(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SpaceAfterSemicolon{}, "<?php $a=1;$b=2;")
 	if want := "<?php $a=1; $b=2;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -41,6 +43,7 @@ func TestSpaceAfterSemicolon(t *testing.T) {
 }
 
 func TestNoWhitespaceInBlankLine(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoWhitespaceInBlankLine{}, "<?php\n$a = 1;\n   \n$b = 2;\n")
 	if want := "<?php\n$a = 1;\n\n$b = 2;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -48,6 +51,7 @@ func TestNoWhitespaceInBlankLine(t *testing.T) {
 }
 
 func TestBlankLineAfterOpeningTag(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php\n$a = 1;\n")
 	if want := "<?php\n\n$a = 1;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -61,6 +65,7 @@ func TestBlankLineAfterOpeningTag(t *testing.T) {
 }
 
 func TestNoLeadingNamespaceWhitespace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoLeadingNamespaceWhitespace{}, "<?php\n    namespace App;\n")
 	if want := "<?php\nnamespace App;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -68,6 +73,7 @@ func TestNoLeadingNamespaceWhitespace(t *testing.T) {
 }
 
 func TestBinaryOperatorSpaces(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BinaryOperatorSpaces{}, "<?php $a = ['x'=>1, 'y'  =>  2];")
 	if want := "<?php $a = ['x' => 1, 'y' => 2];"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -91,6 +97,7 @@ func TestBinaryOperatorSpaces(t *testing.T) {
 }
 
 func TestConcatSpace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ConcatSpace{}, "<?php $s = 'a'.'b'. $c;")
 	if want := "<?php $s = 'a' . 'b' . $c;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -98,6 +105,7 @@ func TestConcatSpace(t *testing.T) {
 }
 
 func TestCastSpaces(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, CastSpaces{}, "<?php $x = (int)$y;")
 	if want := "<?php $x = (int) $y;"; !changed || got != want {
 		t.Fatalf("simple: changed=%v got=%q want=%q", changed, got, want)
@@ -119,6 +127,7 @@ func TestCastSpaces(t *testing.T) {
 }
 
 func TestLowercaseKeywords(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, LowercaseKeywords{}, "<?php FUNCTION foo() { RETURN 1; }")
 	if want := "<?php function foo() { return 1; }"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -130,6 +139,7 @@ func TestLowercaseKeywords(t *testing.T) {
 }
 
 func TestConstantCase(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ConstantCase{}, "<?php $a = TRUE; $b = NULL; $c = False;")
 	if want := "<?php $a = true; $b = null; $c = false;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -140,6 +150,7 @@ func TestConstantCase(t *testing.T) {
 }
 
 func TestLowercaseStaticReference(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, LowercaseStaticReference{}, "<?php SELF::x(); PARENT::y(); Static::z();")
 	if want := "<?php self::x(); parent::y(); static::z();"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -147,6 +158,7 @@ func TestLowercaseStaticReference(t *testing.T) {
 }
 
 func TestLowercaseAndShortCast(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, LowercaseCast{}, "<?php $x = (INT)$y;")
 	if want := "<?php $x = (int)$y;"; !changed || got != want {
 		t.Fatalf("lowercase: changed=%v got=%q want=%q", changed, got, want)
@@ -158,6 +170,7 @@ func TestLowercaseAndShortCast(t *testing.T) {
 }
 
 func TestSingleSpaceAroundConstruct(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php if($a){} else{}")
 	if want := "<?php if ($a){} else {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -188,6 +201,7 @@ func TestSingleSpaceAroundConstruct(t *testing.T) {
 }
 
 func TestNoSpacesAfterFunctionName(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php foo (1); $o->bar ();")
 	if want := "<?php foo(1); $o->bar();"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -202,6 +216,7 @@ func TestNoSpacesAfterFunctionName(t *testing.T) {
 }
 
 func TestNoSpacesInsideParenthesis(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoSpacesInsideParenthesis{}, "<?php foo( $a, $b );")
 	if want := "<?php foo($a, $b);"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -209,6 +224,7 @@ func TestNoSpacesInsideParenthesis(t *testing.T) {
 }
 
 func TestUnaryOperatorSpaces(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, UnaryOperatorSpaces{}, "<?php $i ++; -- $j;")
 	if want := "<?php $i++; --$j;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -216,6 +232,7 @@ func TestUnaryOperatorSpaces(t *testing.T) {
 }
 
 func TestElseif(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, Elseif{}, "<?php if ($a) {} else if ($b) {}")
 	if want := "<?php if ($a) {} elseif ($b) {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -223,6 +240,7 @@ func TestElseif(t *testing.T) {
 }
 
 func TestNoLeadingImportSlash(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoLeadingImportSlash{}, "<?php use \\Foo\\Bar; use function \\ns\\f;")
 	if want := "<?php use Foo\\Bar; use function ns\\f;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -234,6 +252,7 @@ func TestNoLeadingImportSlash(t *testing.T) {
 }
 
 func TestDeclareEqualNormalize(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, DeclareEqualNormalize{}, "<?php declare(strict_types = 1);")
 	if want := "<?php declare(strict_types=1);"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -243,6 +262,7 @@ func TestDeclareEqualNormalize(t *testing.T) {
 // TestAllFixersIdempotent guarantees a second --fix pass is a no-op: running
 // every fixer twice must equal running it once.
 func TestAllFixersIdempotent(t *testing.T) {
+	t.Parallel()
 	corpus := []string{
 		"<?php\ndeclare(strict_types = 1);\nnamespace App;\nuse A\\B, C\\D;\nCLASS Demo\n{\n\n\tpublic function run( $a )\n\t{\n\t\tif($a===TRUE){\n\t\t\treturn SELF::make ( $a );\n\t\t} else if($a) {\n\t\t\t$i ++;\n\t\t}\n\t\t$x=(INTEGER)$a;\n\t\treturn $a.'x';\n\t}\n}\n",
 		"<?php $x = <<<EOT\nline $a<$b if($c)\nEOT;\n",
@@ -280,6 +300,7 @@ func runAll(src string) string {
 }
 
 func TestBinaryOperatorSpacesComparison(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BinaryOperatorSpaces{}, "<?php $x = $a===$b || $c<$d ?? $e;")
 	if want := "<?php $x = $a === $b || $c < $d ?? $e;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -287,6 +308,7 @@ func TestBinaryOperatorSpacesComparison(t *testing.T) {
 }
 
 func TestBlankLinesBeforeNamespace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BlankLinesBeforeNamespace{}, "<?php declare(strict_types=1);\nnamespace App;")
 	if want := "<?php declare(strict_types=1);\n\nnamespace App;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -294,6 +316,7 @@ func TestBlankLinesBeforeNamespace(t *testing.T) {
 }
 
 func TestSingleImportPerStatement(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleImportPerStatement{}, "<?php\nuse A\\B, C\\D;")
 	if want := "<?php\nuse A\\B;\nuse D;"; got == want {
 		t.Fatalf("unexpected: %q", got) // guard against accidental truncation
@@ -311,6 +334,7 @@ func TestSingleImportPerStatement(t *testing.T) {
 }
 
 func TestNoBlankLinesAfterClassOpening(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoBlankLinesAfterClassOpening{}, "<?php class A\n{\n\n\n    public $x;\n}")
 	if want := "<?php class A\n{\n    public $x;\n}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -318,6 +342,7 @@ func TestNoBlankLinesAfterClassOpening(t *testing.T) {
 }
 
 func TestIndentationType(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, IndentationType{}, "<?php\n\t$a = 1;\n\t\t$b = 2;\n")
 	if want := "<?php\n    $a = 1;\n        $b = 2;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -325,6 +350,7 @@ func TestIndentationType(t *testing.T) {
 }
 
 func TestFullOpeningTag(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, FullOpeningTag{}, "<? echo 1;")
 	if want := "<?php echo 1;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -342,6 +368,7 @@ func TestFullOpeningTag(t *testing.T) {
 }
 
 func TestNoClosingTag(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoClosingTag{}, "<?php echo 1;\n?>\n")
 	if want := "<?php echo 1;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -353,6 +380,7 @@ func TestNoClosingTag(t *testing.T) {
 }
 
 func TestBlankLineAfterNamespace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BlankLineAfterNamespace{}, "<?php\nnamespace App;\nclass A {}")
 	if want := "<?php\nnamespace App;\n\nclass A {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -363,6 +391,7 @@ func TestBlankLineAfterNamespace(t *testing.T) {
 }
 
 func TestSingleLineAfterImports(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleLineAfterImports{}, "<?php\nuse A;\nuse B;\nclass C {}")
 	if want := "<?php\nuse A;\nuse B;\n\nclass C {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -381,6 +410,7 @@ func TestSingleLineAfterImports(t *testing.T) {
 }
 
 func TestNoTrailingWhitespace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoTrailingWhitespace{}, "<?php $x = 1;   \n$y = 2;\t\n")
 	if want := "<?php $x = 1;\n$y = 2;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -391,6 +421,7 @@ func TestNoTrailingWhitespace(t *testing.T) {
 }
 
 func TestSingleBlankLineAtEndOfFile(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleBlankLineAtEndOfFile{}, "<?php echo 1;\n\n\n")
 	if !changed || got != "<?php echo 1;\n" {
 		t.Fatalf("collapse: changed=%v got=%q", changed, got)

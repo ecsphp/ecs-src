@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen3TypesTypeDeclarationSpaces(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -48,6 +49,7 @@ func TestGen3TypesTypeDeclarationSpaces(t *testing.T) {
 }
 
 func TestGen3TypesNullableTypeDeclarationForDefaultNullValue(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -93,6 +95,7 @@ func TestGen3TypesNullableTypeDeclarationForDefaultNullValue(t *testing.T) {
 }
 
 func TestGen3TypesSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		TypeDeclarationSpaces{},
 		NullableTypeDeclarationForDefaultNullValue{},

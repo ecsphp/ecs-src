@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestGenWsEncoding(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, Encoding{}, "\uFEFF<?php echo 1;\n")
 	if want := "<?php echo 1;\n"; !changed || got != want {
 		t.Fatalf("strip BOM: changed=%v got=%q want=%q", changed, got, want)
@@ -20,6 +21,7 @@ func TestGenWsEncoding(t *testing.T) {
 }
 
 func TestGenWsDeclareParentheses(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, DeclareParentheses{}, "<?php declare ( strict_types = 1 );")
 	if want := "<?php declare(strict_types = 1);"; !changed || got != want {
 		t.Fatalf("spaces: changed=%v got=%q want=%q", changed, got, want)
@@ -40,6 +42,7 @@ func TestGenWsDeclareParentheses(t *testing.T) {
 }
 
 func TestGenWsMultilineCommentOpeningClosing(t *testing.T) {
+	t.Parallel()
 	cases := []struct{ in, want string }{
 		{"<?php /*** Opening comment */", "<?php /* Opening comment */"},
 		{"<?php /** Closing DocBlock ***/", "<?php /** Closing DocBlock */"},

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocNoAliasTagConfig(t *testing.T) {
+	t.Parallel()
 	// default rewrites @type -> @var
 	got, changed := apply(t, PhpdocNoAliasTag{}, "<?php\n/**\n * @type int $x\n */\n")
 	if want := "<?php\n/**\n * @var int $x\n */\n"; !changed || got != want {
@@ -21,6 +22,7 @@ func TestPhpdocNoAliasTagConfig(t *testing.T) {
 }
 
 func TestPhpdocTypesConfig(t *testing.T) {
+	t.Parallel()
 	// default lowercases a meta type
 	got, changed := apply(t, PhpdocTypes{}, "<?php\n/**\n * @return VOID\n */\n")
 	if want := "<?php\n/**\n * @return void\n */\n"; !changed || got != want {

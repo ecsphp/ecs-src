@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestSelfStaticAccessor(t *testing.T) {
+	t.Parallel()
 	// final class: static accessor and "new static" become self
 	src := "<?php final class A {\n    public function m(): static {\n        $x = static::create();\n        $y = new static();\n        return static::$prop;\n    }\n}"
 	want := "<?php final class A {\n    public function m(): static {\n        $x = self::create();\n        $y = new self();\n        return self::$prop;\n    }\n}"

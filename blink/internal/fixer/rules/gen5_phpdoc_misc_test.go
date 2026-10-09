@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen5PhpdocMiscReturnSelfReference(t *testing.T) {
+	t.Parallel()
 	f := PhpdocReturnSelfReference{}
 
 	// this -> $this
@@ -67,6 +68,7 @@ func TestGen5PhpdocMiscReturnSelfReference(t *testing.T) {
 }
 
 func TestGen5PhpdocMiscReturnSelfReferenceSourceURL(t *testing.T) {
+	t.Parallel()
 	var f fixer.Fixer = PhpdocReturnSelfReference{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 		t.Fatalf("SourceURL %q, want %q", got, want)
