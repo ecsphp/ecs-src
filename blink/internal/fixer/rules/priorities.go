@@ -97,7 +97,7 @@ var fixerPriority = map[string]int{
 	"NoLeadingNamespaceWhitespaceFixer":               0,
 	"NoAlternativeSyntaxFixer":                        42,
 	"NoMixedEchoPrintFixer":                           -10,
-	"NoUnneededCurlyBracesFixer":                      40,
+	"NoUnneededBracesFixer":                           40,
 	"NoMultilineWhitespaceAroundDoubleArrowFixer":     31,
 	"NoMultipleStatementsPerLineFixer":                -1,
 	"MultilineWhitespaceBeforeSemicolonsFixer":        0,

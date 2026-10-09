@@ -8,13 +8,13 @@ import (
 	"blink/internal/tokens"
 )
 
-// PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoUnneededCurlyBracesFixer.php
+// PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoUnneededBracesFixer.php
 //
 // NoUnneededBraces removes superfluous braces that are not part of a control
 // structure body: standalone "{ ... }" blocks and single-element group imports
 // ("use A\{B};" -> "use A\B;"). The namespaces option is off by default, so
-// bracketed namespaces are left untouched. Named NoUnneededCurlyBracesFixer to
-// match the set membership (the rule's former name).
+// bracketed namespaces are left untouched. The former name NoUnneededCurlyBracesFixer
+// is kept as a deprecated alias (see deprecatedAliases in registry.go).
 type NoUnneededBraces struct {
 	Namespaces bool
 }
@@ -27,11 +27,11 @@ func (f NoUnneededBraces) WithConfig(config map[string]any) fixer.Fixer {
 }
 
 func (NoUnneededBraces) Name() string {
-	return `PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`
+	return `PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer`
 }
 
 func (NoUnneededBraces) SourceURL() string {
-	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoUnneededCurlyBracesFixer.php"
+	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoUnneededBracesFixer.php"
 }
 
 func (f NoUnneededBraces) Fix(s *tokens.Stream) bool {

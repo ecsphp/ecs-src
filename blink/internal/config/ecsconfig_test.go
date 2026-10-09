@@ -196,3 +196,36 @@ func TestLoadECSRejectsConflictingCheckers(t *testing.T) {
 		t.Fatalf("single checker should load, got %v", err)
 	}
 }
+
+func TestLoadECSResolvesDeprecatedAlias(t *testing.T) {
+	deprecated := `PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`
+	successor := `PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer`
+
+	// the deprecated class name still maps, to the successor fixer
+	c, resolution, err := LoadECS(writeECS(t, `{
+		"rules": [{"class": "`+esc(deprecated)+`", "config": {}}]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolution.Mapped != 1 || len(resolution.Unsupported) != 0 {
+		t.Fatalf("deprecated alias not mapped: mapped=%d unsupported=%v", resolution.Mapped, resolution.Unsupported)
+	}
+	if len(c.Rules) != 1 || c.Rules[0].Name() != successor {
+		t.Fatalf("alias did not resolve to successor, got %v", c.Rules)
+	}
+
+	// the deprecated name and its successor collapse to a single fixer
+	c, resolution, err = LoadECS(writeECS(t, `{
+		"rules": [
+			{"class": "`+esc(deprecated)+`", "config": {}},
+			{"class": "`+esc(successor)+`", "config": {}}
+		]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolution.Mapped != 1 || len(c.Rules) != 1 {
+		t.Fatalf("alias and successor should collapse to one rule, mapped=%d rules=%d", resolution.Mapped, len(c.Rules))
+	}
+}

@@ -174,8 +174,10 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 			}
 		}
 
-		if !seen[rule.Class] {
-			seen[rule.Class] = true
+		// key on the resolved fixer name, so a deprecated class and its
+		// successor (both resolving to one fixer) are not added twice
+		if !seen[resolved.Name()] {
+			seen[resolved.Name()] = true
 			resolution.Mapped++
 			config.Rules = append(config.Rules, resolved)
 		}

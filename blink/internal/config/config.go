@@ -105,11 +105,12 @@ func resolve(f file) (*Config, error) {
 	}
 
 	for _, name := range f.Rules {
-		if _, ok := rules.ByName(name); !ok {
+		fx, ok := rules.ByName(name)
+		if !ok {
 			return nil, fmt.Errorf("unknown rule %q", name)
 		}
 		selective = true
-		wanted[name] = true
+		wanted[fx.Name()] = true
 	}
 
 	if !selective {
