@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,7 +21,7 @@ func TestRunFixesFile(t *testing.T) {
 	cfg := config.Configure().WithPaths(dir)
 
 	// check mode: reports but does not write
-	results, err := Run(cfg, false, nil)
+	results, err := Run(context.Background(), cfg, false, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +33,7 @@ func TestRunFixesFile(t *testing.T) {
 	}
 
 	// fix mode: writes cleaned content
-	if _, err := Run(cfg, true, nil); err != nil {
+	if _, err := Run(context.Background(), cfg, true, nil); err != nil {
 		t.Fatal(err)
 	}
 	b, _ := os.ReadFile(path)
@@ -44,8 +46,22 @@ func TestRunFixesFile(t *testing.T) {
 	}
 
 	// second check run is clean
-	results, _ = Run(cfg, false, nil)
+	results, _ = Run(context.Background(), cfg, false, nil)
 	if len(results) != 0 {
 		t.Fatalf("expected clean after fix, got %+v", results)
+	}
+}
+
+func TestRunCancelledContext(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.php"), []byte("<?php $x = 1 ;\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if _, err := Run(ctx, config.Configure().WithPaths(dir), false, nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context.Canceled, got %v", err)
 	}
 }
