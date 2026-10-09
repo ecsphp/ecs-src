@@ -19,4 +19,18 @@ final class DeprecatedPhpCsFixerSetsTest extends TestCase
 
         self::assertSame($ecsConfigBuilder, $result);
     }
+
+    public function testSkipsDeprecationWarningInParallelWorker(): void
+    {
+        $originalArgv = $_SERVER['argv'];
+        $_SERVER['argv'] = ['bin/ecs', 'worker', '--config', 'ecs.php'];
+
+        ob_start();
+        new ECSConfigBuilder()->withEditorConfig();
+        $output = ob_get_clean();
+
+        $_SERVER['argv'] = $originalArgv;
+
+        self::assertSame('', $output);
+    }
 }
