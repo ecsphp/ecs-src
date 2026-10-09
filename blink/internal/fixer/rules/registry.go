@@ -1,8 +1,10 @@
 package rules
 
 import (
+	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	"blink/internal/fixer"
 )
@@ -245,7 +247,14 @@ func StructuralFixers() []fixer.Fixer {
 
 // All returns every built-in fixer in execution order. FullOpeningTag runs first
 // (normalize the tag) and NoClosingTag last (trailing tag/EOF cleanup).
-func All() []fixer.Fixer {
+var (
+	registryOnce sync.Once
+	sortedFixers []fixer.Fixer          // canonical execution order
+	fixerByName  map[string]fixer.Fixer // Name -> fixer
+	canonicalPos map[string]int         // Name -> index in sortedFixers
+)
+
+func buildRegistry() {
 	all := []fixer.Fixer{FullOpeningTag{}}
 	all = append(all, CommonFixers()...)
 	all = append(all, PhpdocFixers()...)
@@ -274,7 +283,21 @@ func All() []fixer.Fixer {
 		}
 		return fixerSortName(all[a]) < fixerSortName(all[b])
 	})
-	return all
+
+	sortedFixers = all
+	fixerByName = make(map[string]fixer.Fixer, len(all))
+	canonicalPos = make(map[string]int, len(all))
+	for i, f := range all {
+		fixerByName[f.Name()] = f
+		canonicalPos[f.Name()] = i
+	}
+}
+
+// All returns every fixer in PHP-CS-Fixer execution order. The registry is built
+// once; the returned slice is a fresh copy the caller may append to or reorder.
+func All() []fixer.Fixer {
+	registryOnce.Do(buildRegistry)
+	return slices.Clone(sortedFixers)
 }
 
 // fixerSortName returns the name PHP-CS-Fixer sorts a fixer by: a core fixer's
@@ -295,13 +318,10 @@ func fixerSortName(f fixer.Fixer) string {
 // applies rules in the same order as the standalone path. Fixers unknown to
 // All() are placed last.
 func CanonicalOrder(fixers []fixer.Fixer) {
-	idx := map[string]int{}
-	for i, f := range All() {
-		idx[f.Name()] = i
-	}
+	registryOnce.Do(buildRegistry)
 	const last = 1 << 30
 	pos := func(f fixer.Fixer) int {
-		if i, ok := idx[f.Name()]; ok {
+		if i, ok := canonicalPos[f.Name()]; ok {
 			return i
 		}
 		return last
@@ -329,13 +349,10 @@ var deprecatedAliases = map[string]string{
 
 // ByName returns the fixer whose Name matches, if any.
 func ByName(name string) (fixer.Fixer, bool) {
+	registryOnce.Do(buildRegistry)
 	if canonical, ok := deprecatedAliases[name]; ok {
 		name = canonical
 	}
-	for _, f := range All() {
-		if f.Name() == name {
-			return f, true
-		}
-	}
-	return nil, false
+	f, ok := fixerByName[name]
+	return f, ok
 }
