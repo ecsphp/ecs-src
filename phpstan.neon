@@ -79,11 +79,6 @@ parameters:
             identifier: symplify.noConstructorOverride
             path: src/SniffRunner/ValueObject/File.php
 
-        # static::class is the late-bound class name, not a constant that can change
-        -
-            identifier: symplify.forbiddenStaticClassConstFetch
-            path: packages/coding-standard/src/Fixer/AbstractSymplifyFixer.php
-
         # property_exists() is needed to read the fixer configuration
         -
             message: '#Function "property_exists\(\)" cannot be used/left in the code#'
