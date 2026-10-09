@@ -4,6 +4,7 @@
 package tokens
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/token"
@@ -31,13 +32,11 @@ func (s *Stream) Set(i int, t token.Token) { s.toks[i] = t }
 func (s *Stream) SetValue(i int, v string) { s.toks[i].Value = v }
 
 func (s *Stream) RemoveAt(i int) {
-	s.toks = append(s.toks[:i], s.toks[i+1:]...)
+	s.toks = slices.Delete(s.toks, i, i+1)
 }
 
 func (s *Stream) InsertAt(i int, t token.Token) {
-	s.toks = append(s.toks, token.Token{})
-	copy(s.toks[i+1:], s.toks[i:])
-	s.toks[i] = t
+	s.toks = slices.Insert(s.toks, i, t)
 }
 
 // MatchForward returns the index of the delimiter matching the opener at i
@@ -113,11 +112,11 @@ func (s *Stream) MatchBackward(i int) int {
 	return -1
 }
 
-// ReplaceRange swaps tokens [start, end] (inclusive) for repl.
+// ReplaceRange swaps tokens [start, end] (inclusive) for repl. The splice is
+// done in place: when len(repl) matches the range the tail never moves, and
+// otherwise only the tail shifts, so no fresh tail copy is allocated.
 func (s *Stream) ReplaceRange(start, end int, repl []token.Token) {
-	tail := append([]token.Token(nil), s.toks[end+1:]...)
-	s.toks = append(s.toks[:start], repl...)
-	s.toks = append(s.toks, tail...)
+	s.toks = slices.Replace(s.toks, start, end+1, repl...)
 }
 
 // Render concatenates every token value back into source.
