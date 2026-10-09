@@ -1,8 +1,8 @@
 package rules
 
 import (
+	"cmp"
 	"slices"
-	"sort"
 	"strings"
 	"sync"
 
@@ -276,12 +276,11 @@ func buildRegistry() {
 	all = append(all, NoClosingTag{})
 	// run in PHP-CS-Fixer execution order: priority descending, then by rule name
 	// ascending - exactly how PHP-CS-Fixer's Utils::sortFixers breaks ties
-	sort.SliceStable(all, func(a, b int) bool {
-		pa, pb := fixerPriorityOf(all[a]), fixerPriorityOf(all[b])
-		if pa != pb {
-			return pa > pb
+	slices.SortStableFunc(all, func(a, b fixer.Fixer) int {
+		if pa, pb := fixerPriorityOf(a), fixerPriorityOf(b); pa != pb {
+			return cmp.Compare(pb, pa) // priority descending
 		}
-		return fixerSortName(all[a]) < fixerSortName(all[b])
+		return cmp.Compare(fixerSortName(a), fixerSortName(b))
 	})
 
 	sortedFixers = all
@@ -326,8 +325,8 @@ func CanonicalOrder(fixers []fixer.Fixer) {
 		}
 		return last
 	}
-	sort.SliceStable(fixers, func(a, b int) bool {
-		return pos(fixers[a]) < pos(fixers[b])
+	slices.SortStableFunc(fixers, func(a, b fixer.Fixer) int {
+		return cmp.Compare(pos(a), pos(b))
 	})
 }
 

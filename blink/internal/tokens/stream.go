@@ -10,6 +10,8 @@ import (
 	"blink/internal/token"
 )
 
+// Stream is a flat, mutable, index-addressable token sequence. Fixers read
+// tokens by index and splice them in place; Render rebuilds the source.
 type Stream struct {
 	toks []token.Token
 }

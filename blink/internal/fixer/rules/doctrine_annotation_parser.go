@@ -166,10 +166,8 @@ func daCreateFromDocComment(content string, ignoredTags map[string]bool) []daTok
 		var used []daToken
 		nbScannedTokensToUse := 0
 		nbScopes := 0
-		var lastToken daToken
 		for index := range scanned {
 			tk := scanned[index]
-			lastToken = tk
 			if index == 0 && tk.typ != daTAt {
 				break
 			}
@@ -219,7 +217,6 @@ func daCreateFromDocComment(content string, ignoredTags map[string]bool) []daTok
 			currentPosition = nextAt + last.pos + len(last.content)
 			ignoredTextPosition = currentPosition
 		} else {
-			_ = lastToken
 			currentPosition = nextAt + 1
 		}
 	}

@@ -49,7 +49,6 @@ func stripTrailingWS(val string, isLast bool) string {
 			if trailing(val, i, isLast) {
 				return stripTrailingBuild(val, start, isLast)
 			}
-			_ = start
 		} else {
 			i++
 		}

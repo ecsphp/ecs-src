@@ -3,8 +3,9 @@
 package runner
 
 import (
+	"cmp"
 	"os"
-	"sort"
+	"slices"
 	"sync"
 
 	"blink/internal/config"
@@ -85,7 +86,7 @@ func Run(cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
 		return nil, firstErr
 	}
 
-	sort.Slice(collected, func(i, j int) bool { return collected[i].Path < collected[j].Path })
+	slices.SortFunc(collected, func(a, b FileResult) int { return cmp.Compare(a.Path, b.Path) })
 	return collected, nil
 }
 
