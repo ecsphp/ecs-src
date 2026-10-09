@@ -1,0 +1,58 @@
+name: Benchmark
+
+# informational only - sweeps the parallel jobSize over ECS's own src + tests
+# and prints wall-clock timings to the job summary. Never fails on timing.
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+jobs:
+    jobsize-sweep:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v4
+
+            -
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 8.4
+                    coverage: none
+
+            -   run: composer install --no-progress --ansi
+
+            -
+                name: "Sweep parallel jobSize over src + tests"
+                run: |
+                    echo "| jobSize | run 1 | run 2 | best |" >> "$GITHUB_STEP_SUMMARY"
+                    echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+                    for JOB_SIZE in 16 32 48; do
+                        cat > "build/bench-ecs-${JOB_SIZE}.php" <<PHP
+                    <?php
+                    declare(strict_types=1);
+                    return \Symplify\EasyCodingStandard\Config\ECSConfig::configure()
+                        ->withPaths([__DIR__ . '/../src', __DIR__ . '/../tests'])
+                        ->withPreparedSets(psr12: true, common: true)
+                        ->withParallel(jobSize: ${JOB_SIZE});
+                    PHP
+
+                        BEST=""
+                        TIMES=""
+                        for RUN in 1 2; do
+                            START=$(date +%s%3N)
+                            bin/ecs check --config "build/bench-ecs-${JOB_SIZE}.php" --no-progress-bar > /dev/null 2>&1 || true
+                            END=$(date +%s%3N)
+                            MS=$((END - START))
+                            TIMES="${TIMES} | ${MS} ms"
+                            if [ -z "$BEST" ] || [ "$MS" -lt "$BEST" ]; then
+                                BEST=$MS
+                            fi
+                        done
+
+                        echo "jobSize=${JOB_SIZE}:${TIMES} | best ${BEST} ms"
+                        echo "| ${JOB_SIZE}${TIMES} | ${BEST} ms |" >> "$GITHUB_STEP_SUMMARY"
+                    done
