@@ -26,7 +26,7 @@ final class DeprecatedPhpCsFixerSetsTest extends TestCase
         $_SERVER['argv'] = ['bin/ecs', 'worker', '--config', 'ecs.php'];
 
         ob_start();
-        (new ECSConfigBuilder())->withEditorConfig();
+        new ECSConfigBuilder()->withEditorConfig();
         $output = ob_get_clean();
 
         $_SERVER['argv'] = $originalArgv;
