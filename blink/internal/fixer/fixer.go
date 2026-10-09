@@ -42,6 +42,8 @@ var ecsSrcOnlyFixers = map[string]bool{
 	`Symplify\CodingStandard\Fixer\Annotation\RemoveEventSubscriberDescriptionFixer`:      true,
 }
 
+// Fixer inspects a token stream and mutates it in place. It is the core contract
+// every rule implements, mirroring a PHP-CS-Fixer fixer.
 type Fixer interface {
 	// Name is the checker identifier (the PHP-CS-Fixer FQCN) shown in reports.
 	Name() string

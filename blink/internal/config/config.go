@@ -13,6 +13,8 @@ import (
 	"blink/internal/set"
 )
 
+// Config is a resolved blink run: the paths to check, the rules to apply, and
+// the worker count, assembled from an ECS or blink config file.
 type Config struct {
 	Paths []string
 	Skip  []string // filepath.Match globs tested against each path

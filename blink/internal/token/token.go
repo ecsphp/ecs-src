@@ -20,7 +20,7 @@ const (
 	EOF
 )
 
-var kindNames = map[Kind]string{
+var kindNames = [...]string{
 	Unknown:    "Unknown",
 	OpenTag:    "OpenTag",
 	CloseTag:   "CloseTag",
@@ -38,10 +38,10 @@ var kindNames = map[Kind]string{
 }
 
 func (k Kind) String() string {
-	if n, ok := kindNames[k]; ok {
-		return n
+	if int(k) < 0 || int(k) >= len(kindNames) {
+		return "Kind(?)"
 	}
-	return "Kind(?)"
+	return kindNames[k]
 }
 
 // Token is a single lexical unit. The stream is lossless: concatenating every
