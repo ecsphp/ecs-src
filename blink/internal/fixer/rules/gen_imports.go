@@ -65,9 +65,7 @@ func removeUnneededAliases(s *tokens.Stream, from, semi int) bool {
 			if seg > from && alias < end &&
 				s.At(seg).Kind == token.Ident && s.At(alias).Kind == token.Ident &&
 				s.At(seg).Value == s.At(alias).Value {
-				for r := alias; r >= seg+1; r-- {
-					s.RemoveAt(r)
-				}
+				s.ReplaceRange(seg+1, alias, nil)
 				end -= alias - seg
 				k = seg + 1
 				changed = true

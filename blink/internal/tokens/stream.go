@@ -41,6 +41,12 @@ func (s *Stream) InsertAt(i int, t token.Token) {
 	s.toks = slices.Insert(s.toks, i, t)
 }
 
+// InsertSliceAt inserts ts at index i in one splice, so the tail shifts once
+// instead of once per element.
+func (s *Stream) InsertSliceAt(i int, ts []token.Token) {
+	s.toks = slices.Insert(s.toks, i, ts...)
+}
+
 // MatchForward returns the index of the delimiter matching the opener at i
 // ("(", "{" or "["), or -1 if there is none. Strings and comments are single
 // tokens, so scanning punctuation is safe.

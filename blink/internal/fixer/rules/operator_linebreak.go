@@ -149,11 +149,8 @@ func moveOperatorToLineStart(s *tokens.Stream, opIndices []int, nextM int) {
 		s.SetValue(idx, "")
 	}
 
-	at := nextM
-	for _, c := range clones {
-		s.InsertAt(at, c)
-		at++
-	}
+	s.InsertSliceAt(nextM, clones)
+	at := nextM + len(clones)
 	if hadSpaceBefore {
 		s.InsertAt(at, token.Token{Kind: token.Whitespace, Value: " "})
 	}

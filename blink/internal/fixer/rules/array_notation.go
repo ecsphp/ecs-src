@@ -38,9 +38,7 @@ func convertLongArray(s *tokens.Stream, name string) bool {
 		}
 		s.SetValue(closeIdx, "]")
 		s.SetValue(j, "[")
-		for k := j - 1; k >= i; k-- {
-			s.RemoveAt(k)
-		}
+		s.ReplaceRange(i, j-1, nil)
 		changed = true
 	}
 	return changed

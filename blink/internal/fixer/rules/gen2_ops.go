@@ -76,9 +76,7 @@ func (AssignNullCoalescingToCoalesceEqual) Fix(s *tokens.Stream) bool {
 		// `= $a ??` becomes `??=`: retag the `=` and drop the duplicate operand
 		// and operator.
 		s.SetValue(i, "??=")
-		for k := opIdx; k >= i+1; k-- {
-			s.RemoveAt(k)
-		}
+		s.ReplaceRange(i+1, opIdx, nil)
 		changed = true
 	}
 	return changed
