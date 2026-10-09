@@ -2,37 +2,29 @@ PSR-12 rules left to implement
 ==============================
 
 Reference: PHP-CS-Fixer @PSR12 = @PSR2 (+ @PSR1) plus extra rules.
-Below: what remains NOT implemented in blink. 47 fixers are done (see bottom).
-
-A statement/scope layer exists: Stream.MatchForward/MatchBackward, classifyBrace
-(labels each "{"), and classMemberStarts (iterates class members). The rules
-below need more of it (member reordering, type spans) or a fuller type model.
+Below: what is still partial or bounded in blink. Everything else in @PSR-12
+is implemented (see bottom).
 
 
-NEEDS FULLER AST / TYPE MODEL
------------------------------
-function_declaration            "function" signature spacing, closures
-compact_nullable_type_declaration   "? int" -> "?int" in type positions
-modifier_keywords               modifier ordering (casing/presence done)
-new_with_parentheses            "new Foo" -> "new Foo()" (needs class-name ctx)
-
-Notes:
-- method_argument_space is implemented for single-line comma spacing only; the
-  multi-line "one argument per line" reflow is not done.
-- ordered_class_elements is conservative: it skips any class containing comments
-  or attributes (attributes lex as # comments here), reordering only simple
-  classes. Broadening it needs first-class attribute tokens.
+PARTIAL
+-------
+method_argument_space           single-line comma spacing is done; the multi-line
+                                "one argument per line" reflow is not
+ordered_class_elements          conservative: skips any class containing comments
+                                or attributes (attributes lex as # comments here),
+                                reordering only simple classes. Broadening it needs
+                                first-class attribute tokens.
 
 
 LEFTOVERS (bounded / low value)
 -------------------------------
-no_break_comment                add "// no break" on fallthrough (heuristic)
 binary_operator_spaces          arithmetic/bitwise (+ - * / % & | ^): unary-
-                                ambiguous, need operand context
+                                ambiguous, need operand context (=, =>, comparison
+                                and logical operators are done)
 
 
-IMPLEMENTED (47)
-----------------
+IMPLEMENTED
+-----------
 casing:      lowercase_keywords, constant_case, lowercase_static_reference,
              lowercase_cast, short_scalar_cast
 spacing:     no_leading_namespace_whitespace, no_singleline_whitespace_before_semicolons,
@@ -41,16 +33,17 @@ spacing:     no_leading_namespace_whitespace, no_singleline_whitespace_before_se
              cast_spaces, ternary_operator_spaces, blank_line_after_opening_tag,
              no_trailing_whitespace, no_trailing_whitespace_in_comment,
              single_blank_line_at_eof
-functions:   method_argument_space (single-line), return_type_declaration,
-             no_spaces_after_function_name
+functions:   function_declaration, method_argument_space (single-line),
+             return_type_declaration, no_spaces_after_function_name
+types:       compact_nullable_type_declaration
 constructs:  single_space_around_construct, spaces_inside_parentheses,
-             unary_operator_spaces, elseif,
+             unary_operator_spaces, new_with_parentheses, elseif,
              no_leading_import_slash, declare_equal_normalize,
              switch_case_semicolon_to_colon, switch_case_space,
-             no_multiple_statements_per_line
+             no_break_comment, no_multiple_statements_per_line
 php tag:     full_opening_tag, no_closing_tag
 braces:      braces_position
-class:       visibility_required, single_trait_insert_per_statement,
+class:       visibility_required, modifier_keywords, single_trait_insert_per_statement,
              single_class_element_per_statement, class_definition,
              ordered_class_elements (conservative)
 imports:     single_import_per_statement, ordered_imports,

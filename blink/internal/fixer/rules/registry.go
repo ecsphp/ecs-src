@@ -321,8 +321,17 @@ func fixerPriorityOf(f fixer.Fixer) int {
 	return fixerPriority[short]
 }
 
+// deprecatedAliases maps a deprecated PHP-CS-Fixer class to its successor, so a
+// dumped ECS config that still references the old name resolves to the fixer.
+var deprecatedAliases = map[string]string{
+	`PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`: `PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer`,
+}
+
 // ByName returns the fixer whose Name matches, if any.
 func ByName(name string) (fixer.Fixer, bool) {
+	if canonical, ok := deprecatedAliases[name]; ok {
+		name = canonical
+	}
 	for _, f := range All() {
 		if f.Name() == name {
 			return f, true

@@ -217,7 +217,7 @@ var commonMembers = map[string]bool{
 	"NoTrailingCommaInSinglelineFixer":                true,
 	"NoTrailingWhitespaceInCommentFixer":              true,
 	"NoUnneededControlParenthesesFixer":               true,
-	"NoUnneededCurlyBracesFixer":                      true,
+	"NoUnneededBracesFixer":                           true,
 	"NoUnneededImportAliasFixer":                      true,
 	"NoUnusedImportsFixer":                            true,
 	"NoUselessConcatOperatorFixer":                    true,
