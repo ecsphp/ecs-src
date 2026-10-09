@@ -75,18 +75,7 @@ func (p *Progress) render() {
 	if p.total <= 0 {
 		return
 	}
-	pct := p.cur * 100 / p.total
-	filled := p.cur * p.width / p.total
-	var bar string
-	switch {
-	case filled >= p.width:
-		bar = strings.Repeat("=", p.width)
-	case filled == 0:
-		bar = ">" + strings.Repeat(" ", p.width-1)
-	default:
-		bar = strings.Repeat("=", filled-1) + ">" + strings.Repeat(" ", p.width-filled)
-	}
 	icon := claudeFrames[p.frame%len(claudeFrames)]
 	p.frame++
-	_, _ = fmt.Fprintf(p.w, "\r %s %d/%d [%s] %3d%%", icon, p.cur, p.total, bar, pct)
+	_, _ = fmt.Fprintf(p.w, "\r %s", icon)
 }
