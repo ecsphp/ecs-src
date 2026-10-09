@@ -13,6 +13,11 @@ func TestPhpdocTrim(t *testing.T) {
 	if _, changed := apply(t, PhpdocTrim{}, want); changed {
 		t.Fatal("trimmed docblock must not change")
 	}
+	// a docblock with no content at all is left alone (not collapsed to "/**\n */"),
+	// matching ECS after other fixers strip its description and tags
+	if _, changed := apply(t, PhpdocTrim{}, "<?php\n/**\n *\n */\nfunction f() {}"); changed {
+		t.Fatal("empty docblock must be left untouched")
+	}
 }
 
 func TestPhpdocNoEmptyReturn(t *testing.T) {

@@ -45,6 +45,19 @@ func (PhpdocTrim) SourceURL() string {
 
 func (PhpdocTrim) Fix(s *tokens.Stream) bool {
 	return applyToDocblocks(s, func(d *docblock) bool {
+		// php-cs-fixer trims empty lines around the content; a docblock with no
+		// content at all is left untouched (e.g. "/**\n *\n */" after other fixers
+		// stripped its description and tags), not collapsed to "/**\n */"
+		hasContent := false
+		for _, l := range d.inner {
+			if strings.TrimSpace(l.content) != "" {
+				hasContent = true
+				break
+			}
+		}
+		if !hasContent {
+			return false
+		}
 		before := len(d.inner)
 		for len(d.inner) > 0 && strings.TrimSpace(d.inner[0].content) == "" {
 			d.inner = d.inner[1:]
