@@ -229,3 +229,26 @@ func TestLoadECSResolvesDeprecatedAlias(t *testing.T) {
 		t.Fatalf("alias and successor should collapse to one rule, mapped=%d rules=%d", resolution.Mapped, len(c.Rules))
 	}
 }
+
+func TestLoadECSCountsDistinctClasses(t *testing.T) {
+	// ECS sets overlap, so the same class often appears several times. Duplicate
+	// entries must not inflate Total, or a fully mapped config looks narrower
+	// than it is (mapped 158 of 180 when the 22 extra are duplicates).
+	c, resolution, err := LoadECS(writeECS(t, `{
+		"rules": [
+			{"class": "`+esc(knownRuleA)+`", "config": {}},
+			{"class": "`+esc(knownRuleA)+`", "config": {}},
+			{"class": "`+esc(knownRuleA)+`", "config": {}},
+			{"class": "`+esc(knownRuleB)+`", "config": {}}
+		]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolution.Total != 2 || resolution.Mapped != 2 {
+		t.Fatalf("distinct classes miscounted: mapped/total = %d/%d, want 2/2", resolution.Mapped, resolution.Total)
+	}
+	if len(c.Rules) != 2 {
+		t.Fatalf("expected 2 distinct rules, got %d", len(c.Rules))
+	}
+}

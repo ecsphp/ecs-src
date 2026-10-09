@@ -42,9 +42,11 @@ type ecsFile struct {
 // ECSResolution reports how an ECS config mapped onto blink, so a blink run is
 // never silently narrower than the config it stands in for.
 type ECSResolution struct {
-	// Total is the number of ECS rules in the config.
+	// Total is the number of distinct ECS rule classes in the config. ECS sets
+	// overlap, so the same class is often configured more than once; counting
+	// raw entries would make a fully mapped config look narrower than it is.
 	Total int
-	// Mapped is the number of rules resolved to a blink fixer.
+	// Mapped is the number of distinct rules resolved to a blink fixer.
 	Mapped int
 	// Unsupported are rule classes blink has no fixer for.
 	Unsupported []string
@@ -124,7 +126,11 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 		config.Paths = []string{"."}
 	}
 
-	resolution := &ECSResolution{Total: len(f.Rules)}
+	distinctClasses := map[string]bool{}
+	for _, rule := range f.Rules {
+		distinctClasses[rule.Class] = true
+	}
+	resolution := &ECSResolution{Total: len(distinctClasses)}
 
 	skippedClasses := map[string]bool{}
 	for _, skip := range f.Skips {
