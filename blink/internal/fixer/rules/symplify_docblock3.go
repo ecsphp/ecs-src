@@ -4,10 +4,24 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
+
+// fpntTypoReCache memoizes the per-typo-name @param patterns, which are
+// otherwise recompiled on every fpntFixTypos call. Keyed by typo name.
+var fpntTypoReCache sync.Map
+
+func fpntTypoRe(typoName string) *regexp.Regexp {
+	if re, ok := fpntTypoReCache.Load(typoName); ok {
+		return re.(*regexp.Regexp)
+	}
+	re := regexp.MustCompile(`@param(.*?)(` + regexp.QuoteMeta(typoName) + `\b)`)
+	fpntTypoReCache.Store(typoName, re)
+	return re
+}
 
 // --- FixParamNameTypo: correct a @param variable name to match the real argument ---
 
@@ -132,7 +146,7 @@ func fpntFixTypos(argumentNames []string, missArg, paramNames map[int]string, co
 		if !ok {
 			continue
 		}
-		re := regexp.MustCompile(`@param(.*?)(` + regexp.QuoteMeta(typoName) + `\b)`)
+		re := fpntTypoRe(typoName)
 		content = replaceFirstFunc(content, re, func(groups []string) string {
 			paramName := groups[2]
 			if done, exists := replaced[paramName]; exists && !done {
