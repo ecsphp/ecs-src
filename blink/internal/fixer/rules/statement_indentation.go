@@ -132,6 +132,9 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 
 			for index >= scopes[cur].endIndex {
 				scopes = scopes[:len(scopes)-1]
+				if len(scopes) == 0 {
+					return changed
+				}
 				cur--
 			}
 			continue
