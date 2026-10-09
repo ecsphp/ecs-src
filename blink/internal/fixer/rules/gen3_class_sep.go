@@ -140,16 +140,18 @@ func (f ClassAttributesSeparation) fixMemberGap(s *tokens.Stream, prevStart, nex
 	wsCount, wsIdx := 0, -1
 	for j := prevEnd + 1; j < nextStart; j++ {
 		t := s.At(j)
-		switch {
-		case t.Kind == token.Whitespace:
+		switch t.Kind {
+		case token.Whitespace:
 			wsCount++
 			wsIdx = j
-		case t.Kind == token.DocComment || isAttribute(t):
+		case token.DocComment, token.Comment:
+			// a docblock, attribute (#[...]) or a line/block comment leading the next
+			// member is its trivia: the blank line goes above the block. A trailing
+			// comment on the previous member's line is rejected by the guards below
+			// (its whitespace has no newline), so it is still left alone.
 			if firstTrivia < 0 {
 				firstTrivia = j
 			}
-		case t.Kind == token.Comment:
-			return false // plain comment: ambiguous ownership, leave alone
 		default:
 			return false
 		}
