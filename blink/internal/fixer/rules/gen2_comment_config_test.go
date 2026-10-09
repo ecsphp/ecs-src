@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestAlignMultilineCommentConfig(t *testing.T) {
+	t.Parallel()
 	// default keeps blink's behavior: a line without a "*" is left untouched
 	src := "<?php\n/**\n * foo\nbar\n */\n"
 	got, changed := apply(t, AlignMultilineComment{}, src)

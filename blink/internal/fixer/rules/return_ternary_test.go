@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestReturnTypeDeclaration(t *testing.T) {
+	t.Parallel()
 	// space before the colon is removed, one space kept after
 	got, changed := apply(t, ReturnTypeDeclaration{}, "<?php function f() : int {}")
 	if want := "<?php function f(): int {}"; !changed || got != want {
@@ -56,6 +57,7 @@ func TestReturnTypeDeclaration(t *testing.T) {
 }
 
 func TestTernaryOperatorSpaces(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, TernaryOperatorSpaces{}, "<?php $x = $a?$b:$c;")
 	if want := "<?php $x = $a ? $b : $c;"; !changed || got != want {
 		t.Fatalf("tight: changed=%v got=%q want=%q", changed, got, want)

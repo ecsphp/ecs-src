@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestYodaStyleClassConstant(t *testing.T) {
+	t.Parallel()
 	// non-yoda moves the variable to the left across a class constant
 	got, changed := apply(t, YodaStyle{}, "<?php if (Request::METHOD_POST !== $m) {}")
 	if want := "<?php if ($m !== Request::METHOD_POST) {}"; !changed || got != want {
@@ -16,6 +17,7 @@ func TestYodaStyleClassConstant(t *testing.T) {
 }
 
 func TestYodaStyleNonYodaCompound(t *testing.T) {
+	t.Parallel()
 	cases := []struct{ src, want string }{
 		// compound arithmetic / cast right operands are moved to the left
 		{"<?php if (0 === $i % 2) {}", "<?php if ($i % 2 === 0) {}"},
@@ -40,6 +42,7 @@ func TestYodaStyleNonYodaCompound(t *testing.T) {
 }
 
 func TestYodaStyleConfig(t *testing.T) {
+	t.Parallel()
 	// default: non-yoda, the variable moves to the left
 	got, changed := apply(t, YodaStyle{}, "<?php if (null === $x) {}")
 	if want := "<?php if ($x === null) {}"; !changed || got != want {

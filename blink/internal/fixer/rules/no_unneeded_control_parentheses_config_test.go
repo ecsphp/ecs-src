@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoUnneededControlParenthesesConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php function f() { echo ($a); return ($b); }"
 	got, _ := apply(t, NoUnneededControlParentheses{}, src)
 	if want := "<?php function f() { echo $a; return $b; }"; got != want {

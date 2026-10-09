@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestLinebreakAfterOpeningTag(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, LinebreakAfterOpeningTag{}, "<?php $a = 1;\necho $a;\n")
 	if want := "<?php\n$a = 1;\necho $a;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -18,6 +19,7 @@ func TestLinebreakAfterOpeningTag(t *testing.T) {
 }
 
 func TestNullableTypeDeclaration(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NullableTypeDeclaration{}, "<?php function a(int|null $x): string|null {}")
 	if want := "<?php function a(?int $x): ?string {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -38,6 +40,7 @@ func TestNullableTypeDeclaration(t *testing.T) {
 }
 
 func TestOrderedTypes(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, OrderedTypes{}, "<?php function a(): B|A {}")
 	if want := "<?php function a(): A|B {}"; !changed || got != want {
 		t.Fatalf("return: changed=%v got=%q want=%q", changed, got, want)
@@ -59,6 +62,7 @@ func TestOrderedTypes(t *testing.T) {
 }
 
 func TestOrderedTypesConfig(t *testing.T) {
+	t.Parallel()
 	// sort_algorithm=none keeps source order; null_adjustment=always_last moves null last
 	cfg := map[string]any{"sort_algorithm": "none", "null_adjustment": "always_last"}
 	keep := OrderedTypes{}.WithConfig(cfg).(fixerRule)
@@ -72,6 +76,7 @@ func TestOrderedTypesConfig(t *testing.T) {
 }
 
 func TestMethodChainingIndentation(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, MethodChainingIndentation{}, "<?php\n$x = $obj->foo()\n->bar()\n        ->baz();\n")
 	if want := "<?php\n$x = $obj->foo()\n    ->bar()\n    ->baz();\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)

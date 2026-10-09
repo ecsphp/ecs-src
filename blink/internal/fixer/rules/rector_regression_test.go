@@ -5,6 +5,7 @@ import "testing"
 // SELF/PARENT/STATIC as constant names (member access or declaration) must not
 // be lowercased by lowercase_static_reference.
 func TestLowercaseStaticReferenceKeepsConstants(t *testing.T) {
+	t.Parallel()
 	for _, src := range []string{
 		"<?php return new Name(ObjectReference::SELF);",
 		"<?php class A {\n    public const string PARENT = 'parent';\n}",
@@ -23,6 +24,7 @@ func TestLowercaseStaticReferenceKeepsConstants(t *testing.T) {
 
 // a class constant named like a magic method must not be recased.
 func TestMagicMethodCasingKeepsConstant(t *testing.T) {
+	t.Parallel()
 	if _, changed := apply(t, MagicMethodCasing{}, "<?php class A {\n    public const string __SET = '__set';\n}"); changed {
 		t.Fatal("constant __SET must not become __set")
 	}

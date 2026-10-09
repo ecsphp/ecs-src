@@ -13,13 +13,32 @@ import (
 // "@inheritdocs" untouched, mirroring the default ['inheritDoc'] tag set.
 var inheritDocRe = regexp.MustCompile(`(?i)@inheritdoc\b`)
 
+type tagReplacement struct {
+	re *regexp.Regexp
+	to string
+}
+
+// defaultTagReps is the ['inheritDoc'] replacement used when no tags are configured.
+var defaultTagReps = []tagReplacement{{inheritDocRe, "@inheritDoc"}}
+
+func buildTagReps(tags []string) []tagReplacement {
+	reps := make([]tagReplacement, 0, len(tags))
+	for _, tag := range tags {
+		reps = append(reps, tagReplacement{
+			regexp.MustCompile(`(?i)@` + regexp.QuoteMeta(tag) + `\b`),
+			"@" + tag,
+		})
+	}
+	return reps
+}
+
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTagCasingFixer.php
 //
 // PhpdocTagCasing fixes the casing of the configured tags (default ["inheritDoc"]),
 // in both annotation and inline positions. Each tag is matched case-insensitively
 // and rewritten to the configured spelling.
 type PhpdocTagCasing struct {
-	tags []string
+	reps []tagReplacement // nil means the default ['inheritDoc'] set
 }
 
 func (PhpdocTagCasing) Name() string {
@@ -32,26 +51,15 @@ func (PhpdocTagCasing) SourceURL() string {
 
 func (f PhpdocTagCasing) WithConfig(config map[string]any) fixer.Fixer {
 	if list, ok := phpdocTagsStringList(config["tags"]); ok {
-		f.tags = list
+		f.reps = buildTagReps(list)
 	}
 	return f
 }
 
 func (f PhpdocTagCasing) Fix(s *tokens.Stream) bool {
-	type replacement struct {
-		re *regexp.Regexp
-		to string
-	}
-	var reps []replacement
-	if f.tags == nil {
-		reps = []replacement{{inheritDocRe, "@inheritDoc"}}
-	} else {
-		for _, tag := range f.tags {
-			reps = append(reps, replacement{
-				regexp.MustCompile(`(?i)@` + regexp.QuoteMeta(tag) + `\b`),
-				"@" + tag,
-			})
-		}
+	reps := f.reps
+	if reps == nil {
+		reps = defaultTagReps
 	}
 	return applyToDocblocks(s, func(d *docblock) bool {
 		changed := false
@@ -99,7 +107,8 @@ var inlineTagRe = regexp.MustCompile(`(?i)(?:@\{+|\{+[ \t]*@)[ \t]*(example|id|i
 // job). Option `tags` selects which inline tags to normalize; a nil list keeps
 // blink's default set.
 type PhpdocInlineTagNormalizer struct {
-	tags []string
+	re       *regexp.Regexp // nil means the default inlineTagRe set
+	disabled bool           // an explicit empty tag list disables the fixer
 }
 
 func (PhpdocInlineTagNormalizer) Name() string {
@@ -112,18 +121,22 @@ func (PhpdocInlineTagNormalizer) SourceURL() string {
 
 func (f PhpdocInlineTagNormalizer) WithConfig(config map[string]any) fixer.Fixer {
 	if list, ok := phpdocTagsStringList(config["tags"]); ok {
-		f.tags = list
+		if len(list) == 0 {
+			f.disabled = true
+		} else {
+			f.re = phpdocInlineTagRe(list)
+		}
 	}
 	return f
 }
 
 func (f PhpdocInlineTagNormalizer) Fix(s *tokens.Stream) bool {
-	re := inlineTagRe
-	if f.tags != nil {
-		if len(f.tags) == 0 {
-			return false
-		}
-		re = phpdocInlineTagRe(f.tags)
+	if f.disabled {
+		return false
+	}
+	re := f.re
+	if re == nil {
+		re = inlineTagRe
 	}
 	return applyToDocblocks(s, func(d *docblock) bool {
 		changed := false

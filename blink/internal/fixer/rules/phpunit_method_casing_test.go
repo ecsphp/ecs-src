@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpUnitMethodCasingDefaultsToCamelCase(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nclass FooTest extends TestCase\n{\n    public function test_it_works()\n    {\n    }\n}\n"
 	want := "<?php\nclass FooTest extends TestCase\n{\n    public function testItWorks()\n    {\n    }\n}\n"
 	if got, changed := apply(t, PhpUnitMethodCasing{}, src); !changed || got != want {
@@ -11,6 +12,7 @@ func TestPhpUnitMethodCasingDefaultsToCamelCase(t *testing.T) {
 }
 
 func TestPhpUnitMethodCasingSnakeConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nclass FooTest extends TestCase\n{\n    public function testItWorks()\n    {\n    }\n}\n"
 	want := "<?php\nclass FooTest extends TestCase\n{\n    public function test_it_works()\n    {\n    }\n}\n"
 
@@ -21,6 +23,7 @@ func TestPhpUnitMethodCasingSnakeConfig(t *testing.T) {
 }
 
 func TestPhpUnitMethodCasingCamelConfigLeavesCamel(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nclass FooTest extends TestCase\n{\n    public function testItWorks()\n    {\n    }\n}\n"
 
 	camel := PhpUnitMethodCasing{}.WithConfig(map[string]any{"case": "camel_case"})

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoBreakComment(t *testing.T) {
+	t.Parallel()
 	f := NoBreakComment{}
 
 	// fall-through with a non-empty body gains a "// no break" comment

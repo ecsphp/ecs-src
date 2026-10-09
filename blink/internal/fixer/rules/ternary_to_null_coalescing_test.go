@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestTernaryToNullCoalescing(t *testing.T) {
+	t.Parallel()
 	f := TernaryToNullCoalescing{}
 
 	cases := []struct {

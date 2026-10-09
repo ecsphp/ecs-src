@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestAttributeBlockNoSpaces(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, AttributeBlockNoSpaces{}, "<?php #[ Foo ] function f() {}")
 	if want := "<?php #[Foo] function f() {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -19,6 +20,7 @@ func TestAttributeBlockNoSpaces(t *testing.T) {
 }
 
 func TestNoSpaceAroundDoubleColon(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoSpaceAroundDoubleColon{}, "<?php Foo :: bar(); Baz ::CONST;")
 	if want := "<?php Foo::bar(); Baz::CONST;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -34,6 +36,7 @@ func TestNoSpaceAroundDoubleColon(t *testing.T) {
 }
 
 func TestTrimArraySpaces(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, TrimArraySpaces{}, "<?php $a = [ 1, 2 ];")
 	if want := "<?php $a = [1, 2];"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -57,6 +60,7 @@ func TestTrimArraySpaces(t *testing.T) {
 }
 
 func TestNativeTypeDeclarationCasing(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NativeTypeDeclarationCasing{}, "<?php function f(Int $a, ?STRING $b): VOID {}")
 	if want := "<?php function f(int $a, ?string $b): void {}"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -81,6 +85,7 @@ func TestNativeTypeDeclarationCasing(t *testing.T) {
 }
 
 func TestHeredocToNowdoc(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, HeredocToNowdoc{}, "<?php $a = <<<EOT\nhello world\nEOT;\n")
 	if want := "<?php $a = <<<'EOT'\nhello world\nEOT;\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -100,6 +105,7 @@ func TestHeredocToNowdoc(t *testing.T) {
 }
 
 func TestNoUselessConcat(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoUselessConcatOperator{}, "<?php $s = 'a' . 'b'; $t = \"x\".\"y\";")
 	if want := "<?php $s = 'ab'; $t = \"xy\";"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -125,6 +131,7 @@ func TestNoUselessConcat(t *testing.T) {
 }
 
 func TestNoBinaryString(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoBinaryString{}, "<?php $a = b\"foo\"; $b = B'bar';")
 	if want := "<?php $a = \"foo\"; $b = 'bar';"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)

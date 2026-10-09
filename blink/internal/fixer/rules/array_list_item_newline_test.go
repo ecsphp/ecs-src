@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestArrayListItemNewline(t *testing.T) {
+	t.Parallel()
 	f := ArrayListItemNewline{}
 
 	// associative single-line array -> one item per line, trailing comma, [] on own lines

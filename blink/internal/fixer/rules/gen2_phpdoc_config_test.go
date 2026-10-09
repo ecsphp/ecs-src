@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocOrderByValueConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @covers B\n * @covers A\n */\n"
 	got, changed := apply(t, PhpdocOrderByValue{}, src)
 	if want := "<?php\n/**\n * @covers A\n * @covers B\n */\n"; !changed || got != want {

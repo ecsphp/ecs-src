@@ -5,6 +5,7 @@ import "testing"
 // Cases ported from php-cs-fixer YodaStyleFixerTest. Documents parity;
 // not all pass yet - blink is being changed to match.
 func TestYodaStylePhpCsFixerCases(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name     string
 		cfg      map[string]any

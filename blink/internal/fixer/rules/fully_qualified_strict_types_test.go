@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestFullyQualifiedStrictTypes(t *testing.T) {
+	t.Parallel()
 	f := FullyQualifiedStrictTypes{}
 
 	// code positions: extends/new/instanceof/::/catch, aliased + unimported

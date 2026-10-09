@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestControlStructureContinuationPosition(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ControlStructureContinuationPosition{}, "<?php\nif ($a) {\n    x();\n}\nelse {\n    y();\n}")
 	if want := "<?php\nif ($a) {\n    x();\n} else {\n    y();\n}"; !changed || got != want {
 		t.Fatalf("else: changed=%v got=%q want=%q", changed, got, want)
@@ -28,6 +29,7 @@ func TestControlStructureContinuationPosition(t *testing.T) {
 }
 
 func TestNoUnneededControlParentheses(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoUnneededControlParentheses{}, "<?php return ($x);")
 	if want := "<?php return $x;"; !changed || got != want {
 		t.Fatalf("return: changed=%v got=%q want=%q", changed, got, want)

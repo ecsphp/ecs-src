@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestGen3TypesConfigCases(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		rule fixerRule

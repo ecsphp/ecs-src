@@ -7,6 +7,7 @@ import (
 )
 
 func TestGenOpsCastNoShortBoolCast(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string
@@ -35,6 +36,7 @@ func TestGenOpsCastNoShortBoolCast(t *testing.T) {
 }
 
 func TestGenOpsCastNoUnsetCast(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string
@@ -64,6 +66,7 @@ func TestGenOpsCastNoUnsetCast(t *testing.T) {
 }
 
 func TestGenOpsCastSourceURLs(t *testing.T) {
+	t.Parallel()
 	for _, f := range []fixer.Fixer{NoShortBoolCast{}, NoUnsetCast{}} {
 		if want := fixer.SourceURLFor(f.Name()); f.SourceURL() != want {
 			t.Errorf("%s: SourceURL %q inconsistent with name, want %q", f.Name(), f.SourceURL(), want)

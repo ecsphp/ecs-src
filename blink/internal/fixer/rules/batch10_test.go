@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestTrailingCommaInMultiline(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, TrailingCommaInMultiline{}, "<?php $a = [\n    1,\n    2\n];")
 	if want := "<?php $a = [\n    1,\n    2,\n];"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -21,6 +22,7 @@ func TestTrailingCommaInMultiline(t *testing.T) {
 }
 
 func TestNoTrailingCommaInSingleline(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoTrailingCommaInSingleline{}, "<?php $a = [1, 2,]; foo(1,);")
 	if want := "<?php $a = [1, 2]; foo(1);"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -32,6 +34,7 @@ func TestNoTrailingCommaInSingleline(t *testing.T) {
 }
 
 func TestNoSpacesAroundOffset(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoSpacesAroundOffset{}, "<?php echo $a[ 0 ][ 'k' ];")
 	if want := "<?php echo $a[0]['k'];"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -43,6 +46,7 @@ func TestNoSpacesAroundOffset(t *testing.T) {
 }
 
 func TestObjectOperatorWithoutWhitespace(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ObjectOperatorWithoutWhitespace{}, "<?php $a -> b -> c();")
 	if want := "<?php $a->b->c();"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -50,6 +54,7 @@ func TestObjectOperatorWithoutWhitespace(t *testing.T) {
 }
 
 func TestNativeFunctionCasing(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NativeFunctionCasing{}, "<?php echo STRLEN($x) . Count($y);")
 	if want := "<?php echo strlen($x) . count($y);"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -61,6 +66,7 @@ func TestNativeFunctionCasing(t *testing.T) {
 }
 
 func TestIntegerLiteralCase(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, IntegerLiteralCase{}, "<?php $a = 0XFF; $b = 0B101;")
 	if want := "<?php $a = 0xFF; $b = 0b101;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -71,6 +77,7 @@ func TestIntegerLiteralCase(t *testing.T) {
 }
 
 func TestNoEmptyComment(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoEmptyComment{}, "<?php //\n$a = 1; /*  */")
 	if want := "<?php \n$a = 1; "; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -82,6 +89,7 @@ func TestNoEmptyComment(t *testing.T) {
 }
 
 func TestSingleLineCommentSpacing(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleLineCommentSpacing{}, "<?php //foo\n#bar")
 	if want := "<?php // foo\n# bar"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
@@ -92,6 +100,7 @@ func TestSingleLineCommentSpacing(t *testing.T) {
 }
 
 func TestNoUnusedImports(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoUnusedImports{}, "<?php\nuse App\\Used;\nuse App\\Unused;\n\n$x = new Used();\n")
 	if want := "<?php\nuse App\\Used;\n\n$x = new Used();\n"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)

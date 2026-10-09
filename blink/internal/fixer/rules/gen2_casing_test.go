@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen2CasingClassReferenceNameCasing(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -51,6 +52,7 @@ func TestGen2CasingClassReferenceNameCasing(t *testing.T) {
 }
 
 func TestGen2CasingSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		ClassReferenceNameCasing{},
 	}

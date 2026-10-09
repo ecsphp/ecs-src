@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocToComment(t *testing.T) {
+	t.Parallel()
 	f := PhpdocToComment{}
 
 	// a docblock that documents nothing structural becomes a plain comment

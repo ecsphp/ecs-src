@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestModifierKeywords(t *testing.T) {
+	t.Parallel()
 	f := ModifierKeywords{}
 
 	// reorders modifiers and adds missing visibility across members

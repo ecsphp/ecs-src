@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoTrailingWhitespaceInComment(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoTrailingWhitespaceInComment{}, "<?php // foo   \n/* bar   \n   baz */\n")
 	want := "<?php // foo\n/* bar\n   baz */\n"
 	if !changed || got != want {
@@ -11,6 +12,7 @@ func TestNoTrailingWhitespaceInComment(t *testing.T) {
 }
 
 func TestNoExtraBlankLines(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoExtraBlankLines{}, "<?php\n$a = 1;\n\n\n\n$b = 2;\n")
 	want := "<?php\n$a = 1;\n\n$b = 2;\n"
 	if !changed || got != want {
@@ -19,6 +21,7 @@ func TestNoExtraBlankLines(t *testing.T) {
 }
 
 func TestNoMultipleStatementsPerLine(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, NoMultipleStatementsPerLine{}, "<?php\n$a = 1; $b = 2;$c = 3;\n")
 	want := "<?php\n$a = 1;\n$b = 2;\n$c = 3;\n"
 	if !changed || got != want {
@@ -31,6 +34,7 @@ func TestNoMultipleStatementsPerLine(t *testing.T) {
 }
 
 func TestSwitchCaseSpaceAndSemicolon(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SwitchCaseSpace{}, "<?php switch ($a) { case 1 : break; default : break; }")
 	want := "<?php switch ($a) { case 1: break; default: break; }"
 	if !changed || got != want {
@@ -53,6 +57,7 @@ func TestSwitchCaseSpaceAndSemicolon(t *testing.T) {
 }
 
 func TestSingleClassElementPerStatement(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, SingleClassElementPerStatement{}, "<?php class A {\n    public int $a, $b;\n    const X = 1, Y = 2;\n}")
 	want := "<?php class A {\n    public int $a;\n    public int $b;\n    const X = 1;\n    const Y = 2;\n}"
 	if !changed || got != want {
@@ -61,6 +66,7 @@ func TestSingleClassElementPerStatement(t *testing.T) {
 }
 
 func TestOrderedImports(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, OrderedImports{}, "<?php\nuse const C\\Z;\nuse B\\Y;\nuse function F\\g;\nuse A\\X;\n")
 	// ECS imports_order: class group first (alpha), then function, then const
 	want := "<?php\nuse A\\X;\nuse B\\Y;\nuse function F\\g;\nuse const C\\Z;\n"
@@ -74,6 +80,7 @@ func TestOrderedImports(t *testing.T) {
 }
 
 func TestBlankLineBetweenImportGroups(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, BlankLineBetweenImportGroups{}, "<?php\nuse A\\X;\nuse function F\\g;\nuse const C\\Z;\n")
 	want := "<?php\nuse A\\X;\n\nuse function F\\g;\n\nuse const C\\Z;\n"
 	if !changed || got != want {

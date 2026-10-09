@@ -7,6 +7,7 @@ import (
 )
 
 func TestYodaStyle(t *testing.T) {
+	t.Parallel()
 	f := YodaStyle{}
 
 	// constant on the left moves to the right (non-yoda, ECS common config)
@@ -43,6 +44,7 @@ func TestYodaStyle(t *testing.T) {
 }
 
 func TestYodaStyleSourceURL(t *testing.T) {
+	t.Parallel()
 	f := YodaStyle{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 		t.Fatalf("SourceURL %q, want %q", got, want)

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNewWithParenthesesConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php $a = new Foo; $b = new class {};"
 	got, _ := apply(t, NewWithParentheses{}, src)
 	if want := "<?php $a = new Foo(); $b = new class() {};"; got != want {

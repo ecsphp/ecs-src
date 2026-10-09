@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoUnneededBracesConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nnamespace Foo {\n    echo 1;\n}"
 	if _, changed := apply(t, NoUnneededBraces{}, src); changed {
 		t.Fatal("default should keep bracketed namespace")

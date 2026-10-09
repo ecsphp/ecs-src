@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestTrailingCommaConfigCases(t *testing.T) {
+	t.Parallel()
 	multi := "<?php foo(\n    $a,\n    $b\n);"
 	cases := []struct {
 		name string

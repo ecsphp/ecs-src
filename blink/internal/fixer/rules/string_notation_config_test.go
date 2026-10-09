@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestSingleQuoteConfig(t *testing.T) {
+	t.Parallel()
 	src := `<?php $a = "sample"; $b = "it's";`
 	got, _ := apply(t, SingleQuote{}, src)
 	if want := `<?php $a = 'sample'; $b = "it's";`; got != want {

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoSpacesAroundOffsetConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php $b [ 'a' ] [ 'b' ];"
 	cases := []struct {
 		name string

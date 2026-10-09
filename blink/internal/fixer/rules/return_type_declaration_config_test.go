@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestReturnTypeDeclarationSpaceBefore(t *testing.T) {
+	t.Parallel()
 	// default: no space before the colon, one space after
 	got, changed := apply(t, ReturnTypeDeclaration{}, "<?php function f() : int {}")
 	if want := "<?php function f(): int {}"; !changed || got != want {

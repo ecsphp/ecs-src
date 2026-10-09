@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocAlign(t *testing.T) {
+	t.Parallel()
 	f := PhpdocAlign{}
 
 	// left align: param uses spacing 2, return uses spacing 1

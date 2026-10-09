@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoSuperfluousElseif(t *testing.T) {
+	t.Parallel()
 	f := NoSuperfluousElseif{}
 
 	// preceding branch returns -> elseif becomes if

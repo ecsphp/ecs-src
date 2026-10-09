@@ -20,6 +20,7 @@ func assertFix(t *testing.T, r fixerRule, src, want string, wantChanged bool) {
 }
 
 func TestGenPhpdocVarWithoutName(t *testing.T) {
+	t.Parallel()
 	f := PhpdocVarWithoutName{}
 
 	// single-line property docblock
@@ -69,6 +70,7 @@ func TestGenPhpdocVarWithoutName(t *testing.T) {
 }
 
 func TestGenPhpdocVarSourceURLs(t *testing.T) {
+	t.Parallel()
 	pv := PhpdocVarWithoutName{}
 	if got, want := pv.SourceURL(), fixer.SourceURLFor(pv.Name()); got != want {
 		t.Fatalf("PhpdocVarWithoutName SourceURL %q, want %q", got, want)

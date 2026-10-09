@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestFunctionToConstantConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php $a = pi(); $b = phpversion();"
 	got, _ := apply(t, FunctionToConstant{}, src)
 	if want := "<?php $a = M_PI; $b = PHP_VERSION;"; got != want {

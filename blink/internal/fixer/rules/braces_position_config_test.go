@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestBracesPositionConfig(t *testing.T) {
+	t.Parallel()
 	// default: a class body brace moves to the next line
 	got, changed := apply(t, BracesPosition{}, "<?php\nclass A {\n    public $x;\n}\n")
 	if want := "<?php\nclass A\n{\n    public $x;\n}\n"; !changed || got != want {

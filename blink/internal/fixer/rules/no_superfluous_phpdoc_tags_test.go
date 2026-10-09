@@ -7,6 +7,7 @@ import (
 )
 
 func TestNoSuperfluousPhpdocTags(t *testing.T) {
+	t.Parallel()
 	f := NoSuperfluousPhpdocTags{}
 
 	// @param equal to the native type, no description -> removed
@@ -96,6 +97,7 @@ func TestNoSuperfluousPhpdocTags(t *testing.T) {
 }
 
 func TestNoSuperfluousPhpdocTagsSourceURL(t *testing.T) {
+	t.Parallel()
 	f := NoSuperfluousPhpdocTags{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 		t.Fatalf("SourceURL %q, want %q", got, want)

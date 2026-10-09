@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestStandaloneLinePlainConstructorParam(t *testing.T) {
+	t.Parallel()
 	f := StandaloneLinePlainConstructorParam{}
 
 	// 4+ plain params: each on its own line

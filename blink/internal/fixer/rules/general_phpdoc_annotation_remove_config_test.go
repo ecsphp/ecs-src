@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestGeneralPhpdocAnnotationRemoveConfig(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @author Bob\n * @internal\n */\n"
 
 	// default removes @author (author/package/group/category)

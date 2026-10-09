@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestSingleClassElementPerStatementElements(t *testing.T) {
+	t.Parallel()
 	src := "<?php\nclass C\n{\n    const A = 1, B = 2;\n    public $a, $b;\n}\n"
 
 	// default: both const and property multi-declarations are split

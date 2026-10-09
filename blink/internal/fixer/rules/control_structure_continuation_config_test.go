@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestControlStructureContinuationConfig(t *testing.T) {
+	t.Parallel()
 	// default: the continuation keyword joins the closing brace line
 	got, changed := apply(t, ControlStructureContinuationPosition{}, "<?php\nif ($a) {\n}\nelse {\n}\n")
 	if want := "<?php\nif ($a) {\n} else {\n}\n"; !changed || got != want {

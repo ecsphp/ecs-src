@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestConstantCaseConfig(t *testing.T) {
+	t.Parallel()
 	got, changed := apply(t, ConstantCase{}, "<?php $a = TRUE; $b = Null;")
 	if want := "<?php $a = true; $b = null;"; !changed || got != want {
 		t.Fatalf("default: changed=%v got=%q want=%q", changed, got, want)

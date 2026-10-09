@@ -7,6 +7,7 @@ import (
 )
 
 func TestMethodArgumentSpace(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name    string
 		src     string
@@ -47,6 +48,7 @@ func TestMethodArgumentSpace(t *testing.T) {
 }
 
 func TestMethodArgumentSpaceSourceURL(t *testing.T) {
+	t.Parallel()
 	r := MethodArgumentSpace{}
 	if got := fixerpkg.SourceURLFor(r.Name()); got != r.SourceURL() {
 		t.Fatalf("SourceURL mismatch: derived=%q declared=%q", got, r.SourceURL())

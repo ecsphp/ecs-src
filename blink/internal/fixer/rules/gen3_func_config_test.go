@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestFunctionDeclarationClosureFunctionSpacing(t *testing.T) {
+	t.Parallel()
 	// default: one space after "function" for a closure
 	got, changed := apply(t, FunctionDeclaration{}, "<?php $f = function() {};")
 	if want := "<?php $f = function () {};"; !changed || got != want {
@@ -18,6 +19,7 @@ func TestFunctionDeclarationClosureFunctionSpacing(t *testing.T) {
 }
 
 func TestFunctionDeclarationClosureFnSpacing(t *testing.T) {
+	t.Parallel()
 	// closure_fn_spacing=none: glue "fn" to "("
 	cfg := FunctionDeclaration{}.WithConfig(map[string]any{"closure_fn_spacing": "none"})
 	got, changed := apply(t, cfg, "<?php $f = fn () => 1;")
@@ -39,6 +41,7 @@ func TestFunctionDeclarationClosureFnSpacing(t *testing.T) {
 }
 
 func TestFunctionDeclarationTrailingCommaSingleLine(t *testing.T) {
+	t.Parallel()
 	// trailing_comma_single_line=false: drop the trailing comma in a single-line signature
 	cfg := FunctionDeclaration{}.WithConfig(map[string]any{"trailing_comma_single_line": false})
 	got, changed := apply(t, cfg, "<?php function f($a, $b,) {}")

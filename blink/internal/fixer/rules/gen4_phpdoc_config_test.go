@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestPhpdocLineSpanConfig(t *testing.T) {
+	t.Parallel()
 	single := "<?php\nclass A {\n    /** @var int */\n    public $x;\n}\n"
 	multi := "<?php\nclass A {\n    /**\n     * @var int\n     */\n    public $x;\n}\n"
 

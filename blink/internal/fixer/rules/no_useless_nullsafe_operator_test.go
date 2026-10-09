@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoUselessNullsafeOperator(t *testing.T) {
+	t.Parallel()
 	f := NoUselessNullsafeOperator{}
 
 	got, changed := apply(t, f, "<?php\nclass C extends B {\n    function t() { echo $this?->parentMethod(); }\n}\n")

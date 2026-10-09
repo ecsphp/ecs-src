@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoAlternativeSyntax(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string

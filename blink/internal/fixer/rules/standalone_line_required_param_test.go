@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestStandaloneLineRequiredParam(t *testing.T) {
+	t.Parallel()
 	f := StandaloneLineRequiredParam{}
 
 	// #[Required] public method: each parameter on its own line

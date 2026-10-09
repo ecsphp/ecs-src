@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestBinaryOperatorSpacesConfigCases(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		rule fixerRule

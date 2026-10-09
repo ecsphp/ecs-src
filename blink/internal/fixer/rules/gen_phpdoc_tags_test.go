@@ -7,6 +7,7 @@ import (
 )
 
 func TestGenPhpdocTagsTagCasing(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @inheritdoc\n */\nfunction f() {}"
 	got, changed := apply(t, PhpdocTagCasing{}, src)
 	want := "<?php\n/**\n * @inheritDoc\n */\nfunction f() {}"
@@ -32,6 +33,7 @@ func TestGenPhpdocTagsTagCasing(t *testing.T) {
 }
 
 func TestGenPhpdocTagsInlineNormalizer(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * {{ @link }}\n * @{see http://x}\n */\nfunction f() {}"
 	got, changed := apply(t, PhpdocInlineTagNormalizer{}, src)
 	want := "<?php\n/**\n * {@link}\n * {@see http://x}\n */\nfunction f() {}"
@@ -57,6 +59,7 @@ func TestGenPhpdocTagsInlineNormalizer(t *testing.T) {
 }
 
 func TestGenPhpdocTagsNoDuplicateTypes(t *testing.T) {
+	t.Parallel()
 	src := "<?php\n/**\n * @param int|int|string $bar\n */\nfunction f($bar) {}"
 	got, changed := apply(t, PhpdocNoDuplicateTypes{}, src)
 	want := "<?php\n/**\n * @param int|string $bar\n */\nfunction f($bar) {}"
@@ -83,6 +86,7 @@ func TestGenPhpdocTagsNoDuplicateTypes(t *testing.T) {
 
 // TestGenPhpdocTagsSourceURLs verifies every SourceURL matches SourceURLFor(Name()).
 func TestGenPhpdocTagsSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		PhpdocTagCasing{},
 		PhpdocInlineTagNormalizer{},

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestDoctrineAnnotationSpaces(t *testing.T) {
+	t.Parallel()
 	cases := []struct{ in, want string }{
 		// space before "(" and just inside "(" / ")" removed
 		{`<?php /** @Spaced ( "a" ) */ class C {}`, `<?php /** @Spaced("a") */ class C {}`},
@@ -30,6 +31,7 @@ func TestDoctrineAnnotationSpaces(t *testing.T) {
 }
 
 func TestDoctrineAnnotationSpacesNoOp(t *testing.T) {
+	t.Parallel()
 	noop := []string{
 		// already clean
 		`<?php /** @ORM\Column(type="string", nullable=true) */ class C {}`,

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoEmptyCommentBlock(t *testing.T) {
+	t.Parallel()
 	// empty // line inside a non-empty // block is preserved (PHP leaves it as-is)
 	block := "<?php\n// Native #[Route] attributes declared directly on bundle controllers.\n" +
 		"// Paths already carry their full prefix (e.g. /s, /api), so they are added\n" +

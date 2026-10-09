@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen5PhpdocOrderTypesOrder(t *testing.T) {
+	t.Parallel()
 	f := PhpdocTypesOrder{}
 
 	// null moves to the end, other members keep order: string|null|int -> string|int|null
@@ -56,6 +57,7 @@ func TestGen5PhpdocOrderTypesOrder(t *testing.T) {
 }
 
 func TestGen5PhpdocOrderVarAnnotation(t *testing.T) {
+	t.Parallel()
 	f := PhpdocVarAnnotationCorrectOrder{}
 
 	// swapped single-line @var
@@ -90,6 +92,7 @@ func TestGen5PhpdocOrderVarAnnotation(t *testing.T) {
 }
 
 func TestGen5PhpdocOrderSourceURLs(t *testing.T) {
+	t.Parallel()
 	for _, f := range []fixer.Fixer{PhpdocTypesOrder{}, PhpdocVarAnnotationCorrectOrder{}} {
 		if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 			t.Fatalf("%s SourceURL %q, want %q", f.Name(), got, want)

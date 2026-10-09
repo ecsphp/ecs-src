@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestExplicitStringVariable(t *testing.T) {
+	t.Parallel()
 	f := ExplicitStringVariable{}
 
 	cases := []struct {

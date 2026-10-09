@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestNoUnneededBraces(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src     string
 		want    string

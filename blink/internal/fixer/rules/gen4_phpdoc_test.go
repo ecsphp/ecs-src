@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen4PhpdocLineSpan(t *testing.T) {
+	t.Parallel()
 	f := PhpdocLineSpan{}
 
 	// single-line property docblock is expanded to multi-line (4-space indent)
@@ -54,6 +55,7 @@ func TestGen4PhpdocLineSpan(t *testing.T) {
 }
 
 func TestGen4PhpdocLineSpanLocalStatic(t *testing.T) {
+	t.Parallel()
 	// mautic parity: configured multi (const/method/property) must leave a
 	// /** @var ... */ on a local `static $x` inside a method body UNCHANGED,
 	// because it is not a class member (PHP getClassyElements skips locals).
@@ -71,6 +73,7 @@ func TestGen4PhpdocLineSpanLocalStatic(t *testing.T) {
 }
 
 func TestGen4PhpdocLineSpanSourceURL(t *testing.T) {
+	t.Parallel()
 	var f fixer.Fixer = PhpdocLineSpan{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 		t.Fatalf("SourceURL %q, want %q", got, want)

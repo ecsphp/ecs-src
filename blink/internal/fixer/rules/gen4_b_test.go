@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen4BExplicitIndirectVariable(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		src, want string
 		changed   bool
@@ -52,6 +53,7 @@ func TestGen4BExplicitIndirectVariable(t *testing.T) {
 }
 
 func TestGen4BSourceURLs(t *testing.T) {
+	t.Parallel()
 	fixers := []fixer.Fixer{
 		ExplicitIndirectVariable{},
 	}

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestSelfAccessorSkipsNestedClass(t *testing.T) {
+	t.Parallel()
 	// A reference to the outer class name from inside a nested anonymous class
 	// must be left untouched, while a reference from the outer class's own
 	// top-level method is rewritten to "self".

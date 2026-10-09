@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestCastSpacesConfigCases(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		rule fixerRule

@@ -3,6 +3,7 @@ package rules
 import "testing"
 
 func TestArrayOpenerAndCloserNewline(t *testing.T) {
+	t.Parallel()
 	f := ArrayOpenerAndCloserNewline{}
 
 	// associative array: "[" and "]" go on their own lines, items untouched

@@ -7,6 +7,7 @@ import (
 )
 
 func TestGen3ClassSepMethods(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    public function a() {}\n" +
 		"    public function b() {}\n" +
@@ -27,6 +28,7 @@ func TestGen3ClassSepMethods(t *testing.T) {
 }
 
 func TestGen3ClassSepKeywordTypedProperty(t *testing.T) {
+	t.Parallel()
 	// a property typed with a keyword type ("array") is still a property and must
 	// be separated from the previous member by a blank line
 	src := "<?php class A {\n" +
@@ -45,6 +47,7 @@ func TestGen3ClassSepKeywordTypedProperty(t *testing.T) {
 }
 
 func TestGen3ClassSepPropertiesAndConsts(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    const X = 1;\n" +
 		"    const Y = 2;\n" +
@@ -67,6 +70,7 @@ func TestGen3ClassSepPropertiesAndConsts(t *testing.T) {
 }
 
 func TestGen3ClassSepTraitImportsStayTight(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    use TraitA;\n" +
 		"    use TraitB;\n" +
@@ -87,6 +91,7 @@ func TestGen3ClassSepTraitImportsStayTight(t *testing.T) {
 }
 
 func TestGen3ClassSepEnumCasesStayTight(t *testing.T) {
+	t.Parallel()
 	src := "<?php enum Suit {\n" +
 		"    case Hearts;\n" +
 		"    case Spades;\n" +
@@ -106,6 +111,7 @@ func TestGen3ClassSepEnumCasesStayTight(t *testing.T) {
 }
 
 func TestGen3ClassSepDocblockStaysAttached(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    public function a() {}\n" +
 		"    /** b */\n" +
@@ -128,6 +134,7 @@ func TestGen3ClassSepDocblockStaysAttached(t *testing.T) {
 }
 
 func TestGen3ClassSepAttributeStaysAttached(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    public function a() {}\n" +
 		"    #[Test]\n" +
@@ -146,6 +153,7 @@ func TestGen3ClassSepAttributeStaysAttached(t *testing.T) {
 }
 
 func TestGen3ClassSepLeadingComment(t *testing.T) {
+	t.Parallel()
 	// a line comment leading the next member is its trivia: the blank line goes
 	// above the comment, matching ECS
 	src := "<?php class A {\n" +
@@ -165,6 +173,7 @@ func TestGen3ClassSepLeadingComment(t *testing.T) {
 }
 
 func TestGen3ClassSepNestedBodyUntouched(t *testing.T) {
+	t.Parallel()
 	src := "<?php class A {\n" +
 		"    public function a() {\n" +
 		"        $x = 1;\n" +
@@ -189,6 +198,7 @@ func TestGen3ClassSepNestedBodyUntouched(t *testing.T) {
 }
 
 func TestGen3ClassSepGluedMembersLeftAlone(t *testing.T) {
+	t.Parallel()
 	// members on one line are not reformatted (conservative)
 	src := "<?php class A { public $a; public $b; }"
 	if got, changed := apply(t, ClassAttributesSeparation{}, src); changed || got != src {
@@ -197,6 +207,7 @@ func TestGen3ClassSepGluedMembersLeftAlone(t *testing.T) {
 }
 
 func TestGen3ClassSepSourceURL(t *testing.T) {
+	t.Parallel()
 	f := ClassAttributesSeparation{}
 	if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 		t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)
