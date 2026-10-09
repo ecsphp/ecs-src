@@ -15,8 +15,12 @@ type Progress struct {
 	active bool
 	total  int
 	cur    int
+	frame  int
 	mu     sync.Mutex
 }
+
+// claudeFrames is the Claude-style twinkling starburst, advanced one step per render.
+var claudeFrames = []string{"✶", "✷", "✸", "✹", "✺", "✹", "✸", "✷"}
 
 // NewProgress returns a progress bar; it only draws when w is a terminal.
 func NewProgress(w *os.File) *Progress {
@@ -64,7 +68,7 @@ func (p *Progress) Finish() {
 	if p == nil || !p.active {
 		return
 	}
-	_, _ = fmt.Fprintf(p.w, "\r%s\r", strings.Repeat(" ", p.width+20))
+	_, _ = fmt.Fprintf(p.w, "\r%s\r", strings.Repeat(" ", p.width+24))
 }
 
 func (p *Progress) render() {
@@ -82,5 +86,7 @@ func (p *Progress) render() {
 	default:
 		bar = strings.Repeat("=", filled-1) + ">" + strings.Repeat(" ", p.width-filled)
 	}
-	_, _ = fmt.Fprintf(p.w, "\r %d/%d [%s] %3d%%", p.cur, p.total, bar, pct)
+	icon := claudeFrames[p.frame%len(claudeFrames)]
+	p.frame++
+	_, _ = fmt.Fprintf(p.w, "\r %s %d/%d [%s] %3d%%", icon, p.cur, p.total, bar, pct)
 }
