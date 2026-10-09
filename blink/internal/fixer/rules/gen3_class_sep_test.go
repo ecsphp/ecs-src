@@ -145,15 +145,22 @@ func TestGen3ClassSepAttributeStaysAttached(t *testing.T) {
 	}
 }
 
-func TestGen3ClassSepPlainCommentSkipped(t *testing.T) {
-	// a plain comment in the gap has ambiguous ownership - leave the gap alone
+func TestGen3ClassSepLeadingComment(t *testing.T) {
+	// a line comment leading the next member is its trivia: the blank line goes
+	// above the comment, matching ECS
 	src := "<?php class A {\n" +
 		"    public function a() {}\n" +
 		"    // note\n" +
 		"    public function b() {}\n" +
 		"}"
-	if got, changed := apply(t, ClassAttributesSeparation{}, src); changed || got != src {
-		t.Fatalf("gap with a plain comment must be untouched: changed=%v got=%q", changed, got)
+	want := "<?php class A {\n" +
+		"    public function a() {}\n" +
+		"\n" +
+		"    // note\n" +
+		"    public function b() {}\n" +
+		"}"
+	if got, changed := apply(t, ClassAttributesSeparation{}, src); !changed || got != want {
+		t.Fatalf("blank line must go above a leading comment: changed=%v got=%q", changed, got)
 	}
 }
 
