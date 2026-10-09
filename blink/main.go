@@ -3,11 +3,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"runtime"
 	"runtime/debug"
+	"syscall"
 	"time"
 
 	"blink/internal/config"
@@ -79,7 +82,10 @@ func run(args []string) int {
 	start := time.Now()
 	progress := reporter.NewProgress(os.Stderr)
 
-	results, err := runner.Run(cfg, fix, progress)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	results, err := runner.Run(ctx, cfg, fix, progress)
 	progress.Finish()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)

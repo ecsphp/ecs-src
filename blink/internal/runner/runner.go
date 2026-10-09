@@ -4,6 +4,8 @@ package runner
 
 import (
 	"cmp"
+	"context"
+	"errors"
 	"os"
 	"slices"
 	"sync"
@@ -25,16 +27,16 @@ type FileResult struct {
 
 func (r FileResult) Changed() bool { return len(r.AppliedRules) > 0 }
 
-// Run scans the config's paths and applies rules across Jobs workers. When
-// write is true, changed files are written back to disk. Results are returned
-// sorted by path so output is deterministic regardless of worker scheduling.
 // Progress receives per-file progress updates during a run.
 type Progress interface {
 	Start(total int)
 	Advance()
 }
 
-func Run(cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
+// Run scans the config's paths and applies rules across Jobs workers, stopping
+// early when ctx is cancelled. Every file error is collected (not just the
+// first) and returned joined.
+func Run(ctx context.Context, cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
 	files, err := finder.Find(cfg.Paths, cfg.Skip)
 	if err != nil {
 		return nil, err
@@ -47,8 +49,8 @@ func Run(cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
 
 	paths := make(chan string)
 	results := make(chan FileResult)
-	var firstErr error
-	var errOnce sync.Once
+	var mu sync.Mutex
+	var errs []error
 
 	var wg sync.WaitGroup
 	for range jobs {
@@ -59,7 +61,9 @@ func Run(cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
 					prog.Advance()
 				}
 				if err != nil {
-					errOnce.Do(func() { firstErr = err })
+					mu.Lock()
+					errs = append(errs, err)
+					mu.Unlock()
 					continue
 				}
 				if res.Changed() {
@@ -69,11 +73,18 @@ func Run(cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
 		})
 	}
 
+	// Feed paths until exhausted or cancelled, then let the workers finish.
 	go func() {
+		defer close(paths)
 		for _, p := range files {
-			paths <- p
+			select {
+			case paths <- p:
+			case <-ctx.Done():
+				return
+			}
 		}
-		close(paths)
+	}()
+	go func() {
 		wg.Wait()
 		close(results)
 	}()
@@ -82,8 +93,12 @@ func Run(cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
 	for r := range results {
 		collected = append(collected, r)
 	}
-	if firstErr != nil {
-		return nil, firstErr
+
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
 	}
 
 	slices.SortFunc(collected, func(a, b FileResult) int { return cmp.Compare(a.Path, b.Path) })
