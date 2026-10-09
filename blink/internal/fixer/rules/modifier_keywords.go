@@ -133,9 +133,7 @@ func orderModifierKeywords(s *tokens.Stream, m int) bool {
 		repl = append(repl, token.Token{Kind: token.Whitespace, Value: " "})
 	}
 	if after == m {
-		for _, tk := range slices.Backward(repl) {
-			s.InsertAt(m, tk)
-		}
+		s.InsertSliceAt(m, repl)
 		return true
 	}
 	s.ReplaceRange(m, after-1, repl)

@@ -255,9 +255,7 @@ func (StandardizeIncrement) Fix(s *tokens.Stream) bool {
 
 		// Drop `<op> 1` (operator..number), then the inline gap before it, then
 		// prepend the increment operator at the chain root.
-		for k := numIdx; k >= i; k-- {
-			s.RemoveAt(k)
-		}
+		s.ReplaceRange(i, numIdx, nil)
 		if lv+1 < s.Len() && s.At(lv+1).Kind == token.Whitespace && !hasNewline(s.At(lv+1).Value) {
 			s.RemoveAt(lv + 1)
 		}
@@ -322,9 +320,7 @@ func (IncrementStyle) Fix(s *tokens.Stream) bool {
 		}
 
 		// Move the operator in front of the variable, dropping the inline gap.
-		for k := i; k >= lv+1; k-- {
-			s.RemoveAt(k)
-		}
+		s.ReplaceRange(lv+1, i, nil)
 		s.InsertAt(lv, token.Token{Kind: token.Punct, Value: t.Value})
 		changed = true
 		i = lv
@@ -420,9 +416,7 @@ func (LongToShorthandOperator) Fix(s *tokens.Stream) bool {
 		// `= $a <op>` becomes `<op>=`: retag the `=` and drop the duplicate
 		// operand and operator.
 		s.SetValue(i, s.At(opIdx).Value+"=")
-		for k := opIdx; k >= i+1; k-- {
-			s.RemoveAt(k)
-		}
+		s.ReplaceRange(i+1, opIdx, nil)
 		changed = true
 	}
 	return changed

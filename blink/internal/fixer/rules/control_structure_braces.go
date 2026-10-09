@@ -139,9 +139,7 @@ func csbIsAltSyntax(s *tokens.Stream, controlIndex int) bool {
 
 // csbInsert inserts toks at pos, preserving their order.
 func csbInsert(s *tokens.Stream, pos int, toks []token.Token) {
-	for i, t := range toks {
-		s.InsertAt(pos+i, t)
-	}
+	s.InsertSliceAt(pos, toks)
 }
 
 // csbFindParenthesisEnd returns the ")" index of the control's condition, or the

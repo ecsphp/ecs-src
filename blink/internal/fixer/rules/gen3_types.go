@@ -272,9 +272,7 @@ func nullableTypeRemove(s *tokens.Stream, start, end int, hasNullable bool) bool
 	} else {
 		return false
 	}
-	for j := hi; j >= lo; j-- {
-		s.RemoveAt(j)
-	}
+	s.ReplaceRange(lo, hi, nil)
 	return true
 }
 

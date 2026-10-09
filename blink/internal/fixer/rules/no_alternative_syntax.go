@@ -162,10 +162,7 @@ func nasAddBraces(s *tokens.Stream, keyword token.Token, index, colonIndex int) 
 
 // nasReplace replaces the single token at pos with items, preserving order.
 func nasReplace(s *tokens.Stream, pos int, items []token.Token) {
-	s.RemoveAt(pos)
-	for i, t := range items {
-		s.InsertAt(pos+i, t)
-	}
+	s.ReplaceRange(pos, pos, items)
 }
 
 // nasNextParen returns the index of the first "(" after index, or -1.

@@ -142,9 +142,7 @@ func (EmptyLoopBody) Fix(s *tokens.Stream) bool {
 		// Replace "{" with ";" and drop the "}" plus the whitespace-only interior,
 		// so "{ }" collapses cleanly to ";".
 		s.SetValue(braceOpen, ";")
-		for k := braceClose; k > braceOpen; k-- {
-			s.RemoveAt(k)
-		}
+		s.ReplaceRange(braceOpen+1, braceClose, nil)
 		changed = true
 	}
 	return changed

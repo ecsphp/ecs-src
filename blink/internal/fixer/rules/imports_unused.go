@@ -360,9 +360,7 @@ func matchCloseBrace(s *tokens.Stream, open int) int {
 }
 
 func removeImport(s *tokens.Stream, im importInfo) {
-	for r := im.semi; r >= im.start; r-- {
-		s.RemoveAt(r)
-	}
+	s.ReplaceRange(im.start, im.semi, nil)
 	// drop just the statement's own line break, keeping any blank line
 	if im.start < s.Len() && s.At(im.start).Kind == token.Whitespace {
 		if v := s.At(im.start).Value; strings.HasPrefix(v, "\n") {
