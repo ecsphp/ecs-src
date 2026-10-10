@@ -19,6 +19,21 @@ func TestClassDefinitionSingleLine(t *testing.T) {
 	}
 }
 
+// A class-name reference the lexer tags as a class-like keyword (here "Enum" in
+// "Enum::MODE_ADD") is not a declaration, so single_line must not flatten the code
+// that follows it.
+func TestClassDefinitionIgnoresKeywordNamedReference(t *testing.T) {
+	t.Parallel()
+	src := "<?php\nclass Foo\n{\n    public function run(): void\n    {\n        $x = [\n" +
+		"            Enum::MODE_ADD,\n            Enum::MODE_EDIT,\n        ];\n    }\n\n" +
+		"    public function other(): void\n    {\n    }\n}\n"
+
+	cfg := ClassDefinition{}.WithConfig(map[string]any{"single_line": true})
+	if got, changed := apply(t, cfg, src); changed || got != src {
+		t.Fatalf("single_line must not touch an Enum:: reference: changed=%v got=%q", changed, got)
+	}
+}
+
 func TestClassDefinitionSpaceBeforeParenthesis(t *testing.T) {
 	t.Parallel()
 	src := "<?php $x = new class() {};"
