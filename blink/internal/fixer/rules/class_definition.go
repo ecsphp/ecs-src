@@ -77,6 +77,12 @@ func (f ClassDefinition) Fix(s *tokens.Stream) bool {
 			}
 			continue
 		}
+		// a genuine declaration is followed by the type name; a class-like keyword
+		// followed by "::" or "(" (e.g. "Enum::MODE_ADD") is a name the lexer tagged
+		// as a keyword, not a declaration
+		if n := nextSignificantIndex(s, i); n < 0 || s.At(n).Kind != token.Ident {
+			continue
+		}
 		if normalizeHeaderSpacing(s, i) {
 			changed = true
 		}
