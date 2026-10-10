@@ -19,8 +19,8 @@ type Progress struct {
 	mu     sync.Mutex
 }
 
-// claudeFrames is the Claude-style twinkling starburst, advanced one step per render.
-var claudeFrames = []string{"✶", "✷", "✸", "✹", "✺", "✹", "✸", "✷"}
+// iconFrames is a pulsing bloom that grows from a dot to a star and back, advanced one step per render.
+var iconFrames = []string{"·", "∘", "○", "◯", "✦", "✧", "✦", "◯", "○", "∘"}
 
 // NewProgress returns a progress bar; it only draws when w is a terminal.
 func NewProgress(w *os.File) *Progress {
@@ -75,7 +75,7 @@ func (p *Progress) render() {
 	if p.total <= 0 {
 		return
 	}
-	icon := claudeFrames[p.frame%len(claudeFrames)]
+	icon := iconFrames[p.frame%len(iconFrames)]
 	p.frame++
 	_, _ = fmt.Fprintf(p.w, "\r %s", icon)
 }
