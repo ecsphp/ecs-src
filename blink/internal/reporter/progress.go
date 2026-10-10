@@ -19,8 +19,12 @@ type Progress struct {
 	mu     sync.Mutex
 }
 
-// iconFrames is a pulsing bloom that grows from a dot to a star and back, advanced one step per render.
+// iconFrames is a pulsing bloom that grows from a dot to a star and back.
 var iconFrames = []string{"·", "∘", "○", "◯", "✦", "✧", "✦", "◯", "○", "∘"}
+
+// iconHold keeps each frame on screen for several renders, so the pulse reads
+// as a slow bloom instead of a flicker on large file counts.
+const iconHold = 5
 
 // NewProgress returns a progress bar; it only draws when w is a terminal.
 func NewProgress(w *os.File) *Progress {
@@ -75,7 +79,7 @@ func (p *Progress) render() {
 	if p.total <= 0 {
 		return
 	}
-	icon := iconFrames[p.frame%len(iconFrames)]
+	icon := iconFrames[(p.frame/iconHold)%len(iconFrames)]
 	p.frame++
 	_, _ = fmt.Fprintf(p.w, "\r %s", icon)
 }
