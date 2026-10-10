@@ -27,7 +27,7 @@ func TestFindSkipsDependencyDirs(t *testing.T) {
 		}
 	}
 
-	found, err := Find([]string{root}, nil)
+	found, discovered, err := Find([]string{root}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,6 +46,35 @@ func TestFindSkipsDependencyDirs(t *testing.T) {
 		if !got[w] {
 			t.Fatalf("missing %s in %v", w, found)
 		}
+	}
+	// dependency dirs and non-.php files are not discovered either
+	if discovered != len(want) {
+		t.Fatalf("discovered = %d, want %d", discovered, len(want))
+	}
+}
+
+func TestFindCountsSkippedFiles(t *testing.T) {
+	root := t.TempDir()
+	for _, rel := range []string{"src/a.php", "src/Fixture/b.php", "src/Fixture/c.php"} {
+		full := filepath.Join(root, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte("<?php"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	found, discovered, err := Find([]string{root}, []string{"*/Fixture/*"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// only a.php is processed, but all three .php files count toward the total
+	if len(found) != 1 {
+		t.Fatalf("found %v, want 1 file", found)
+	}
+	if discovered != 3 {
+		t.Fatalf("discovered = %d, want 3 (skipped files still counted)", discovered)
 	}
 }
 
