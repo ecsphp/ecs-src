@@ -218,6 +218,7 @@ func StructuralFixers() []fixer.Fixer {
 		SingleLineEmptyBody{},
 		VisibilityRequired{},
 		ModifierKeywords{},
+		PsrAutoloading{},
 		SingleTraitInsertPerStatement{},
 		SingleClassElementPerStatement{},
 		OrderedClassElements{},

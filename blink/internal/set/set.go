@@ -30,7 +30,22 @@ func Default() []fixer.Fixer { return selectMembers(defaultMembers) }
 // full rule set plus single_line_empty_body, which is PER-CS-specific and not
 // part of the default/common output.
 func PERCS() []fixer.Fixer {
-	return append(rules.All(), rules.SingleLineEmptyBody{})
+	all := rules.All()
+	out := make([]fixer.Fixer, 0, len(all)+1)
+	for _, f := range all {
+		if percsExcluded[shortName(f.Name())] {
+			continue
+		}
+		out = append(out, f)
+	}
+	return append(out, rules.SingleLineEmptyBody{})
+}
+
+// percsExcluded are implemented fixers that @PER-CS does not enable, so the
+// per-cs set (which otherwise runs every fixer) leaves them out. PsrAutoloading
+// renames classes from the file path and is opt-in only.
+var percsExcluded = map[string]bool{
+	"PsrAutoloadingFixer": true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
