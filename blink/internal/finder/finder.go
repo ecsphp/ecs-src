@@ -14,10 +14,14 @@ var alwaysSkipDirs = map[string]bool{
 	".git":         true,
 }
 
-// Find walks paths and returns every .php file not matching a skip glob.
-func Find(paths []string, skip []string) ([]string, error) {
+// Find walks paths and returns every .php file not matching a skip glob, plus the
+// count of distinct .php files discovered before skip globs are applied. ECS counts
+// every discovered file in its run summary (skipped ones included), so the caller
+// reports this total while only processing the returned files.
+func Find(paths []string, skip []string) ([]string, int, error) {
 	var out []string
 	seen := map[string]bool{}
+	discovered := 0
 
 	for _, p := range paths {
 		err := filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
@@ -33,18 +37,22 @@ func Find(paths []string, skip []string) ([]string, error) {
 			if !strings.HasSuffix(path, ".php") {
 				return nil
 			}
-			if skipped(path, skip) || seen[path] {
+			if seen[path] {
 				return nil
 			}
 			seen[path] = true
+			discovered++
+			if skipped(path, skip) {
+				return nil
+			}
 			out = append(out, path)
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
-	return out, nil
+	return out, discovered, nil
 }
 
 // Skipped reports whether path matches any of the skip globs, using the same

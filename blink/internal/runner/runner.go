@@ -37,12 +37,13 @@ type Progress interface {
 // early when ctx is cancelled. Every file error is collected (not just the
 // first) and returned joined.
 func Run(ctx context.Context, cfg *config.Config, write bool, prog Progress) ([]FileResult, error) {
-	files, err := finder.Find(cfg.Paths, cfg.Skip)
+	files, discovered, err := finder.Find(cfg.Paths, cfg.Skip)
 	if err != nil {
 		return nil, err
 	}
 	if prog != nil {
-		prog.Start(len(files))
+		// discovered includes skip-matched files, mirroring ECS's run summary
+		prog.Start(discovered)
 	}
 
 	jobs := max(cfg.Jobs, 1)
