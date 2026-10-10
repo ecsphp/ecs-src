@@ -65,7 +65,7 @@ func TestFindCountsSkippedFiles(t *testing.T) {
 		}
 	}
 
-	found, discovered, err := Find([]string{root}, []string{"*/Fixture/*"})
+	found, discovered, err := Find([]string{root}, []string{filepath.FromSlash("*/Fixture/*")})
 	if err != nil {
 		t.Fatal(err)
 	}
