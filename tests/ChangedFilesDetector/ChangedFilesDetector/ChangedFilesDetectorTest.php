@@ -38,6 +38,16 @@ final class ChangedFilesDetectorTest extends AbstractTestCase
         $this->assertFileHasNotChanged($this->filePath);
     }
 
+    public function testClearCache(): void
+    {
+        $this->changedFilesDetector->addFilePath($this->filePath);
+        $this->assertFileHasNotChanged($this->filePath);
+
+        $this->changedFilesDetector->clearCache();
+
+        $this->assertFileHasChanged($this->filePath);
+    }
+
     public function testInvalidateCacheOnConfigurationChange(): void
     {
         $this->changedFilesDetector->addFilePath($this->filePath);
