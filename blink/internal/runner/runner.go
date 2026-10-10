@@ -114,6 +114,7 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 	original := string(src)
 
 	stream := tokens.New(lexer.Lex(original))
+	stream.SetPath(path)
 	res := FileResult{Path: path}
 
 	for _, rule := range cfg.Rules {

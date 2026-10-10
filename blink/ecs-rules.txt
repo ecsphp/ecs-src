@@ -19,25 +19,22 @@ PHP-CS-Fixer name and only differ by alias:
   NoSpacesInsideParenthesisFixer    -> SpacesInsideParenthesesFixer (done)
   FunctionTypehintSpaceFixer        -> TypeDeclarationSpacesFixer (done, deprecated alias)
 
-PsrAutoloadingFixer cannot be ported: blink fixers receive only a token stream,
-not the file path the rule needs.
+PsrAutoloadingFixer reads the file path, which the runner records on the stream
+(Stream.Path); it is opt-in only (not in any default set, excluded from per-cs).
 
 
 NOT YET IMPLEMENTED (behavior)
 ------------------------------
-control structures:  NoBreakComment
-functions:           LambdaNotUsedImport
-class:               ModifierKeywords
-operators:           OperatorLinebreak
-types:               FullyQualifiedStrictTypes
-phpdoc:              PhpdocSeparation, PhpdocToComment, GeneralPhpdocTagRename
-doctrine annotations: DoctrineAnnotationArrayAssignment, DoctrineAnnotationIndentation
-                      (need an annotation parser)
-symplify custom:     StandaloneLinePlainConstructorParam, StandaloneLineRequiredParam,
-                     StandaloneLineSymfonyAttributeParam
+None. Every ECS rule is now implemented; the only path-dependent rule,
+PsrAutoloading, runs off Stream.Path.
 
 
 RECENTLY IMPLEMENTED
 --------------------
+PsrAutoloading, NoBreakComment, LambdaNotUsedImport, ModifierKeywords,
+OperatorLinebreak, FullyQualifiedStrictTypes, PhpdocSeparation, PhpdocToComment,
+GeneralPhpdocTagRename, DoctrineAnnotationArrayAssignment,
+DoctrineAnnotationIndentation, StandaloneLinePlainConstructorParam,
+StandaloneLineRequiredParam, StandaloneLineSymfonyAttributeParam,
 ControlStructureBraces, NoAlternativeSyntax, NoUnneededBraces
 (NoUnneededCurlyBraces), NoUnreachableDefaultArgumentValue.

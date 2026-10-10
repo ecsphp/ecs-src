@@ -14,11 +14,20 @@ import (
 // tokens by index and splice them in place; Render rebuilds the source.
 type Stream struct {
 	toks []token.Token
+	path string
 }
 
 func New(toks []token.Token) *Stream {
 	return &Stream{toks: toks}
 }
+
+// SetPath records the source file path, for the few fixers (PsrAutoloading) that
+// derive output from the file location rather than the tokens alone.
+func (s *Stream) SetPath(p string) { s.path = p }
+
+// Path returns the source file path set by the runner, or "" when the stream was
+// built from a string with no backing file.
+func (s *Stream) Path() string { return s.path }
 
 func (s *Stream) Len() int { return len(s.toks) }
 
