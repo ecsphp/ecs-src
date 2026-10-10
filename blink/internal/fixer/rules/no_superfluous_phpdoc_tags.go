@@ -285,6 +285,7 @@ type funcSig struct {
 func signatureAfter(s *tokens.Stream, doc int) (funcSig, bool) {
 	// Walk forward across whitespace, attributes (#[...] Comment) and modifier
 	// keywords to the "function" keyword.
+	sawModifier := false
 	j := doc + 1
 	for j < s.Len() {
 		t := s.At(j)
@@ -301,13 +302,21 @@ func signatureAfter(s *tokens.Stream, doc int) (funcSig, bool) {
 				return funcSig{}, false
 			}
 			if lv == "var" || isFuncModifier(lv) || lv == "readonly" {
+				sawModifier = true
 				j++
 				continue
 			}
 			// a typed property whose type is a reserved word (e.g. "array")
 			return parseProperty(s, j)
-		case token.Ident, token.Punct, token.Variable:
-			// a property: "Foo $x", "?Foo $x", "\Foo\Bar $x", or untyped "$x"
+		case token.Ident, token.Punct:
+			// a property: "Foo $x", "?Foo $x", "\Foo\Bar $x"
+			return parseProperty(s, j)
+		case token.Variable:
+			// a bare variable with no preceding modifier/type is an expression
+			// statement (e.g. "$this->foo()"), not a property declaration
+			if !sawModifier {
+				return funcSig{}, false
+			}
 			return parseProperty(s, j)
 		default:
 			return funcSig{}, false

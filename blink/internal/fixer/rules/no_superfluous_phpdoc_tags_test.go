@@ -96,6 +96,20 @@ func TestNoSuperfluousPhpdocTags(t *testing.T) {
 		"<?php\n/**\n * Does a thing.\n *\n */\nfunction f(int $n) {}", true)
 }
 
+// A docblock documenting a closure parameter, placed before an expression
+// statement (a method call taking the closure), is not attached to a function or
+// property declaration, so its @param must be kept even with allow_unused_params.
+func TestNoSuperfluousPhpdocTagsKeepsDocBeforeExpression(t *testing.T) {
+	t.Parallel()
+	f := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"allow_unused_params": false}).(fixerRule)
+
+	src := "<?php\nclass A {\n    public function run(array $stmts): void\n    {\n" +
+		"        /** @param Use_::TYPE_* $useType */\n" +
+		"        $this->traverser->traverse($stmts, static function (int $useType) {});\n" +
+		"    }\n}\n"
+	assertFix(t, f, src, src, false)
+}
+
 func TestNoSuperfluousPhpdocTagsSourceURL(t *testing.T) {
 	t.Parallel()
 	f := NoSuperfluousPhpdocTags{}
