@@ -31,15 +31,13 @@ final readonly class ConsoleOutputFormatter implements OutputFormatterInterface
             $this->reportFileDiffs($errorAndDiffResult->getFileDiffs());
         }
 
-        $this->easyCodingStandardStyle->newLine(1);
-
         if ($errorAndDiffResult->getErrorCount() === 0 && $errorAndDiffResult->getFileDiffsCount() === 0) {
             $this->easyCodingStandardStyle->success('No errors found. Great job - your code is shiny in style!');
 
             return $this->exitCodeResolver->resolve($errorAndDiffResult, $configuration);
         }
 
-        $this->easyCodingStandardStyle->newLine();
+        $this->easyCodingStandardStyle->newLine(2);
 
         if ($configuration->isFixer()) {
             $this->printAfterFixerStatus($errorAndDiffResult, $configuration);

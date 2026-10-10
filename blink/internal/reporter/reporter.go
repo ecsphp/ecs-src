@@ -31,14 +31,13 @@ func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
 	if !isFixer {
 		f.reportFileDiffs(results)
 	}
-	f.newLine(1)
 
 	if len(results) == 0 {
 		f.success("No errors found. Great job - your code is shiny in style!")
 		return 0
 	}
 
-	f.newLine(1)
+	f.newLine(2)
 
 	n := len(results)
 	if isFixer {
@@ -62,7 +61,7 @@ func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
 
 // Footer prints an ECS-style run summary: files scanned, time and memory.
 func Footer(w io.Writer, files int, d time.Duration, memBytes uint64) {
-	_, _ = fmt.Fprintf(w, "\n // %d files · %s · %d MB\n", files, d.Truncate(time.Millisecond), memBytes/(1024*1024))
+	_, _ = fmt.Fprintf(w, " // %d files · %s · %d MB\n", files, d.Truncate(time.Millisecond), memBytes/(1024*1024))
 }
 
 func newFormatter(w io.Writer) formatter {
