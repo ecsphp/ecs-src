@@ -125,6 +125,11 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 	}
 
 	res.After = stream.Render()
+	// Rules that fight to a draw (one edits, another reverts) leave the rendered
+	// file identical to the original; like PHP-CS-Fixer, report only real diffs.
+	if res.After == original {
+		res.AppliedRules = nil
+	}
 	if !res.Changed() {
 		return res, nil
 	}
