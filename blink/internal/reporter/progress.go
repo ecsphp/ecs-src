@@ -15,8 +15,12 @@ type Progress struct {
 	active bool
 	total  int
 	cur    int
+	frame  int
 	mu     sync.Mutex
 }
+
+// iconFrames is a pulsing bloom that grows from a dot to a star and back, advanced one step per render.
+var iconFrames = []string{"·", "∘", "○", "◯", "✦", "✧", "✦", "◯", "○", "∘"}
 
 // NewProgress returns a progress bar; it only draws when w is a terminal.
 func NewProgress(w *os.File) *Progress {
@@ -64,23 +68,14 @@ func (p *Progress) Finish() {
 	if p == nil || !p.active {
 		return
 	}
-	_, _ = fmt.Fprintf(p.w, "\r%s\r", strings.Repeat(" ", p.width+20))
+	_, _ = fmt.Fprintf(p.w, "\r%s\r", strings.Repeat(" ", p.width+24))
 }
 
 func (p *Progress) render() {
 	if p.total <= 0 {
 		return
 	}
-	pct := p.cur * 100 / p.total
-	filled := p.cur * p.width / p.total
-	var bar string
-	switch {
-	case filled >= p.width:
-		bar = strings.Repeat("=", p.width)
-	case filled == 0:
-		bar = ">" + strings.Repeat(" ", p.width-1)
-	default:
-		bar = strings.Repeat("=", filled-1) + ">" + strings.Repeat(" ", p.width-filled)
-	}
-	_, _ = fmt.Fprintf(p.w, "\r %d/%d [%s] %3d%%", p.cur, p.total, bar, pct)
+	icon := iconFrames[p.frame%len(iconFrames)]
+	p.frame++
+	_, _ = fmt.Fprintf(p.w, "\r %s", icon)
 }
