@@ -80,7 +80,7 @@ func run(args []string) int {
 	cfg.WithPaths(paths...)
 
 	start := time.Now()
-	progress := reporter.NewProgress(os.Stderr)
+	progress := reporter.NewProgress(os.Stderr, fix)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
