@@ -46,12 +46,23 @@ func TestReportCheckFixable(t *testing.T) {
 
 func TestReportFixed(t *testing.T) {
 	var buf bytes.Buffer
-	results := []runner.FileResult{{Path: "a.php", AppliedRules: []string{"X"}}, {Path: "b.php", AppliedRules: []string{"Y"}}}
+	results := []runner.FileResult{
+		{Path: "a.php", AppliedRules: []string{"X"}, Diff: "--- Original\n+++ New\n@@ @@\n-$a=1;\n+$a = 1;\n"},
+		{Path: "b.php", AppliedRules: []string{"Y"}, Diff: "--- Original\n+++ New\n@@ @@\n-$b=2;\n+$b = 2;\n"},
+	}
 	code := Report(&buf, results, true)
+	out := buf.String()
 	if code != 0 {
 		t.Fatalf("fix exit code = %d, want 0", code)
 	}
-	if !strings.Contains(buf.String(), "2 errors successfully fixed and no other errors found!") {
-		t.Fatalf("missing fixed message:\n%s", buf.String())
+	for _, want := range []string{
+		"1) a.php",
+		"begin diff",
+		"Applied checkers:",
+		"2 errors successfully fixed and no other errors found!",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("output missing %q:\n%s", want, out)
+		}
 	}
 }

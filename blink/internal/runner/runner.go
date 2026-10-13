@@ -135,11 +135,8 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 	if !res.Changed() {
 		return res, nil
 	}
-	// The unified diff is only rendered in check (dry-run) mode; --fix reports a
-	// count and rewrites the file, so computing the diff there is wasted work.
-	if !write {
-		res.Diff = diff.Unified(original, res.After)
-	}
+	// Both check and --fix list the per-file diff, matching ECS.
+	res.Diff = diff.Unified(original, res.After)
 
 	if write {
 		info, statErr := os.Stat(path)
