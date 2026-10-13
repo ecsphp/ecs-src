@@ -158,7 +158,7 @@ var fixerPriority = map[string]int{
 	"SingleClassElementPerStatementFixer":             56,
 	"SingleImportPerStatementFixer":                   1,
 	"SingleLineAfterImportsFixer":                     -11,
-	"NoBlankLineBetweenImportsFixer":                  -50,
+	"NoBlankLineBetweenImportsFixer":                  -35,
 	"SpaceAfterCommaHereNowDocFixer":                  0,
 	"ArrayOpenerAndCloserNewlineFixer":                34,
 	"SingleLineCommentSpacingFixer":                   1,
