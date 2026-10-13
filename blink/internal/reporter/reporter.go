@@ -26,11 +26,8 @@ type formatter struct {
 func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
 	f := newFormatter(w)
 
-	// --fix applies changes and prints a summary; the per-file diff listing is a
-	// check (dry-run) concern, matching ECS.
-	if !isFixer {
-		f.reportFileDiffs(results)
-	}
+	// Both check and --fix list the per-file diff, matching ECS.
+	f.reportFileDiffs(results)
 
 	if len(results) == 0 {
 		f.success("No errors found. Great job - your code is shiny in style!")
