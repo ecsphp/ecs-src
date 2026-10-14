@@ -58,7 +58,15 @@ func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
 
 // Footer prints an ECS-style run summary: files scanned, time and memory.
 func Footer(w io.Writer, files int, d time.Duration, memBytes uint64) {
-	_, _ = fmt.Fprintf(w, " // %d files · %s · %d MB\n", files, d.Truncate(time.Millisecond), memBytes/(1024*1024))
+	_, _ = fmt.Fprintf(w, " // %d files · %s · %d MB\n", files, formatElapsed(d), memBytes/(1024*1024))
+}
+
+// formatElapsed shows seconds past 5s, milliseconds below.
+func formatElapsed(d time.Duration) string {
+	if d > 5*time.Second {
+		return fmt.Sprintf("%.2f s", d.Seconds())
+	}
+	return fmt.Sprintf("%dms", d.Truncate(time.Millisecond).Milliseconds())
 }
 
 func newFormatter(w io.Writer) formatter {
