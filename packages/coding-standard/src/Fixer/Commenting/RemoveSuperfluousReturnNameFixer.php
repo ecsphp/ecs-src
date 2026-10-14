@@ -35,6 +35,9 @@ final class RemoveSuperfluousReturnNameFixer extends AbstractDocBlockFixer
 
     private const string VARIABLE_NAME_PART = 'variableName';
 
+    // PHPStan conditional return type, e.g. "@return $var ? TypeA : TypeB"
+    private const string CONDITIONAL_RETURN_REGEX = '#@(?:psalm-|phpstan-)?return\s+\$\w+\s*(?:\?|is\b)#';
+
     public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(self::ERROR_MESSAGE, []);
@@ -83,6 +86,10 @@ final class RemoveSuperfluousReturnNameFixer extends AbstractDocBlockFixer
     private function shouldSkip(array $match, string $content): bool
     {
         if (in_array($match[self::VARIABLE_NAME_PART], self::ALLOWED_VARIABLE_NAMES, true)) {
+            return true;
+        }
+
+        if (Regex::match($content, self::CONDITIONAL_RETURN_REGEX) !== null) {
             return true;
         }
 
