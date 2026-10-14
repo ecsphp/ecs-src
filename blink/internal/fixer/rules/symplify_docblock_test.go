@@ -88,6 +88,12 @@ func TestRemoveSuperfluousReturnName(t *testing.T) {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
 	idempotent(t, RemoveSuperfluousReturnName{}, got)
+
+	// a PHPStan conditional return type is left alone; the variable is the condition, not a name
+	cond := "<?php\nclass A {\n    /**\n     * @return $arrayHydration ? array<int, mixed> : array<int, LeadList>\n     */\n    function f(bool $arrayHydration) {}\n}\n"
+	if got, changed := apply(t, RemoveSuperfluousReturnName{}, cond); changed || got != cond {
+		t.Fatalf("conditional return type changed=%v got=%q", changed, got)
+	}
 }
 
 // TestRemoveSuperfluousVarName drops the variable name from a property @var.

@@ -104,6 +104,8 @@ type RemoveSuperfluousReturnName struct{}
 var (
 	returnVarNameRe   = regexp.MustCompile(`(@(?:psalm-|phpstan-)?return)(\s+[|\\\w]+)?(\s+)(\$[\w]+)`)
 	docVariableNameRe = regexp.MustCompile(`\$\w+`)
+	// PHPStan conditional return type, e.g. "@return $var ? TypeA : TypeB"
+	conditionalReturnRe = regexp.MustCompile(`@(?:psalm-|phpstan-)?return\s+\$\w+\s*(?:\?|is\b)`)
 )
 
 func (RemoveSuperfluousReturnName) Name() string {
@@ -123,6 +125,9 @@ func (RemoveSuperfluousReturnName) Fix(s *tokens.Stream) bool {
 				continue
 			}
 			if m[4] == "$this" {
+				continue
+			}
+			if conditionalReturnRe.MatchString(line) {
 				continue
 			}
 			if len(docVariableNameRe.FindAllString(line, -1)) >= 2 {
