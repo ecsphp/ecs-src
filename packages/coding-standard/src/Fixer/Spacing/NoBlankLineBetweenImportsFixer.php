@@ -8,6 +8,7 @@ use PhpCsFixer\Fixer\WhitespacesAwareFixerInterface;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
 use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
+use PhpCsFixer\Tokenizer\CT;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
 use PhpCsFixer\Tokenizer\TokensAnalyzer;
@@ -26,7 +27,7 @@ final class NoBlankLineBetweenImportsFixer extends AbstractSymplifyFixer impleme
 
     public function getDefinition(): FixerDefinitionInterface
     {
-        return new FixerDefinition(self::ERROR_MESSAGE, [new CodeSample("<?php\nuse Foo\\Bar;\n\nuse function Foo\\baz;\n")]);
+        return new FixerDefinition(self::ERROR_MESSAGE, [new CodeSample("<?php\nuse Foo\\Bar;\n\nuse Foo\\Baz;\n")]);
     }
 
     // run after OrderedImportsFixer, before BlankLineBetweenImportGroupsFixer
@@ -67,6 +68,11 @@ final class NoBlankLineBetweenImportsFixer extends AbstractSymplifyFixer impleme
                 continue;
             }
 
+            // keep the blank line between different import groups, e.g. class and "use function"
+            if ($this->resolveImportType($tokens, $useIndex) !== $this->resolveImportType($tokens, $useIndexes[$i - 1])) {
+                continue;
+            }
+
             $whitespaceIndex = $useIndex - 1;
             if (! $tokens[$whitespaceIndex]->isWhitespace()) {
                 continue;
@@ -78,5 +84,26 @@ final class NoBlankLineBetweenImportsFixer extends AbstractSymplifyFixer impleme
 
             $tokens[$whitespaceIndex] = new Token([T_WHITESPACE, $lineEnding]);
         }
+    }
+
+    /**
+     * @param Tokens<Token> $tokens
+     */
+    private function resolveImportType(Tokens $tokens, int $useIndex): string
+    {
+        $nextIndex = $tokens->getNextMeaningfulToken($useIndex);
+        if ($nextIndex === null) {
+            return 'class';
+        }
+
+        if ($tokens[$nextIndex]->isGivenKind(CT::T_FUNCTION_IMPORT)) {
+            return 'function';
+        }
+
+        if ($tokens[$nextIndex]->isGivenKind(CT::T_CONST_IMPORT)) {
+            return 'const';
+        }
+
+        return 'class';
     }
 }

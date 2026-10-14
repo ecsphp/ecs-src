@@ -46,6 +46,10 @@ func (NoBlankLineBetweenImports) Fix(s *tokens.Stream) bool {
 		if prev < 0 || s.At(prev).Kind != token.Punct || s.At(prev).Value != ";" {
 			continue
 		}
+		// keep the blank line between different import groups, e.g. class and "use function"
+		if importType(s, useIndex) != importType(s, uses[k-1]) {
+			continue
+		}
 		ws := useIndex - 1
 		if ws < 0 || s.At(ws).Kind != token.Whitespace {
 			continue
@@ -57,4 +61,18 @@ func (NoBlankLineBetweenImports) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	return changed
+}
+
+// importType classifies an import "use" as "function", "const" or "class".
+func importType(s *tokens.Stream, useIndex int) string {
+	j := skipWhitespace(s, useIndex+1)
+	if j < s.Len() {
+		switch strings.ToLower(s.At(j).Value) {
+		case "function":
+			return "function"
+		case "const":
+			return "const"
+		}
+	}
+	return "class"
 }
