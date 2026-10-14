@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -18,7 +19,31 @@ import (
 // This handles class-body const/property/method members. Constructor promoted
 // properties and PHP 8.4 asymmetric set-visibility (public(set)) are left
 // untouched; members whose modifier run contains a comment are skipped.
-type ModifierKeywords struct{}
+//
+// The `elements` option limits which member kinds (const, property, method) are
+// fixed; nil fixes all three, matching the PHP-CS-Fixer default.
+type ModifierKeywords struct {
+	// elements is the set of enabled member kinds; nil means all three.
+	elements map[string]bool
+}
+
+func (f ModifierKeywords) WithConfig(config map[string]any) fixer.Fixer {
+	if list, ok := arrayNotationStringList(config["elements"]); ok {
+		set := make(map[string]bool, len(list))
+		for _, item := range list {
+			set[item] = true
+		}
+		f.elements = set
+	}
+	return f
+}
+
+func (f ModifierKeywords) enabled(kind string) bool {
+	if f.elements == nil {
+		return true
+	}
+	return f.elements[kind]
+}
 
 func (ModifierKeywords) Name() string {
 	return `PhpCsFixer\Fixer\ClassNotation\ModifierKeywordsFixer`
@@ -28,7 +53,7 @@ func (ModifierKeywords) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/ModifierKeywordsFixer.php"
 }
 
-func (ModifierKeywords) Fix(s *tokens.Stream) bool {
+func (f ModifierKeywords) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
@@ -38,7 +63,7 @@ func (ModifierKeywords) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		for _, m := range slices.Backward(classMemberStarts(s, i)) {
-			if orderModifierKeywords(s, m) {
+			if f.orderModifierKeywords(s, m) {
 				changed = true
 			}
 		}
@@ -46,7 +71,21 @@ func (ModifierKeywords) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
-func orderModifierKeywords(s *tokens.Stream, m int) bool {
+// modifierMemberKind classifies the member whose modifier run ends at index
+// after: "const", "method" (a function) or "property".
+func modifierMemberKind(s *tokens.Stream, after int) string {
+	if after < s.Len() && s.At(after).Kind == token.Keyword {
+		switch strings.ToLower(s.At(after).Value) {
+		case "const":
+			return "const"
+		case "function":
+			return "method"
+		}
+	}
+	return "property"
+}
+
+func (f ModifierKeywords) orderModifierKeywords(s *tokens.Stream, m int) bool {
 	var absFinal []string
 	visibility := ""
 	static := ""
@@ -95,6 +134,9 @@ func orderModifierKeywords(s *tokens.Stream, m int) bool {
 	}
 	after := k
 	if after < s.Len() && (s.At(after).Kind == token.Comment || s.At(after).Kind == token.DocComment) {
+		return false
+	}
+	if !f.enabled(modifierMemberKind(s, after)) {
 		return false
 	}
 	if visibility == "" {

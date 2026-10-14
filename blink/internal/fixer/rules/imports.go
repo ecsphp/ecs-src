@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -58,9 +59,13 @@ func skipWhitespace(s *tokens.Stream, i int) int {
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Import/SingleImportPerStatementFixer.php
 //
 // SingleImportPerStatement splits a grouped import into one per line:
-// "use A, B;" -> "use A;\nuse B;". Group imports ("use A\{B, C};") and closure
-// "use (...)" are left alone.
-type SingleImportPerStatement struct{}
+// "use A, B;" -> "use A;\nuse B;". With group_to_single_imports (the default) a
+// brace group "use A\{B, C};" is also expanded; set it to false to keep groups.
+// Closure "use (...)" is always left alone.
+type SingleImportPerStatement struct {
+	// keepGroups leaves brace group imports untouched (group_to_single_imports:false).
+	keepGroups bool
+}
 
 func (SingleImportPerStatement) Name() string {
 	return `PhpCsFixer\Fixer\Import\SingleImportPerStatementFixer`
@@ -70,8 +75,15 @@ func (SingleImportPerStatement) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Import/SingleImportPerStatementFixer.php"
 }
 
-func (SingleImportPerStatement) Fix(s *tokens.Stream) bool {
-	return splitUseStatements(s, false)
+func (f SingleImportPerStatement) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["group_to_single_imports"].(bool); ok {
+		f.keepGroups = !v
+	}
+	return f
+}
+
+func (f SingleImportPerStatement) Fix(s *tokens.Stream) bool {
+	return splitUseStatements(s, false, !f.keepGroups)
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/SingleTraitInsertPerStatementFixer.php
@@ -89,12 +101,13 @@ func (SingleTraitInsertPerStatement) SourceURL() string {
 }
 
 func (SingleTraitInsertPerStatement) Fix(s *tokens.Stream) bool {
-	return splitUseStatements(s, true)
+	return splitUseStatements(s, true, false)
 }
 
 // splitUseStatements splits grouped "use" statements one per line. inClass picks
 // the scope: false handles top-level imports, true handles in-class trait use.
-func splitUseStatements(s *tokens.Stream, inClass bool) bool {
+// expandGroups also expands brace group imports ("use A\{B, C};").
+func splitUseStatements(s *tokens.Stream, inClass, expandGroups bool) bool {
 	changed := false
 	i := 0
 	for i < s.Len() {
@@ -102,7 +115,7 @@ func splitUseStatements(s *tokens.Stream, inClass bool) bool {
 			i++
 			continue
 		}
-		next, c := splitUseAt(s, i, inClass)
+		next, c := splitUseAt(s, i, inClass, expandGroups)
 		i = next
 		if c {
 			changed = true
@@ -113,7 +126,7 @@ func splitUseStatements(s *tokens.Stream, inClass bool) bool {
 
 // splitUseAt splits the "use" statement at index i when its scope matches
 // inClass. It returns the index to continue from and whether it changed.
-func splitUseAt(s *tokens.Stream, i int, inClass bool) (int, bool) {
+func splitUseAt(s *tokens.Stream, i int, inClass, expandGroups bool) (int, bool) {
 	if inClassLikeBody(s, i) != inClass {
 		return i + 1, false
 	}
@@ -130,7 +143,7 @@ func splitUseAt(s *tokens.Stream, i int, inClass bool) (int, bool) {
 		return i + 1, false // closure "use (...)"
 	}
 
-	semi, group := -1, false
+	semi, group, openBrace := -1, false, -1
 	var commas []int
 	for k := j; k < s.Len(); k++ {
 		if s.At(k).Kind != token.Punct {
@@ -139,6 +152,7 @@ func splitUseAt(s *tokens.Stream, i int, inClass bool) (int, bool) {
 		switch s.At(k).Value {
 		case "{":
 			group = true
+			openBrace = k
 		case ";":
 			semi = k
 		case ",":
@@ -148,7 +162,13 @@ func splitUseAt(s *tokens.Stream, i int, inClass bool) (int, bool) {
 			break
 		}
 	}
-	if group || semi < 0 || len(commas) == 0 {
+	if group {
+		if !expandGroups {
+			return i + 1, false
+		}
+		return expandGroupImport(s, i, j, openBrace, modifier)
+	}
+	if semi < 0 || len(commas) == 0 {
 		return i + 1, false
 	}
 
@@ -169,6 +189,119 @@ func splitUseAt(s *tokens.Stream, i int, inClass bool) (int, bool) {
 	}
 	s.ReplaceRange(i, semi, repl)
 	return i + len(repl), true
+}
+
+// expandGroupImport expands a brace group import "use Prefix\{A, function b, const C};"
+// into one single import per member, carrying the common prefix and any outer or
+// per-member "function"/"const" modifier. prefixStart points at the first prefix
+// token (after "use" and an outer modifier), openBrace at the "{".
+func expandGroupImport(s *tokens.Stream, useIdx, prefixStart, openBrace int, outerModifier string) (int, bool) {
+	closeBrace := -1
+	depth := 0
+	for k := openBrace; k < s.Len(); k++ {
+		if s.At(k).Kind != token.Punct {
+			continue
+		}
+		switch s.At(k).Value {
+		case "{":
+			depth++
+		case "}":
+			depth--
+			if depth == 0 {
+				closeBrace = k
+			}
+		}
+		if closeBrace >= 0 {
+			break
+		}
+	}
+	if closeBrace < 0 {
+		return useIdx + 1, false
+	}
+
+	semi := -1
+	for k := closeBrace + 1; k < s.Len(); k++ {
+		if s.At(k).Kind == token.Whitespace || s.At(k).Kind == token.Comment || s.At(k).Kind == token.DocComment {
+			continue
+		}
+		if s.At(k).Kind == token.Punct && s.At(k).Value == ";" {
+			semi = k
+		}
+		break
+	}
+	if semi < 0 {
+		return useIdx + 1, false
+	}
+
+	var prefix []token.Token
+	for k := prefixStart; k < openBrace; k++ {
+		prefix = append(prefix, s.At(k))
+	}
+	prefix = trimWhitespace(prefix)
+
+	items := splitGroupItems(s, openBrace+1, closeBrace)
+	indent := indentBefore(s, useIdx)
+
+	var repl []token.Token
+	emitted := 0
+	for _, item := range items {
+		item = trimWhitespace(item)
+		if len(item) == 0 {
+			continue // trailing comma
+		}
+		modifier := outerModifier
+		rest := item
+		if item[0].Kind == token.Keyword {
+			if lw := strings.ToLower(item[0].Value); lw == "function" || lw == "const" {
+				modifier = item[0].Value
+				rest = trimWhitespace(item[1:])
+			}
+		}
+		if emitted > 0 {
+			repl = append(repl, token.Token{Kind: token.Whitespace, Value: "\n" + indent})
+		}
+		repl = append(repl, token.Token{Kind: token.Keyword, Value: "use"}, token.Token{Kind: token.Whitespace, Value: " "})
+		if modifier != "" {
+			repl = append(repl, token.Token{Kind: token.Keyword, Value: modifier}, token.Token{Kind: token.Whitespace, Value: " "})
+		}
+		repl = append(repl, prefix...)
+		repl = append(repl, rest...)
+		repl = append(repl, token.Token{Kind: token.Punct, Value: ";"})
+		emitted++
+	}
+	if emitted == 0 {
+		return useIdx + 1, false
+	}
+
+	s.ReplaceRange(useIdx, semi, repl)
+	return useIdx + len(repl), true
+}
+
+// splitGroupItems slices the tokens in (open, close) at top-level commas.
+func splitGroupItems(s *tokens.Stream, from, close int) [][]token.Token {
+	var items [][]token.Token
+	var cur []token.Token
+	depth := 0
+	for k := from; k < close; k++ {
+		t := s.At(k)
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case "{", "[", "(":
+				depth++
+			case "}", "]", ")":
+				depth--
+			case ",":
+				if depth == 0 {
+					items = append(items, cur)
+					cur = nil
+					continue
+				}
+			}
+		}
+		cur = append(cur, t)
+	}
+	items = append(items, cur)
+	return items
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Import/SingleLineAfterImportsFixer.php

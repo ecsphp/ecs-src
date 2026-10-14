@@ -3,15 +3,21 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/NamespaceNotation/BlankLinesBeforeNamespaceFixer.php
 //
-// BlankLinesBeforeNamespace ensures exactly one blank line before a namespace
-// declaration that sits on its own line.
-type BlankLinesBeforeNamespace struct{}
+// BlankLinesBeforeNamespace keeps the line breaks before a namespace declaration
+// within the configured bounds (both default to 2, i.e. exactly one blank line).
+type BlankLinesBeforeNamespace struct {
+	// minLineBreaks / maxLineBreaks bound the line breaks before namespace; 0
+	// means the default of 2.
+	minLineBreaks int
+	maxLineBreaks int
+}
 
 func (BlankLinesBeforeNamespace) Name() string {
 	return `PhpCsFixer\Fixer\NamespaceNotation\BlankLinesBeforeNamespaceFixer`
@@ -21,7 +27,25 @@ func (BlankLinesBeforeNamespace) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/NamespaceNotation/BlankLinesBeforeNamespaceFixer.php"
 }
 
-func (BlankLinesBeforeNamespace) Fix(s *tokens.Stream) bool {
+func (f BlankLinesBeforeNamespace) WithConfig(config map[string]any) fixer.Fixer {
+	f.minLineBreaks = configInt(config, "min_line_breaks", 2)
+	f.maxLineBreaks = configInt(config, "max_line_breaks", 2)
+	return f
+}
+
+func (f BlankLinesBeforeNamespace) lineBreaks() (int, int) {
+	minBreaks, maxBreaks := f.minLineBreaks, f.maxLineBreaks
+	if minBreaks == 0 {
+		minBreaks = 2
+	}
+	if maxBreaks == 0 {
+		maxBreaks = 2
+	}
+	return minBreaks, maxBreaks
+}
+
+func (f BlankLinesBeforeNamespace) Fix(s *tokens.Stream) bool {
+	minBreaks, maxBreaks := f.lineBreaks()
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
@@ -32,12 +56,43 @@ func (BlankLinesBeforeNamespace) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		prev := s.At(i - 1)
-		if prev.Kind == token.Whitespace && hasNewline(prev.Value) && prev.Value != "\n\n" {
-			s.SetValue(i-1, "\n\n")
+		if prev.Kind != token.Whitespace || !hasNewline(prev.Value) {
+			continue
+		}
+		target := clampLineBreaks(strings.Count(prev.Value, "\n"), minBreaks, maxBreaks)
+		indent := prev.Value
+		if idx := strings.LastIndexByte(prev.Value, '\n'); idx >= 0 {
+			indent = prev.Value[idx+1:]
+		}
+		want := strings.Repeat("\n", target) + indent
+		if prev.Value != want {
+			s.SetValue(i-1, want)
 			changed = true
 		}
 	}
 	return changed
+}
+
+func clampLineBreaks(n, minBreaks, maxBreaks int) int {
+	if n < minBreaks {
+		return minBreaks
+	}
+	if n > maxBreaks {
+		return maxBreaks
+	}
+	return n
+}
+
+// configInt reads an int option (a JSON number arrives as float64), falling back
+// to def when absent.
+func configInt(config map[string]any, key string, def int) int {
+	switch n := config[key].(type) {
+	case float64:
+		return int(n)
+	case int:
+		return n
+	}
+	return def
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/NamespaceNotation/BlankLineAfterNamespaceFixer.php

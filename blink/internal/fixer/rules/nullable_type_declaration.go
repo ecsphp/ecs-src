@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -14,7 +15,11 @@ import (
 // fires only for a two-member union whose sole other member is a single type
 // name, in a confirmed type position (parameter, return or typed property).
 // Unions of three or more members, intersections and DNF types are left alone.
-type NullableTypeDeclaration struct{}
+// With `syntax: union` the fixer goes the other way: "?int" becomes "int|null".
+type NullableTypeDeclaration struct {
+	// syntax is "question_mark" (the default when empty) or "union".
+	syntax string
+}
 
 func (NullableTypeDeclaration) Name() string {
 	return `PhpCsFixer\Fixer\LanguageConstruct\NullableTypeDeclarationFixer`
@@ -24,7 +29,56 @@ func (NullableTypeDeclaration) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/LanguageConstruct/NullableTypeDeclarationFixer.php"
 }
 
-func (NullableTypeDeclaration) Fix(s *tokens.Stream) bool {
+func (f NullableTypeDeclaration) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["syntax"].(string); ok {
+		f.syntax = v
+	}
+	return f
+}
+
+func (f NullableTypeDeclaration) Fix(s *tokens.Stream) bool {
+	if f.syntax == "union" {
+		return f.fixUnion(s)
+	}
+	return f.fixQuestionMark(s)
+}
+
+// fixUnion rewrites a "?T" nullable marker to the explicit "T|null" union.
+func (f NullableTypeDeclaration) fixUnion(s *tokens.Stream) bool {
+	changed := false
+	for i := 0; i < s.Len(); i++ {
+		if !isPunctVal(s, i, "?") || !isNullableType(s, i) {
+			continue
+		}
+		j := i + 1
+		for j < s.Len() && s.At(j).Kind == token.Whitespace {
+			j++
+		}
+		start := j
+		for j < s.Len() {
+			t := s.At(j)
+			if t.Kind == token.Ident || t.Kind == token.Keyword || (t.Kind == token.Punct && t.Value == `\`) {
+				j++
+				continue
+			}
+			break
+		}
+		if j == start {
+			continue // no type name after "?"
+		}
+		repl := make([]token.Token, 0, j-start+2)
+		for k := start; k < j; k++ {
+			repl = append(repl, s.At(k))
+		}
+		repl = append(repl, token.Token{Kind: token.Punct, Value: "|"}, token.Token{Kind: token.Ident, Value: "null"})
+		s.ReplaceRange(i, j-1, repl)
+		changed = true
+		i += len(repl) - 1
+	}
+	return changed
+}
+
+func (f NullableTypeDeclaration) fixQuestionMark(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
