@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -18,7 +19,21 @@ import (
 // intersection type separator is left alone; and a "&" that is a return-ref or a
 // reference is left alone. Object operators "->"/"?->" and "::" are moved too,
 // matching php-cs-fixer's getObjectOperatorKinds() + T_PAAMAYIM_NEKUDOTAYIM.
-type OperatorLinebreak struct{}
+//
+// The `position` option places the operator at the beginning (default) or end of
+// the line; `only_booleans` limits the set to the boolean operators.
+type OperatorLinebreak struct {
+	// onlyBooleans limits the operator set to &&, ||, and, or, xor.
+	onlyBooleans bool
+	// position is "beginning" (the default when empty) or "end".
+	position string
+}
+
+// operatorLinebreakBooleanPunct are the boolean operator tokens kept when
+// only_booleans is set.
+var operatorLinebreakBooleanPunct = map[string]bool{
+	"||": true, "&&": true,
+}
 
 // operatorLinebreakPunct are the always-unambiguous operator tokens.
 var operatorLinebreakPunct = map[string]bool{
@@ -40,7 +55,17 @@ func (OperatorLinebreak) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/OperatorLinebreakFixer.php"
 }
 
-func isOperatorLinebreakToken(t token.Token) bool {
+func (f OperatorLinebreak) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["only_booleans"].(bool); ok {
+		f.onlyBooleans = v
+	}
+	if v, ok := config["position"].(string); ok {
+		f.position = v
+	}
+	return f
+}
+
+func (f OperatorLinebreak) isOperatorToken(t token.Token) bool {
 	switch t.Kind {
 	case token.Keyword:
 		switch strings.ToLower(t.Value) {
@@ -48,6 +73,9 @@ func isOperatorLinebreakToken(t token.Token) bool {
 			return true
 		}
 	case token.Punct:
+		if f.onlyBooleans {
+			return operatorLinebreakBooleanPunct[t.Value]
+		}
 		return operatorLinebreakPunct[t.Value]
 	}
 	return false
@@ -75,11 +103,11 @@ func operatorLinebreakExcluded(s *tokens.Stream, i int, switchColons map[int]boo
 	return false
 }
 
-func (OperatorLinebreak) Fix(s *tokens.Stream) bool {
+func (f OperatorLinebreak) Fix(s *tokens.Stream) bool {
 	changed := false
 	switchColons := switchCaseColons(s)
 	for i := s.Len() - 1; i > 0; i-- {
-		if !isOperatorLinebreakToken(s.At(i)) {
+		if !f.isOperatorToken(s.At(i)) {
 			continue
 		}
 		if operatorLinebreakExcluded(s, i, switchColons) {
@@ -104,11 +132,20 @@ func (OperatorLinebreak) Fix(s *tokens.Stream) bool {
 		if !operatorSpanMultiline(s, prevM+1, nextM-1) {
 			continue
 		}
-		// already at the beginning of a line if there is no newline after it
-		if !operatorSpanMultiline(s, hi, nextM-1) {
-			continue
+
+		if f.position == "end" {
+			// already at the end of a line if there is no newline before it
+			if !operatorSpanMultiline(s, prevM+1, lo) {
+				continue
+			}
+			moveOperatorToLineEnd(s, opIndices, prevM)
+		} else {
+			// already at the beginning of a line if there is no newline after it
+			if !operatorSpanMultiline(s, hi, nextM-1) {
+				continue
+			}
+			moveOperatorToLineStart(s, opIndices, nextM)
 		}
-		moveOperatorToLineStart(s, opIndices, nextM)
 		changed = true
 		i = lo // resume before the moved group
 	}
@@ -154,4 +191,31 @@ func moveOperatorToLineStart(s *tokens.Stream, opIndices []int, nextM int) {
 	if hadSpaceBefore {
 		s.InsertAt(at, token.Token{Kind: token.Whitespace, Value: " "})
 	}
+}
+
+// moveOperatorToLineEnd mirrors fixMoveToTheEnd: it clears each operator (and the
+// whitespace immediately after it) and re-inserts the operators just after the
+// previous meaningful token, keeping a single trailing space when a space
+// followed the group.
+func moveOperatorToLineEnd(s *tokens.Stream, opIndices []int, prevM int) {
+	hi := opIndices[len(opIndices)-1]
+	hadSpaceAfter := hi+1 < s.Len() && s.At(hi+1).Kind == token.Whitespace
+
+	clones := make([]token.Token, len(opIndices))
+	for k, idx := range opIndices {
+		clones[k] = token.Token{Kind: s.At(idx).Kind, Value: s.At(idx).Value}
+	}
+	for _, idx := range opIndices {
+		if idx+1 < s.Len() && s.At(idx+1).Kind == token.Whitespace {
+			s.SetValue(idx+1, "")
+		}
+		s.SetValue(idx, "")
+	}
+
+	at := prevM + 1
+	if hadSpaceAfter {
+		s.InsertAt(at, token.Token{Kind: token.Whitespace, Value: " "})
+		at++
+	}
+	s.InsertSliceAt(at, clones)
 }

@@ -324,12 +324,14 @@ func TestSingleImportPerStatement(t *testing.T) {
 	if want := "<?php\nuse A\\B;\nuse C\\D;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
-	// closure use and group import are left alone
+	// closure use is left alone
 	if _, changed := apply(t, SingleImportPerStatement{}, "<?php $f = function () use ($a, $b) {};"); changed {
 		t.Fatal("closure use must not be split")
 	}
-	if _, changed := apply(t, SingleImportPerStatement{}, "<?php use A\\{B, C};"); changed {
-		t.Fatal("group import must not be split")
+	// group imports are expanded by default (group_to_single_imports: true)
+	got, changed = apply(t, SingleImportPerStatement{}, "<?php use A\\{B, C};")
+	if want := "<?php use A\\B;\nuse A\\C;"; !changed || got != want {
+		t.Fatalf("group default changed=%v got=%q want=%q", changed, got, want)
 	}
 }
 
