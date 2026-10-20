@@ -47,6 +47,24 @@ final class FileHashComputerTest extends AbstractTestCase
         $this->filesystem->remove(self::INCLUDED_CONFIG_FILE);
     }
 
+    public function testInvalidateCacheOnLocalCheckerChange(): void
+    {
+        $localSniffFile = __DIR__ . '/Source/LocalSniff.php';
+        $originalContents = $this->filesystem->readFile($localSniffFile);
+
+        $originalHash = $this->fileHashComputer->computeConfig(__DIR__ . '/Source/local_sniff_config.php');
+
+        try {
+            $this->filesystem->dumpFile($localSniffFile, $originalContents . "\n// changed\n");
+
+            $changedHash = $this->fileHashComputer->computeConfig(__DIR__ . '/Source/local_sniff_config.php');
+        } finally {
+            $this->filesystem->dumpFile($localSniffFile, $originalContents);
+        }
+
+        $this->assertNotSame($originalHash, $changedHash);
+    }
+
     public function testPhpFileHash(): void
     {
         $fileOne = __DIR__ . '/Source/SomeScannedClass.php';
