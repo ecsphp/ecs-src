@@ -28,6 +28,7 @@ var ecsSrcOnlyFixers = map[string]bool{
 	`Symplify\CodingStandard\Fixer\Spacing\NoBlankLineBetweenImportsFixer`:                true,
 	`Symplify\CodingStandard\Fixer\Spacing\SpaceAfterCommaHereNowDocFixer`:                true,
 	`Symplify\CodingStandard\Fixer\ArrayNotation\ArrayOpenerAndCloserNewlineFixer`:        true,
+	`Symplify\CodingStandard\Fixer\LineLength\LineLengthFixer`:                            true,
 	`Symplify\CodingStandard\Fixer\Commenting\FixTagTypoFixer`:                            true,
 	`Symplify\CodingStandard\Fixer\Commenting\TypeToVarTagFixer`:                          true,
 	`Symplify\CodingStandard\Fixer\Commenting\MergeDocBlockStartFixer`:                    true,
