@@ -22,6 +22,7 @@ var fixerPriority = map[string]int{
 	"ArrayIndentationFixer":                    29,
 	"ArrayListItemNewlineFixer":                40,
 	"StandaloneLineInMultilineArrayFixer":      5,
+	"LineLengthFixer":                          5,
 	"ArraySyntaxFixer":                         37,
 	"AssignNullCoalescingToCoalesceEqualFixer": -1,
 	"AttributeBlockNoSpacesFixer":              0,
