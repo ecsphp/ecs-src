@@ -12,33 +12,38 @@ import (
 type importStmt struct {
 	start, semi int
 	kind        string // "class", "function" or "const"
-	pathKey     string // lowercased imported path, for alphabetical ordering
+	pathKey     string // lowercased imported path + "as" alias, for alphabetical ordering
 }
 
-// importSortKey returns the lowercased imported path of a use statement (after an
-// optional "function"/"const", up to ";" or " as "), used as the alphabetical
-// sort key by ECS's default OrderedImports (sort_algorithm: alpha).
-func importSortKey(s *tokens.Stream, useIdx, semi int) string {
+// importSortKey returns the alphabetical sort key of a use statement (after an
+// optional "function"/"const"): the imported path plus any "as <alias>" suffix,
+// matching PHP-CS-Fixer's namespace key. PHP maps both "\" and whitespace to a
+// space and compares; blink uses "\x00" as that shared separator so "\" and the
+// space before "as" sort before any identifier character ("Rector\Php\X" before
+// "Rector\Php71\Y", and "Foo\Bar as Baz" before "Foo\Bar\Qux"). lower controls
+// case folding (off for sort_algorithm with case_sensitive: true).
+func importSortKey(s *tokens.Stream, useIdx, semi int, lower bool) string {
 	j := skipWhitespace(s, useIdx+1)
 	if j < s.Len() && s.At(j).Kind == token.Keyword {
 		if lw := strings.ToLower(s.At(j).Value); lw == "function" || lw == "const" {
 			j = skipWhitespace(s, j+1)
 		}
 	}
+	const sep = "\x00"
 	var b strings.Builder
 	for k := j; k < semi; k++ {
 		t := s.At(k)
-		if t.Kind == token.Keyword && strings.ToLower(t.Value) == "as" {
-			break
-		}
 		if t.Kind == token.Whitespace {
+			b.WriteString(sep)
 			continue
 		}
-		b.WriteString(t.Value)
+		v := t.Value
+		if lower {
+			v = strings.ToLower(v)
+		}
+		b.WriteString(strings.ReplaceAll(v, `\`, sep))
 	}
-	// compare segment by segment: "\" must sort before any other character so
-	// "Rector\Php\X" precedes "Rector\Php71\Y" (ECS's alpha comparator)
-	return strings.ReplaceAll(strings.ToLower(b.String()), `\`, "\x00")
+	return strings.TrimRight(b.String(), sep)
 }
 
 // importKindRank orders use statements by kind for ECS's default imports_order
@@ -99,7 +104,7 @@ func collectImportRun(s *tokens.Stream, start int) []importStmt {
 		if group || semi < 0 {
 			break
 		}
-		stmts = append(stmts, importStmt{start: k, semi: semi, kind: useKind(s, k), pathKey: importSortKey(s, k, semi)})
+		stmts = append(stmts, importStmt{start: k, semi: semi, kind: useKind(s, k), pathKey: importSortKey(s, k, semi, true)})
 		n := skipWhitespace(s, semi+1)
 		if n < s.Len() && s.At(n).Kind == token.Keyword && strings.ToLower(s.At(n).Value) == "use" {
 			k = n
@@ -278,7 +283,7 @@ func (f OrderedImports) orderedImportsAlphaKey(s *tokens.Stream, st importStmt) 
 	if !f.caseSensitive {
 		return st.pathKey
 	}
-	return strings.ReplaceAll(orderedImportsPath(s, st.start, st.semi), `\`, "\x00")
+	return importSortKey(s, st.start, st.semi, false)
 }
 
 // orderedImportsLen returns the length used by the (deprecated) length algorithm:
