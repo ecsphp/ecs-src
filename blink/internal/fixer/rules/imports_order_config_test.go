@@ -49,3 +49,22 @@ func TestOrderedImportsKeepsBlankBetweenGroups(t *testing.T) {
 		t.Fatalf("blank between groups must be preserved: changed=%v got=%q", changed, got)
 	}
 }
+
+func TestOrderedImportsAliasInSortKey(t *testing.T) {
+	t.Parallel()
+	// the "as <alias>" suffix is part of the alpha key: a plain import sorts
+	// before the aliased import of the same class, matching PHP-CS-Fixer
+	src := "<?php\nuse Mautic\\LeadBundle\\Entity\\Lead as TheLead;\nuse Mautic\\LeadBundle\\Entity\\Lead;\n"
+	want := "<?php\nuse Mautic\\LeadBundle\\Entity\\Lead;\nuse Mautic\\LeadBundle\\Entity\\Lead as TheLead;\n"
+	if got, changed := apply(t, OrderedImports{}, src); !changed || got != want {
+		t.Fatalf("alias key: changed=%v got=%q want=%q", changed, got, want)
+	}
+
+	// "\" and the space before "as" both sort before an identifier char, so an
+	// aliased class precedes a deeper path under the same prefix
+	src = "<?php\nuse Foo\\Bar\\Qux;\nuse Foo\\Bar as Baz;\n"
+	want = "<?php\nuse Foo\\Bar as Baz;\nuse Foo\\Bar\\Qux;\n"
+	if got, changed := apply(t, OrderedImports{}, src); !changed || got != want {
+		t.Fatalf("alias vs deeper path: changed=%v got=%q want=%q", changed, got, want)
+	}
+}
