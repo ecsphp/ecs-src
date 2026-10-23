@@ -86,7 +86,6 @@
     "replace": {
         "symfony/console": "*",
         "symfony/event-dispatcher": "7.*",
-        "symfony/process": "7.*",
         "symfony/stopwatch": "7.*"
     }
 }
