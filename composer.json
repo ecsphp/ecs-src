@@ -36,7 +36,7 @@
         "phpunit/phpunit": "^13.4",
         "rector/rector": "^2.7",
         "rector/swiss-knife": "^2.7",
-        "symplify/phpstan-rules": "^14.17",
+        "symplify/phpstan-rules": "^14.19",
         "symplify/vendor-patches": "^11.5",
         "tomasvotruba/class-leak": "^2.3",
         "tomasvotruba/type-coverage": "^2.5",
