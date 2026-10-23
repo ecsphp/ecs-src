@@ -18,11 +18,12 @@ final readonly class EasyCodingStandardStyleFactory
      */
     public function create(): EasyCodingStandardStyle
     {
-        $outputPrinter = new OutputPrinter(new OutputColorizer());
+        $outputColorizer = new OutputColorizer();
+        $outputPrinter = new OutputPrinter($outputColorizer);
         $progressBar = new ProgressBar();
 
         $isDebug = in_array('--debug', $_SERVER['argv'] ?? [], true);
 
-        return new EasyCodingStandardStyle($outputPrinter, $progressBar, $isDebug);
+        return new EasyCodingStandardStyle($outputPrinter, $progressBar, $outputColorizer, $isDebug);
     }
 }

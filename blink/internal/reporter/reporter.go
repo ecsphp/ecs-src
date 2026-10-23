@@ -56,9 +56,12 @@ func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
 	return 1
 }
 
-// Footer prints an ECS-style run summary: files scanned, time and memory.
+// Footer prints an ECS-style run summary: files scanned, time and memory,
+// greyed and preceded by a blank line.
 func Footer(w io.Writer, files int, d time.Duration, memBytes uint64) {
-	_, _ = fmt.Fprintf(w, " // %d files · %s · %d MB\n", files, formatElapsed(d), memBytes/(1024*1024))
+	f := newFormatter(w)
+	line := fmt.Sprintf(" // %d files · %s · %d MB", files, formatElapsed(d), memBytes/(1024*1024))
+	_, _ = fmt.Fprintf(w, "\n%s\n", f.grey(line))
 }
 
 // formatElapsed shows seconds past 5s, milliseconds below.
@@ -197,6 +200,7 @@ func (f formatter) bg(s string, fg, bg int) string {
 }
 
 func (f formatter) comment(s string) string { return f.fg(s, 33) } // yellow
+func (f formatter) grey(s string) string    { return f.fg(s, 37) } // light grey, matches PHP
 func (f formatter) bold(s string) string {
 	if !f.color {
 		return s
