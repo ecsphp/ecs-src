@@ -200,7 +200,7 @@ func (f formatter) bg(s string, fg, bg int) string {
 }
 
 func (f formatter) comment(s string) string { return f.fg(s, 33) } // yellow
-func (f formatter) grey(s string) string    { return f.fg(s, 37) } // light grey, matches PHP
+func (f formatter) grey(s string) string    { return f.fg(s, 90) } // bright black, matches PHP
 func (f formatter) bold(s string) string {
 	if !f.color {
 		return s
