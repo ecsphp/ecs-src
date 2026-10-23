@@ -26,9 +26,11 @@ final class EasyCodingStandardStyleTest extends TestCase
 
     protected function setUp(): void
     {
+        $outputColorizer = new OutputColorizer();
         $this->easyCodingStandardStyle = new EasyCodingStandardStyle(
-            new OutputPrinter(new OutputColorizer()),
-            new ProgressBar()
+            new OutputPrinter($outputColorizer),
+            new ProgressBar(),
+            $outputColorizer
         );
 
         $this->normalizeTagsReflectionMethod = new ReflectionMethod($this->easyCodingStandardStyle, 'normalizeTags');
@@ -56,6 +58,8 @@ final class EasyCodingStandardStyleTest extends TestCase
         ];
 
         yield 'explicit color closing tag is normalized' => ['<fg=red>err</fg=red>', '<fg=red>err</>'];
+
+        yield 'grey tag is applied directly' => ['<fg=grey> // 3 files</>', "\033[37m // 3 files\033[0m"];
 
         yield 'plain text is left untouched' => ['no tags here', 'no tags here'];
     }

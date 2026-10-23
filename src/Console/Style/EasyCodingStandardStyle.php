@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Console\Style;
 
+use Entropy\Console\Enum\Color;
+use Entropy\Console\Output\OutputColorizer;
 use Entropy\Console\Output\OutputPrinter;
 use Entropy\Console\Output\ProgressBar;
 use Symplify\EasyCodingStandard\SniffRunner\ValueObject\Error\CodingStandardError;
@@ -20,6 +22,7 @@ final readonly class EasyCodingStandardStyle
     public function __construct(
         private OutputPrinter $outputPrinter,
         private ProgressBar $progressBar,
+        private OutputColorizer $outputColorizer,
         private bool $isDebug = false,
     ) {
     }
@@ -112,6 +115,13 @@ final readonly class EasyCodingStandardStyle
         // <comment> → yellow, <info> → green
         $text = (string) preg_replace('#<comment>(.*?)</comment>#su', '<fg=yellow>$1</>', $text);
         $text = (string) preg_replace('#<info>(.*?)</info>#su', '<fg=green>$1</>', $text);
+
+        // grey is not handled by OutputColorizer::colorize(), apply it directly
+        $text = (string) preg_replace_callback(
+            '#<fg=grey>(.*?)</>#su',
+            fn (array $matches): string => $this->outputColorizer->color($matches[1], Color::GREY),
+            $text
+        );
 
         // normalize explicit closing tags (e.g. </fg=green>) to the generic closing tag
         return (string) preg_replace('#</fg=[a-z]+>#', '</>', $text);

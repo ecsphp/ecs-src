@@ -129,8 +129,9 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
             ? sprintf('%.2f s', $elapsedMilliseconds / 1000)
             : sprintf('%dms', $elapsedMilliseconds);
 
+        $this->easyCodingStandardStyle->newLine();
         $this->easyCodingStandardStyle->writeln(
-            sprintf(' // %d files · %s · %d MB', $filesCount, $elapsedTime, $peakMemoryMegabytes)
+            sprintf('<fg=grey> // %d files · %s · %d MB</>', $filesCount, $elapsedTime, $peakMemoryMegabytes)
         );
     }
 }
