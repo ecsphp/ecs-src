@@ -1,0 +1,8 @@
+{
+    "name": "symfony",
+    "repo": "https://github.com/symfony/symfony.git",
+    "paths": ["src"],
+    "skip": ["*/node_modules/*", "*/Fixtures/*", "*/Fixture/*"],
+    "sets": ["psr12", "perCs", "common", "standaloneLine", "cleanCode"],
+    "max_diff_percent": 3.0
+}
