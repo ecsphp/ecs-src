@@ -6,6 +6,7 @@ use PhpCsFixer\Fixer\Import\NoUnneededImportAliasFixer;
 use PhpCsFixer\Fixer\Import\NoUnusedImportsFixer;
 use PhpCsFixer\Fixer\Import\OrderedImportsFixer;
 use PhpCsFixer\Fixer\NamespaceNotation\SingleBlankLineBeforeNamespaceFixer;
+use Symplify\CodingStandard\Fixer\ConstantNotation\RemoveSlashFromNativeConstantFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 
 return ECSConfig::configure()
@@ -14,4 +15,5 @@ return ECSConfig::configure()
         OrderedImportsFixer::class,
         SingleBlankLineBeforeNamespaceFixer::class,
         NoUnneededImportAliasFixer::class,
+        RemoveSlashFromNativeConstantFixer::class,
     ]);
