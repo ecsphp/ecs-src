@@ -98,12 +98,17 @@ jobs:
                 with:
                     go-version: "1.26.10"
 
+            -   run: sudo apt-get update && sudo apt-get install -y upx-ucl
+
             -   run: |
                     for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
                         suffix=""
                         if [ "${target%/*}" = "windows" ]; then suffix=".exe"; fi
                         (cd blink && CGO_ENABLED=0 GOOS=${target%/*} GOARCH=${target#*/} go build -trimpath -ldflags="-s -w" -o "$GITHUB_WORKSPACE/ecs-prefixed-downgraded/bin/blink-${target%/*}-${target#*/}${suffix}" .)
                     done
+
+                    # compress Linux binaries only; UPX is reliable there, but breaks code-signing on macOS and trips antivirus on Windows
+                    upx --best --lzma ecs-prefixed-downgraded/bin/blink-linux-amd64 ecs-prefixed-downgraded/bin/blink-linux-arm64
 
                     chmod 755 ecs-prefixed-downgraded/bin/blink-*
 
