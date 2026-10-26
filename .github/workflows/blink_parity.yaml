@@ -27,6 +27,7 @@ jobs:
                     - rector-src
                     - mautic
                     - laravel
+                    - symfony
         name: "parity: ${{ matrix.corpus }}"
         steps:
             - uses: actions/checkout@v4
