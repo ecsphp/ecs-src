@@ -1,6 +1,6 @@
 // Package reporter reproduces ECS's console output: numbered file-diff blocks
-// with "Applied checkers" listings, wrapped diffs, and Symfony-style
-// success/warning status blocks.
+// with "Applied checkers" listings, wrapped diffs, and single-line
+// success/warning status lines.
 package reporter
 
 import (
@@ -158,22 +158,13 @@ func (f formatter) listing(items []string) {
 	f.newLine(1)
 }
 
-// success / warning render Symfony-style padded, colored blocks.
-func (f formatter) success(msg string) { f.block("[OK]", msg, 30, 42) }
-func (f formatter) warning(msg string) { f.block("[WARNING]", msg, 30, 43) }
+// success / warning render ECS's single-line green/yellow status line.
+func (f formatter) success(msg string) { f.statusLine("[OK]", msg, 32) }
+func (f formatter) warning(msg string) { f.statusLine("[WARNING]", msg, 33) }
 
-func (f formatter) block(tag, msg string, fg, bg int) {
+func (f formatter) statusLine(tag, msg string, color int) {
 	f.newLine(1)
-	pad := func(s string) string {
-		if len([]rune(s)) < f.width {
-			s += strings.Repeat(" ", f.width-len([]rune(s)))
-		}
-		return f.bg(s, fg, bg)
-	}
-	f.writeln(pad(""))
-	f.writeln(pad(" " + tag + " " + msg))
-	f.writeln(pad(""))
-	f.newLine(1)
+	f.writeln(f.fg(" "+tag+" "+msg, color))
 }
 
 func (f formatter) newLine(n int) {
@@ -190,13 +181,6 @@ func (f formatter) fg(s string, code int) string {
 		return s
 	}
 	return fmt.Sprintf("\x1b[%dm%s\x1b[39m", code, s)
-}
-
-func (f formatter) bg(s string, fg, bg int) string {
-	if !f.color {
-		return s
-	}
-	return fmt.Sprintf("\x1b[%d;%dm%s\x1b[39;49m", fg, bg, s)
 }
 
 func (f formatter) comment(s string) string { return f.fg(s, 33) } // yellow
