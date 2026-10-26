@@ -25,6 +25,9 @@ set -euo pipefail
 
 fail() { echo "parity: $*" >&2; exit 2; }
 
+START=$(date +%s)
+log() { printf '==> [%4ds] %s\n' "$(( $(date +%s) - START ))" "$*" >&2; }
+
 CORPUS=""
 WORKDIR=""
 KEEP=0
@@ -57,6 +60,7 @@ fi
 mkdir -p "$WORKDIR"
 
 # 1. build blink from this checkout
+log "building blink from $REPO_ROOT/blink"
 blink_bin="$WORKDIR/blink"
 ( cd "$REPO_ROOT/blink" && go build -o "$blink_bin" . ) || fail "blink build failed"
 
@@ -75,6 +79,7 @@ ecs_php="$WORKDIR/ecs.php"
 } > "$ecs_php"
 
 # 3. fetch the corpus once, then two identical copies
+log "cloning $repo ($ref)"
 src="$WORKDIR/corpus"
 rm -rf "$src"
 git clone --depth 1 --branch "$ref" "$repo" "$src" >/dev/null 2>&1 \
@@ -90,20 +95,26 @@ for p in "${paths[@]}"; do
     [ -d "$ecs/$p" ] && abs_paths_ecs+=("$ecs/$p")
     [ -d "$src/$p" ] && abs_paths_src+=("$src/$p")
 done
+file_count=$(cd "$src" && find "${paths[@]}" -name '*.php' 2>/dev/null | wc -l)
+log "corpus $name @ $rev: $file_count PHP files in ${paths[*]}"
 
 # 4. fix one tree with blink, the other with the PHP engine
+log "fixing with blink (--blink) ..."
 ECS_BLINK_BIN="$blink_bin" "$REPO_ROOT/bin/ecs" check --fix --no-progress-bar \
     --config "$ecs_php" --blink "${abs_paths_ours[@]}" >/dev/null 2>&1 || true
+log "fixing with PHP ECS ..."
 "$REPO_ROOT/bin/ecs" check --fix --no-progress-bar \
     --config "$ecs_php" "${abs_paths_ecs[@]}" >/dev/null 2>&1 || true
 
 # 5. the checkers ECS applied on the pristine tree, as JSON, for attribution
+log "collecting applied checkers (PHP ECS, json) ..."
 ecs_json="$WORKDIR/ecs.json"
 "$REPO_ROOT/bin/ecs" check --no-progress-bar --output-format=json \
     --config "$ecs_php" "${abs_paths_src[@]}" > "$ecs_json" 2>/dev/null || echo '{}' > "$ecs_json"
 
 # 6. diff the two trees, attribute each differing file to the ECS checkers that
 #    touched it on the pristine sample
+log "diffing blink vs PHP ECS trees ..."
 report="$WORKDIR/report.txt"
 : > "$report"
 total=0; differ=0
@@ -120,6 +131,7 @@ while IFS= read -r f; do
 done < <(cd "$ours" && find "${paths[@]}" -name '*.php' 2>/dev/null | sort)
 
 pct=$(awk "BEGIN{ if ($total>0) printf \"%.2f\", $differ*100/$total; else print \"0.00\" }")
+log "done: $differ of $total files differ (${pct}%, max ${threshold}%)"
 
 emit() {
     echo "## blink vs ECS parity: $name @ $rev"

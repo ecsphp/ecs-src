@@ -49,3 +49,16 @@ func TestTernaryLeavesNullableTypes(t *testing.T) {
 		}
 	}
 }
+
+// OperatorLinebreak blanked the moved operator's tokens but left them in the
+// stream; the zero-width Punct tokens extended YodaStyle's operand scan past the
+// closing paren, so a parenthesized assignment "null !== ($p = ...)" was wrongly
+// swapped to "($p = ...) !== null" (laravel parity finding, Gate.php).
+func TestOperatorLinebreakKeepsNullFirstParenAssignment(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nclass Sample\n{\n    public function resolve($user, $ability, array $arguments)\n    {\n        if (isset($arguments[0]) &&\n            ! is_null($policy = $this->getPolicyFor($arguments[0])) &&\n            $callback = $this->resolvePolicyCallback($user, $ability, $arguments, $policy)) {\n            return $callback;\n        }\n    }\n}\n"
+	want := "<?php\n\nclass Sample\n{\n    public function resolve($user, $ability, array $arguments)\n    {\n        if (isset($arguments[0])\n            && null !== ($policy = $this->getPolicyFor($arguments[0]))\n            && $callback = $this->resolvePolicyCallback($user, $ability, $arguments, $policy)) {\n            return $callback;\n        }\n    }\n}\n"
+	if got := runAll(src); got != want {
+		t.Fatalf("parenthesized assignment must stay null-first\n got: %q\nwant: %q", got, want)
+	}
+}

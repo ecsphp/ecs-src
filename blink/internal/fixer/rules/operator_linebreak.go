@@ -149,6 +149,15 @@ func (f OperatorLinebreak) Fix(s *tokens.Stream) bool {
 		changed = true
 		i = lo // resume before the moved group
 	}
+	if changed {
+		// drop the tokens blanked while moving operators; leaving zero-width
+		// Punct tokens behind corrupts later fixers' operand scans (e.g. YodaStyle)
+		for j := s.Len() - 1; j >= 0; j-- {
+			if s.At(j).Value == "" {
+				s.RemoveAt(j)
+			}
+		}
+	}
 	return changed
 }
 
