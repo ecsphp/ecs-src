@@ -41,7 +41,6 @@ var ecsSrcOnlyFixers = map[string]bool{
 	`Symplify\CodingStandard\Fixer\Annotation\RemovePropertyVariableNameDescriptionFixer`: true,
 	`Symplify\CodingStandard\Fixer\Annotation\RemoveMethodNameDuplicateDescriptionFixer`:  true,
 	`Symplify\CodingStandard\Fixer\Annotation\RemoveEventSubscriberDescriptionFixer`:      true,
-	`Symplify\CodingStandard\Fixer\ConstantNotation\RemoveSlashFromNativeConstantFixer`:   true,
 }
 
 // Fixer inspects a token stream and mutates it in place. It is the core contract
