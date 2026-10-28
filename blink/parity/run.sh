@@ -174,8 +174,9 @@ emit() {
         echo "### differing files (blink vs PHP ECS)"
         echo
         cat "$details"
-        [ "$differ" -gt "$SHOW_FILES_CAP" ] \
-            && echo "_… $((differ - SHOW_FILES_CAP)) more differing files omitted_"
+        if [ "$differ" -gt "$SHOW_FILES_CAP" ]; then
+            echo "_… $((differ - SHOW_FILES_CAP)) more differing files omitted_"
+        fi
     fi
 }
 emit
