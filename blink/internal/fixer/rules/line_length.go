@@ -158,6 +158,11 @@ func (f LineLength) processOpener(s *tokens.Stream, pos int) bool {
 	if sigNext(s, open) == closeIdx {
 		return false
 	}
+	// a __construct signature is left to StandaloneLineConstructorParamFixer, which
+	// keeps each param on its own line; LineLengthFixer skips it (see upstream)
+	if llIsConstructorDecl(s, pos, open) {
+		return false
+	}
 	if f.shouldSkip(s, open, closeIdx) {
 		return false
 	}
@@ -551,6 +556,16 @@ func llIsMethodCall(s *tokens.Stream, open int) bool {
 	}
 	t := s.At(arrow)
 	return t.Kind == token.Punct && (t.Value == "->" || t.Value == "?->")
+}
+
+// llIsConstructorDecl reports whether the "(" at open belongs to a
+// "function __construct(" declaration opened by the keyword at pos.
+func llIsConstructorDecl(s *tokens.Stream, pos, open int) bool {
+	if s.At(pos).Kind != token.Keyword || !strings.EqualFold(s.At(pos).Value, "function") {
+		return false
+	}
+	name := sigPrev(s, open)
+	return name > pos && s.At(name).Kind == token.Ident && strings.EqualFold(s.At(name).Value, "__construct")
 }
 
 func llHasPromotedProperty(s *tokens.Stream, open, closeIdx int) bool {

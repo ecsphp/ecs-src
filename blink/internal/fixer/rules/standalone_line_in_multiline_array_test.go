@@ -27,4 +27,16 @@ func TestStandaloneLineInMultilineArray(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\n$a = [[\"k\" => 1, \"j\" => 2]];\n"); changed {
 		t.Fatal("a leading non-associative array aborts the pass")
 	}
+
+	// items already on their own lines with aligned trailing comments are left
+	// untouched - the fixer only inserts newlines, it must not collapse the
+	// author's alignment whitespace before "// ..." (matches PHP ECS output)
+	aligned := "<?php\n$a = [\n" +
+		"    'html_class' => 'anchor-link', // CSS class for the anchor\n" +
+		"    'symbol' => '#',               // Symbol for the link\n" +
+		"    'id_prefix' => 'content',      // Prefix for the ID\n" +
+		"];\n"
+	if got, changed := apply(t, f, aligned); changed || got != aligned {
+		t.Fatalf("aligned trailing comments must be preserved: changed=%v got=%q", changed, got)
+	}
 }
