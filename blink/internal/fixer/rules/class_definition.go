@@ -69,10 +69,15 @@ func (f ClassDefinition) Fix(s *tokens.Stream) bool {
 		if memberPrev(s, i) {
 			continue // ::class
 		}
-		if prev, ok := prevSignificant(s, i); ok && strings.ToLower(prev.Value) == "new" {
-			// anonymous class: otherwise left untouched. Only the constructor "("
-			// spacing is normalized, and only when the option asks for it.
+		if newIdx := anonClassNewIndex(s, i); newIdx >= 0 {
+			// anonymous class: the constructor "(" spacing is normalized (opt-in),
+			// and a multiline attribute in the header ("new #[Attr(\n...)] class")
+			// is flattened to one line, as php-cs-fixer's makeClassyDefinitionSingleLine
+			// collapses the whole anon-class header
 			if f.spaceBeforeParenthesis && classDefSpaceBeforeParen(s, i) {
+				changed = true
+			}
+			if classDefFlattenAnonHeaderAttributes(s, newIdx, i) {
 				changed = true
 			}
 			continue
@@ -87,6 +92,35 @@ func (f ClassDefinition) Fix(s *tokens.Stream) bool {
 			changed = true
 		}
 		if (f.singleLine || f.singleItemSingleLine) && f.classDefFlattenHeader(s, i) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// anonClassNewIndex returns the index of the "new" keyword governing the
+// anonymous class whose keyword is at classIdx, or -1 for a named declaration.
+// prevMeaningfulIndex steps over a leading attribute ("new #[Attr] class").
+func anonClassNewIndex(s *tokens.Stream, classIdx int) int {
+	p := prevMeaningfulIndex(s, classIdx)
+	if p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "new") {
+		return p
+	}
+	return -1
+}
+
+// classDefFlattenAnonHeaderAttributes collapses a multiline attribute standing
+// between the "new" at newIdx and the "class" keyword at classIdx back onto one
+// line, mirroring makeClassyDefinitionSingleLine over the anon-class header.
+func classDefFlattenAnonHeaderAttributes(s *tokens.Stream, newIdx, classIdx int) bool {
+	changed := false
+	for j := newIdx + 1; j < classIdx; j++ {
+		t := s.At(j)
+		if !isAttributeComment(t) || !strings.ContainsRune(t.Value, '\n') {
+			continue
+		}
+		if nv, ok := collapseAttributeText(t.Value, false); ok && nv != t.Value {
+			s.SetValue(j, nv)
 			changed = true
 		}
 	}

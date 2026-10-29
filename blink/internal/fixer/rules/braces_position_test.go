@@ -47,6 +47,16 @@ func TestBracesPositionClosureLeftAlone(t *testing.T) {
 	}
 }
 
+func TestBracesPositionAnonClassWithAttributeSameLine(t *testing.T) {
+	t.Parallel()
+	// an attribute between "new" and "class" must not make the brace look like a
+	// named-class brace: the anon-class brace stays on the same line
+	src := "<?php $x = new #[AsEventListener(event: Event::class)] class() {\n};"
+	if got, changed := apply(t, BracesPosition{}, src); changed || got != src {
+		t.Fatalf("anon-class brace must stay same-line: changed=%v got=%q", changed, got)
+	}
+}
+
 func TestBracesPositionDynamicAccessLeftAlone(t *testing.T) {
 	t.Parallel()
 	// "->{$prop}" is dynamic access, not a control block: no space inserted

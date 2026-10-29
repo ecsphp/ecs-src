@@ -171,6 +171,7 @@ var fixerPriority = map[string]int{
 	"SpaceAfterSemicolonFixer":                        -1,
 	"SpacesInsideParenthesesFixer":                    3,
 	"StandaloneLinePromotedPropertyFixer":             40,
+	"StandaloneLineSymfonyAttributeParamFixer":        40,
 	"StandardizeIncrementFixer":                       16,
 	"StandardizeNotEqualsFixer":                       0,
 	"StatementIndentationFixer":                       -3,
