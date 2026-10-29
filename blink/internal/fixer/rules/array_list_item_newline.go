@@ -100,6 +100,13 @@ func enclosingListsForExpandedAssoc(s *tokens.Stream, open, closeIdx int) []int 
 		if encClose < 0 || !assocIsLastContent(s, innerClose, encClose) {
 			break
 		}
+		// ECS breaks the opener only as an emergent effect of collapsing the inner
+		// array; an enclosing array that already spans lines AND wraps the assoc as
+		// its sole item keeps its opener, so stop walking here. A multiline
+		// enclosing list with several items is still broken (matches ECS).
+		if rangeHasNewline(s, enc, encClose) && arraySingleTopLevelItem(s, enc, encClose) {
+			break
+		}
 		if s.At(enc).Value == "{" {
 			break // a block, not an expression wrapper
 		}
@@ -186,6 +193,32 @@ func splitTopLevelCommas(s *tokens.Stream, open, closeIdx int) bool {
 		}
 	}
 	return changed
+}
+
+// arraySingleTopLevelItem reports whether the array holds at most one item at its
+// own level, i.e. it has no separating comma (a trailing comma before the closer
+// does not count as a second item).
+func arraySingleTopLevelItem(s *tokens.Stream, open, closeIdx int) bool {
+	depth := 0
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch t.Value {
+		case "(", "[", "{":
+			depth++
+		case ")", "]", "}":
+			depth--
+		case ",":
+			if depth == 0 {
+				if ns := sigNext(s, j); ns >= 0 && ns < closeIdx {
+					return false // a separating comma: more than one item
+				}
+			}
+		}
+	}
+	return true
 }
 
 // arrayTopLevelMultiline reports whether the array already has a newline at its
