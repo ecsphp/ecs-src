@@ -648,15 +648,20 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks b
 	if n < s.Len() && !isAttributeComment(s.At(n)) &&
 		(isLineComment(s.At(n)) || s.At(n).Kind == token.Comment || s.At(n).Kind == token.DocComment) {
 		changed := false
-		if ws >= 0 {
-			if s.At(ws).Value != " " {
-				s.SetValue(ws, " ")
+		// only method_argument_space normalizes the comma-to-comment gap to one
+		// space; the Symplify array/standalone-line reflows (collapseBlanks=false)
+		// keep the author's alignment, matching their PHP fixers
+		if collapseBlanks {
+			if ws >= 0 {
+				if s.At(ws).Value != " " {
+					s.SetValue(ws, " ")
+					changed = true
+				}
+			} else {
+				s.InsertAt(comma+1, token.Token{Kind: token.Whitespace, Value: " "})
+				n++
 				changed = true
 			}
-		} else {
-			s.InsertAt(comma+1, token.Token{Kind: token.Whitespace, Value: " "})
-			n++
-			changed = true
 		}
 		if editSlotAfter(s, n, "\n"+base+"    ") {
 			changed = true

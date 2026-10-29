@@ -23,6 +23,15 @@ func TestYodaStyle(t *testing.T) {
 
 	// constant name, ::class, signed number, empty array on the left
 	assertFix(t, f, "<?php\nif (JSON_ERROR_NONE === json_last_error()) {}", "<?php\nif (json_last_error() === JSON_ERROR_NONE) {}", true)
+	// namespaced/global constant with a leading backslash on the left
+	assertFix(t, f, "<?php\nif (\\INF === $beta) {}", "<?php\nif ($beta === \\INF) {}", true)
+	assertFix(t, f, "<?php\nif (\\E_USER_DEPRECATED !== $type) {}", "<?php\nif ($type !== \\E_USER_DEPRECATED) {}", true)
+	// embedded in a larger boolean expression
+	assertFix(t, f, "<?php\nif (\\E_DEPRECATED !== $type && $ok) {}", "<?php\nif ($type !== \\E_DEPRECATED && $ok) {}", true)
+	// leading-backslash constant against a namespaced call on the right
+	assertFix(t, f, "<?php\nif (\\PREG_NO_ERROR !== preg_last_error()) {}", "<?php\nif (preg_last_error() !== \\PREG_NO_ERROR) {}", true)
+	// class constant on the left after a compound assignment
+	assertFix(t, f, "<?php\n$n += Events::RESPONSE === $tag ? 1 : 0;", "<?php\n$n += $tag === Events::RESPONSE ? 1 : 0;", true)
 	assertFix(t, f, "<?php\nif (Closure::class === $l) {}", "<?php\nif ($l === Closure::class) {}", true)
 	assertFix(t, f, "<?php\nif (-1 === $i) {}", "<?php\nif ($i === -1) {}", true)
 	assertFix(t, f, "<?php\nif ([] === $seq) {}", "<?php\nif ($seq === []) {}", true)

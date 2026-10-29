@@ -116,18 +116,39 @@ ecs_json="$WORKDIR/ecs.json"
 #    touched it on the pristine sample
 log "diffing blink vs PHP ECS trees ..."
 report="$WORKDIR/report.txt"
-: > "$report"
+details="$WORKDIR/details.md"
+: > "$report"; : > "$details"
+# cap per-file diff lines and shown files so $GITHUB_STEP_SUMMARY stays within limit
+DIFF_LINES_CAP=80
+SHOW_FILES_CAP=60
 total=0; differ=0
 declare -A by_checker
 while IFS= read -r f; do
     total=$((total + 1))
     diff -q "$ours/$f" "$ecs/$f" >/dev/null 2>&1 && continue
     differ=$((differ + 1))
-    abs="$src/$f"
-    checkers=$(jq -r --arg k "$abs" '.files[$k].diffs[]?.applied_checkers[]?' "$ecs_json" 2>/dev/null \
+    # attribute to the ECS checkers that touched the pristine file; keys may be
+    # absolute ($src/$f) or relative ($f) depending on how ECS emitted the json
+    checkers=$(jq -r --arg a "$src/$f" --arg r "$f" \
+        '(.files[$a] // .files[$r]).diffs[]?.applied_checkers[]?' "$ecs_json" 2>/dev/null \
         | sed -E 's#.*\\##' | sort -u | paste -sd, - || true)
     echo "--- $f${checkers:+  [${checkers}]}" >> "$report"
     for c in $(echo "$checkers" | tr ',' ' '); do by_checker[$c]=$(( ${by_checker[$c]:-0} + 1 )); done
+
+    # per-file blink-vs-ECS diff, so CI shows the exact code that breaks parity;
+    # '-' lines are blink output, '+' lines are PHP ECS output
+    if [ "$differ" -le "$SHOW_FILES_CAP" ]; then
+        {
+            echo "<details><summary><code>$f</code>${checkers:+  — [${checkers}]}</summary>"
+            echo
+            echo '```diff'
+            diff -u --label "blink/$f" --label "ecs/$f" "$ours/$f" "$ecs/$f" \
+                | head -n "$DIFF_LINES_CAP" || true
+            echo '```'
+            echo '</details>'
+            echo
+        } >> "$details"
+    fi
 done < <(cd "$ours" && find "${paths[@]}" -name '*.php' 2>/dev/null | sort)
 
 pct=$(awk "BEGIN{ if ($total>0) printf \"%.2f\", $differ*100/$total; else print \"0.00\" }")
@@ -148,6 +169,15 @@ emit() {
     echo "|---|---|"
     for c in "${!by_checker[@]}"; do echo "${by_checker[$c]} $c"; done | sort -rn \
         | while read -r n c; do echo "| $n | \`$c\` |"; done
+    if [ "$differ" -gt 0 ]; then
+        echo
+        echo "### differing files (blink vs PHP ECS)"
+        echo
+        cat "$details"
+        if [ "$differ" -gt "$SHOW_FILES_CAP" ]; then
+            echo "_… $((differ - SHOW_FILES_CAP)) more differing files omitted_"
+        fi
+    fi
 }
 emit
 [ -n "${GITHUB_STEP_SUMMARY:-}" ] && emit >> "$GITHUB_STEP_SUMMARY"
