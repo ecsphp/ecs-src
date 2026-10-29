@@ -81,4 +81,10 @@ func TestArrayListItemNewline(t *testing.T) {
 	if want := "<?php\nreturn [[\n    'k' => 1,\n]];"; !changed || got != want {
 		t.Fatalf("first-element-array: changed=%v got=%q", changed, got)
 	}
+
+	// a "[$a, $b]" destructuring inside a closure value of a keyed array is not an
+	// array item: its comma must stay inline (matches ECS ArrayListItemNewlineFixer)
+	if _, changed := apply(t, f, "<?php\n$r->setDefaults([\n    'special' => function ($options) {\n        [$first, $second] = $options->getPair();\n    },\n]);"); changed {
+		t.Fatal("destructuring inside a nested closure must stay inline")
+	}
 }
