@@ -85,10 +85,13 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		switch kind {
 		case braceClassLike:
 			category = "classes"
-			// an anonymous class ("new class ... {") is configured separately
+			// an anonymous class ("new class ... {", also "new #[Attr] class ... {")
+			// is configured separately; prevMeaningfulIndex steps over the attribute
 			if kw >= 0 {
-				if prev, ok := prevSignificant(s, kw); ok && prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "new") {
-					category = "anon_classes"
+				if p := prevMeaningfulIndex(s, kw); p >= 0 {
+					if prev := s.At(p); prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "new") {
+						category = "anon_classes"
+					}
 				}
 			}
 		case braceFunctionDecl:

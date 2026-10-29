@@ -50,3 +50,22 @@ func TestClassDefinitionSpaceBeforeParenthesis(t *testing.T) {
 		t.Fatalf("space_before_parenthesis=true: changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+// A multiline attribute in an anonymous-class header ("new #[Attr(\n...)] class")
+// is flattened back onto one line, as php-cs-fixer's makeClassyDefinitionSingleLine
+// collapses the whole anon-class header. StandaloneLineSymfonyAttributeParam breaks
+// it first (higher priority); ClassDefinition undoes that, so the net result stays
+// inline.
+func TestClassDefinitionFlattensAnonHeaderAttribute(t *testing.T) {
+	t.Parallel()
+	src := "<?php $x = new #[AsEventListener(\n    event: Event::class,\n    method: 'handle'\n)] class() {\n};"
+	want := "<?php $x = new #[AsEventListener(event: Event::class, method: 'handle')] class() {\n};"
+
+	got, changed := apply(t, ClassDefinition{}, src)
+	if !changed || got != want {
+		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
+	}
+	if _, changed := apply(t, ClassDefinition{}, want); changed {
+		t.Fatal("already-inline anon-class attribute should not change (idempotent)")
+	}
+}
