@@ -291,6 +291,11 @@ func leftLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
 				}
 			}
 		}
+		// a bare constant may be qualified ("\INF", "\Foo\BAR"); include the
+		// leading "\" and namespace segments so the boundary check sees them
+		if t.Kind == token.Ident {
+			return qualifiedNameStart(s, le), le, true
+		}
 		return le, le, true
 	}
 	return 0, 0, false
@@ -440,7 +445,10 @@ func isLeftBoundary(s *tokens.Stream, p int) bool {
 		switch t.Value {
 		// "." (concat) binds tighter than comparison, so an operand next to it is
 		// part of a larger concat expression, not a standalone comparison operand
-		case "(", "[", "{", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>":
+		case "(", "[", "{", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>",
+			// compound assignments bind looser than a comparison, so the operand
+			// after one is a standalone comparison operand ("$x += C === $y")
+			"+=", "-=", "*=", "/=", ".=", "%=", "**=", "??=", "&=", "|=", "^=", "<<=", ">>=":
 			return true
 		}
 		return false
