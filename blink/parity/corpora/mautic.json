@@ -1,6 +1,7 @@
 {
     "name": "mautic",
     "repo": "https://github.com/mautic/mautic.git",
+    "ref": "7.2.1",
     "paths": ["app", "plugins"],
     "skip": ["*/node_modules/*", "*/Fixture/*"],
     "sets": ["psr12", "perCs", "common", "standaloneLine", "cleanCode"],
