@@ -22,6 +22,8 @@ func TestBinaryOperatorSpacesConfigCases(t *testing.T) {
 		{"collapse aligned arrow inside attribute", BinaryOperatorSpaces{}, "<?php #[X([\n    'a'   => 1,\n    'bb'  => 2,\n])]\nclass C {}", "<?php #[X([\n    'a' => 1,\n    'bb' => 2,\n])]\nclass C {}"},
 		{"arrow inside attribute string left alone", BinaryOperatorSpaces{}, "<?php #[X('a   => b')]\nclass C {}", "<?php #[X('a   => b')]\nclass C {}"},
 		{"reference assignment is spaced around =", BinaryOperatorSpaces{}, "<?php $a   =&$b;", "<?php $a = &$b;"},
+		{"compound assign follows default without override", BinaryOperatorSpaces{}.WithConfig(map[string]any{"default": "single_space", "operators": map[string]any{"=>": "single_space", "=": "single_space"}}).(fixerRule), "<?php $url .='c'; $a .=$b;", "<?php $url .= 'c'; $a .= $b;"},
+		{"compound assign explicit no_space override", BinaryOperatorSpaces{}.WithConfig(map[string]any{"default": "single_space", "operators": map[string]any{".=": "no_space"}}).(fixerRule), "<?php $url .= 'c';", "<?php $url.='c';"},
 	}
 	for _, c := range cases {
 		got, _ := apply(t, c.rule, c.src)
