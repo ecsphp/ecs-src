@@ -21,6 +21,38 @@ func TestPhpdocNoAliasTagConfig(t *testing.T) {
 	}
 }
 
+func TestPhpdocNoAliasTagQuoteSkipQuirk(t *testing.T) {
+	t.Parallel()
+	// php-cs-fixer's default map; the set configures it the same way
+	full := PhpdocNoAliasTag{}.WithConfig(map[string]any{"replacements": map[string]any{
+		"property-read": "property", "property-write": "property", "type": "var", "link": "see",
+	}}).(fixerRule)
+
+	// GeneralPhpdocTagRename's regex greedily skips from the first quote to the last
+	// matching quote, so only the @property-read before the first quote is renamed
+	src := "<?php\n/**\n * @property-read Foo<'a'> $a\n * @property-read Foo<'b'> $b\n * @property-read Foo<'c'> $c\n */\n"
+	want := "<?php\n/**\n * @property Foo<'a'> $a\n * @property-read Foo<'b'> $b\n * @property-read Foo<'c'> $c\n */\n"
+	got, changed := apply(t, full, src)
+	if !changed || got != want {
+		t.Fatalf("quote-skip: changed=%v\n got: %q\nwant: %q", changed, got, want)
+	}
+	idempotent(t, full, got)
+
+	// no quotes: every alias tag is renamed
+	src = "<?php\n/**\n * @property-read Foo $a\n * @property-write Foo $b\n */\n"
+	want = "<?php\n/**\n * @property Foo $a\n * @property Foo $b\n */\n"
+	if got, changed := apply(t, full, src); !changed || got != want {
+		t.Fatalf("no-quote: changed=%v\n got: %q\nwant: %q", changed, got, want)
+	}
+
+	// an unbalanced quote starts no skip span, so both tags are still renamed
+	src = "<?php\n/**\n * @type a 'x\n * @type b\n */\n"
+	want = "<?php\n/**\n * @var a 'x\n * @var b\n */\n"
+	if got, changed := apply(t, full, src); !changed || got != want {
+		t.Fatalf("unbalanced: changed=%v\n got: %q\nwant: %q", changed, got, want)
+	}
+}
+
 func TestPhpdocTypesConfig(t *testing.T) {
 	t.Parallel()
 	// default lowercases a meta type
