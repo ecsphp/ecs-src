@@ -43,9 +43,12 @@ var singleSpaceKnownKeywords = map[string]bool{
 // single space, Preceded lists keywords ("as", "else", "elseif", "use_lambda")
 // preceded by one, YieldFrom collapses whitespace inside "yield from".
 type SingleSpaceAroundConstruct struct {
-	Followed  map[string]bool
-	Preceded  map[string]bool
-	YieldFrom bool
+	Followed map[string]bool
+	Preceded map[string]bool
+	// NamedArgument ensures a single space after a named-argument colon ("foo(a:1)"
+	// -> "foo(a: 1)"); it is the "named_argument" virtual construct of php-cs-fixer.
+	NamedArgument bool
+	YieldFrom     bool
 }
 
 func (SingleSpaceAroundConstruct) Name() string {
@@ -59,7 +62,11 @@ func (SingleSpaceAroundConstruct) SourceURL() string {
 func (f SingleSpaceAroundConstruct) WithConfig(config map[string]any) fixer.Fixer {
 	if list, ok := singleSpaceStringList(config["constructs_followed_by_a_single_space"]); ok {
 		f.Followed = map[string]bool{}
+		f.NamedArgument = false
 		for _, name := range list {
+			if name == "named_argument" {
+				f.NamedArgument = true
+			}
 			if singleSpaceKnownKeywords[name] {
 				f.Followed[name] = true
 			}
@@ -154,9 +161,59 @@ func (f SingleSpaceAroundConstruct) fixPreceded(s *tokens.Stream) bool {
 	return changed
 }
 
+// fixNamedArgument ensures a single space after a named-argument colon. A colon is
+// a named-argument colon when its previous meaningful token is a name and the one
+// before that is "(" or "," - php-cs-fixer's NamedArgumentTransformer rule, which
+// excludes "::", ternary "?:", return-type ")" and goto labels. The space before
+// the colon is left as-is, matching php-cs-fixer.
+func (f SingleSpaceAroundConstruct) fixNamedArgument(s *tokens.Stream) bool {
+	changed := false
+	for i := 0; i < s.Len(); i++ {
+		if t := s.At(i); t.Kind != token.Punct || t.Value != ":" {
+			continue
+		}
+		name := prevSignificantIndex(s, i)
+		if name < 0 || s.At(name).Kind != token.Ident {
+			continue
+		}
+		pre := prevSignificantIndex(s, name)
+		if pre < 0 || s.At(pre).Kind != token.Punct || (s.At(pre).Value != "(" && s.At(pre).Value != ",") {
+			continue
+		}
+		if i+1 >= s.Len() {
+			continue
+		}
+		next := s.At(i + 1)
+		if next.Kind == token.Whitespace {
+			// a newline into an attribute or doc comment is kept, as php-cs-fixer does
+			if hasNewline(next.Value) {
+				if nn := i + 2; nn < s.Len() && (isAttributeComment(s.At(nn)) || s.At(nn).Kind == token.DocComment) {
+					continue
+				}
+			}
+			if next.Value != " " {
+				s.SetValue(i+1, " ")
+				changed = true
+			}
+			continue
+		}
+		// no space yet: insert one, unless a separator/closer directly follows
+		switch next.Value {
+		case ",", ":", ";", ")", "]", "}":
+		default:
+			s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
+			changed = true
+		}
+	}
+	return changed
+}
+
 func (f SingleSpaceAroundConstruct) Fix(s *tokens.Stream) bool {
 	changed := f.YieldFrom && f.fixYieldFrom(s)
 
+	if f.NamedArgument && f.fixNamedArgument(s) {
+		changed = true
+	}
 	if len(f.Preceded) > 0 && f.fixPreceded(s) {
 		changed = true
 	}
