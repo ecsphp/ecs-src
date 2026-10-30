@@ -29,3 +29,13 @@ func TestNoUnusedImportsBraceNamespaceUnused(t *testing.T) {
 		t.Fatalf("unused brace-namespace import must be removed; changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+// An import used only as an attribute name ("#[AsCommand(...)]") is a class usage,
+// even though a "(" follows the name, so it must be kept.
+func TestNoUnusedImportsAttributeUsage(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nnamespace App;\n\nuse Symfony\\Component\\Console\\Attribute\\AsCommand;\n\n#[AsCommand(name: 'app:run')]\nclass RunCommand\n{\n}\n"
+	if got, changed := apply(t, NoUnusedImports{}, src); changed || got != src {
+		t.Fatalf("attribute-used import must be kept; changed=%v got=%q", changed, got)
+	}
+}

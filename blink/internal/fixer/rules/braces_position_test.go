@@ -111,3 +111,14 @@ func TestClassifyTraitBlockIsOther(t *testing.T) {
 		t.Fatalf("trait block classify = %d, want braceOther", kind)
 	}
 }
+
+// A class preceded by a multiline attribute still gets its opening brace moved to
+// the next line: the attribute's own ")" must not be read as a multiline signature.
+func TestBracesPositionClassAfterMultilineAttribute(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\n#[AsCommand(\n    name: 'x'\n)]\nclass C extends Command {\n    public $x = 1;\n}\n"
+	want := "<?php\n\n#[AsCommand(\n    name: 'x'\n)]\nclass C extends Command\n{\n    public $x = 1;\n}\n"
+	if got, changed := apply(t, BracesPosition{}, src); !changed || got != want {
+		t.Fatalf("class brace after attribute; changed=%v got=%q", changed, got)
+	}
+}

@@ -117,3 +117,14 @@ func TestNoSuperfluousPhpdocTagsSourceURL(t *testing.T) {
 		t.Fatalf("SourceURL %q, want %q", got, want)
 	}
 }
+
+// A @param whose native type is fully covered is superfluous even when the
+// parameter carries an attribute ("#[\SensitiveParameter] array $x").
+func TestNoSuperfluousPhpdocTagsAttributedParam(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nclass C\n{\n    /**\n     * @param array $data\n     * @return void\n     */\n    public function run(#[\\SensitiveParameter] array $data)\n    {\n    }\n}\n"
+	want := "<?php\n\nclass C\n{\n    /**\n     * @return void\n     */\n    public function run(#[\\SensitiveParameter] array $data)\n    {\n    }\n}\n"
+	if got, changed := apply(t, NoSuperfluousPhpdocTags{}, src); !changed || got != want {
+		t.Fatalf("attributed-param @param must be removed; changed=%v got=%q", changed, got)
+	}
+}

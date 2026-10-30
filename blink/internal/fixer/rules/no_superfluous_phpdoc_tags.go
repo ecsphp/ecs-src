@@ -423,6 +423,12 @@ func parseParams(s *tokens.Stream, open, close int, sig *funcSig) {
 	}
 	for k := open + 1; k < close; k++ {
 		t := s.At(k)
+		if t.Kind == token.AttributeStart {
+			if end := s.AttributeEnd(k); end >= 0 {
+				k = end // a param attribute ("#[\SensitiveParameter] array $x") is not its type
+			}
+			continue
+		}
 		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
 			if t.Kind == token.Comment || t.Kind == token.DocComment {
 				for _, name := range nspCommentParamNames(t.Value) {

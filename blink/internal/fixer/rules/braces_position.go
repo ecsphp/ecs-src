@@ -230,6 +230,9 @@ func funcSignatureMultiline(s *tokens.Stream, brace int) bool {
 	closeParen := -1
 	for j := brace - 1; j >= 0; j-- {
 		t := s.At(j)
+		if t.Kind == token.AttributeEnd {
+			return false // a leading attribute's parens are not the signature (e.g. a class header)
+		}
 		if t.Kind != token.Punct {
 			continue
 		}
