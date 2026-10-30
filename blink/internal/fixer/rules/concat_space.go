@@ -93,6 +93,13 @@ func spaceAttributeConcat(value string, none bool) (string, bool) {
 			}
 			continue
 		}
+		if c == '<' && strings.HasPrefix(value[i:], "<<<") {
+			if end := heredocEnd(value, i); end > i {
+				b = append(b, value[i:end]...)
+				i = end - 1
+				continue
+			}
+		}
 		if c == '\'' || c == '"' {
 			quote = c
 			b = append(b, c)
