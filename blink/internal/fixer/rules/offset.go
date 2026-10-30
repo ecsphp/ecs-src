@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"strings"
+
 	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
@@ -14,6 +16,16 @@ func isOffsetOpen(s *tokens.Stream, open int) bool {
 		return false
 	}
 	if prev.Kind == token.Variable || prev.Kind == token.Ident || prev.Kind == token.String {
+		// "yield from [...]" - "from" is not a reserved word so it lexes as an
+		// identifier, but the "[" is the yielded array literal, not an offset
+		if prev.Kind == token.Ident && strings.EqualFold(prev.Value, "from") {
+			if pi := prevSignificantIndex(s, open); pi >= 0 {
+				if pp := prevSignificantIndex(s, pi); pp >= 0 &&
+					s.At(pp).Kind == token.Keyword && strings.EqualFold(s.At(pp).Value, "yield") {
+					return false
+				}
+			}
+		}
 		return true
 	}
 	return prev.Value == ")" || prev.Value == "]"

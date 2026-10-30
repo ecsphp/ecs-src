@@ -379,6 +379,10 @@ func TestNoClosingTag(t *testing.T) {
 	if _, changed := apply(t, NoClosingTag{}, "<?php if ($a): ?>\n<div></div>\n<?php endif; ?>\n"); changed {
 		t.Fatal("file with inline HTML must keep closing tags")
 	}
+	// several PHP blocks separated by whitespace-only inline HTML keep the tag
+	if _, changed := apply(t, NoClosingTag{}, "<?php echo $a; ?> <?php echo $b; ?>"); changed {
+		t.Fatal("multiple PHP blocks must keep the closing tag")
+	}
 }
 
 func TestBlankLineAfterNamespace(t *testing.T) {

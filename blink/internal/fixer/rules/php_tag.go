@@ -54,6 +54,7 @@ func (NoClosingTag) SourceURL() string {
 
 func (NoClosingTag) Fix(s *tokens.Stream) bool {
 	last := -1
+	openTags := 0
 	for i := range s.Len() {
 		t := s.At(i)
 		// real inline HTML means a templating file; whitespace-only inline HTML
@@ -61,9 +62,17 @@ func (NoClosingTag) Fix(s *tokens.Stream) bool {
 		if t.Kind == token.InlineHTML && strings.TrimSpace(t.Value) != "" {
 			return false
 		}
+		if t.Kind == token.OpenTag {
+			openTags++
+		}
 		if t.Kind == token.CloseTag {
 			last = i
 		}
+	}
+	// only a monolithic file (one "<?php" block) loses its closing tag; several
+	// blocks ("?> <?php") are a template, even when the gap is whitespace only
+	if openTags > 1 {
+		return false
 	}
 	if last < 0 {
 		return false

@@ -94,4 +94,10 @@ func TestArrayListItemNewline(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\n$r->setDefaults([\n    'special' => function ($options) {\n        [$first, $second] = $options->getPair();\n    },\n]);"); changed {
 		t.Fatal("destructuring inside a nested closure must stay inline")
 	}
+
+	// a keyed destructuring target in a foreach head is not an array literal: it
+	// stays inline (matches ECS)
+	if _, changed := apply(t, f, "<?php\nforeach ($handlers as ['threshold' => $threshold, 'handler' => $handler]) {\n}"); changed {
+		t.Fatal("foreach-as keyed destructuring must stay inline")
+	}
 }
