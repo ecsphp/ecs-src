@@ -3,7 +3,6 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/token"
 	"blink/internal/tokens"
 )
 
@@ -11,8 +10,8 @@ import (
 //
 // StandaloneLineSymfonyAttributeParam puts each argument of an allow-listed
 // Symfony attribute on its own line. #[AsCommand] always breaks; every other
-// listed attribute only when it has 2 or more arguments. The lexer keeps an
-// attribute as a single comment token, so the reformat happens on that string.
+// listed attribute only when it has 2 or more arguments. The reflow runs on the
+// attribute's source text, which is then re-lexed back into the stream.
 type StandaloneLineSymfonyAttributeParam struct{}
 
 const alwaysBreakAttributeShortName = "AsCommand"
@@ -48,14 +47,19 @@ func (StandaloneLineSymfonyAttributeParam) SourceURL() string {
 func (StandaloneLineSymfonyAttributeParam) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Comment || !strings.HasPrefix(t.Value, "#[") {
+		if !attributeStartsAt(s, i) {
 			continue
 		}
-		reflowed, ok := reflowSymfonyAttribute(t.Value, lineIndentBefore(s, i))
-		if ok && reflowed != t.Value {
-			s.SetValue(i, reflowed)
+		end := s.AttributeEnd(i)
+		if end < 0 {
+			continue
+		}
+		base := lineIndentBefore(s, i)
+		if rewriteAttributeText(s, i, end, func(v string) (string, bool) {
+			return reflowSymfonyAttribute(v, base)
+		}) {
 			changed = true
+			i = s.AttributeEnd(i)
 		}
 	}
 	return changed

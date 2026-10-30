@@ -45,19 +45,42 @@ func (AttributeBlockNoSpaces) SourceURL() string {
 func (AttributeBlockNoSpaces) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Comment || !strings.HasPrefix(t.Value, "#[") || !strings.HasSuffix(t.Value, "]") {
+		if !attributeStartsAt(s, i) {
 			continue
 		}
-		inner := t.Value[2 : len(t.Value)-1]
-		trimmed := strings.TrimRight(strings.TrimLeft(inner, " \t"), " \t")
-		if trimmed == inner {
+		end := s.AttributeEnd(i)
+		if end < 0 {
 			continue
 		}
-		s.SetValue(i, "#["+trimmed+"]")
-		changed = true
+		// trailing space before "]" first (higher index), so its removal never shifts
+		// the leading token we trim next; only same-line spaces/tabs are stripped
+		if j := end - 1; j > i && s.At(j).Kind == token.Whitespace {
+			if trimAttributeEdgeSpace(s, j, strings.TrimRight) {
+				changed = true
+			}
+		}
+		if j := i + 1; j < s.Len() && s.At(j).Kind == token.Whitespace {
+			if trimAttributeEdgeSpace(s, j, strings.TrimLeft) {
+				changed = true
+			}
+		}
 	}
 	return changed
+}
+
+// trimAttributeEdgeSpace strips same-line spaces/tabs from the whitespace token at
+// j using trim (TrimLeft or TrimRight), removing it when nothing is left.
+func trimAttributeEdgeSpace(s *tokens.Stream, j int, trim func(string, string) string) bool {
+	nv := trim(s.At(j).Value, " \t")
+	if nv == s.At(j).Value {
+		return false
+	}
+	if nv == "" {
+		s.RemoveAt(j)
+	} else {
+		s.SetValue(j, nv)
+	}
+	return true
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/NoSpaceAroundDoubleColonFixer.php

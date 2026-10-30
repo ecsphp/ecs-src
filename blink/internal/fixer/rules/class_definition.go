@@ -102,7 +102,7 @@ func (f ClassDefinition) Fix(s *tokens.Stream) bool {
 // anonymous class whose keyword is at classIdx, or -1 for a named declaration.
 // prevMeaningfulIndex steps over a leading attribute ("new #[Attr] class").
 func anonClassNewIndex(s *tokens.Stream, classIdx int) int {
-	p := prevMeaningfulIndex(s, classIdx)
+	p := prevMeaningfulSkippingAttributes(s, classIdx)
 	if p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "new") {
 		return p
 	}
@@ -115,14 +115,22 @@ func anonClassNewIndex(s *tokens.Stream, classIdx int) int {
 func classDefFlattenAnonHeaderAttributes(s *tokens.Stream, newIdx, classIdx int) bool {
 	changed := false
 	for j := newIdx + 1; j < classIdx; j++ {
-		t := s.At(j)
-		if !isAttributeComment(t) || !strings.ContainsRune(t.Value, '\n') {
+		if !attributeStartsAt(s, j) {
 			continue
 		}
-		if nv, ok := collapseAttributeText(t.Value, false); ok && nv != t.Value {
-			s.SetValue(j, nv)
-			changed = true
+		end := s.AttributeEnd(j)
+		if end < 0 {
+			continue
 		}
+		before := s.Len()
+		if strings.ContainsRune(attributeText(s, j, end), '\n') &&
+			rewriteAttributeText(s, j, end, func(v string) (string, bool) {
+				return collapseAttributeText(v, false)
+			}) {
+			changed = true
+			classIdx -= before - s.Len() // the splice shifted the "class" keyword
+		}
+		j = s.AttributeEnd(j) // skip past the attribute we just handled
 	}
 	return changed
 }
@@ -169,10 +177,10 @@ func (f ClassDefinition) classDefFlattenHeader(s *tokens.Stream, kw int) bool {
 		if t.Kind != token.Whitespace || !hasNewline(t.Value) {
 			continue
 		}
-		if j-1 >= 0 && (s.At(j-1).Kind == token.DocComment || isAttribute(s.At(j-1))) {
+		if j-1 >= 0 && (s.At(j-1).Kind == token.DocComment || attributeEndsAt(s, j-1)) {
 			continue
 		}
-		if j+1 < s.Len() && (s.At(j+1).Kind == token.DocComment || isAttribute(s.At(j+1))) {
+		if j+1 < s.Len() && (s.At(j+1).Kind == token.DocComment || attributeStartsAt(s, j+1)) {
 			continue
 		}
 		s.SetValue(j, " ")

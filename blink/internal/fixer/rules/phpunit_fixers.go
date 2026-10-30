@@ -109,7 +109,11 @@ func puDocBlockIndex(s *tokens.Stream, index int) int {
 			return idx
 		}
 		t := s.At(p)
-		if t.Kind == token.Comment { // includes folded #[...] attributes
+		if t.Kind == token.AttributeEnd {
+			idx = s.AttributeStartOf(p)
+			continue
+		}
+		if t.Kind == token.Comment {
 			idx = p
 			continue
 		}
@@ -266,17 +270,17 @@ func isTestMethod(s *tokens.Stream, index int) bool {
 	return docIdx >= 0 && s.At(docIdx).Kind == token.DocComment && strings.Contains(s.At(docIdx).Value, "@test")
 }
 
-// isTestAttributePresent reports whether the method carries a #[Test] attribute,
-// which the lexer folds into a single comment token starting with "#[".
+// isTestAttributePresent reports whether the method carries a #[Test] attribute.
 func isTestAttributePresent(s *tokens.Stream, index int) bool {
 	p := getPrevNonWhitespace(s, index)
 	for p >= 0 {
 		t := s.At(p)
-		if t.Kind == token.Comment {
-			if strings.HasPrefix(t.Value, "#[") && phpUnitTestAttrRe(t.Value) {
+		if t.Kind == token.AttributeEnd {
+			start := s.AttributeStartOf(p)
+			if phpUnitTestAttrRe(attributeText(s, start, p)) {
 				return true
 			}
-			p = getPrevNonWhitespace(s, p)
+			p = getPrevNonWhitespace(s, start)
 			continue
 		}
 		if t.Kind == token.Keyword && puModifierKw[strings.ToLower(t.Value)] {

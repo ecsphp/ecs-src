@@ -507,7 +507,7 @@ func stmtIsComment(s *tokens.Stream, i int) bool {
 	if t.Kind == token.DocComment {
 		return true
 	}
-	return t.Kind == token.Comment && !isAttributeComment(t)
+	return t.Kind == token.Comment
 }
 
 // stmtIsPlainComment reports whether token i is a non-doc line/block comment
@@ -517,7 +517,7 @@ func stmtIsPlainComment(s *tokens.Stream, i int) bool {
 		return false
 	}
 	t := s.At(i)
-	return t.Kind == token.Comment && !isAttributeComment(t)
+	return t.Kind == token.Comment
 }
 
 // stmtNextValue returns the index of the next token equal to value, or -1.

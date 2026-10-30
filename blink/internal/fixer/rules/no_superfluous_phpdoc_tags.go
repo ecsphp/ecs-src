@@ -283,8 +283,8 @@ type funcSig struct {
 // signatureAfter finds the function declaration a docblock at index i documents
 // and extracts its parameter and return types.
 func signatureAfter(s *tokens.Stream, doc int) (funcSig, bool) {
-	// Walk forward across whitespace, attributes (#[...] Comment) and modifier
-	// keywords to the "function" keyword.
+	// Walk forward across whitespace, attributes (#[...]) and modifier keywords to
+	// the "function" keyword.
 	sawModifier := false
 	j := doc + 1
 	for j < s.Len() {
@@ -293,6 +293,12 @@ func signatureAfter(s *tokens.Stream, doc int) (funcSig, bool) {
 		case token.Whitespace, token.Comment:
 			j++
 			continue
+		case token.AttributeStart:
+			if end := s.AttributeEnd(j); end > j {
+				j = end + 1
+				continue
+			}
+			return funcSig{}, false
 		case token.Keyword:
 			lv := strings.ToLower(t.Value)
 			if lv == "function" {

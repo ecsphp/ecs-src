@@ -99,17 +99,22 @@ func TestLexHeredocNowdocOpaque(t *testing.T) {
 
 func TestLexMultilineAttributeWithNowdoc(t *testing.T) {
 	src := "<?php\n#[Deprecated(message: <<<'TXT'\nprose e.g. with. dots\nTXT)]\nclass A {}"
-	var attr string
+	var sawAttrStart bool
+	var nowdoc string
 	for _, tk := range Lex(src) {
-		if tk.Kind == token.Comment && len(tk.Value) > 2 && tk.Value[:2] == "#[" {
-			attr = tk.Value
+		if tk.Kind == token.AttributeStart {
+			sawAttrStart = true
+		}
+		if tk.Kind == token.String && strings.Contains(tk.Value, "prose e.g. with. dots") {
+			nowdoc = tk.Value
 		}
 	}
-	if attr == "" {
-		t.Fatal("multiline attribute not captured as one token")
+	if !sawAttrStart {
+		t.Fatal(`attribute opener "#[" not lexed as an AttributeStart token`)
 	}
-	if !strings.Contains(attr, "prose e.g. with. dots") {
-		t.Errorf("nowdoc body not inside the attribute token: %q", attr)
+	// the nowdoc stays one opaque String token, so its body never leaks out as code
+	if nowdoc == "" {
+		t.Error("nowdoc body not captured as a single string token")
 	}
 	// lossless
 	var got strings.Builder
@@ -118,6 +123,41 @@ func TestLexMultilineAttributeWithNowdoc(t *testing.T) {
 	}
 	if got.String() != src {
 		t.Errorf("not lossless:\n src: %q\n got: %q", src, got.String())
+	}
+}
+
+func TestLexAttributeIsNative(t *testing.T) {
+	toks := Lex("<?php #[Route('/x', methods: ['GET'])]\nclass C {}")
+	start, end := -1, -1
+	kinds := map[string]token.Kind{}
+	for i, tk := range toks {
+		switch tk.Kind {
+		case token.AttributeStart:
+			start = i
+			if tk.Value != "#[" {
+				t.Errorf("AttributeStart value = %q, want %q", tk.Value, "#[")
+			}
+		case token.AttributeEnd:
+			end = i
+			if tk.Value != "]" {
+				t.Errorf("AttributeEnd value = %q, want %q", tk.Value, "]")
+			}
+		}
+		kinds[tk.Value] = tk.Kind
+	}
+	if start < 0 || end < 0 || end < start {
+		t.Fatalf("attribute delimiters not lexed: start=%d end=%d", start, end)
+	}
+	// the attribute's contents are ordinary tokens, visible to fixers
+	if kinds["Route"] != token.Ident {
+		t.Errorf("attribute name not lexed as Ident: %v", kinds["Route"])
+	}
+	if kinds["methods"] != token.Ident {
+		t.Errorf("named argument not lexed natively: %v", kinds["methods"])
+	}
+	// the inner array "[" stays a plain Punct, only the outer "]" is AttributeEnd
+	if kinds["["] != token.Punct {
+		t.Errorf("inner array bracket kind = %v, want Punct", kinds["["])
 	}
 }
 

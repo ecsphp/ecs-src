@@ -393,13 +393,17 @@ func (f LineLength) inlineItems(s *tokens.Stream, open, closeIdx int) bool {
 	return changed
 }
 
-// processAttribute expands a too-long "#[Attr(...)]" (one comment token) onto
-// multiple lines by rewriting its text.
+// processAttribute expands a too-long "#[Attr(...)]" onto multiple lines by
+// rewriting the attribute's text and re-lexing it back into the stream.
 func (f LineLength) processAttribute(s *tokens.Stream, pos int) bool {
 	if !f.breakLongLines {
 		return false
 	}
-	v := s.At(pos).Value
+	end := s.AttributeEnd(pos)
+	if end < 0 {
+		return false
+	}
+	v := attributeText(s, pos, end)
 	if !strings.Contains(v, "(") {
 		return false
 	}
@@ -411,12 +415,10 @@ func (f LineLength) processAttribute(s *tokens.Stream, pos int) bool {
 		return false
 	}
 	base := lineIndent(s, pos)
-	nv := llExpandAttribute(v, base)
-	if nv == "" || nv == v {
-		return false
-	}
-	s.SetValue(pos, nv)
-	return true
+	return rewriteAttributeText(s, pos, end, func(v string) (string, bool) {
+		nv := llExpandAttribute(v, base)
+		return nv, nv != ""
+	})
 }
 
 // attributeColumn is the rendered column at which the attribute token starts.
@@ -582,7 +584,7 @@ func llHasPromotedProperty(s *tokens.Stream, open, closeIdx int) bool {
 }
 
 func llIsAttribute(t token.Token) bool {
-	return t.Kind == token.Comment && strings.HasPrefix(t.Value, "#[")
+	return t.Kind == token.AttributeStart
 }
 
 func llIsHeredoc(t token.Token) bool {

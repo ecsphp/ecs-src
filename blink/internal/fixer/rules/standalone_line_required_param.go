@@ -17,8 +17,7 @@ type StandaloneLineRequiredParam struct{}
 
 var (
 	requiredAnnotationRe = regexp.MustCompile(`(?i)@required\b`)
-	// the lexer folds a #[Required] attribute into a single "#..." comment token
-	requiredAttributeRe = regexp.MustCompile(`(?i)^#\[.*\bRequired\b`)
+	requiredAttributeRe  = regexp.MustCompile(`(?i)^#\[.*\bRequired\b`)
 )
 
 func (StandaloneLineRequiredParam) Name() string {
@@ -65,13 +64,16 @@ func isPublicRequiredMethod(s *tokens.Stream, fnPos int) bool {
 	isRequired := false
 	for j := fnPos - 1; j >= 0; j-- {
 		t := s.At(j)
-		switch t.Kind {
-		case token.Whitespace:
-			continue
-		case token.Comment:
-			if requiredAttributeRe.MatchString(t.Value) {
+		if attributeEndsAt(s, j) {
+			start := s.AttributeStartOf(j)
+			if requiredAttributeRe.MatchString(attributeText(s, start, j)) {
 				isRequired = true
 			}
+			j = start
+			continue
+		}
+		switch t.Kind {
+		case token.Whitespace, token.Comment:
 			continue
 		case token.DocComment:
 			if requiredAnnotationRe.MatchString(t.Value) {

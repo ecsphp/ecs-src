@@ -21,7 +21,35 @@ func Lex(src string) []token.Token {
 	// most tokens are a few bytes; presize to avoid repeated slice regrowth
 	l := &lexer{src: src, toks: make([]token.Token, 0, len(src)/3+8)}
 	l.run()
+	markAttributeCloses(l.toks)
 	return l.toks
+}
+
+// markAttributeCloses retags the "]" that closes each "#[" attribute as an
+// AttributeEnd token, so generic bracket-depth scans treat neither attribute
+// delimiter as an array bracket (mirroring php-cs-fixer's T_ATTRIBUTE_CLOSE).
+func markAttributeCloses(toks []token.Token) {
+	for i := range toks {
+		if toks[i].Kind != token.AttributeStart {
+			continue
+		}
+		depth := 1
+		for j := i + 1; j < len(toks); j++ {
+			if toks[j].Kind != token.Punct {
+				continue
+			}
+			switch toks[j].Value {
+			case "[":
+				depth++
+			case "]":
+				depth--
+				if depth == 0 {
+					toks[j].Kind = token.AttributeEnd
+					j = len(toks)
+				}
+			}
+		}
+	}
 }
 
 type lexer struct {
@@ -341,49 +369,12 @@ func (l *lexer) hasPrefix(s string) bool {
 	return strings.HasPrefix(l.src[l.pos:], s)
 }
 
-// lexAttribute consumes a "#[ ... ]" attribute as one opaque token, matching
-// brackets across lines and skipping string and heredoc/nowdoc content inside
-// (so a multiline nowdoc in an attribute never leaks out as code).
+// lexAttribute emits the "#[" that opens an attribute as one token; its contents
+// (and the closing "]") then lex as ordinary PHP tokens, so fixers see the arrays,
+// named arguments and operators inside, matching php-cs-fixer's T_ATTRIBUTE.
 func (l *lexer) lexAttribute(start int) {
 	l.pos += 2 // consume "#["
-	depth := 1
-	for l.pos < len(l.src) && depth > 0 {
-		switch c := l.src[l.pos]; {
-		case c == '[':
-			depth++
-			l.pos++
-		case c == ']':
-			depth--
-			l.pos++
-		case c == '\'' || c == '"':
-			l.skipString(c)
-		case l.hasPrefix("<<<"):
-			if end := l.scanHeredoc(); end > l.pos {
-				l.pos = end
-			} else {
-				l.pos++
-			}
-		default:
-			l.pos++
-		}
-	}
-	l.emit(token.Comment, start)
-}
-
-// skipString advances past a single- or double-quoted string, honoring escapes.
-func (l *lexer) skipString(quote byte) {
-	l.pos++ // opening quote
-	for l.pos < len(l.src) {
-		c := l.src[l.pos]
-		if c == '\\' && l.pos+1 < len(l.src) {
-			l.pos += 2
-			continue
-		}
-		l.pos++
-		if c == quote {
-			return
-		}
-	}
+	l.emit(token.AttributeStart, start)
 }
 
 // scanHeredoc returns the end offset of a heredoc/nowdoc starting at "<<<", or
