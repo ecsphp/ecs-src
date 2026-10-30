@@ -7,6 +7,7 @@ namespace Symplify\EasyCodingStandard\Console\Command;
 use Entropy\Console\Contract\CommandInterface;
 use Entropy\Console\Contract\DefaultCommandInterface;
 use Symplify\EasyCodingStandard\Application\EasyCodingStandardApplication;
+use Symplify\EasyCodingStandard\Blink\BlinkCommitRunner;
 use Symplify\EasyCodingStandard\Blink\BlinkConfigDumper;
 use Symplify\EasyCodingStandard\Blink\BlinkRunner;
 use Symplify\EasyCodingStandard\Configuration\ConfigInitializer;
@@ -27,6 +28,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         private EasyCodingStandardApplication $easyCodingStandardApplication,
         private ConfigurationFactory $configurationFactory,
         private BlinkRunner $blinkRunner,
+        private BlinkCommitRunner $blinkCommitRunner,
         private BlinkConfigDumper $blinkConfigDumper,
         private EasyCodingStandardStyle $easyCodingStandardStyle,
     ) {
@@ -45,6 +47,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
     /**
      * @param bool   $dirty        Check only files with uncommitted git changes
      * @param bool   $blink        [EXPERIMENTAL] run the ecs-go Go binary instead of the PHP engine
+     * @param bool   $commit       [EXPERIMENTAL] with --blink, apply rules one by one and commit each separately
      * @param string $config       Path to config file
      * @param string $outputFormat Select output format
      * @param string $memoryLimit  Memory limit for check
@@ -71,6 +74,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         bool $debug = false,
         bool $dirty = false,
         bool $blink = false,
+        bool $commit = false,
         string $config = '',
         string $outputFormat = ConsoleOutputFormatter::NAME,
         string $memoryLimit = '',
@@ -78,6 +82,14 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         string $identifier = '',
         string ...$paths,
     ): int {
+        if ($commit && ! $blink) {
+            $this->easyCodingStandardStyle->error(
+                'The --commit option works only together with --blink. It runs the ecs-go engine rule by rule and creates one git commit per rule. Re-run as: vendor/bin/ecs check --blink --commit'
+            );
+
+            return ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+        }
+
         // create ecs.php config file if does not exist yet, unless an explicit --config was provided
         if ($config === '' && ! $this->configInitializer->areSomeCheckersRegistered()) {
             $this->configInitializer->createConfig((string) getcwd());
@@ -103,6 +115,11 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         // experimental: hand the resolved config to the ecs-go Go binary and skip the PHP engine
         if ($blink) {
             $configData = $this->blinkConfigDumper->dump($configuration->getSources());
+
+            if ($commit) {
+                return $this->blinkCommitRunner->run($configData);
+            }
+
             $blinkExitCode = $this->blinkRunner->run($configData, $fix);
             return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
