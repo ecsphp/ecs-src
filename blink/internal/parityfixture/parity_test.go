@@ -1,6 +1,8 @@
 // Package parityfixture runs blink's full configured pipeline over small fixtures
-// captured from real parity divergences (mautic/laravel/symfony), so a regression
-// is reproducible locally and fails in CI without cloning and fixing a whole corpus.
+// that still diverge from PHP ECS, reproducing each divergence locally without
+// cloning and fixing a whole corpus. A case is a standing bug: once blink matches
+// ECS, the case is removed (the fix keeps its own unit test), so an empty set means
+// no known divergences remain.
 //
 // Each case is testdata/cases/<name>/{input.php, expected.php}: input.php is fed
 // through the same rule set the parity run uses (testdata/checkers.json, dumped via
@@ -24,7 +26,9 @@ func TestParityFixtures(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(cases) == 0 {
-		t.Fatal("no parity fixtures found under testdata/cases")
+		// only cases that still diverge from PHP ECS live here; a fix removes its
+		// case (the fix keeps its own unit test), so an empty set is the goal state
+		t.Skip("no outstanding parity divergences")
 	}
 
 	for _, dir := range cases {
