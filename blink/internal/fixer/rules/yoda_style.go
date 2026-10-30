@@ -460,8 +460,10 @@ func isLeftBoundary(s *tokens.Stream, p int) bool {
 	if t.Kind == token.Punct {
 		switch t.Value {
 		// "." (concat) binds tighter than comparison, so an operand next to it is
-		// part of a larger concat expression, not a standalone comparison operand
-		case "(", "[", "{", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>",
+		// part of a larger concat expression, not a standalone comparison operand.
+		// "}" closes a preceding block (e.g. "if {...}"), so a literal right after it
+		// starts a new statement and is a standalone comparison operand
+		case "(", "[", "{", "}", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>",
 			// compound assignments bind looser than a comparison, so the operand
 			// after one is a standalone comparison operand ("$x += C === $y")
 			"+=", "-=", "*=", "/=", ".=", "%=", "**=", "??=", "&=", "|=", "^=", "<<=", ">>=":
