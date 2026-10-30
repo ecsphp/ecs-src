@@ -191,13 +191,24 @@ func (f BinaryOperatorSpaces) modeAt(s *tokens.Stream, i int) string {
 		}
 		return ""
 	}
-	if !legacy {
+	if !legacy && !binaryOperatorSpacesCompoundAssign(t.Value) {
 		return ""
 	}
 	if f.Default == "" {
 		return "single"
 	}
 	return f.Default
+}
+
+// binaryOperatorSpacesCompoundAssign reports the compound assignment operators.
+// They are always binary, so they follow the default mode like "=", even without
+// an explicit operators override (matching php-cs-fixer).
+func binaryOperatorSpacesCompoundAssign(op string) bool {
+	switch op {
+	case "+=", "-=", "*=", "/=", ".=", "%=", "**=", "??=", "&=", "|=", "^=", "<<=", ">>=":
+		return true
+	}
+	return false
 }
 
 func binaryOperatorSpacesDefaultTarget(s *tokens.Stream, i int) bool {
@@ -217,6 +228,9 @@ func binaryOperatorSpacesDefaultTarget(s *tokens.Stream, i int) bool {
 // may only be spaced when explicitly configured through the operators option.
 func binaryOperatorSpacesExtraTarget(s *tokens.Stream, i int) bool {
 	t := s.At(i)
+	if binaryOperatorSpacesCompoundAssign(t.Value) {
+		return true
+	}
 	switch t.Value {
 	case "**", "/", "%", "^", "<<", ">>":
 		return true
