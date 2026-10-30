@@ -54,3 +54,19 @@ func TestMethodArgumentSpaceSourceURL(t *testing.T) {
 		t.Fatalf("SourceURL mismatch: derived=%q declared=%q", got, r.SourceURL())
 	}
 }
+
+// A single-argument call to the eval/exit/die language constructs is not a
+// function call, so a heredoc argument must not be reflowed onto its own line.
+func TestMethodArgumentSpaceEvalHeredocNotReflowed(t *testing.T) {
+	t.Parallel()
+	src := "<?php\neval(<<<EOPHP\nnamespace X;\nEOPHP\n);\n"
+	if got, changed := apply(t, MethodArgumentSpace{}, src); changed || got != src {
+		t.Fatalf("eval heredoc must be left inline; changed=%v got=%q", changed, got)
+	}
+	// a real method named eval is still a call: its heredoc arg reflows onto its own line
+	call := "<?php\n$o->eval(<<<EOT\nbody\nEOT\n);\n"
+	want := "<?php\n$o->eval(\n    <<<EOT\nbody\nEOT\n);\n"
+	if got, changed := apply(t, MethodArgumentSpace{}, call); !changed || got != want {
+		t.Fatalf("a real ->eval() method call must still be processed; changed=%v got=%q", changed, got)
+	}
+}
