@@ -82,6 +82,13 @@ func TestArrayListItemNewline(t *testing.T) {
 		t.Fatalf("first-element-array: changed=%v got=%q", changed, got)
 	}
 
+	// an associative array nested inside an already-multiline enclosing list does
+	// not break the outer opener (ECS only breaks it when collapsing a single line)
+	got, changed = apply(t, f, "<?php\nyield 'x' => ['e', [\n    ['k' => 1, 'm' => 2],\n]];")
+	if want := "<?php\nyield 'x' => ['e', [\n    [\n        'k' => 1,\n        'm' => 2,\n    ],\n]];"; !changed || got != want {
+		t.Fatalf("multiline-enclosing outer break: changed=%v got=%q", changed, got)
+	}
+
 	// a "[$a, $b]" destructuring inside a closure value of a keyed array is not an
 	// array item: its comma must stay inline (matches ECS ArrayListItemNewlineFixer)
 	if _, changed := apply(t, f, "<?php\n$r->setDefaults([\n    'special' => function ($options) {\n        [$first, $second] = $options->getPair();\n    },\n]);"); changed {
