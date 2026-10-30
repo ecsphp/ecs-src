@@ -42,6 +42,13 @@ func TestYodaStyle(t *testing.T) {
 	// match-arm condition (=> boundary) is de-yoda'd too
 	assertFix(t, f, "<?php\n$r = match (true) {\n    null !== $x => 1,\n};", "<?php\n$r = match (true) {\n    $x !== null => 1,\n};", true)
 
+	// comparison that is a multiline ternary condition starting right after a
+	// preceding block's "}" - the "}" is a left boundary, so it is de-yoda'd
+	assertFix(t, f,
+		"<?php\nif ($a) {\n    $b = 1;\n}\n\nnull === $delay\n    ? x()\n    : y($delay);",
+		"<?php\nif ($a) {\n    $b = 1;\n}\n\n$delay === null\n    ? x()\n    : y($delay);",
+		true)
+
 	// already non-yoda - no-op
 	assertFix(t, f, "<?php\nif ($x === null) {}", "<?php\nif ($x === null) {}", false)
 
