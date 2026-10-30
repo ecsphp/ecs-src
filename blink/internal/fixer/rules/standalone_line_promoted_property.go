@@ -9,10 +9,11 @@ import (
 
 // Symplify: https://github.com/symplify/coding-standard/blob/main/src/Fixer/Spacing/StandaloneLinePromotedPropertyFixer.php
 //
-// StandaloneLinePromotedProperty puts each constructor parameter on its own line:
-// a "function __construct(...)" with at least one parameter becomes fully
-// multiline, "(" and ")" on their own lines. Matches symplify's constructor
-// param newliners (promoted and plain), which together break every __construct.
+// StandaloneLinePromotedProperty is a file-level fixer: when any constructor in
+// the file declares a promoted property, it puts each parameter of every
+// constructor in the file on its own line ("(" and ")" on their own lines),
+// promoted or plain. A file with no promoted constructor is left untouched (plain
+// constructors with 4+ params are then handled by StandaloneLinePlainConstructorParam).
 type StandaloneLinePromotedProperty struct{}
 
 func (StandaloneLinePromotedProperty) Name() string {
@@ -24,31 +25,61 @@ func (StandaloneLinePromotedProperty) SourceURL() string {
 }
 
 func (StandaloneLinePromotedProperty) Fix(s *tokens.Stream) bool {
+	if !fileHasPromotedConstructor(s) {
+		return false // the fixer only runs when a promoted constructor is present
+	}
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind != token.Ident || !strings.EqualFold(s.At(i).Value, "__construct") {
-			continue
-		}
-		// must be a declaration: "function __construct("
-		if p := sigPrev(s, i); p < 0 || s.At(p).Kind != token.Keyword || strings.ToLower(s.At(p).Value) != "function" {
-			continue
-		}
-		open := sigNext(s, i)
-		if open < 0 || s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+		open := constructorParamOpen(s, i)
+		if open < 0 {
 			continue
 		}
 		closeIdx := s.MatchForward(open)
 		if closeIdx < 0 || sigNext(s, open) == closeIdx {
 			continue // no parameters
 		}
-		if !hasPromotedParam(s, open, closeIdx) {
-			continue // only constructor property promotion is split out
-		}
 		if reflowParen(s, open, closeIdx, false) {
 			changed = true
 		}
 	}
 	return changed
+}
+
+// fileHasPromotedConstructor reports whether any constructor in the file declares
+// a promoted property. Symplify's StandaloneLinePromotedPropertyFixer is a file-
+// level candidate: once one promoted constructor exists it breaks the params of
+// every constructor in the file onto standalone lines, promoted or plain.
+func fileHasPromotedConstructor(s *tokens.Stream) bool {
+	for i := 0; i < s.Len(); i++ {
+		open := constructorParamOpen(s, i)
+		if open < 0 {
+			continue
+		}
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 {
+			continue
+		}
+		if hasPromotedParam(s, open, closeIdx) {
+			return true
+		}
+	}
+	return false
+}
+
+// constructorParamOpen returns the index of the "(" opening the parameter list of
+// a "function __construct(" declaration at i, or -1 when i is not such a name.
+func constructorParamOpen(s *tokens.Stream, i int) int {
+	if s.At(i).Kind != token.Ident || !strings.EqualFold(s.At(i).Value, "__construct") {
+		return -1
+	}
+	if p := sigPrev(s, i); p < 0 || s.At(p).Kind != token.Keyword || strings.ToLower(s.At(p).Value) != "function" {
+		return -1
+	}
+	open := sigNext(s, i)
+	if open < 0 || s.At(open).Kind != token.Punct || s.At(open).Value != "(" {
+		return -1
+	}
+	return open
 }
 
 // hasPromotedParam reports whether the parameter list has a promoted property -

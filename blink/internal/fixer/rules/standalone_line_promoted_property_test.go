@@ -12,9 +12,18 @@ func TestStandaloneLinePromotedProperty(t *testing.T) {
 		t.Fatalf("promoted: changed=%v got=%q", changed, got)
 	}
 
-	// a plain constructor is left inline
+	// a plain constructor is left inline when the file has no promoted constructor
 	if _, changed := apply(t, f, "<?php\nclass A {\n    public function __construct($x, $y)\n    {\n    }\n}"); changed {
-		t.Fatal("plain constructor must stay inline")
+		t.Fatal("plain constructor must stay inline without a promoted constructor")
+	}
+
+	// file-level trigger: once any constructor in the file is promoted, every
+	// constructor's params break onto standalone lines, plain ones included
+	mixed := "<?php\nclass A {\n    public function __construct(private int $x)\n    {\n    }\n}\nclass B {\n    public function __construct($y)\n    {\n    }\n}"
+	got, changed = apply(t, f, mixed)
+	want := "<?php\nclass A {\n    public function __construct(\n        private int $x\n    )\n    {\n    }\n}\nclass B {\n    public function __construct(\n        $y\n    )\n    {\n    }\n}"
+	if !changed || got != want {
+		t.Fatalf("file-level trigger: changed=%v got=%q", changed, got)
 	}
 
 	// a non-constructor method is untouched
