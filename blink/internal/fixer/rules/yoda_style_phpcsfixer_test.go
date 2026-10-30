@@ -469,7 +469,7 @@ var yodaKnownFailures = map[string]bool{
 	"yoda#26": true, "yoda#27": true, "yoda#28": true, "yoda#29": true, "yoda#30": true, "yoda#32": true, "yoda#34": true, "yoda#36": true,
 	"yoda#38": true, "yoda#40": true, "yoda#42": true, "yoda#44": true, "yoda#46": true, "yoda#47": true, "yoda#50": true, "yoda#136": true,
 	"yoda#137": true, "yoda#144": true, "yoda#148": true, "yoda#150": true, "yoda#152": true, "yoda#156": true, "yoda#158": true, "yoda#160": true,
-	"yoda#162": true, "yoda#163": true, "yoda#164": true, "yoda#165": true, "yoda#168": true, "yoda#169": true, "yoda#170": true, "yoda#171": true,
+	"yoda#162": true, "yoda#164": true, "yoda#168": true, "yoda#169": true, "yoda#170": true, "yoda#171": true,
 	"yoda#174": true, "yoda#176": true, "yoda#178": true, "yoda#179": true, "yoda#180": true, "yoda#181": true, "yoda#182": true, "yoda#183": true,
 	"yoda#186": true, "yoda#187": true, "yoda#188": true, "yoda#189": true, "yoda#192": true, "yoda#193": true, "yoda#194": true, "yoda#195": true,
 	"yoda#196": true, "yoda#197": true, "yoda#198": true, "yoda#199": true, "yoda#200": true, "yoda#201": true, "yoda#202": true, "yoda#203": true,

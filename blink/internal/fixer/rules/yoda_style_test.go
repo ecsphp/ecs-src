@@ -50,6 +50,12 @@ func TestYodaStyle(t *testing.T) {
 
 	// parenthesized left with the constant already on the right - no-op
 	assertFix(t, f, "<?php\nreturn ($this->html ?? '') === '';", "<?php\nreturn ($this->html ?? '') === '';", false)
+
+	// a yoda nested inside another yoda's operand: both are de-yoda'd, innermost first
+	assertFix(t, f,
+		"<?php\n$b = [] !== array_filter($e, fn ($c) => 1 === preg_match('/x/', $c));",
+		"<?php\n$b = array_filter($e, fn ($c) => preg_match('/x/', $c) === 1) !== [];",
+		true)
 }
 
 func TestYodaStyleSourceURL(t *testing.T) {
