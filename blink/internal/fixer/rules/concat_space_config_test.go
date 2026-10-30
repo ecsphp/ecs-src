@@ -19,6 +19,7 @@ func TestConcatSpaceConfigCases(t *testing.T) {
 		{"float literal in attribute left alone", ConcatSpace{}, "<?php #[X(1.5)]\nclass C {}", "<?php #[X(1.5)]\nclass C {}"},
 		{"spread in attribute left alone", ConcatSpace{}, "<?php #[X(...$a)]\nclass C {}", "<?php #[X(...$a)]\nclass C {}"},
 		{"scope resolution in attribute left alone", ConcatSpace{}, "<?php #[X(self::A.'b')]\nclass C {}", "<?php #[X(self::A . 'b')]\nclass C {}"},
+		{"dot inside attribute heredoc left alone", ConcatSpace{}, "<?php #[X(help: <<<'TXT'\n%command.name% runs.\nTXT, __DIR__.'/x')]\nclass C {}", "<?php #[X(help: <<<'TXT'\n%command.name% runs.\nTXT, __DIR__ . '/x')]\nclass C {}"},
 	}
 	for _, c := range cases {
 		got, _ := apply(t, c.rule, c.src)
