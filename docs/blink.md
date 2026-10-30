@@ -5,6 +5,7 @@
 ```bash
 vendor/bin/ecs check --blink          # report only (like a normal check)
 vendor/bin/ecs check --blink --fix    # rewrite files in place
+vendor/bin/ecs check --blink --commit # apply rules one by one, one git commit per rule
 vendor/bin/ecs check src --blink      # limit to a path - pass the path before the flag
 ```
 
@@ -16,6 +17,10 @@ ECS resolves the configuration from `ecs.php` (paths, rules and skips) exactly a
 - `--blink --fix` runs `ecs-go --ecs-config <config.json> --fix` - rewrites in place.
 
 The exit code of `ecs-go` is passed through.
+
+## Commit per rule
+
+`--blink --commit` applies the resolved rules one at a time, each in its own fix run, and turns every rule that actually changed files into a single git commit (`[Group] RuleName`, from the rule's namespace). Rules that change nothing are skipped. It requires `--blink`; used alone it errors. Run it on a clean working tree, since each commit stages tracked changes with `git add --update`.
 
 ## Dumping the config
 
