@@ -248,35 +248,82 @@ func (f PhpdocNoAliasTag) Fix(s *tokens.Stream) bool {
 	if len(f.replacements) == 0 {
 		return false
 	}
-	re := phpdocNoAliasTagRe(f.replacements)
+	keys := phpdocAliasKeysLongestFirst(f.replacements)
 	return applyToDocblocks(s, func(d *docblock) bool {
-		changed := false
+		// GeneralPhpdocTagRename (the fixer this proxies) runs one case-sensitive
+		// regex over the whole docblock, whose first branch
+		// (["'])[^\x01]*\1(*SKIP)(*FAIL) greedily consumes everything from the first
+		// quote to the last matching quote, so an alias tag inside that span is not
+		// renamed. Join the lines (prefixes hold no quotes or tags) and scan once,
+		// then split back - a rename never adds or removes a newline.
+		joined := make([]string, len(d.inner))
 		for i, l := range d.inner {
-			trimmed := strings.TrimLeft(l.content, " ")
-			m := re.FindStringSubmatch(trimmed)
-			if m == nil {
-				continue
-			}
-			lead := l.content[:len(l.content)-len(trimmed)]
-			d.inner[i].content = lead + "@" + f.replacements[m[1]] + trimmed[len(m[0]):]
-			changed = true
+			joined[i] = l.content
 		}
-		return changed
+		got, changed := renameAliasTagsOutsideQuotes(strings.Join(joined, "\n"), f.replacements, keys)
+		if !changed {
+			return false
+		}
+		for i, part := range strings.Split(got, "\n") {
+			d.inner[i].content = part
+		}
+		return true
 	})
 }
 
-// phpdocNoAliasTagRe builds a "^@(tag|...)\b" matcher for the configured tags,
-// longest first so a longer tag (e.g. property-read) wins over a prefix.
-func phpdocNoAliasTagRe(replacements map[string]string) *regexp.Regexp {
+// phpdocAliasKeysLongestFirst returns the replacement tags longest-first so a
+// longer tag is tried before a shorter one that is its prefix.
+func phpdocAliasKeysLongestFirst(replacements map[string]string) []string {
 	keys := make([]string, 0, len(replacements))
 	for k := range replacements {
 		keys = append(keys, k)
 	}
 	sort.Slice(keys, func(i, j int) bool { return len(keys[i]) > len(keys[j]) })
-	for i, k := range keys {
-		keys[i] = regexp.QuoteMeta(k)
+	return keys
+}
+
+// renameAliasTagsOutsideQuotes rewrites "@tag" to its replacement, replicating
+// GeneralPhpdocTagRename's regex: case-sensitive, no word boundary after the tag,
+// not inside "{@...}", not immediately before "}", and skipping any region spanned
+// by a greedy quoted string (first quote to last same quote in the content).
+func renameAliasTagsOutsideQuotes(content string, repl map[string]string, keys []string) (string, bool) {
+	var b strings.Builder
+	changed := false
+	for p := 0; p < len(content); {
+		c := content[p]
+		if c == '\'' || c == '"' {
+			if last := strings.LastIndexByte(content, c); last > p {
+				b.WriteString(content[p : last+1])
+				p = last + 1
+				continue
+			}
+		}
+		if c == '@' && (p == 0 || content[p-1] != '{') {
+			if key := matchAliasKey(content[p+1:], keys); key != "" {
+				after := p + 1 + len(key)
+				if after >= len(content) || content[after] != '}' {
+					b.WriteString("@" + repl[key])
+					p = after
+					changed = true
+					continue
+				}
+			}
+		}
+		b.WriteByte(c)
+		p++
 	}
-	return regexp.MustCompile(`^@(` + strings.Join(keys, "|") + `)\b`)
+	return b.String(), changed
+}
+
+// matchAliasKey returns the first (longest) key that is a case-sensitive prefix of
+// rest, or "" when none match.
+func matchAliasKey(rest string, keys []string) string {
+	for _, k := range keys {
+		if strings.HasPrefix(rest, k) {
+			return k
+		}
+	}
+	return ""
 }
 
 var noPackageRe = regexp.MustCompile(`^@(?:package|subpackage)\b`)
