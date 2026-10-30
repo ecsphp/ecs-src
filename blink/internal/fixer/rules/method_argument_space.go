@@ -710,6 +710,25 @@ func argListIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
 
 // isCallOrDeclParen reports whether the "(" at open opens a function/method call
 // or a function/closure declaration (not a control structure, array or grouping).
+// isLanguageConstructBareword reports whether the identifier at p is a language
+// construct (eval, exit, die) used as a bareword rather than a member call. PHP
+// tokenizes these as their own constructs, not T_STRING, so MethodArgumentSpace
+// never reflows their parentheses as a function argument list.
+func isLanguageConstructBareword(s *tokens.Stream, p int) bool {
+	switch strings.ToLower(s.At(p).Value) {
+	case "eval", "exit", "die":
+	default:
+		return false
+	}
+	if pp := sigPrev(s, p); pp >= 0 && s.At(pp).Kind == token.Punct {
+		switch s.At(pp).Value {
+		case "->", "?->", "::":
+			return false // "$obj->eval(...)" is a real method call
+		}
+	}
+	return true
+}
+
 func isCallOrDeclParen(s *tokens.Stream, open int) bool {
 	p := sigPrev(s, open)
 	if p < 0 {
@@ -718,6 +737,9 @@ func isCallOrDeclParen(s *tokens.Stream, open int) bool {
 	t := s.At(p)
 	switch t.Kind {
 	case token.Ident, token.Variable:
+		if t.Kind == token.Ident && isLanguageConstructBareword(s, p) {
+			return false // eval()/exit()/die() are language constructs, not function calls
+		}
 		return true
 	case token.Punct:
 		// ")" and "]" end a prior call/subscript; "}" ends a dynamic name like
