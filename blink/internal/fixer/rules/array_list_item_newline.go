@@ -100,13 +100,6 @@ func enclosingListsForExpandedAssoc(s *tokens.Stream, open, closeIdx int) []int 
 		if encClose < 0 || !assocIsLastContent(s, innerClose, encClose) {
 			break
 		}
-		// ECS breaks the opener only as an emergent effect of collapsing the inner
-		// array; an enclosing array that already spans lines AND wraps the assoc as
-		// its sole item keeps its opener, so stop walking here. A multiline
-		// enclosing list with several items is still broken (matches ECS).
-		if rangeHasNewline(s, enc, encClose) && arraySingleTopLevelItem(s, enc, encClose) {
-			break
-		}
 		if s.At(enc).Value == "{" {
 			break // a block, not an expression wrapper
 		}
@@ -115,6 +108,13 @@ func enclosingListsForExpandedAssoc(s *tokens.Stream, open, closeIdx int) []int 
 			first := sigNext(s, enc)
 			firstIsArray := first >= 0 && s.At(first).Kind == token.Punct && s.At(first).Value == "[" && isArrayLiteralOpen(s, first)
 			openerOwnLine := enc+1 < s.Len() && s.At(enc+1).Kind == token.Whitespace && hasNewline(s.At(enc+1).Value)
+			// ECS breaks the opener only as an emergent effect of collapsing the inner
+			// array; a list that already spans lines and wraps a single array item keeps
+			// its opener, so stop walking. A wrapper whose sole item is not an array
+			// (e.g. "new RequestStack([new Request(...)])") still has its opener broken.
+			if firstIsArray && rangeHasNewline(s, enc, encClose) && arraySingleTopLevelItem(s, enc, encClose) {
+				break
+			}
 			if !firstIsArray && !openerOwnLine {
 				result = append(result, enc)
 			}

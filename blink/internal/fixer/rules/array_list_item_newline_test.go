@@ -58,6 +58,14 @@ func TestArrayListItemNewline(t *testing.T) {
 		t.Fatal("already-multiline inner must not break the outer opener")
 	}
 
+	// expanding a single-line assoc wrapped in a call that is a list's sole element
+	// breaks that list's opener, even when an intervening assoc already spans lines
+	// (the sole element is a call, not an array - unlike the keep case above)
+	got, changed = apply(t, f, "<?php\n$x = new RequestStack([new Request([], [\n    'outer' => ['k' => 1],\n])]);")
+	if want := "<?php\n$x = new RequestStack([\nnew Request([], [\n    'outer' => [\n        'k' => 1,\n    ],\n])]);"; !changed || got != want {
+		t.Fatalf("call-wrapped opener break: changed=%v got=%q", changed, got)
+	}
+
 	// a blank line a user put between array items is preserved (unlike call args)
 	if _, changed := apply(t, f, "<?php\n$x = [\n    'a' => 1,\n\n    'b' => 2,\n];"); changed {
 		t.Fatal("blank line between array items must be preserved")
