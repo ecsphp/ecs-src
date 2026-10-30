@@ -250,14 +250,18 @@ func topBracketIsArray(stack []string) bool {
 }
 
 // isDestructuringAssignOpen reports whether the "[" at open is a short-list
-// destructuring target - its matching "]" is directly followed by a single "=".
+// destructuring target - its matching "]" is directly followed by a single "=",
+// or it sits after "as" in a foreach head ("foreach ($x as ['k' => $v])").
 func isDestructuringAssignOpen(s *tokens.Stream, open int) bool {
 	c := s.MatchForward(open)
 	if c < 0 {
 		return false
 	}
 	n := nextSignificantIndex(s, c)
-	return n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "="
+	if n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "=" {
+		return true
+	}
+	return arrayNotationInForeachHead(s, open)
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ArrayNotation/NoWhitespaceBeforeCommaInArrayFixer.php
