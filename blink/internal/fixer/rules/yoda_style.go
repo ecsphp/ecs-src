@@ -222,23 +222,39 @@ func (f YodaStyle) Fix(s *tokens.Stream) bool {
 	if len(swaps) == 0 {
 		return false
 	}
-	// drop any swap whose operand span overlaps an earlier (inner) one; applying
-	// overlapping ranges would interleave tokens and corrupt the output
+	// drop a swap that partially overlaps (interleaves) a kept one; a swap fully
+	// nested inside another's operand span is fine (e.g. "[] !== array_filter(fn
+	// => ... || 1 === preg_match(...))") and is kept, to be applied innermost-first
 	kept := swaps[:0:0]
 	for _, sw := range swaps {
-		overlaps := false
+		bad := false
 		for _, k := range kept {
-			if sw.ls <= k.re && k.ls <= sw.re {
-				overlaps = true
+			if sw.ls > k.re || k.ls > sw.re {
+				continue // disjoint
+			}
+			// contained in the other's right operand is fine (that block is moved as a
+			// unit, so applying the inner swap first then the outer one is correct); any
+			// other overlap would interleave tokens
+			outer, inner := k, sw
+			if sw.re-sw.ls > k.re-k.ls {
+				outer, inner = sw, k
+			}
+			if outer.rs > inner.ls || inner.re > outer.re {
+				bad = true
 				break
 			}
 		}
-		if !overlaps {
+		if !bad {
 			kept = append(kept, sw)
 		}
 	}
 	swaps = kept
-	for _, sw := range slices.Backward(swaps) {
+	// apply innermost-first: a contained swap must be reordered before its
+	// container moves it as a block. A swap preserves its operand token count, so
+	// applying the smaller (inner) range first leaves the larger range's indices
+	// valid. Disjoint swaps are order-independent for the same reason.
+	slices.SortFunc(swaps, func(a, b swap) int { return (a.re - a.ls) - (b.re - b.ls) })
+	for _, sw := range swaps {
 		left := append([]token.Token(nil), s.Tokens()[sw.ls:sw.le+1]...)
 		mid := append([]token.Token(nil), s.Tokens()[sw.le+1:sw.rs]...)
 		right := append([]token.Token(nil), s.Tokens()[sw.rs:sw.re+1]...)
