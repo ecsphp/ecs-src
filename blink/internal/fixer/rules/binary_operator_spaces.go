@@ -19,6 +19,13 @@ var binaryOperators = map[string]bool{
 	"&&": true, "||": true, "??": true, "=>": true,
 }
 
+// compoundAssignmentOperators are always binary (never unary), so they follow the
+// default spacing like "=" without needing an explicit operators override.
+var compoundAssignmentOperators = map[string]bool{
+	"+=": true, "-=": true, "*=": true, "/=": true, ".=": true, "%=": true,
+	"**=": true, "??=": true, "&=": true, "|=": true, "^=": true, "<<=": true, ">>=": true,
+}
+
 // BinaryOperatorSpaces normalizes spacing around binary operators (assignment
 // "=", arrow "=>", comparison and logical operators). The zero value applies a
 // single space to the default operator set. Whitespace spanning a newline is left
@@ -203,7 +210,7 @@ func binaryOperatorSpacesDefaultTarget(s *tokens.Stream, i int) bool {
 		// keeps the variable); only declare(...) headers are left alone
 		return !insideDeclareArgs(s, i)
 	}
-	return binaryOperators[t.Value]
+	return binaryOperators[t.Value] || compoundAssignmentOperators[t.Value]
 }
 
 // binaryOperatorSpacesExtraTarget covers operators outside the default set that
@@ -211,8 +218,7 @@ func binaryOperatorSpacesDefaultTarget(s *tokens.Stream, i int) bool {
 func binaryOperatorSpacesExtraTarget(s *tokens.Stream, i int) bool {
 	t := s.At(i)
 	switch t.Value {
-	case "+=", "-=", "*=", "/=", ".=", "%=", "**=", "??=", "&=", "|=", "^=", "<<=", ">>=",
-		"**", "/", "%", "^", "<<", ">>":
+	case "**", "/", "%", "^", "<<", ">>":
 		return true
 	case "+", "-", "*":
 		prev, ok := prevSignificant(s, i)
