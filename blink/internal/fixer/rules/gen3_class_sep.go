@@ -145,12 +145,21 @@ func (f ClassAttributesSeparation) fixMemberGap(s *tokens.Stream, prevStart, nex
 			wsCount++
 			wsIdx = j
 		case token.DocComment, token.Comment:
-			// a docblock, attribute (#[...]) or a line/block comment leading the next
-			// member is its trivia: the blank line goes above the block. A trailing
-			// comment on the previous member's line is rejected by the guards below
-			// (its whitespace has no newline), so it is still left alone.
+			// a docblock or a line/block comment leading the next member is its
+			// trivia: the blank line goes above the block. A trailing comment on the
+			// previous member's line is rejected by the guards below (its whitespace
+			// has no newline), so it is still left alone.
 			if firstTrivia < 0 {
 				firstTrivia = j
+			}
+		case token.AttributeStart:
+			// an attribute (#[...]) leading the next member is trivia too; skip its
+			// inner tokens so the blank line goes above the whole attribute block
+			if firstTrivia < 0 {
+				firstTrivia = j
+			}
+			if end := s.AttributeEnd(j); end > j {
+				j = end
 			}
 		default:
 			return false
@@ -258,12 +267,7 @@ func hasDocOrAttrAbove(s *tokens.Stream, start int) bool {
 	if j < 0 {
 		return false
 	}
-	t := s.At(j)
-	return t.Kind == token.DocComment || isAttribute(t)
-}
-
-func isAttribute(t token.Token) bool {
-	return t.Kind == token.Comment && strings.HasPrefix(t.Value, "#[")
+	return s.At(j).Kind == token.DocComment || s.AttributeStartOf(j) >= 0
 }
 
 // setNewlineCount rewrites the whitespace token at idx to hold exactly req

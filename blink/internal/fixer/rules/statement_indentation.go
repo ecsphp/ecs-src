@@ -507,7 +507,7 @@ func stmtIsComment(s *tokens.Stream, i int) bool {
 	if t.Kind == token.DocComment {
 		return true
 	}
-	return t.Kind == token.Comment && !isAttributeComment(t)
+	return t.Kind == token.Comment
 }
 
 // stmtIsPlainComment reports whether token i is a non-doc line/block comment
@@ -517,7 +517,7 @@ func stmtIsPlainComment(s *tokens.Stream, i int) bool {
 		return false
 	}
 	t := s.At(i)
-	return t.Kind == token.Comment && !isAttributeComment(t)
+	return t.Kind == token.Comment
 }
 
 // stmtNextValue returns the index of the next token equal to value, or -1.
@@ -731,8 +731,9 @@ func stmtIsPropertyStart(s *tokens.Stream, index int) bool {
 		return false
 	}
 	// a promoted constructor parameter ("(private A $a, protected B $b)") is not a
-	// class property: its modifier chain is preceded by "(" or ","
-	before := prevMeaningfulIndex(s, chainStart)
+	// class property: its modifier chain is preceded by "(" or "," (across a leading
+	// param attribute, e.g. "#[\SensitiveParameter] public $a")
+	before := prevMeaningfulSkippingAttributes(s, chainStart)
 	if before >= 0 && s.At(before).Kind == token.Punct && (s.At(before).Value == "(" || s.At(before).Value == ",") {
 		return false
 	}

@@ -99,6 +99,14 @@ func classMemberStarts(s *tokens.Stream, open int) []int {
 		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
 			continue
 		}
+		if t.Kind == token.AttributeStart {
+			// an attribute decorates the member that follows it; skip it as trivia so
+			// the member start is the keyword, as when attributes were comment tokens
+			if end := s.AttributeEnd(k); end > k {
+				k = end
+			}
+			continue
+		}
 		if expect {
 			starts = append(starts, k)
 			expect = false

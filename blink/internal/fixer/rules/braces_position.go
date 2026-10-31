@@ -86,9 +86,9 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		case braceClassLike:
 			category = "classes"
 			// an anonymous class ("new class ... {", also "new #[Attr] class ... {")
-			// is configured separately; prevMeaningfulIndex steps over the attribute
+			// is configured separately; step back over any leading attribute
 			if kw >= 0 {
-				if p := prevMeaningfulIndex(s, kw); p >= 0 {
+				if p := prevMeaningfulSkippingAttributes(s, kw); p >= 0 {
 					if prev := s.At(p); prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "new") {
 						category = "anon_classes"
 					}
@@ -230,6 +230,9 @@ func funcSignatureMultiline(s *tokens.Stream, brace int) bool {
 	closeParen := -1
 	for j := brace - 1; j >= 0; j-- {
 		t := s.At(j)
+		if t.Kind == token.AttributeEnd {
+			return false // a leading attribute's parens are not the signature (e.g. a class header)
+		}
 		if t.Kind != token.Punct {
 			continue
 		}

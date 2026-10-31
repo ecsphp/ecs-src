@@ -15,26 +15,30 @@ const (
 	Ident           // names (T_STRING): function/class names, constants, types
 	Keyword         // reserved words: function, class, return, namespace, ...
 	Number
-	String // '...' "..."
-	Punct  // operators, braces, ; , etc.
+	String         // '...' "..."
+	Punct          // operators, braces, ; , etc.
+	AttributeStart // "#[" opening an attribute; its contents lex as ordinary tokens
+	AttributeEnd   // the "]" closing an attribute (retagged so depth scans skip it)
 	EOF
 )
 
 var kindNames = [...]string{
-	Unknown:    "Unknown",
-	OpenTag:    "OpenTag",
-	CloseTag:   "CloseTag",
-	InlineHTML: "InlineHTML",
-	Whitespace: "Whitespace",
-	Comment:    "Comment",
-	DocComment: "DocComment",
-	Variable:   "Variable",
-	Ident:      "Ident",
-	Keyword:    "Keyword",
-	Number:     "Number",
-	String:     "String",
-	Punct:      "Punct",
-	EOF:        "EOF",
+	Unknown:        "Unknown",
+	OpenTag:        "OpenTag",
+	CloseTag:       "CloseTag",
+	InlineHTML:     "InlineHTML",
+	Whitespace:     "Whitespace",
+	Comment:        "Comment",
+	DocComment:     "DocComment",
+	Variable:       "Variable",
+	Ident:          "Ident",
+	Keyword:        "Keyword",
+	Number:         "Number",
+	String:         "String",
+	Punct:          "Punct",
+	AttributeStart: "AttributeStart",
+	AttributeEnd:   "AttributeEnd",
+	EOF:            "EOF",
 }
 
 func (k Kind) String() string {

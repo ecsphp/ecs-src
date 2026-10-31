@@ -187,7 +187,7 @@ func (f SingleSpaceAroundConstruct) fixNamedArgument(s *tokens.Stream) bool {
 		if next.Kind == token.Whitespace {
 			// a newline into an attribute or doc comment is kept, as php-cs-fixer does
 			if hasNewline(next.Value) {
-				if nn := i + 2; nn < s.Len() && (isAttributeComment(s.At(nn)) || s.At(nn).Kind == token.DocComment) {
+				if nn := i + 2; nn < s.Len() && (attributeStartsAt(s, nn) || s.At(nn).Kind == token.DocComment) {
 					continue
 				}
 			}

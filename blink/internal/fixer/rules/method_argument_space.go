@@ -295,6 +295,12 @@ func countTopLevelArgs(s *tokens.Stream, open, closeIdx int) int {
 	count := 1
 	depth := 0
 	for j := open + 1; j < closeIdx; j++ {
+		if attributeStartsAt(s, j) {
+			if end := s.AttributeEnd(j); end > j {
+				j = end
+			}
+			continue
+		}
 		t := s.At(j)
 		if t.Kind != token.Punct {
 			continue
@@ -319,7 +325,7 @@ func countTopLevelArgs(s *tokens.Stream, open, closeIdx int) int {
 func argumentContentIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
 	for i := open + 1; i < closeIdx; i++ {
 		t := s.At(i)
-		if (t.Kind == token.Comment || t.Kind == token.DocComment) && !isAttributeComment(t) {
+		if t.Kind == token.Comment || t.Kind == token.DocComment {
 			return true
 		}
 		if i == open+1 || i == closeIdx-1 {
@@ -429,26 +435,25 @@ func isGroupingReflowParen(s *tokens.Stream, open int) bool {
 	return t.Kind == token.Punct && (t.Value == "!" || t.Value == "&&" || t.Value == "||")
 }
 
-// isAttributeComment reports whether t is a "#[...]" attribute (the lexer keeps
-// it as one comment token), as opposed to a "//" or "#" line comment.
-func isAttributeComment(t token.Token) bool {
-	return t.Kind == token.Comment && strings.HasPrefix(t.Value, "#[")
-}
-
 // collapseAttributeArgs collapses a multiline argument list inside an attribute
-// (e.g. "#[Attr(\n    'foo'\n)]" -> "#[Attr('foo')]") on the attribute's token
-// text. With singleArgOnly it only collapses a call that has a single argument,
-// matching on_multiline=ensure_single_line_for_single_argument.
+// (e.g. "#[Attr(\n    'foo'\n)]" -> "#[Attr('foo')]") on the attribute's text, then
+// re-lexes it. With singleArgOnly it only collapses a call that has a single
+// argument, matching on_multiline=ensure_single_line_for_single_argument.
 func collapseAttributeArgs(s *tokens.Stream, singleArgOnly bool) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if !isAttributeComment(t) || !strings.ContainsRune(t.Value, '\n') {
+		if !attributeStartsAt(s, i) {
 			continue
 		}
-		if nv, ok := collapseAttributeText(t.Value, singleArgOnly); ok && nv != t.Value {
-			s.SetValue(i, nv)
+		end := s.AttributeEnd(i)
+		if end < 0 || !strings.ContainsRune(attributeText(s, i, end), '\n') {
+			continue
+		}
+		if rewriteAttributeText(s, i, end, func(v string) (string, bool) {
+			return collapseAttributeText(v, singleArgOnly)
+		}) {
 			changed = true
+			i = s.AttributeEnd(i)
 		}
 	}
 	return changed
@@ -508,17 +513,19 @@ func placeAttributesInParen(s *tokens.Stream, open, closeIdx int, placement stri
 	var attrs []int
 	depth := 0
 	for j := open + 1; j < closeIdx; j++ {
-		t := s.At(j)
-		if isAttributeComment(t) {
+		if attributeStartsAt(s, j) {
 			if depth == 0 {
 				attrs = append(attrs, j)
 			}
+			if end := s.AttributeEnd(j); end > j {
+				j = end
+			}
 			continue
 		}
-		if t.Kind != token.Punct {
+		if s.At(j).Kind != token.Punct {
 			continue
 		}
-		switch t.Value {
+		switch s.At(j).Value {
 		case "(", "[", "{":
 			depth++
 		case ")", "]", "}":
@@ -533,7 +540,8 @@ func placeAttributesInParen(s *tokens.Stream, open, closeIdx int, placement stri
 		} else {
 			want = "\n" + lineIndentBefore(s, a)
 		}
-		if editSlotAfter(s, a, want) {
+		// the whitespace to normalize sits after the attribute's closing "]"
+		if editSlotAfter(s, s.AttributeEnd(a), want) {
 			changed = true
 		}
 	}
@@ -550,6 +558,12 @@ func reflowParen(s *tokens.Stream, open, closeIdx int, collapseBlanks bool) bool
 	var commas []int
 	depth := 0
 	for j := open + 1; j < closeIdx; j++ {
+		if attributeStartsAt(s, j) {
+			if end := s.AttributeEnd(j); end > j {
+				j = end // an attribute's inner commas are not argument separators
+			}
+			continue
+		}
 		t := s.At(j)
 		if t.Kind != token.Punct {
 			continue
@@ -605,7 +619,7 @@ func reflowBreakAfterComments(s *tokens.Stream, open, closeIdx int, base string)
 			continue
 		}
 		if depth != 0 || (t.Kind != token.Comment && t.Kind != token.DocComment) ||
-			isLineComment(t) || isAttributeComment(t) {
+			isLineComment(t) {
 			continue // attributes are placed by applyAttributePlacement, not here
 		}
 		// the comment must start its own line (preceded by a newline) to count as a
@@ -645,7 +659,7 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks b
 		ws = n
 		n++
 	}
-	if n < s.Len() && !isAttributeComment(s.At(n)) &&
+	if n < s.Len() &&
 		(isLineComment(s.At(n)) || s.At(n).Kind == token.Comment || s.At(n).Kind == token.DocComment) {
 		changed := false
 		// only method_argument_space normalizes the comma-to-comment gap to one
@@ -686,11 +700,18 @@ func argListIsMultiline(s *tokens.Stream, open, closeIdx int) bool {
 	}
 	depth := 0
 	for j := open + 1; j < closeIdx; j++ {
-		t := s.At(j)
-		// a top-level attribute that itself spans lines makes the list multiline
-		if depth == 0 && isAttributeComment(t) && hasNewline(t.Value) {
-			return true
+		if attributeStartsAt(s, j) {
+			end := s.AttributeEnd(j)
+			if end > j {
+				// a top-level attribute that itself spans lines makes the list multiline
+				if depth == 0 && strings.ContainsRune(attributeText(s, j, end), '\n') {
+					return true
+				}
+				j = end
+				continue
+			}
 		}
+		t := s.At(j)
 		if t.Kind != token.Punct {
 			continue
 		}
@@ -792,8 +813,7 @@ func argNLAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks bo
 			if newlines := strings.Count(ws.Value, "\n"); newlines >= 2 {
 				keep := !collapseBlanks
 				if collapseBlanks {
-					if nx := nextSignificantIndex(s, comma); nx >= 0 &&
-						isComment(s.At(nx)) && !isAttributeComment(s.At(nx)) {
+					if nx := nextSignificantIndex(s, comma); nx >= 0 && isComment(s.At(nx)) {
 						keep = true
 					}
 				}

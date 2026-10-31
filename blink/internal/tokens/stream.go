@@ -129,6 +129,35 @@ func (s *Stream) MatchBackward(i int) int {
 	return -1
 }
 
+// AttributeEnd returns the index of the AttributeEnd ("]") closing the attribute
+// whose AttributeStart ("#[") is at i, or -1. Attributes never nest, so the next
+// AttributeEnd is the match.
+func (s *Stream) AttributeEnd(i int) int {
+	if i < 0 || i >= len(s.toks) || s.toks[i].Kind != token.AttributeStart {
+		return -1
+	}
+	for j := i + 1; j < len(s.toks); j++ {
+		if s.toks[j].Kind == token.AttributeEnd {
+			return j
+		}
+	}
+	return -1
+}
+
+// AttributeStartOf returns the index of the AttributeStart ("#[") matching the
+// AttributeEnd ("]") at i, or -1 when i is not an attribute close.
+func (s *Stream) AttributeStartOf(i int) int {
+	if i < 0 || i >= len(s.toks) || s.toks[i].Kind != token.AttributeEnd {
+		return -1
+	}
+	for j := i - 1; j >= 0; j-- {
+		if s.toks[j].Kind == token.AttributeStart {
+			return j
+		}
+	}
+	return -1
+}
+
 // ReplaceRange swaps tokens [start, end] (inclusive) for repl. The splice is
 // done in place: when len(repl) matches the range the tail never moves, and
 // otherwise only the tail shifts, so no fresh tail copy is allocated.
