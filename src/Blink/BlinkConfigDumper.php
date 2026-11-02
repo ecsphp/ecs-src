@@ -122,7 +122,8 @@ final readonly class BlinkConfigDumper
             return new stdClass();
         }
 
-        $defaults = $reflectionProperty->getValue(new ($fixer::class)());
+        $fixerClass = $fixer::class;
+        $defaults = $reflectionProperty->getValue(new $fixerClass());
 
         $changed = [];
         foreach ($configuration as $option => $value) {
