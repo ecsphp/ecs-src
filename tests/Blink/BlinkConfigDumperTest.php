@@ -7,6 +7,8 @@ namespace Symplify\EasyCodingStandard\Tests\Blink;
 use Override;
 use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
 use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
+use PhpCsFixer\Fixer\Import\FullyQualifiedStrictTypesFixer;
+use stdClass;
 use Symplify\EasyCodingStandard\Blink\BlinkConfigDumper;
 use Symplify\EasyCodingStandard\Testing\PHPUnit\AbstractTestCase;
 
@@ -41,8 +43,23 @@ final class BlinkConfigDumperTest extends AbstractTestCase
 
         $this->assertArrayHasKey(ArraySyntaxFixer::class, $configByClass);
         $this->assertSame([
-            'syntax' => 'short',
+            'syntax' => 'long',
         ], $configByClass[ArraySyntaxFixer::class]);
+    }
+
+    public function testDumpDropsOptionsLeftAtDefault(): void
+    {
+        $data = $this->blinkConfigDumper->dump([]);
+
+        $configByClass = [];
+        foreach ($data['rules'] as $rule) {
+            $configByClass[$rule['class']] = $rule['config'];
+        }
+
+        // a configurable fixer left at its defaults dumps a config-less object,
+        // not its resolved default options
+        $this->assertArrayHasKey(FullyQualifiedStrictTypesFixer::class, $configByClass);
+        $this->assertEquals(new stdClass(), $configByClass[FullyQualifiedStrictTypesFixer::class]);
     }
 
     public function testDumpReportsPathSkipAndClassSkip(): void

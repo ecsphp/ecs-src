@@ -278,22 +278,66 @@ func (NoSpacesAfterFunctionName) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/NoSpacesAfterFunctionNameFixer.php"
 }
 
+// language constructs php-cs-fixer treats as function-like calls (T_ARRAY,
+// T_ECHO, T_EMPTY, T_INCLUDE[_ONCE], T_ISSET, T_LIST, T_PRINT, T_REQUIRE[_ONCE],
+// T_UNSET). eval/exit/die are Ident in the lexer, handled by the name branch.
+var noSpacesFunctionyKeywords = map[string]bool{
+	"array": true, "echo": true, "empty": true, "include": true,
+	"include_once": true, "isset": true, "list": true, "print": true,
+	"require": true, "require_once": true, "unset": true,
+}
+
+// echo/print/include/require parentheses may be expression grouping rather than
+// a call; the space is removed only when the matching ")" closes straight into ";".
+var noSpacesGroupingKeywords = map[string]bool{
+	"echo": true, "print": true, "include": true,
+	"include_once": true, "require": true, "require_once": true,
+}
+
 func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind != token.Ident {
+		if s.At(i).Kind != token.Punct || s.At(i).Value != "(" {
 			continue
 		}
-		// "from" in "yield from (expr)" is part of the construct, not a call
-		if strings.EqualFold(s.At(i).Value, "from") {
-			if p := sigPrev(s, i); p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "yield") {
-				continue
+		last := sigPrev(s, i)
+		if last < 0 {
+			continue
+		}
+		prev := s.At(last)
+
+		if prev.Kind == token.Keyword && noSpacesGroupingKeywords[strings.ToLower(prev.Value)] {
+			if end := s.MatchForward(i); end >= 0 {
+				if n := sigNext(s, end); n >= 0 && (s.At(n).Kind != token.Punct || s.At(n).Value != ";") {
+					continue
+				}
 			}
 		}
-		if i+2 < s.Len() &&
-			s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) &&
-			s.At(i+2).Kind == token.Punct && s.At(i+2).Value == "(" {
-			s.RemoveAt(i + 1)
+
+		switch {
+		case prev.Kind == token.Variable:
+			// "$func ()"
+		case prev.Kind == token.Keyword && noSpacesFunctionyKeywords[strings.ToLower(prev.Value)]:
+		case prev.Kind == token.Ident:
+			p := sigPrev(s, last)
+			// "function foo ()" is a definition, not a call
+			if p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "function") {
+				continue
+			}
+			// "from" in "yield from (expr)" is part of the construct, not a call
+			if strings.EqualFold(prev.Value, "from") && p >= 0 &&
+				s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "yield") {
+				continue
+			}
+		case prev.Kind == token.Punct && (prev.Value == ")" || prev.Value == "]"):
+			// chained call "$f() ()" or "$a[0] ()"
+		default:
+			continue
+		}
+
+		if i >= 1 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
+			s.RemoveAt(i - 1)
+			i--
 			changed = true
 		}
 	}

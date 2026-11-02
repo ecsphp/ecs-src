@@ -213,6 +213,16 @@ func TestNoSpacesAfterFunctionName(t *testing.T) {
 	if _, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php function g() { yield from (new Foo())->all(); }"); changed {
 		t.Fatal("yield from ( must keep its space")
 	}
+	// language constructs and a variable call, mirroring php-cs-fixer
+	constructs := "<?php\nrequire ('a.php');\nrequire_once ('a.php');\ninclude ('a.php');\ninclude_once ('a.php');\nexit (1);\n$a = isset ($b);\n$a = empty ($b);\nunset ($b);\neval ('1;');\nprint ('x');\necho ('x');\n$c = array (1);\nlist ($d) = [1];\n$func ();\nstrlen ('x');"
+	wantConstructs := "<?php\nrequire('a.php');\nrequire_once('a.php');\ninclude('a.php');\ninclude_once('a.php');\nexit(1);\n$a = isset($b);\n$a = empty($b);\nunset($b);\neval('1;');\nprint('x');\necho('x');\n$c = array(1);\nlist($d) = [1];\n$func();\nstrlen('x');"
+	if got, changed := apply(t, NoSpacesAfterFunctionName{}, constructs); !changed || got != wantConstructs {
+		t.Fatalf("constructs: changed=%v got=%q", changed, got)
+	}
+	// echo/print/include/require whose parens are expression grouping keep the space
+	if _, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php echo ('x') ? 'a' : 'b';"); changed {
+		t.Fatal("echo grouping parens must keep their space")
+	}
 }
 
 func TestNoSpacesInsideParenthesis(t *testing.T) {
