@@ -34,4 +34,9 @@ func TestFullyQualifiedStrictTypes(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\nnamespace App;\nuse Foo\\Bar;\nnew \\Other\\Thing();\n"); changed {
 		t.Fatal("unimported name must stay fully qualified")
 	}
+
+	// a URL after @see is not a type: case must not be rewritten to an import's
+	if _, changed := apply(t, f, "<?php\nnamespace App;\n\nuse Vendor\\Package;\nuse WP_Query;\n\n/**\n * @see https://github.com/vendor/package/issues/1\n * @see https://developer.wordpress.org/reference/classes/wp_query/__construct/\n * @link https://developer.wordpress.org/reference/classes/wp_query/\n */\nfunction foo(WP_Query $query, Package $p): void\n{\n}\n"); changed {
+		t.Fatal("URLs in @see/@link must not be rewritten")
+	}
 }

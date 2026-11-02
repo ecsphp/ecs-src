@@ -41,6 +41,26 @@ func fqNameChar(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c >= 0x80
 }
 
+// fqDocTypeRun reports whether the non-whitespace run after a tag is a type
+// expression at all. php-cs-fixer only rewrites a type that matches its
+// TypeExpression grammar and ends at whitespace/"}"; a URL or path (e.g. after
+// "@see https://.../wp_query/") is not a type, so it is left untouched. A char
+// outside the type-expression set (notably "/" or ".") marks the run as not a type.
+func fqDocTypeRun(run []byte) bool {
+	for _, c := range run {
+		if fqNameChar(c) {
+			continue
+		}
+		switch c {
+		case '\\', '|', '&', '<', '>', ',', '(', ')', '[', ']', '{', '}',
+			'?', ':', '=', '\'', '"', '$', '*', '-', '+':
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 // fqDocTemplateNames collects @template/@type declared identifiers (reserved).
 func fqDocTemplateNames(content string) []string {
 	var out []string
@@ -157,7 +177,7 @@ func fqPhpDocContent(content string, uses *fqUses, ns string, reserved map[strin
 						out = append(out, b[i:g1End]...)
 						out = append(out, tag...)
 						out = append(out, b[t:h]...)
-						if fqPhpdocTags[strings.ToLower(string(tag))] {
+						if fqPhpdocTags[strings.ToLower(string(tag))] && fqDocTypeRun(b[typeStart:te]) {
 							out = append(out, []byte(fqShortenDocType(string(b[typeStart:te]), uses, ns, reserved))...)
 						} else {
 							out = append(out, b[typeStart:te]...)
