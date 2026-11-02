@@ -19,6 +19,10 @@ const SymplifySourceBase = "https://github.com/symplify/coding-standard/blob/mai
 // that live there but have not been split out to symplify/coding-standard.
 const EcsSrcSourceBase = "https://github.com/ecsphp/ecs-src/blob/main/packages/coding-standard/src/Fixer/"
 
+// PhpCodeSnifferSourceBase is the PHP_CodeSniffer location, for the few rules
+// ported from a PHP_CodeSniffer sniff rather than a PHP-CS-Fixer fixer.
+const PhpCodeSnifferSourceBase = "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/4.x/src/"
+
 // ecsSrcOnlyFixers are Symplify fixers sourced from ecsphp/ecs-src rather than
 // the split symplify/coding-standard repository.
 var ecsSrcOnlyFixers = map[string]bool{
@@ -66,6 +70,12 @@ type ConfigurableFixer interface {
 // SourceURLFor derives the canonical PHP-CS-Fixer source URL from a fixer Name
 // (an FQCN like `PhpCsFixer\Fixer\Semicolon\SpaceAfterSemicolonFixer`).
 func SourceURLFor(name string) string {
+	// a PHP_CodeSniffer sniff: "PHP_CodeSniffer\Standards\...\FooSniff" maps
+	// onto "src/Standards/.../FooSniff.php" in the PHPCSStandards repo.
+	if rest, ok := strings.CutPrefix(name, `PHP_CodeSniffer\`); ok {
+		return PhpCodeSnifferSourceBase + strings.ReplaceAll(rest, `\`, "/") + ".php"
+	}
+
 	parts := strings.Split(name, `\`)
 	if len(parts) < 2 {
 		return ""
