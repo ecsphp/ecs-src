@@ -221,6 +221,7 @@ func (l *lexer) lexPHP() {
 		l.lexLineComment(start)
 	case l.hasPrefix("/*"):
 		l.lexBlockComment(start)
+	case (c == 'b' || c == 'B') && l.lexBinaryString(start):
 	case c == '\'':
 		l.lexString(start, '\'')
 	case c == '"':
@@ -526,6 +527,26 @@ func (l *lexer) lexString(start int, quote byte) {
 		l.pos++
 	}
 	l.emit(token.String, start)
+}
+
+// lexBinaryString lexes a string with the binary prefix "b" ("b'x'", b<<<EOT)
+// as one token, as PHP's scanner does, or reports false when no string follows.
+func (l *lexer) lexBinaryString(start int) bool {
+	switch q := l.byteAt(start + 1); {
+	case q == '\'' || q == '"':
+		l.pos = start + 1
+		l.lexString(start, q)
+		return true
+	case strings.HasPrefix(l.src[start+1:], "<<<"):
+		l.pos = start + 1
+		if end := l.scanHeredoc(); end > l.pos {
+			l.pos = end
+			l.emit(token.String, start)
+			return true
+		}
+		l.pos = start
+	}
+	return false
 }
 
 // lexInterpolatedString splits a double-quoted string that contains a complex

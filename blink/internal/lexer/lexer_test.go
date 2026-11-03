@@ -426,3 +426,32 @@ func TestIsIntegerLiteral(t *testing.T) {
 		}
 	}
 }
+
+// The binary-string prefix "b" is part of the string token, as in PHP.
+func TestLexBinaryStringPrefix(t *testing.T) {
+	cases := map[string]string{
+		"<?php $a = B'x';":              "B'x'",
+		"<?php $a = b\"x\";":            "b\"x\"",
+		"<?php $a = b<<<EOT\nx\nEOT;\n": "b<<<EOT\nx\nEOT",
+		"<?php $a = b\"x {$y}\";":       "b\"x {",
+	}
+	for src, want := range cases {
+		found := false
+		for _, tk := range Lex(src) {
+			if tk.Kind == token.String {
+				found = true
+				if tk.Value != want {
+					t.Errorf("%q: string %q, want %q", src, tk.Value, want)
+				}
+				break
+			}
+		}
+		if !found {
+			t.Errorf("%q: no string token", src)
+		}
+	}
+	// "b" alone stays a name
+	if toks := Lex("<?php echo b, 'x';"); toks[4].Kind != token.Ident || toks[4].Value != "b" {
+		t.Errorf("bare b: got %s %q", toks[4].Kind, toks[4].Value)
+	}
+}

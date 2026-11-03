@@ -27,7 +27,7 @@ func (ExplicitStringVariable) Fix(s *tokens.Stream) bool {
 		if s.At(i).Kind != token.String {
 			continue
 		}
-		v := s.At(i).Value
+		prefix, v := token.SplitBinaryPrefix(s.At(i).Value) // b"$x" interpolates too
 		start, ok := interpolatedBody(v)
 		if !ok {
 			continue
@@ -41,7 +41,7 @@ func (ExplicitStringVariable) Fix(s *tokens.Stream) bool {
 		// alone
 		body, hit := wrapInterpolations(v[start:end], v[0] == '}')
 		if hit {
-			s.SetValue(i, v[:start]+body+v[end:])
+			s.SetValue(i, prefix+v[:start]+body+v[end:])
 			changed = true
 		}
 	}

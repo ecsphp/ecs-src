@@ -48,6 +48,15 @@ func (k Kind) String() string {
 	return kindNames[k]
 }
 
+// SplitBinaryPrefix splits the binary-string prefix "b" or "B" off the value of
+// a string token ("b'x'", "B\"x\"", "b<<<EOT"); prefix is "" when there is none.
+func SplitBinaryPrefix(v string) (prefix, rest string) {
+	if len(v) > 1 && (v[0] == 'b' || v[0] == 'B') && (v[1] == '\'' || v[1] == '"' || (len(v) > 3 && v[1:4] == "<<<")) {
+		return v[:1], v[1:]
+	}
+	return "", v
+}
+
 // Token is a single lexical unit. The stream is lossless: concatenating every
 // Value in order reproduces the original source byte for byte.
 type Token struct {

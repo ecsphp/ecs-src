@@ -37,18 +37,19 @@ func (f SingleQuote) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
-		if t.Kind != token.String || len(t.Value) < 2 {
+		if t.Kind != token.String {
 			continue
 		}
-		if t.Value[0] != '"' || t.Value[len(t.Value)-1] != '"' {
+		prefix, v := token.SplitBinaryPrefix(t.Value) // b"x" keeps its prefix
+		if len(v) < 2 || v[0] != '"' || v[len(v)-1] != '"' {
 			continue // not a plain double-quoted string (e.g. heredoc)
 		}
-		content := t.Value[1 : len(t.Value)-1]
+		content := v[1 : len(v)-1]
 		if strings.ContainsAny(content, "$\\") || (!f.WithSingleQuotes && strings.Contains(content, "'")) {
 			continue // interpolation, escape, or a quote that would need escaping
 		}
 		content = strings.ReplaceAll(content, "'", `\'`)
-		s.SetValue(i, "'"+content+"'")
+		s.SetValue(i, prefix+"'"+content+"'")
 		changed = true
 	}
 	return changed

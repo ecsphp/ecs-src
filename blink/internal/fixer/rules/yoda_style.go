@@ -108,15 +108,19 @@ func yodaMirror(v string) string {
 // isInterpolatedString reports whether t is a double-quoted string that contains
 // a variable interpolation, making it a runtime value rather than a constant.
 func isInterpolatedString(t token.Token) bool {
-	if t.Kind != token.String || len(t.Value) == 0 || t.Value[0] != '"' {
+	if t.Kind != token.String {
 		return false
 	}
-	for i := 1; i < len(t.Value); i++ {
-		if t.Value[i] == '\\' {
+	_, v := token.SplitBinaryPrefix(t.Value)
+	if len(v) == 0 || v[0] != '"' {
+		return false
+	}
+	for i := 1; i < len(v); i++ {
+		if v[i] == '\\' {
 			i++
 			continue
 		}
-		if t.Value[i] == '$' || (t.Value[i] == '{' && i+1 < len(t.Value) && t.Value[i+1] == '$') {
+		if v[i] == '$' || (v[i] == '{' && i+1 < len(v) && v[i+1] == '$') {
 			return true
 		}
 	}

@@ -303,11 +303,15 @@ func (HeredocToNowdoc) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.String || !strings.HasPrefix(t.Value, "<<<") {
+		if t.Kind != token.String {
 			continue
 		}
-		if out, ok := heredocToNowdoc(t.Value); ok {
-			s.SetValue(i, out)
+		prefix, v := token.SplitBinaryPrefix(t.Value)
+		if !strings.HasPrefix(v, "<<<") {
+			continue
+		}
+		if out, ok := heredocToNowdoc(v); ok {
+			s.SetValue(i, prefix+out)
 			changed = true
 		}
 	}
@@ -399,8 +403,9 @@ func (f NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/StringNotation/NoBinaryStringFixer.php
 //
-// NoBinaryString drops the binary-string prefix "b"/"B" (b"x" -> "x"). The
-// lexer emits the prefix as a separate identifier directly before the string.
+// NoBinaryString drops the binary-string prefix "b"/"B" (b"x" -> "x"), which
+// the lexer keeps in the string token, of a string, an interpolated string or
+// a heredoc.
 type NoBinaryString struct{}
 
 func (NoBinaryString) Name() string {
@@ -415,21 +420,13 @@ func (NoBinaryString) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.Ident || (t.Value != "b" && t.Value != "B") {
+		if t.Kind != token.String {
 			continue
 		}
-		if i+1 >= s.Len() || s.At(i+1).Kind != token.String {
-			continue
+		if prefix, _ := token.SplitBinaryPrefix(t.Value); prefix != "" {
+			s.SetValue(i, t.Value[1:])
+			changed = true
 		}
-		if prev, ok := prevSignificant(s, i); ok {
-			switch prev.Value {
-			case "->", "?->", "::", `\`:
-				continue
-			}
-		}
-		s.RemoveAt(i)
-		i--
-		changed = true
 	}
 	return changed
 }
