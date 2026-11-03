@@ -227,6 +227,7 @@ func ConstructFixers() []fixer.Fixer {
 		DeclareStrictTypes{},
 		VoidReturn{},
 		StaticLambda{},
+		NoUselessElse{},
 	}
 }
 

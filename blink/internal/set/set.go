@@ -66,6 +66,7 @@ var percsExcluded = map[string]bool{
 	"DeclareStrictTypesFixer":            true,
 	"VoidReturnFixer":                    true,
 	"StaticLambdaFixer":                  true,
+	"NoUselessElseFixer":                 true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
