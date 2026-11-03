@@ -177,7 +177,8 @@ func fqPhpDocContent(content string, uses *fqUses, ns string, reserved map[strin
 						out = append(out, b[i:g1End]...)
 						out = append(out, tag...)
 						out = append(out, b[t:h]...)
-						if fqPhpdocTags[strings.ToLower(string(tag))] && fqDocTypeRun(b[typeStart:te]) {
+						// the allowed tags match case-sensitively (in_array strict)
+						if fqPhpdocTags[string(tag)] && fqDocTypeRun(b[typeStart:te]) {
 							out = append(out, []byte(fqShortenDocType(string(b[typeStart:te]), uses, ns, reserved))...)
 						} else {
 							out = append(out, b[typeStart:te]...)
@@ -235,14 +236,18 @@ func fqShortenDocType(typeStr string, uses *fqUses, ns string, reserved map[stri
 			for j < n && fqNameChar(b[j]) {
 				j++
 			}
-			for j < n && b[j] == '\\' && j+1 < n && fqNameStart(b[j+1]) {
+			// TypeExpression's <name>: identifiers joined by "\\" or "-"
+			// ("positive-int", "key-of"); a dashed name is never a class
+			dashed := false
+			for j < n && (b[j] == '\\' || b[j] == '-') && j+1 < n && fqNameStart(b[j+1]) {
+				dashed = dashed || b[j] == '-'
 				j++
 				for j < n && fqNameChar(b[j]) {
 					j++
 				}
 			}
 			atom := string(b[start:j])
-			if fqDocAtomShortenable(b, start, j, n) {
+			if !dashed && fqDocAtomShortenable(b, start, j, n) {
 				out = append(out, []byte(fqMapDocAtom(atom, uses, ns, reserved))...)
 			} else {
 				out = append(out, b[start:j]...)
@@ -258,15 +263,21 @@ func fqShortenDocType(typeStr string, uses *fqUses, ns string, reserved map[stri
 
 // fqDocAtomShortenable guards against non-type atoms.
 func fqDocAtomShortenable(b []byte, start, end, n int) bool {
-	// preceded by `$` (variable) or `:` (::member or value separator artefact)
+	// preceded by `$` (variable), `:` (::member or value separator artefact)
+	// or a digit (the letters of a number constant: "1e3", "0x1F")
 	if start > 0 {
 		p := b[start-1]
-		if p == '$' || p == ':' {
+		if p == '$' || p == ':' || (p >= '0' && p <= '9') {
 			return false
 		}
 	}
-	// array-shape / object-shape key: atom immediately followed by a single `:`
-	if end < n && b[end] == ':' && (end+1 >= n || b[end+1] != ':') {
+	// array-shape / object-shape key: atom followed by a single `:`, or by
+	// `?:` for an optional key
+	k := end
+	if k < n && b[k] == '?' {
+		k++
+	}
+	if k < n && b[k] == ':' && (k+1 >= n || b[k+1] != ':') {
 		return false
 	}
 	// generic base (`Foo<...>`): ECS shortens some but keeps others (wildcards,
