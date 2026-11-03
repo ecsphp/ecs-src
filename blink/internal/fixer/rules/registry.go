@@ -242,6 +242,7 @@ func ConstructFixers() []fixer.Fixer {
 		GetClassToClassKeyword{},
 		LogicalOperators{},
 		TernaryToElvisOperator{},
+		EchoTagSyntax{},
 	}
 }
 
