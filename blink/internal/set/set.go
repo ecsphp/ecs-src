@@ -65,6 +65,7 @@ var percsExcluded = map[string]bool{
 	"ErrorSuppressionFixer":              true,
 	"GetClassToClassKeywordFixer":        true,
 	"LogicalOperatorsFixer":              true,
+	"TernaryToElvisOperatorFixer":        true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
