@@ -4,14 +4,17 @@
 package reporter
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"blink/internal/fixer"
 	"blink/internal/runner"
 )
 
@@ -22,38 +25,137 @@ type formatter struct {
 }
 
 // Report writes results to w and returns the process exit code (0 when clean or
-// after a successful fix, 1 when a check finds fixable issues).
+// after a fix that leaves no errors, 1 otherwise; "ecs check --blink" turns 1
+// into 2, as ECS does).
 func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
 	f := newFormatter(w)
 
-	// Both check and --fix list the per-file diff, matching ECS.
-	f.reportFileDiffs(results)
+	var diffs []runner.FileResult
+	var errs []fileError
+	for _, r := range results {
+		if r.Changed() {
+			diffs = append(diffs, r)
+		}
+		for _, e := range r.Errors {
+			errs = append(errs, fileError{path: r.Path, err: e})
+		}
+	}
 
-	if len(results) == 0 {
+	// Both check and --fix list the per-file diff, matching ECS.
+	f.reportFileDiffs(diffs)
+
+	if len(diffs) == 0 && len(errs) == 0 {
 		f.success("No errors found. Great job - your code is shiny in style!")
 		return 0
 	}
 
 	f.newLine(2)
 
-	n := len(results)
+	n := len(diffs)
 	if isFixer {
-		f.success(fmt.Sprintf(
-			"%d error%s successfully fixed and no other errors found!",
-			n, plural(n),
-		))
-		return 0
+		f.printErrors(errs)
+		if len(errs) == 0 {
+			f.success(fmt.Sprintf(
+				"%d error%s successfully fixed and no other errors found!",
+				n, plural(n),
+			))
+			return 0
+		}
+		f.errorCountStatus(len(errs))
+		return 1
+	}
+
+	if len(errs) > 0 {
+		f.newLine(1)
+		f.printErrors(errs)
+		f.errorCountStatus(len(errs))
+	}
+	if n == 0 {
+		return 1
 	}
 
 	verb := "errors are"
 	if n == 1 {
 		verb = "error is"
 	}
+	goodNews := ""
+	if len(errs) > 0 {
+		goodNews = "Good news is that "
+	}
 	f.warning(fmt.Sprintf(
-		"%d %s fixable! Just add \"--fix\" to console command and rerun to apply.",
-		n, verb,
+		"%s%d %s fixable! Just add \"--fix\" to console command and rerun to apply.",
+		goodNews, n, verb,
 	))
 	return 1
+}
+
+// fileError is a reported error with the file it was found in.
+type fileError struct {
+	path string
+	err  fixer.CodingStandardError
+}
+
+// errorCountStatus prints ECS's "Found N errors that need to be fixed manually."
+func (f formatter) errorCountStatus(n int) {
+	need := "s"
+	if n != 1 {
+		need = ""
+	}
+	f.errorLine(fmt.Sprintf("Found %d error%s that need%s to be fixed manually.", n, plural(n), need))
+}
+
+// printErrors mirrors EasyCodingStandardStyle::printErrors, sorted by file and
+// line.
+func (f formatter) printErrors(errs []fileError) {
+	slices.SortStableFunc(errs, func(a, b fileError) int {
+		return cmp.Or(cmp.Compare(a.path, b.path), cmp.Compare(a.err.Line, b.err.Line))
+	})
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = ""
+	}
+	width := errorTableWidth()
+	separator := " " + strings.Repeat("-", max(width, 0))
+	for _, e := range errs {
+		f.writeln(separator)
+		f.writeln(fmt.Sprintf(" %s:%d", relativePath(cwd, e.path), e.err.Line))
+		f.writeln(separator)
+		message := fmt.Sprintf("%s\n\n Reported by: \"%s\"", e.err.Message, e.err.Checker)
+		f.writeln(" " + phpWordwrap(strings.ReplaceAll(message, "\r", ""), width))
+		f.writeln(separator)
+		f.newLine(1)
+	}
+}
+
+// errorTableWidth mirrors EasyCodingStandardStyle::getTerminalWidth.
+func errorTableWidth() int {
+	const bulgarianConstant = 8
+	if n, err := strconv.Atoi(os.Getenv("COLUMNS")); err == nil {
+		return n - bulgarianConstant
+	}
+	return 120 - bulgarianConstant
+}
+
+// phpWordwrap mirrors PHP's wordwrap($text, $width, "\n", false).
+func phpWordwrap(text string, width int) string {
+	b := []byte(text)
+	lastStart, lastSpace := 0, 0
+	for current := range b {
+		switch {
+		case text[current] == '\n':
+			lastStart, lastSpace = current+1, current+1
+		case text[current] == ' ':
+			if current-lastStart >= width {
+				b[current] = '\n'
+				lastStart = current + 1
+			}
+			lastSpace = current
+		case current-lastStart >= width && lastStart != lastSpace:
+			b[lastSpace] = '\n'
+			lastStart = lastSpace + 1
+		}
+	}
+	return string(b)
 }
 
 // Footer prints an ECS-style run summary: files scanned, time and memory,
@@ -159,8 +261,9 @@ func (f formatter) listing(items []string) {
 }
 
 // success / warning render ECS's single-line green/yellow status line.
-func (f formatter) success(msg string) { f.statusLine("[OK]", msg, 32) }
-func (f formatter) warning(msg string) { f.statusLine("[WARNING]", msg, 33) }
+func (f formatter) success(msg string)   { f.statusLine("[OK]", msg, 32) }
+func (f formatter) errorLine(msg string) { f.statusLine("[ERROR]", msg, 31) }
+func (f formatter) warning(msg string)   { f.statusLine("[WARNING]", msg, 33) }
 
 func (f formatter) statusLine(tag, msg string, color int) {
 	f.newLine(1)

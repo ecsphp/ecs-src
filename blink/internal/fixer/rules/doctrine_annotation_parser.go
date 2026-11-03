@@ -295,15 +295,18 @@ func buildStringSet(items []string) map[string]bool {
 // classModifierKw are the class modifiers skipped before a "class" keyword.
 var classModifierKw = map[string]bool{"abstract": true, "final": true, "readonly": true}
 
-// memberModifierKw mirrors MODIFIER_KINDS for skipping to a class member.
+// memberModifierKw are the keywords of upstream's MODIFIER_KINDS. "static" and
+// "var" are not in it, so upstream skips members declared with them.
 var memberModifierKw = map[string]bool{
 	"public": true, "protected": true, "private": true, "final": true,
 	"abstract": true, "readonly": true,
 }
 
+var daSetVisibility = map[string]bool{"public(set)": true, "protected(set)": true, "private(set)": true}
+
 // docAnnotationEligible mirrors nextElementAcceptsDoctrineAnnotations: the
-// docblock at index must precede a class or a member of a class (not interface,
-// trait or enum).
+// docblock at index must precede a class, or an element of a class body that
+// TokensAnalyzer::getClassyElements lists.
 func docAnnotationEligible(s *tokens.Stream, index int) bool {
 	i := sigNext(s, index)
 	for i >= 0 && s.At(i).Kind == token.Keyword && classModifierKw[strings.ToLower(s.At(i).Value)] {
@@ -315,19 +318,137 @@ func docAnnotationEligible(s *tokens.Stream, index int) bool {
 	if s.At(i).Kind == token.Keyword && strings.ToLower(s.At(i).Value) == "class" {
 		return true
 	}
-	// skip member modifiers / type tokens, then require an enclosing "class" body
-	for i >= 0 && s.At(i).Kind == token.Keyword && memberModifierKw[strings.ToLower(s.At(i).Value)] {
-		i = sigNext(s, i)
+	for i >= 0 {
+		next, ok := daSkipModifierKind(s, i)
+		if !ok {
+			break
+		}
+		i = next
 	}
 	if i < 0 {
 		return false
 	}
-	return enclosingClassIsClass(s, i)
+	return daIsClassElement(s, i)
 }
 
-// enclosingClassIsClass reports whether the nearest enclosing "{ }" block around
-// idx is a class body (not interface/trait/enum).
-func enclosingClassIsClass(s *tokens.Stream, idx int) bool {
+// daSkipModifierKind returns the token after the MODIFIER_KINDS token at i, or
+// ok=false when i is none.
+func daSkipModifierKind(s *tokens.Stream, i int) (int, bool) {
+	t := s.At(i)
+	switch {
+	case t.Kind == token.Keyword && daSetVisibility[strings.ToLower(t.Value)]:
+		return sigNext(s, i), true
+	case t.Kind == token.Keyword && memberModifierKw[strings.ToLower(t.Value)]:
+		if lw := strings.ToLower(t.Value); lw == "public" || lw == "protected" || lw == "private" {
+			// "private(set)" lexed as four tokens; PHP allows no whitespace inside
+			if i+3 < s.Len() && isPunctVal(s, i+1, "(") && s.At(i+2).Kind == token.Ident && strings.EqualFold(s.At(i+2).Value, "set") && isPunctVal(s, i+3, ")") {
+				return sigNext(s, i+3), true
+			}
+			// upstream retypes a promoted visibility, which then is no MODIFIER_KINDS
+			if daInConstructorParameters(s, i) {
+				return 0, false
+			}
+		}
+		return sigNext(s, i), true
+	case t.Kind == token.Ident, isPunctVal(s, i, `\`), isPunctVal(s, i, "?"):
+		return sigNext(s, i), true
+	}
+	return 0, false
+}
+
+// daInConstructorParameters reports whether i is inside the parameter list of
+// a "function __construct", as ConstructorPromotionTransformer sees it.
+func daInConstructorParameters(s *tokens.Stream, i int) bool {
+	depth := 0
+	for j := i - 1; j >= 0; j-- {
+		switch {
+		case isPunctVal(s, j, ")"):
+			depth++
+		case isPunctVal(s, j, "("):
+			if depth > 0 {
+				depth--
+				continue
+			}
+			name := sigPrev(s, j)
+			if name >= 0 && s.At(name).Kind == token.Ident && strings.EqualFold(s.At(name).Value, "__construct") && kwIs(s.At(max(sigPrev(s, name), 0)), "function") {
+				return true
+			}
+		case depth == 0 && (isPunctVal(s, j, "{") || isPunctVal(s, j, "}") || isPunctVal(s, j, ";")):
+			return false
+		}
+	}
+	return false
+}
+
+// daIsClassElement reports whether the token at i is an element of a class body
+// as TokensAnalyzer::getClassyElements finds them.
+func daIsClassElement(s *tokens.Stream, i int) bool {
+	open := daEnclosingClassBrace(s, i)
+	if open < 0 {
+		return false
+	}
+	t := s.At(i)
+	switch {
+	case t.Kind == token.Keyword:
+		switch strings.ToLower(t.Value) {
+		case "function":
+			return !isPunctVal(s, sigNext(s, i), "(")
+		case "const", "use", "case":
+			return true
+		}
+		return false
+	case t.Kind != token.Variable:
+		return false
+	}
+	// the innermost "(" still open between the class brace and the variable
+	paren, depth := -1, 0
+	for j := i - 1; j > open; j-- {
+		switch {
+		case isPunctVal(s, j, ")"):
+			depth++
+		case isPunctVal(s, j, "("):
+			if depth == 0 {
+				paren = j
+			} else {
+				depth--
+			}
+		}
+		if paren >= 0 {
+			break
+		}
+	}
+	if paren < 0 {
+		return true
+	}
+	return daIsPromotedProperty(s, paren, i)
+}
+
+// daIsPromotedProperty reports whether the parameter variable at v, in the list
+// opened at paren, is a promoted constructor property.
+func daIsPromotedProperty(s *tokens.Stream, paren, v int) bool {
+	name := sigPrev(s, paren)
+	if name < 0 || s.At(name).Value != "__construct" || !kwIs(s.At(max(sigPrev(s, name), 0)), "function") {
+		return false
+	}
+	for j := v - 1; j > paren; j-- {
+		t := s.At(j)
+		if t.Kind == token.Variable {
+			return false
+		}
+		if t.Kind == token.Keyword {
+			switch strings.ToLower(t.Value) {
+			case "public", "protected", "private", "readonly", "final",
+				"public(set)", "protected(set)", "private(set)":
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// daEnclosingClassBrace returns the "{" of the class body directly holding idx
+// (not an interface, trait or enum, nor a method body), or -1.
+func daEnclosingClassBrace(s *tokens.Stream, idx int) int {
 	depth := 0
 	for j := idx - 1; j >= 0; j-- {
 		if s.At(j).Kind != token.Punct {
@@ -337,19 +458,31 @@ func enclosingClassIsClass(s *tokens.Stream, idx int) bool {
 		case "}":
 			depth++
 		case "{":
-			if depth == 0 {
-				kind, kw := classifyBrace(s, j)
-				return kind == braceClassLike && kw >= 0 && strings.ToLower(s.At(kw).Value) == "class"
+			if depth > 0 {
+				depth--
+				continue
 			}
-			depth--
+			kind, kw := classifyBrace(s, j)
+			if kind == braceClassLike && kw >= 0 && strings.ToLower(s.At(kw).Value) == "class" {
+				return j
+			}
+			return -1
 		}
 	}
-	return false
+	return -1
 }
 
 // applyToDoctrineAnnotations runs fn over each eligible docblock's parsed
 // annotation tokens, replacing the docblock when fn mutates them.
 func applyToDoctrineAnnotations(s *tokens.Stream, fn func(toks []daToken) bool) bool {
+	return applyToDoctrineAnnotationsWith(s, doctrineIgnoredTags, func(toks []daToken) ([]daToken, bool) {
+		return toks, fn(toks)
+	})
+}
+
+// applyToDoctrineAnnotationsWith is applyToDoctrineAnnotations with the
+// ignored_tags option; fn returns the tokens to render, so it may insert some.
+func applyToDoctrineAnnotationsWith(s *tokens.Stream, ignoredTags map[string]bool, fn func(toks []daToken) ([]daToken, bool)) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.DocComment {
@@ -358,14 +491,28 @@ func applyToDoctrineAnnotations(s *tokens.Stream, fn func(toks []daToken) bool) 
 		if !docAnnotationEligible(s, i) {
 			continue
 		}
-		toks := daCreateFromDocComment(s.At(i).Value, doctrineIgnoredTags)
-		if fn(toks) {
-			rebuilt := daGetCode(toks)
-			if rebuilt != s.At(i).Value {
-				s.SetValue(i, rebuilt)
-				changed = true
-			}
+		toks, mutated := fn(daCreateFromDocComment(s.At(i).Value, ignoredTags))
+		if !mutated {
+			continue
+		}
+		if rebuilt := daGetCode(toks); rebuilt != s.At(i).Value {
+			s.SetValue(i, rebuilt)
+			changed = true
 		}
 	}
 	return changed
+}
+
+// doctrineIgnoredTagsOption reads the ignored_tags option shared by the
+// Doctrine annotation fixers; ok is false when it is absent (keep the default).
+func doctrineIgnoredTagsOption(config map[string]any) (map[string]bool, bool) {
+	v, ok := config["ignored_tags"]
+	if !ok {
+		return nil, false
+	}
+	list, ok := arrayNotationStringList(v)
+	if !ok {
+		return nil, false
+	}
+	return buildStringSet(list), true
 }

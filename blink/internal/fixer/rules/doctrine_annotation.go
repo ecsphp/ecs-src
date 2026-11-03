@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/token"
 	"blink/internal/tokens"
 )
 
@@ -27,18 +28,32 @@ func (DoctrineAnnotationSpaces) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/DoctrineAnnotation/DoctrineAnnotationSpacesFixer.php"
 }
 
+// Fix only touches the docblocks AbstractDoctrineAnnotationFixer accepts.
 func (DoctrineAnnotationSpaces) Fix(s *tokens.Stream) bool {
-	return applyToDocblocks(s, func(d *docblock) bool {
-		changed := false
-		for i := range d.inner {
-			fixed, ok := fixDoctrineSpacesLine(d.inner[i].content)
-			if ok && fixed != d.inner[i].content {
-				d.inner[i].content = fixed
-				changed = true
+	changed := false
+	for i := range s.Len() {
+		t := s.At(i)
+		if t.Kind != token.DocComment || !docAnnotationEligible(s, i) {
+			continue
+		}
+		d, ok := parseDoc(t.Value)
+		if !ok {
+			continue
+		}
+		mutated := false
+		for j := range d.inner {
+			fixed, ok := fixDoctrineSpacesLine(d.inner[j].content)
+			if ok && fixed != d.inner[j].content {
+				d.inner[j].content = fixed
+				mutated = true
 			}
 		}
-		return changed
-	})
+		if mutated {
+			s.SetValue(i, d.render())
+			changed = true
+		}
+	}
+	return changed
 }
 
 // fixDoctrineSpacesLine rewrites a single doc line that holds one complete
