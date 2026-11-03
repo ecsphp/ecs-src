@@ -129,25 +129,6 @@ func classMemberStarts(s *tokens.Stream, open int) []int {
 	return starts
 }
 
-// braceDepthAt returns the number of "{" still open before index idx.
-func braceDepthAt(s *tokens.Stream, idx int) int {
-	d := 0
-	for j := range idx {
-		if s.At(j).Kind != token.Punct {
-			continue
-		}
-		switch s.At(j).Value {
-		case "{":
-			d++
-		case "}":
-			if d > 0 {
-				d--
-			}
-		}
-	}
-	return d
-}
-
 // lineIndent is PHP-CS-Fixer's IndentationTrait::getLineIndentation: the
 // spaces and tabs after the last line break of the nearest whitespace or
 // inline-HTML token before idx that has one.

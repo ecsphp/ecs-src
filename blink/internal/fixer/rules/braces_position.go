@@ -22,8 +22,9 @@ type BracesPosition struct {
 	anonymousFunctionsOpeningBrace string
 	controlStructuresOpeningBrace  string
 	// allowSingleLineAnonFnsSet records whether the option was given; the value
-	// defaults to true (php-cs-fixer default), so a false value expands a
-	// single-line closure body onto its own lines.
+	// defaults to true (php-cs-fixer 3 default), which keeps a single-line
+	// closure body on its line, while false puts every closure body on lines of
+	// its own.
 	allowSingleLineAnonFns    bool
 	allowSingleLineAnonFnsSet bool
 }
@@ -68,13 +69,6 @@ func (BracesPosition) SourceURL() string {
 
 func (f BracesPosition) Fix(s *tokens.Stream) bool {
 	changed := false
-	// allow_single_line_anonymous_functions=false expands a single-line closure
-	// body onto its own lines (statement_indentation then aligns it)
-	if f.allowSingleLineAnonFnsSet && !f.allowSingleLineAnonFns {
-		if f.expandSingleLineClosureBodies(s) {
-			changed = true
-		}
-	}
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
 			continue
@@ -111,83 +105,108 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 			continue
 		}
 
-		nextLine, handle := f.wantNextLine(category, s, i)
-		if !handle {
-			continue
+		// php-cs-fixer's $addNewlinesInsideBraces, for closures only so far
+		newlinesInside := kind == braceClosure && f.closureBodyNeedsNewlines(s, i)
+		if newlinesInside && bpOpenBraceNeedsNewline(s, i) {
+			changed = editSlotAfter(s, i, "\n"+lineIndent(s, i)) || changed
 		}
 
-		want := " "
-		if nextLine {
-			// php-cs-fixer aligns the brace with the line holding the
-			// declaration keyword, not with the brace nesting depth: a method of
-			// an anonymous class inside an argument list sits deeper than that
-			want = "\n" + lineIndent(s, kw)
-		}
-		if i > 0 && s.At(i-1).Kind == token.Whitespace {
-			if s.At(i-1).Value != want {
-				s.SetValue(i-1, want)
+		if nextLine, handle := f.wantNextLine(category, s, i); handle {
+			want := " "
+			if nextLine {
+				// php-cs-fixer aligns the brace with the line holding the keyword
+				want = "\n" + lineIndent(s, kw)
+			}
+			if i > 0 && s.At(i-1).Kind == token.Whitespace {
+				if s.At(i-1).Value != want {
+					s.SetValue(i-1, want)
+					changed = true
+				}
+			} else {
+				s.InsertAt(i, token.Token{Kind: token.Whitespace, Value: want})
+				i++
 				changed = true
 			}
-		} else {
-			s.InsertAt(i, token.Token{Kind: token.Whitespace, Value: want})
-			i++
+		}
+
+		if newlinesInside && bpCloseBraceOnOwnLine(s, i) {
 			changed = true
 		}
 	}
 	return changed
 }
 
-// expandSingleLineClosureBodies puts the body of a single-line anonymous function
-// ("function () { ... }") on its own lines, matching php-cs-fixer with
-// allow_single_line_anonymous_functions=false. An empty body or one that already
-// starts on a new line is left alone; statement_indentation aligns the rest.
-func (f BracesPosition) expandSingleLineClosureBodies(s *tokens.Stream) bool {
-	changed := false
-	for i := s.Len() - 1; i >= 0; i-- {
-		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
-			continue
-		}
-		if kind, _ := classifyBrace(s, i); kind != braceClosure {
-			continue
-		}
-		closeIdx := s.MatchForward(i)
-		if closeIdx < 0 || sigNext(s, i) == closeIdx {
-			continue // empty body
-		}
-		if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && hasNewline(s.At(i+1).Value) {
-			continue // body already starts on its own line
-		}
-		if braceHasCommentOnOpenLine(s, i, closeIdx) {
-			continue // a comment shares the "{" line; php-cs-fixer leaves it
-		}
-		depth := braceDepthAt(s, i)
-		if editSlotBefore(s, closeIdx, "\n"+strings.Repeat("    ", depth)) {
-			changed = true
-		}
-		if editSlotAfter(s, i, "\n"+strings.Repeat("    ", depth+1)) {
-			changed = true
-		}
+// closureBodyNeedsNewlines reports whether the body of the anonymous function
+// whose "{" is at open goes on lines of its own: always when
+// allow_single_line_anonymous_functions is false, and otherwise only when
+// some whitespace inside the braces already holds a line break.
+func (f BracesPosition) closureBodyNeedsNewlines(s *tokens.Stream, open int) bool {
+	if f.allowSingleLineAnonFnsSet && !f.allowSingleLineAnonFns {
+		return true
 	}
-	return changed
-}
-
-// braceHasCommentOnOpenLine reports whether a comment appears between the "{" at
-// open and the first newline (i.e. on the same line as the brace).
-func braceHasCommentOnOpenLine(s *tokens.Stream, open, closeIdx int) bool {
+	closeIdx := s.MatchForward(open)
 	for j := open + 1; j < closeIdx; j++ {
-		t := s.At(j)
-		if t.Kind == token.Whitespace {
-			if hasNewline(t.Value) {
-				return false
-			}
-			continue
-		}
-		if t.Kind == token.Comment || t.Kind == token.DocComment {
+		if s.At(j).Kind == token.Whitespace && hasNewline(s.At(j).Value) {
 			return true
 		}
-		return false
 	}
 	return false
+}
+
+// bpOpenBraceNeedsNewline reports whether php-cs-fixer breaks the line after
+// the "{" at open: not when a line break already follows it (comments
+// directly after the brace aside), when a comment shares its line, or when
+// the next meaningful token is "?>".
+func bpOpenBraceNeedsNewline(s *tokens.Stream, open int) bool {
+	for j := open + 1; j < s.Len()-1; j++ {
+		t := s.At(j)
+		if t.Kind == token.Comment || t.Kind == token.DocComment {
+			continue
+		}
+		if t.Kind == token.Whitespace && hasNewline(t.Value) {
+			return false
+		}
+		break
+	}
+	if j := open + 1; j < s.Len() {
+		if s.At(j).Kind == token.Whitespace && !hasNewline(s.At(j).Value) {
+			j++
+		}
+		if j < s.Len() && (s.At(j).Kind == token.Comment || s.At(j).Kind == token.DocComment) {
+			return false
+		}
+	}
+	if n := sigNext(s, open); n >= 0 && s.At(n).Kind == token.CloseTag {
+		return false
+	}
+	return true
+}
+
+// bpCloseBraceOnOwnLine puts the "}" matching the "{" at open on a line of its
+// own, at the indentation of the line holding the "{", unless it already
+// starts a line or directly follows "<?php".
+func bpCloseBraceOnOwnLine(s *tokens.Stream, open int) bool {
+	closeIdx := s.MatchForward(open)
+	if closeIdx < 0 {
+		return false
+	}
+	if p := sigPrev(s, closeIdx); p >= 0 && s.At(p).Kind == token.OpenTag {
+		return false
+	}
+	prev := closeIdx - 1
+	for prev > 0 && s.At(prev).Value == "" {
+		prev--
+	}
+	if s.At(prev).Kind == token.Whitespace && hasNewline(s.At(prev).Value) {
+		return false
+	}
+	ws := "\n" + lineIndent(s, open)
+	if s.At(prev).Kind == token.Whitespace {
+		s.SetValue(prev, ws)
+	} else {
+		s.InsertAt(prev+1, token.Token{Kind: token.Whitespace, Value: ws})
+	}
+	return true
 }
 
 // wantNextLine resolves the configured position for a brace category to whether

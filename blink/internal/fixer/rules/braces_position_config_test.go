@@ -24,16 +24,19 @@ func TestBracesPositionConfig(t *testing.T) {
 		t.Fatalf("control next_line: changed=%v got=%q", changed, got)
 	}
 
-	// allow_single_line_anonymous_functions=false expands a single-line closure body
+	// allow_single_line_anonymous_functions=false expands a single-line closure
+	// body, at the "{" line's indentation (StatementIndentation indents it)
 	noSingle := BracesPosition{}.WithConfig(map[string]any{"allow_single_line_anonymous_functions": false}).(fixerRule)
 	got, changed = apply(t, noSingle, "<?php\n$f = function ($x) { return $x; };\n")
-	if want := "<?php\n$f = function ($x) {\n    return $x;\n};\n"; !changed || got != want {
+	if want := "<?php\n$f = function ($x) {\nreturn $x;\n};\n"; !changed || got != want {
 		t.Fatalf("closure expand: changed=%v got=%q", changed, got)
 	}
-	// an empty body or a comment on the brace line is left alone
-	if _, changed := apply(t, noSingle, "<?php\n$f = function ($x) {};\n"); changed {
-		t.Fatal("empty closure body must be left alone")
+	// an empty body is expanded too
+	got, changed = apply(t, noSingle, "<?php\n$f = function ($x) {};\n")
+	if want := "<?php\n$f = function ($x) {\n};\n"; !changed || got != want {
+		t.Fatalf("empty closure: changed=%v got=%q", changed, got)
 	}
+	// a comment on the brace line keeps the line break after it as is
 	if _, changed := apply(t, noSingle, "<?php\n$f = function ($x) { // note\n    return $x;\n};\n"); changed {
 		t.Fatal("comment on brace line must be left alone")
 	}
