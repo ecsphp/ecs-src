@@ -16,4 +16,10 @@ func TestNoAlternativeSyntaxConfig(t *testing.T) {
 	if want := "<?php if ($a) { echo 1; }"; !changed || got != want {
 		t.Fatalf("monolithic: changed=%v got=%q", changed, got)
 	}
+	// the newline after a final "?>" belongs to the close tag in PHP, so the
+	// file is still monolithic
+	got, changed = apply(t, f.(fixerRule), "<?php\nif ($a):\n    echo 1;\nendif;\n?>\n")
+	if want := "<?php\nif ($a) {\n    echo 1;\n}\n?>\n"; !changed || got != want {
+		t.Fatalf("close tag newline: changed=%v got=%q", changed, got)
+	}
 }

@@ -35,7 +35,7 @@ func nasIsMonolithic(s *tokens.Stream) bool {
 		case token.OpenTag:
 			opens++
 		case token.InlineHTML:
-			if i > 0 && s.At(i-1).Kind == token.CloseTag && (t.Value == "\n" || t.Value == "\r\n") {
+			if i > 0 && s.At(i-1).Kind == token.CloseTag && (t.Value == "\n" || t.Value == "\r\n" || t.Value == "\r") {
 				continue
 			}
 			html++

@@ -59,8 +59,41 @@ func TestBlankLineAfterOpeningTag(t *testing.T) {
 	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php\n\n$a = 1;\n"); changed {
 		t.Fatal("existing blank line must not change")
 	}
-	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php $a = 1;\n"); changed {
-		t.Fatal("code on tag line must not change")
+	// the cases below mirror PHP-CS-Fixer's output for each input
+	cases := map[string]string{
+		// code on the tag line moves below a blank line
+		"<?php $a = 1;\n$b = 2;\n":             "<?php\n\n$a = 1;\n$b = 2;\n",
+		"<?php /* c */\n$a = 1;\n":             "<?php\n\n/* c */\n$a = 1;\n",
+		"<?php\t$a = 1;\n":                     "<?php\n\n$a = 1;\n",
+		"<?php  $a = 1;\n":                     "<?php\n\n $a = 1;\n",
+		"<?php echo 1; // x\n":                 "<?php\n\necho 1; // x\n",
+		"<?php\n    $a = 1;\n":                 "<?php\n\n    $a = 1;\n",
+		"<?php\r\n$a = 1;\r\n":                 "<?php\r\n\n$a = 1;\r\n",
+		"#!/usr/bin/env php\n<?php\n$a = 1;\n": "#!/usr/bin/env php\n<?php\n\n$a = 1;\n",
+		// a close tag's newline is part of the tag: still monolithic
+		"<?php\n$a = 1;\n?>\n": "<?php\n\n$a = 1;\n?>\n",
+		// only whitespace after the tag
+		"<?php \n":  "<?php\n\n",
+		"<?php\n  ": "<?php\n\n  ",
+	}
+	for src, want := range cases {
+		if got, changed := apply(t, BlankLineAfterOpeningTag{}, src); !changed || got != want {
+			t.Fatalf("%q: changed=%v got=%q want=%q", src, changed, got, want)
+		}
+	}
+	for _, src := range []string{
+		"<?php $a = 1;",                      // no newline at all
+		"<?php\n \n$a = 1;\n",                // the token after the tag holds a newline
+		"<?php\n$a = 1;\n?>\n<p>x</p>\n",     // inline HTML
+		"<?php\n$a = 1; ?>\n<?php $b = 2;\n", // two open tags
+		"<?php\n$a = 1;\n?>\n<?= $a ?>\n",    // short echo tag
+		"<?php\n",                            // nothing after the tag
+		"<?php\r\n",
+		"#!/usr/bin/env php\n<?php\n",
+	} {
+		if got, changed := apply(t, BlankLineAfterOpeningTag{}, src); changed {
+			t.Fatalf("%q must not change: got=%q", src, got)
+		}
 	}
 	// only a monolithic PHP file: the data after __halt_compiler is inline HTML,
 	// the newline right after "?>" is not
