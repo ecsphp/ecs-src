@@ -49,3 +49,20 @@ func TestFunctionDeclarationTrailingCommaSingleLine(t *testing.T) {
 		t.Fatalf("trailing_comma_single_line=false: changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+// TestFunctionDeclarationTrailingCommaClosuresAndArrowFns checks the closure
+// "use" list and arrow functions too; the expected output comes from
+// PHP-CS-Fixer (a multi-line closure "use" keeps its comma).
+func TestFunctionDeclarationTrailingCommaClosuresAndArrowFns(t *testing.T) {
+	t.Parallel()
+	cfg := FunctionDeclaration{}.WithConfig(map[string]any{"trailing_comma_single_line": false})
+	in := "<?php\n$f = function($x,) use ($y,) {};\n$g = fn ($x,) => 1;\n$h = fn ($x, /* c */) => 1;\nfunction k($a,) {}\n$j = static fn &($x,) => $x;\n$m = fn ($x , ) => 1;\nfunction n($a ,) {}\n$q = function () use ($a, /* x */ ) {};\n"
+	want := "<?php\n$f = function ($x) use ($y) {};\n$g = fn ($x) => 1;\n$h = fn ($x /* c */) => 1;\nfunction k($a) {}\n$j = static fn &($x) => $x;\n$m = fn ($x) => 1;\nfunction n($a) {}\n$q = function () use ($a /* x */) {};\n"
+	if got, _ := apply(t, cfg, in); got != want {
+		t.Errorf("got %q\nwant %q", got, want)
+	}
+	multi := "<?php\n$f = function ($a) use ($b,\n) {};\n"
+	if got, _ := apply(t, cfg, multi); got != multi {
+		t.Errorf("multi-line use list: got %q", got)
+	}
+}
