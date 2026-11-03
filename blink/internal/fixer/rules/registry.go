@@ -126,6 +126,7 @@ func CommonFixers() []fixer.Fixer {
 		NoUselessSprintf{},
 		ModernizeTypesCasting{},
 		FopenFlagOrder{},
+		SimpleToComplexStringVariable{},
 	}
 }
 
