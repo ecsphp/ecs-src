@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/token"
@@ -149,8 +150,10 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 	return true
 }
 
-// importIsUsed reports whether the import's short name appears as a matching-kind
-// reference or in a comment (word-boundary) within its namespace region [lo, hi].
+// importIsUsed ports NoUnusedImportsFixer::isImportUsed(): whether the
+// import's short name appears (case-insensitively) as a matching-kind reference,
+// anywhere inside an attribute, or as a word in a comment within its namespace
+// region [lo, hi]. Use statements themselves are skipped.
 func importIsUsed(s *tokens.Stream, im importInfo, lo, hi int, inImport func(int) bool) bool {
 	if lo < 0 {
 		lo = 0
@@ -158,10 +161,19 @@ func importIsUsed(s *tokens.Stream, im importInfo, lo, hi int, inImport func(int
 	if hi >= s.Len() {
 		hi = s.Len() - 1
 	}
+	inAttribute := false
 	for k := lo; k <= hi; k++ {
 		t := s.At(k)
+		switch t.Kind {
+		case token.AttributeStart:
+			inAttribute = true
+			continue
+		case token.AttributeEnd:
+			inAttribute = false
+			continue
+		}
 		if t.Kind == token.Ident && !inImport(k) && strings.ToLower(t.Value) == im.shortLower {
-			if usageMatchesKind(s, k, im.kind) {
+			if usageMatchesKind(s, k, im.kind, inAttribute) {
 				return true
 			}
 			continue
@@ -177,6 +189,54 @@ func importIsUsed(s *tokens.Stream, im importInfo, lo, hi int, inImport func(int
 		}
 	}
 	return false
+}
+
+// usageMatchesKind reports whether the name at k is a reference of the given
+// import kind, following isImportUsed's checks on its meaningful neighbours
+// (comments and whitespace skipped).
+func usageMatchesKind(s *tokens.Stream, k int, kind string, inAttribute bool) bool {
+	var prev, next token.Token
+	if p := prevMeaningfulIndex(s, k); p >= 0 {
+		prev = s.At(p)
+	}
+	if n := nextMeaningfulIndex(s, k); n >= 0 {
+		next = s.At(n)
+	}
+	isPunct := func(t token.Token, vals ...string) bool {
+		return t.Kind == token.Punct && slices.Contains(vals, t.Value)
+	}
+	// a named argument "f(Name: 1)" is CT::T_NAMED_ARGUMENT_NAME in PHP-CS-Fixer,
+	// never a T_STRING, so it never counts
+	if isPunct(prev, "(", ",") && isPunct(next, ":") {
+		return false
+	}
+	if isPunct(prev, `\`, "->", "?->", "::") {
+		return false
+	}
+	if prev.Kind == token.Keyword {
+		switch strings.ToLower(prev.Value) {
+		case "namespace", "function":
+			return false
+		case "const":
+			if isPunct(next, "=") {
+				return false
+			}
+		}
+	}
+	if inAttribute {
+		return true // any matching name inside #[...] counts, whatever its kind
+	}
+	// a goto label "Name:" after ":", ";", "{", "}" or the open tag
+	if isPunct(next, ":") && (isPunct(prev, ":", ";", "{", "}") || prev.Kind == token.OpenTag) {
+		return false
+	}
+	prevNew := prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "new")
+	fnCall := isPunct(next, "(") && !prevNew
+	if kind == "function" {
+		return fnCall
+	}
+	// class and const references are any matching identifier that is not a call
+	return !fnCall
 }
 
 // attributeNameAt reports whether the identifier at k is an attribute name - the
@@ -215,40 +275,6 @@ func attributeNameAt(s *tokens.Stream, k int) bool {
 		}
 	}
 	return false
-}
-
-// usageMatchesKind reports whether the identifier at k is a reference of the
-// given import kind.
-func usageMatchesKind(s *tokens.Stream, k int, kind string) bool {
-	if attributeNameAt(s, k) {
-		return kind == "class" // an attribute is always a class reference, even with "(" after
-	}
-	prev, hasPrev := prevSignificant(s, k)
-	if hasPrev {
-		if prev.Kind == token.Punct {
-			switch prev.Value {
-			case `\`, "->", "?->", "::":
-				return false
-			}
-		}
-		if prev.Kind == token.Keyword {
-			switch strings.ToLower(prev.Value) {
-			case "namespace", "function":
-				return false
-			case "const":
-				if nextSignificantValue(s, k) == "=" {
-					return false
-				}
-			}
-		}
-	}
-	prevNew := hasPrev && prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "new")
-	fnCall := nextSignificantValue(s, k) == "(" && !prevNew
-	if kind == "function" {
-		return fnCall
-	}
-	// class and const references are any matching identifier that is not a call
-	return !fnCall
 }
 
 // commentReferences reports whether short appears in v as a whole word, not

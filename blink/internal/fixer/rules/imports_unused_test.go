@@ -121,3 +121,23 @@ func TestNoUnusedImportsUnusedSameNamespaceRemovedTwice(t *testing.T) {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+// isImportUsed counts any matching name inside an attribute, whatever the
+// import kind, but never a named-argument name or a goto label, and reads the
+// neighbours of a name past comments.
+func TestNoUnusedImportsUsageLikePhpCsFixer(t *testing.T) {
+	t.Parallel()
+	kept := "<?php\nnamespace App;\n\nuse Vendor\\Option;\n\n#[Route(path: '/', methods: Option())]\nfunction run(): void {}\n"
+	if got, changed := apply(t, NoUnusedImports{}, kept); changed || got != kept {
+		t.Fatalf("name inside an attribute must count; changed=%v got=%q", changed, got)
+	}
+	kept = "<?php\nnamespace App;\n\nuse Vendor\\Thing;\n\n$x = new /* the */ Thing();\n"
+	if got, changed := apply(t, NoUnusedImports{}, kept); changed || got != kept {
+		t.Fatalf("comment between new and the name must be skipped; changed=%v got=%q", changed, got)
+	}
+	src := "<?php\nnamespace App;\n\nuse Vendor\\Label;\nuse Vendor\\Limit;\n\nfetch(limit: 3);\nlabel:\necho 1;\n"
+	want := "<?php\nnamespace App;\n\n\nfetch(limit: 3);\nlabel:\necho 1;\n"
+	if got, changed := apply(t, NoUnusedImports{}, src); !changed || got != want {
+		t.Fatalf("named argument and goto label are not usages; changed=%v got=%q want=%q", changed, got, want)
+	}
+}
