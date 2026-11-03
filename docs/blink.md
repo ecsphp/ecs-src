@@ -47,7 +47,7 @@ The shape is:
 }
 ```
 
-Configured fixer options are read off the fixer instance; sniff properties are not extracted yet.
+Configured fixer options are read off the fixer instance; sniff properties are not extracted yet. A skipped interface or parent class (ECS matches class skips with `is_a()`) is dumped as is, followed by one entry per configured checker it covers, so ecs-go can match skips by exact checker class.
 
 ## Binary resolution
 

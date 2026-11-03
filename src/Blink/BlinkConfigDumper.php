@@ -77,21 +77,47 @@ final readonly class BlinkConfigDumper
             ];
         }
 
-        foreach ($this->skippedCriteriaResolver->resolveClasses() as $checkerClass => $paths) {
-            if ($paths === null) {
-                $skips[] = [
-                    'class' => $checkerClass,
-                ];
-                continue;
+        $configuredCheckerClasses = $this->resolveConfiguredCheckerClasses();
+
+        foreach ($this->skippedCriteriaResolver->resolveClasses() as $skippedClass => $paths) {
+            // SkipSkipper matches with is_a(), so also name each configured
+            // checker a skipped interface or parent class covers
+            $checkerClasses = [$skippedClass];
+            foreach ($configuredCheckerClasses as $configuredCheckerClass) {
+                if ($configuredCheckerClass !== $skippedClass && is_a($configuredCheckerClass, $skippedClass, true)) {
+                    $checkerClasses[] = $configuredCheckerClass;
+                }
             }
 
-            $skips[] = [
-                'class' => $checkerClass,
-                'paths' => array_values($paths),
-            ];
+            foreach ($checkerClasses as $checkerClass) {
+                $skips[] = $paths === null ? [
+                    'class' => $checkerClass,
+                ] : [
+                    'class' => $checkerClass,
+                    'paths' => array_values($paths),
+                ];
+            }
         }
 
         return $skips;
+    }
+
+    /**
+     * @return array<class-string>
+     */
+    private function resolveConfiguredCheckerClasses(): array
+    {
+        $checkerClasses = [];
+
+        foreach ($this->fixerFileProcessor->getCheckers() as $fixer) {
+            $checkerClasses[] = $fixer::class;
+        }
+
+        foreach ($this->sniffFileProcessor->getCheckers() as $sniff) {
+            $checkerClasses[] = $sniff::class;
+        }
+
+        return array_values(array_unique($checkerClasses));
     }
 
     /**
