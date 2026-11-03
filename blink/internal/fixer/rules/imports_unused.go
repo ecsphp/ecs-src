@@ -443,44 +443,6 @@ func (c *clearableTokens) scanUntilNewLine(i, dir int) (int, bool) {
 	return -1, has
 }
 
-// attributeNameAt reports whether the identifier at k is an attribute name - the
-// first segment right after "#[", or after a top-level comma in a grouped attribute
-// "#[A, B]". Such a name is a class reference regardless of a following "(".
-func attributeNameAt(s *tokens.Stream, k int) bool {
-	p := prevSignificantIndex(s, k)
-	if p < 0 {
-		return false
-	}
-	if s.At(p).Kind == token.AttributeStart {
-		return true
-	}
-	if s.At(p).Kind != token.Punct || s.At(p).Value != "," {
-		return false
-	}
-	depth := 0
-	for j := p - 1; j >= 0; j-- {
-		t := s.At(j)
-		if t.Kind == token.AttributeStart && depth == 0 {
-			return true
-		}
-		if t.Kind == token.AttributeEnd {
-			return false
-		}
-		if t.Kind == token.Punct {
-			switch t.Value {
-			case ")", "]", "}":
-				depth++
-			case "(", "[", "{":
-				if depth == 0 {
-					return false
-				}
-				depth--
-			}
-		}
-	}
-	return false
-}
-
 // commentReferences reports whether short appears in v as a whole word, not
 // preceded by an identifier char, "$" or "\".
 func commentReferences(v, short string) bool {
