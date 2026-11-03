@@ -4,8 +4,9 @@ import "testing"
 
 func TestClassDefinitionNormalizesSpaces(t *testing.T) {
 	t.Parallel()
+	// the opening brace of a named class goes on the next line (PHP-CS-Fixer)
 	got, changed := apply(t, ClassDefinition{}, "<?php class  A  extends  B  implements  C {}")
-	want := "<?php class A extends B implements C {}"
+	want := "<?php class A extends B implements C\n{}"
 	if !changed || got != want {
 		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
 	}
@@ -13,7 +14,7 @@ func TestClassDefinitionNormalizesSpaces(t *testing.T) {
 
 func TestClassDefinitionLeavesCorrectHeader(t *testing.T) {
 	t.Parallel()
-	src := "<?php class A extends B implements C {}"
+	src := "<?php class A extends B implements C\n{}"
 	got, changed := apply(t, ClassDefinition{}, src)
 	if changed || got != src {
 		t.Fatalf("correct header must be untouched: changed=%v got=%q", changed, got)

@@ -215,6 +215,7 @@ type setConfig map[string]map[string]any
 // in perCSRules.
 var (
 	commonConfig = setConfig{
+		"ClassDefinitionFixer":               {"single_line": true},
 		"ConcatSpaceFixer":                   {"spacing": "one"},
 		"GeneralPhpdocAnnotationRemoveFixer": {"annotations": []any{"author", "package", "group", "category"}},
 		"NoSuperfluousPhpdocTagsFixer":       {"allow_mixed": true, "remove_inheritdoc": true},
