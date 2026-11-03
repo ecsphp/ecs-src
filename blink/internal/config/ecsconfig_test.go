@@ -275,3 +275,41 @@ func TestLoadECSKeepsConfigKeyOrder(t *testing.T) {
 		}
 	}
 }
+
+// No path list skips the rule everywhere, a list on those paths, an empty list nowhere.
+func TestLoadECSClassSkipPathLists(t *testing.T) {
+	cases := []struct {
+		name      string
+		skip      string
+		wantRules int
+		wantPaths []string
+	}{
+		{"no paths", `{"class": "` + esc(knownRuleA) + `"}`, 0, nil},
+		{"null paths", `{"class": "` + esc(knownRuleA) + `", "paths": null}`, 0, nil},
+		{"some paths", `{"class": "` + esc(knownRuleA) + `", "paths": ["/p/old/*.php", "/p/src/Web"]}`, 1, []string{"/p/old/*.php", "/p/src/Web"}},
+		{"empty paths", `{"class": "` + esc(knownRuleA) + `", "paths": []}`, 1, []string{}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg, _, err := LoadECS(writeECS(t, `{
+				"rules": [{"class": "`+esc(knownRuleA)+`", "config": {}}],
+				"skips": [`+c.skip+`]
+			}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(cfg.Rules) != c.wantRules {
+				t.Fatalf("rules = %d, want %d", len(cfg.Rules), c.wantRules)
+			}
+			got, ok := cfg.PerPathRuleSkips[knownRuleA]
+			if ok != (c.wantPaths != nil) || len(got) != len(c.wantPaths) {
+				t.Fatalf("per-path skips = %v (present %v), want %v", got, ok, c.wantPaths)
+			}
+			for i := range got {
+				if got[i] != c.wantPaths[i] {
+					t.Fatalf("per-path skips = %v, want %v", got, c.wantPaths)
+				}
+			}
+		})
+	}
+}

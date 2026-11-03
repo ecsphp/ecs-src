@@ -151,7 +151,8 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 	skippedClasses := map[string]bool{}
 	for _, skip := range f.Skips {
 		switch {
-		case skip.Class != "" && skip.Path == "" && len(skip.Paths) == 0:
+		// no path list skips the class everywhere; an empty list skips nothing
+		case skip.Class != "" && skip.Path == "" && skip.Paths == nil:
 			skippedClasses[skip.Class] = true
 		case skip.Class != "":
 			// A rule disabled only on some paths: skip that rule on those paths,
