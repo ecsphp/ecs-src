@@ -27,4 +27,11 @@ func TestArrayIndentation(t *testing.T) {
 	if _, changed := apply(t, f, "<?php\n$a = [\n    'x' => 1,\n];\n"); changed {
 		t.Fatal("correctly indented array must be a no-op")
 	}
+
+	// indentation of the opening line lives in a preceding inline-HTML token;
+	// items are indented one level past it (8 -> 12), closer back to it (8)
+	got, changed = apply(t, f, "<?php $x = 1; ?>\n        <a href=\"<?php echo foo([\n'a' => 1,\n'b' => 2,\n]); ?>\">\n")
+	if want := "<?php $x = 1; ?>\n        <a href=\"<?php echo foo([\n            'a' => 1,\n            'b' => 2,\n        ]); ?>\">\n"; !changed || got != want {
+		t.Fatalf("inline-html indent: changed=%v got=%q", changed, got)
+	}
 }

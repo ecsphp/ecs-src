@@ -55,6 +55,8 @@ func (ArrayIndentation) Fix(s *tokens.Stream) bool {
 
 		if t.Kind == token.Whitespace && hasNewline(t.Value) {
 			lastIndent = aiExtractIndent(t.Value)
+		} else if t.Kind == token.InlineHTML && hasNewline(t.Value) {
+			lastIndent = aiLeadingIndent(t.Value)
 		}
 
 		if cur < 0 {
@@ -208,6 +210,20 @@ func aiExtractIndent(ws string) string {
 		return ws[i+1:]
 	}
 	return ws
+}
+
+// aiLeadingIndent returns the leading spaces/tabs of the last line, mirroring
+// PHP-CS-Fixer's getLineIndentation reading indentation off an inline-HTML token.
+func aiLeadingIndent(text string) string {
+	line := text
+	if i := strings.LastIndexByte(text, '\n'); i >= 0 {
+		line = text[i+1:]
+	}
+	n := 0
+	for n < len(line) && (line[n] == ' ' || line[n] == '\t') {
+		n++
+	}
+	return line[:n]
 }
 
 // aiReindentArray keeps the newline run of a whitespace token and sets the line's
