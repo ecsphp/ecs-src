@@ -215,3 +215,13 @@ func taArrowFunctionEnd(s *tokens.Stream, i int) int {
 	}
 	return sigPrev(s, index)
 }
+
+func taSeqVariable(name string) taSeqItem {
+	return func(s *tokens.Stream, i int) bool {
+		return s.At(i).Kind == token.Variable && s.At(i).Value == name
+	}
+}
+
+func taSeqKeyword(name string) taSeqItem {
+	return func(s *tokens.Stream, i int) bool { return kwIs(s.At(i), name) }
+}

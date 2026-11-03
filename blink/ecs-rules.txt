@@ -37,8 +37,8 @@ RECENTLY IMPLEMENTED
 PhpUnitConstruct, PhpUnitFqcnAnnotation, PhpUnitMockShortWillReturn,
 PhpUnitTestAnnotation, DoctrineAnnotationBraces, GlobalKeyword sniff,
 DeclareStrictTypes, VoidReturn, StaticLambda, NoUselessElse,
-NoUnneededFinalMethod (in no ECS set, so not counted above; ported for configs
-that enable them),
+NoUnneededFinalMethod, NoPhp4Constructor (in no ECS set, so not counted above;
+ported for configs that enable them),
 PsrAutoloading, NoBreakComment, LambdaNotUsedImport, ModifierKeywords,
 OperatorLinebreak, FullyQualifiedStrictTypes, PhpdocSeparation, PhpdocToComment,
 GeneralPhpdocTagRename, DoctrineAnnotationArrayAssignment,

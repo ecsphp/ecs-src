@@ -70,6 +70,7 @@ var fixerPriority = map[string]int{
 	"StaticLambdaFixer":                               0,
 	"NoUselessElseFixer":                              39,
 	"NoUnneededFinalMethodFixer":                      0,
+	"NoPhp4ConstructorFixer":                          75,
 	"EmptyLoopBodyFixer":                              39,
 	"EmptyLoopConditionFixer":                         1,
 	"EncodingFixer":                                   100,

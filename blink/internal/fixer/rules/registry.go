@@ -229,6 +229,7 @@ func ConstructFixers() []fixer.Fixer {
 		StaticLambda{},
 		NoUselessElse{},
 		NoUnneededFinalMethod{},
+		NoPhp4Constructor{},
 	}
 }
 

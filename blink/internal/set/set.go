@@ -68,6 +68,7 @@ var percsExcluded = map[string]bool{
 	"StaticLambdaFixer":                  true,
 	"NoUselessElseFixer":                 true,
 	"NoUnneededFinalMethodFixer":         true,
+	"NoPhp4ConstructorFixer":             true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
