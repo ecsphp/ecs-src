@@ -51,4 +51,5 @@ FopenFlagOrder, SimpleToComplexStringVariable, StringLineEnding,
 NonPrintableCharacter, NoHomoglyphNames, StringLengthToEmpty,
 ModernSerializationMethods, ArrayPush, SetTypeToCast, PowToExponentiation,
 EregToPreg, ModernizeStrpos, BacktickToShellExec, ErrorSuppression,
-GetClassToClassKeyword, LogicalOperators, TernaryToElvisOperator, EchoTagSyntax.
+GetClassToClassKeyword, LogicalOperators, TernaryToElvisOperator, EchoTagSyntax,
+SemicolonAfterInstruction.

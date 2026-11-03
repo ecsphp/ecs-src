@@ -582,7 +582,7 @@ func (v *elvisView) clearUnit(a int) {
 func (TernaryToElvisOperator) Fix(s *tokens.Stream) bool {
 	// indices below assume no cleared placeholders, as after PHP-CS-Fixer's
 	// clearEmptyTokens between fixers
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 	var v *elvisView
 	changed := false
 	for index := s.Len() - 1; index > 1; index-- {
@@ -612,7 +612,7 @@ func (TernaryToElvisOperator) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	if changed {
-		compactEmptyTokens(s)
+		s.ClearEmptyTokens()
 	}
 	return changed
 }

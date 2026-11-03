@@ -23,7 +23,7 @@ func (GetClassToClassKeyword) SourceURL() string {
 func (GetClassToClassKeyword) Fix(s *tokens.Stream) bool {
 	// indices below assume no cleared placeholders, as after PHP-CS-Fixer's
 	// clearEmptyTokens between fixers
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 	type call struct{ index, open, variable, close int }
 	var calls []call
 	var analysis gfcAnalysis
@@ -91,6 +91,6 @@ outer:
 	for k, c := range calls {
 		s.InsertSliceAt(c.index, replacements[k])
 	}
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 	return true
 }

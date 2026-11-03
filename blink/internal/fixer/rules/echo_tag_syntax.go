@@ -100,7 +100,7 @@ func echoTagLongToShort(s *tokens.Stream, simpleOnly bool) bool {
 		changed = true
 	}
 	if changed {
-		compactEmptyTokens(s)
+		s.ClearEmptyTokens()
 	}
 	return changed
 }

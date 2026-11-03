@@ -97,6 +97,7 @@ var fixerPriority = map[string]int{
 	"LogicalOperatorsFixer":                           0,
 	"TernaryToElvisOperatorFixer":                     2,
 	"EchoTagSyntaxFixer":                              0,
+	"SemicolonAfterInstructionFixer":                  2,
 	"HeredocToNowdocFixer":                            0,
 	"IncludeFixer":                                    0,
 	"IndentationTypeFixer":                            50,
