@@ -96,7 +96,7 @@ func (SwitchCaseSpace) Fix(s *tokens.Stream) bool {
 		}
 		if def >= 0 {
 			if def+2 >= s.Len() || s.At(def+1).Kind != token.Whitespace ||
-				!(isPunctVal(s, def+2, ":") || isPunctVal(s, def+2, ";")) {
+				(!isPunctVal(s, def+2, ":") && !isPunctVal(s, def+2, ";")) {
 				continue
 			}
 			clearTokenAt(s, def+1)

@@ -45,7 +45,7 @@ func (NoUnneededImportAlias) Fix(s *tokens.Stream) bool {
 			j = sigPrev(s, j)
 		}
 		// "use", or the "{" of a group import "use App\{Foo, Bar}"
-		if j < 0 || !(kwIs(s.At(j), "use") || (isPunctVal(s, j, "{") && isPunctVal(s, sigPrev(s, j), `\`))) {
+		if j < 0 || !kwIs(s.At(j), "use") && (!isPunctVal(s, j, "{") || !isPunctVal(s, sigPrev(s, j), `\`)) {
 			continue
 		}
 		clearTokenAndMergeWS(s, alias)
