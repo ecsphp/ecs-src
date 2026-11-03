@@ -3,6 +3,7 @@
 package set
 
 import (
+	"maps"
 	"sort"
 	"strings"
 
@@ -11,20 +12,36 @@ import (
 )
 
 // Spaces is the ordered spaces set (safest first), matching ECS SpacesLevel.
-func Spaces() []fixer.Fixer { return rules.SpacingFixers() }
+func Spaces() []fixer.Fixer { return fromRegistry(rules.SpacingFixers(), spacesConfig) }
+
+// Casing is the casing set.
+func Casing() []fixer.Fixer { return fromRegistry(rules.CasingFixers(), nil) }
+
+// fromRegistry swaps each fixer for the registry's, which holds PHP-CS-Fixer's
+// defaults, then applies the options config gives it.
+func fromRegistry(fixers []fixer.Fixer, config setConfig) []fixer.Fixer {
+	out := make([]fixer.Fixer, 0, len(fixers))
+	for _, f := range fixers {
+		if registered, ok := rules.ByName(f.Name()); ok {
+			f = registered
+		}
+		out = append(out, configure(f, config[shortName(f.Name())]))
+	}
+	return out
+}
 
 // PSR12 is the @PSR-12 rule set as ECS exposes it (withPreparedSets(psr12: true)),
 // restricted to the fixers blink implements.
-func PSR12() []fixer.Fixer { return selectMembers(psr12Members) }
+func PSR12() []fixer.Fixer { return selectMembers(psr12Members, psr12Config) }
 
 // Common is ECS's common prepared set (array, casing, cleanup, comments,
 // control-structures, docblock, namespaces, spaces, clean-code), restricted to
 // the fixers blink implements.
-func Common() []fixer.Fixer { return selectMembers(commonMembers) }
+func Common() []fixer.Fixer { return selectMembers(commonMembers, commonConfig) }
 
 // Default is what blink runs with no config: psr12 + common, exactly the pair
 // ECS's default prepared sets enable. It is the union of PSR12 and Common.
-func Default() []fixer.Fixer { return selectMembers(defaultMembers) }
+func Default() []fixer.Fixer { return selectMembers(defaultMembers, defaultConfig) }
 
 // PERCS is ECS's SetList::PER_CS (config/set/per-cs.php), limited to the fixers
 // blink implements.
@@ -44,10 +61,7 @@ func build(set []setRule) []fixer.Fixer {
 		if !ok {
 			continue
 		}
-		if r.config != nil {
-			f = f.(fixer.ConfigurableFixer).WithConfig(r.config)
-		}
-		out = append(out, f)
+		out = append(out, configure(f, r.config))
 	}
 	rules.CanonicalOrder(out)
 	return out
@@ -163,23 +177,63 @@ var perCSRules = []setRule{
 
 var byName = map[string]func() []fixer.Fixer{
 	"spaces": Spaces,
-	"casing": rules.CasingFixers,
+	"casing": Casing,
 	"psr12":  PSR12,
 	"per-cs": PERCS,
 	"common": Common,
 }
 
 // selectMembers keeps the built-in fixers whose short class name is in members,
-// preserving All()'s priority-sorted execution order.
-func selectMembers(members map[string]bool) []fixer.Fixer {
+// preserving All()'s priority-sorted execution order, with the options config
+// gives them.
+func selectMembers(members map[string]bool, config setConfig) []fixer.Fixer {
 	var out []fixer.Fixer
 	for _, f := range rules.All() {
-		if members[shortName(f.Name())] {
-			out = append(out, f)
+		if name := shortName(f.Name()); members[name] {
+			out = append(out, configure(f, config[name]))
 		}
 	}
 	return out
 }
+
+// configure applies options over f's own (PHP-CS-Fixer's defaults for a
+// registry fixer); nil options leave f as it is.
+func configure(f fixer.Fixer, options map[string]any) fixer.Fixer {
+	if options == nil {
+		return f
+	}
+	return f.(fixer.ConfigurableFixer).WithConfig(options)
+}
+
+// setConfig maps a member's short class name to the options a set gives it.
+type setConfig map[string]map[string]any
+
+// The options ECS's prepared sets configure, for members whose blink default
+// (PHP-CS-Fixer's) differs from what the set wants. commonConfig mirrors the
+// RULE_CONFIGURATIONS of src/Config/Level/*Level.php, psr12Config
+// config/set/psr12.php and spacesConfig SpacesLevel. per-cs carries its options
+// in perCSRules.
+var (
+	commonConfig = setConfig{
+		"YodaStyleFixer": {"equal": false, "identical": false, "less_and_greater": false},
+	}
+	psr12Config  = setConfig{}
+	spacesConfig = setConfig{}
+)
+
+// defaultConfig is psr12Config then commonConfig, a later option winning.
+var defaultConfig = func() setConfig {
+	m := setConfig{}
+	for _, c := range []setConfig{psr12Config, commonConfig} {
+		for name, options := range c {
+			if m[name] == nil {
+				m[name] = map[string]any{}
+			}
+			maps.Copy(m[name], options)
+		}
+	}
+	return m
+}()
 
 // shortName returns the class name without its namespace ("...\FooFixer" -> "FooFixer").
 func shortName(name string) string {
