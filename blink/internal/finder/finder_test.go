@@ -3,6 +3,7 @@ package finder
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -91,5 +92,67 @@ func TestSkippedSegmentNotSubstring(t *testing.T) {
 		if got := Skipped(path, skip); got != want {
 			t.Errorf("Skipped(%q) = %v, want %v", path, got, want)
 		}
+	}
+}
+
+// Expected values are ECS's SourceFinder and FileInfoMatcher run under PHP on
+// the same tree.
+func TestFindBuildsPathsLikeSymfonyFinder(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []string{"src/Legacy/A.php", "src/LegacyOld/B.php", "src/C.php", "lib/D.php"} {
+		full := filepath.Join(root, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte("<?php echo 1;\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	abs := root + "/src"
+
+	cases := []struct {
+		cwd    string
+		source string
+		skip   string
+		want   []string // kept files, in walk order
+	}{
+		{"", "./src", "src/Legacy", []string{"./src/C.php", "./src/LegacyOld/B.php"}},
+		{"", "./src", "src/Leg", []string{"./src/C.php", "./src/Legacy/A.php", "./src/LegacyOld/B.php"}},
+		{"", "./src", "Legacy/A.php", []string{"./src/C.php", "./src/LegacyOld/B.php"}},
+		{"", "./src", "src/Legacy/*", []string{"./src/C.php", "./src/LegacyOld/B.php"}},
+		// the prefix quirk: "src/Legacy" is a string prefix of "src/LegacyOld/B.php"
+		{"", "src/", "src/Legacy", []string{"src/C.php"}},
+		{"", "src/", "src/Leg", []string{"src/C.php"}},
+		{"", "src", "src/Legacy", []string{"src/C.php"}},
+		{"", "src", "Legacy/A.php", []string{"src/C.php", "src/LegacyOld/B.php"}},
+		{"", "src//", "src/Legacy/*", []string{"src/C.php", "src/LegacyOld/B.php"}},
+		{"", abs, "src/Legacy", []string{abs + "/C.php", abs + "/LegacyOld/B.php"}},
+		{"", abs + "/", "src/Leg", []string{abs + "/C.php", abs + "/Legacy/A.php", abs + "/LegacyOld/B.php"}},
+		{"lib", "../src", "../src/Legacy", []string{"../src/C.php", "../src/LegacyOld/B.php"}},
+		{"lib", "../src", "src/Leg", []string{"../src/C.php", "../src/Legacy/A.php", "../src/LegacyOld/B.php"}},
+		{"lib", ".", "Legacy/A.php", []string{"./D.php"}},
+		{"lib", "./", "Legacy/A.php", []string{"./D.php"}},
+	}
+	for _, c := range cases {
+		t.Run(c.cwd+"|"+c.source+"|"+c.skip, func(t *testing.T) {
+			t.Chdir(filepath.Join(root, c.cwd))
+			found, discovered, err := Find([]string{c.source}, []string{c.skip})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(found, c.want) {
+				t.Fatalf("Find(%q, skip %q) = %q, want %q", c.source, c.skip, found, c.want)
+			}
+			wantDiscovered := 3
+			if c.cwd == "lib" && (c.source == "." || c.source == "./") {
+				wantDiscovered = 1
+			}
+			if discovered != wantDiscovered {
+				t.Fatalf("discovered = %d, want %d", discovered, wantDiscovered)
+			}
+		})
 	}
 }
