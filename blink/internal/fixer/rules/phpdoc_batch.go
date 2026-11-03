@@ -384,13 +384,16 @@ func removeDocLines(s *tokens.Stream, re *regexp.Regexp) bool {
 	})
 }
 
-var singleLineVarRe = regexp.MustCompile(`^(@(?:var|type|param))\s+([^\s$]+)\s*(\$\S+)?\s*(.*)$`)
-
-var phpdocWsRe = regexp.MustCompile(`\s+`)
+// singleLineVarRe is PhpdocSingleLineVarSpacingFixer's pattern
+// #^/\*\*\h*@var\h+(\S+)\h*(\$\S+)?\h*([^\n]*)\*/$#.
+var singleLineVarRe = regexp.MustCompile(`^/\*\*[ \t]*@var[ \t]+(\S+)[ \t]*(\$\S+)?[ \t]*([^\n]*)\*/$`)
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocSingleLineVarSpacingFixer.php
 //
-// PhpdocSingleLineVarSpacing normalizes spacing in single-line @var/@type/@param docblocks.
+// PhpdocSingleLineVarSpacing normalizes the spacing of a single-line @var
+// comment to "/** @var <type> <$name> <rest> */". Like PHP-CS-Fixer it applies
+// to any comment, so "/**@var int $x*/" (a plain comment for PHP's scanner)
+// becomes a doc comment.
 type PhpdocSingleLineVarSpacing struct{}
 
 func (PhpdocSingleLineVarSpacing) Name() string {
@@ -402,29 +405,29 @@ func (PhpdocSingleLineVarSpacing) SourceURL() string {
 }
 
 func (PhpdocSingleLineVarSpacing) Fix(s *tokens.Stream) bool {
-	return applyToDocblocks(s, func(d *docblock) bool {
-		if !d.single || len(d.inner) == 0 {
-			return false
+	changed := false
+	for i := range s.Len() {
+		t := s.At(i)
+		if t.Kind != token.Comment && t.Kind != token.DocComment {
+			continue
 		}
-		content := d.inner[0].content
-		m := singleLineVarRe.FindStringSubmatch(content)
+		m := singleLineVarRe.FindStringSubmatch(t.Value)
 		if m == nil {
-			return false
+			continue
 		}
-		out := []string{m[1], m[2]}
-		if m[3] != "" {
-			out = append(out, m[3])
+		fixed := "/** @var"
+		for _, g := range m[1:] {
+			if g != "" {
+				fixed += " " + g
+			}
 		}
-		normalized := strings.Join(out, " ")
-		if rest := strings.TrimSpace(phpdocWsRe.ReplaceAllString(m[4], " ")); rest != "" {
-			normalized += " " + rest
+		fixed = strings.TrimRight(fixed, " \t\n\r\x00\x0B") + " */"
+		if fixed != t.Value {
+			s.Set(i, token.Token{Kind: token.DocComment, Value: fixed, Pos: t.Pos})
+			changed = true
 		}
-		if normalized == content {
-			return false
-		}
-		d.inner[0].content = normalized
-		return true
-	})
+	}
+	return changed
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTrimConsecutiveBlankLineSeparationFixer.php

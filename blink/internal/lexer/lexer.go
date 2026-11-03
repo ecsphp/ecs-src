@@ -449,8 +449,9 @@ func (l *lexer) lexBlockComment(start int) {
 	}
 	val := l.src[start:l.pos]
 	kind := token.Comment
-	// /** ... */ is a doc comment, but /**/ is not
-	if strings.HasPrefix(val, "/**") && val != "/**/" {
+	// PHP's scanner reads "/**" followed by whitespace as a doc comment; "/**/",
+	// "/***/" and "/**@var x*/" are plain comments
+	if strings.HasPrefix(val, "/**") && len(val) > 3 && isSpace(val[3]) {
 		kind = token.DocComment
 	}
 	l.toks = append(l.toks, token.Token{Kind: kind, Value: val, Pos: start})

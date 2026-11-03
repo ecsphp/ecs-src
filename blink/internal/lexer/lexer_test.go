@@ -344,3 +344,22 @@ func TestLexOpenTagAnyCase(t *testing.T) {
 		t.Errorf("uppercase tag: code lexed as %s", toks[len(toks)-1].Kind)
 	}
 }
+
+// PHP's scanner reads "/**" as a doc comment only when whitespace follows it.
+func TestDocCommentNeedsWhitespaceAfterOpening(t *testing.T) {
+	cases := map[string]token.Kind{
+		"/** doc */":       token.DocComment,
+		"/**\n * doc\n */": token.DocComment,
+		"/**\tdoc */":      token.DocComment,
+		"/**@var \\X*/":    token.Comment,
+		"/***/":            token.Comment,
+		"/***x */":         token.Comment,
+		"/**/":             token.Comment,
+	}
+	for c, want := range cases {
+		toks := Lex("<?php " + c)
+		if got := toks[len(toks)-1]; got.Value != c || got.Kind != want {
+			t.Errorf("%q: got %s %q, want %s", c, got.Kind, got.Value, want)
+		}
+	}
+}
