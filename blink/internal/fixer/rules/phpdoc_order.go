@@ -4,6 +4,7 @@ import (
 	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
+	"slices"
 )
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocOrderFixer.php
@@ -129,8 +130,8 @@ func phpdocMoveAnnotationsAfter(move string, after []string, content string) str
 	}
 	start := toBeMoved[0].start
 	line := doc.lines[start]
-	for k := len(others) - 1; k >= 0; k-- {
-		if other := others[k]; other.end > start {
+	for _, other := range slices.Backward(others) {
+		if other.end > start {
 			line.content = other.content() + line.content
 			other.remove()
 		}

@@ -404,7 +404,7 @@ func parsePHPTypeNameSuffix(s string, start, nameEnd int, t *phpType) (int, bool
 // ($var|types) is [not] types ? types : types.
 func parsePHPConditional(s string, i int, t *phpType) (int, bool) {
 	var inners []phpTypeSpan
-	e := i
+	var e int
 	if i < len(s) && s[i] == '$' {
 		next, ok := parsePHPTypeIdentifier(s, i+1)
 		if !ok {

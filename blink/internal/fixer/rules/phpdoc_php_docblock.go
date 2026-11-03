@@ -2,6 +2,7 @@ package rules
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -158,11 +159,8 @@ func (d *phpDocBlock) annotationLength(start int) int {
 func (d *phpDocBlock) annotationsOfType(types []string) []*phpDocAnnotation {
 	var out []*phpDocAnnotation
 	for _, a := range d.annotations {
-		for _, t := range types {
-			if a.tag == t {
-				out = append(out, a)
-				break
-			}
+		if slices.Contains(types, a.tag) {
+			out = append(out, a)
 		}
 	}
 	return out

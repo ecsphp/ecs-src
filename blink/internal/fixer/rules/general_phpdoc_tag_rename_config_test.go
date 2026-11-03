@@ -1,14 +1,15 @@
 package rules
 
-import "testing"
+import (
+	"maps"
+	"testing"
+)
 
 func TestGeneralPhpdocTagRenameConfig(t *testing.T) {
 	t.Parallel()
 	cfg := func(extra map[string]any) fixerRule {
 		config := map[string]any{"replacements": map[string]any{"inheritDocs": "inheritDoc"}}
-		for k, v := range extra {
-			config[k] = v
-		}
+		maps.Copy(config, extra)
 		return GeneralPhpdocTagRename{}.WithConfig(config).(fixerRule)
 	}
 
