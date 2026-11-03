@@ -50,4 +50,4 @@ CombineNestedDirname, ImplodeCall, NoUselessSprintf, ModernizeTypesCasting,
 FopenFlagOrder, SimpleToComplexStringVariable, StringLineEnding,
 NonPrintableCharacter, NoHomoglyphNames, StringLengthToEmpty,
 ModernSerializationMethods, ArrayPush, SetTypeToCast, PowToExponentiation,
-EregToPreg, ModernizeStrpos, BacktickToShellExec.
+EregToPreg, ModernizeStrpos, BacktickToShellExec, ErrorSuppression.

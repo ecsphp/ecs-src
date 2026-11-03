@@ -238,6 +238,7 @@ func ConstructFixers() []fixer.Fixer {
 		NoUselessElse{},
 		NoUnneededFinalMethod{},
 		NoPhp4Constructor{},
+		ErrorSuppression{},
 	}
 }
 
