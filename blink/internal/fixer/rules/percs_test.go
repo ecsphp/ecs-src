@@ -45,3 +45,15 @@ func TestSingleLineEmptyBody(t *testing.T) {
 		t.Fatal("control body is out of scope")
 	}
 }
+
+// TestSingleLineEmptyBodyMatchesPHPCSFixer covers bodies already "{}" on the
+// next line, closures, enums, anonymous classes and a comment before the
+// brace; the expected output comes from PHP-CS-Fixer.
+func TestSingleLineEmptyBodyMatchesPHPCSFixer(t *testing.T) {
+	t.Parallel()
+	in := "<?php\nclass A\n{}\nclass B\n{\n}\nfunction f()\n{\n    \n}\n$f = function () use ($x)\n{};\nabstract class C\n{\n    abstract function g();\n    function h() /* c */\n    {\n    }\n}\nuse function Foo\\bar;\ninterface I extends J\n{\n}\nenum E: string\n{\n}\n$o = new class\n{\n};\n"
+	want := "<?php\nclass A {}\nclass B {}\nfunction f() {}\n$f = function () use ($x) {};\nabstract class C\n{\n    abstract function g();\n    function h() /* c */\n    {}\n}\nuse function Foo\\bar;\ninterface I extends J {}\nenum E: string {}\n$o = new class {};\n"
+	if got, _ := apply(t, SingleLineEmptyBody{}, in); got != want {
+		t.Errorf("got %q\nwant %q", got, want)
+	}
+}
