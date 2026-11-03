@@ -20,6 +20,9 @@ const phpDefaultsJSON = `{
 	"PhpCsFixer\\Fixer\\Basic\\NoTrailingCommaInSinglelineFixer": {
 		"elements": ["arguments", "array", "array_destructuring", "group_import"]
 	},
+	"PhpCsFixer\\Fixer\\ClassNotation\\ClassDefinitionFixer": {
+		"inline_constructor_arguments": true
+	},
 	"PhpCsFixer\\Fixer\\ControlStructure\\YodaStyleFixer": {
 		"equal": true, "identical": true, "less_and_greater": null
 	},

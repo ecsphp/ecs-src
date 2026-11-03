@@ -118,6 +118,7 @@ func configure(f fixer.Fixer, configs ...map[string]map[string]any) fixer.Fixer 
 // SpacesLevel.
 var (
 	commonConfig = map[string]map[string]any{
+		"ClassDefinitionFixer":               {"single_line": true},
 		"ConcatSpaceFixer":                   {"spacing": "one"},
 		"GeneralPhpdocAnnotationRemoveFixer": {"annotations": []any{"author", "package", "group", "category"}},
 		"NoSuperfluousPhpdocTagsFixer":       {"allow_mixed": true, "remove_inheritdoc": true},
@@ -129,8 +130,9 @@ var (
 		"OrderedImportsFixer": {"imports_order": []any{"class", "function", "const"}},
 	}
 	perCSConfig = map[string]map[string]any{
-		"ConcatSpaceFixer":    {"spacing": "one"},
-		"OrderedImportsFixer": {"imports_order": []any{"class", "function", "const"}, "sort_algorithm": "none"},
+		"ClassDefinitionFixer": {"inline_constructor_arguments": false, "single_line": false, "space_before_parenthesis": true},
+		"ConcatSpaceFixer":     {"spacing": "one"},
+		"OrderedImportsFixer":  {"imports_order": []any{"class", "function", "const"}, "sort_algorithm": "none"},
 		"SingleSpaceAroundConstructFixer": {
 			"constructs_followed_by_a_single_space": []any{
 				"abstract", "as", "case", "catch", "class", "const", "const_import", "do", "else", "elseif",
