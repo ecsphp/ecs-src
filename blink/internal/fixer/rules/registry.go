@@ -134,6 +134,7 @@ func CommonFixers() []fixer.Fixer {
 		ModernSerializationMethods{},
 		ArrayPush{},
 		SetTypeToCast{},
+		PowToExponentiation{},
 	}
 }
 

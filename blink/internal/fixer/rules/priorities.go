@@ -75,6 +75,7 @@ var fixerPriority = map[string]int{
 	"FunctionDeclarationFixer":                        31,
 	"ArrayPushFixer":                                  0,
 	"SetTypeToCastFixer":                              0,
+	"PowToExponentiationFixer":                        32,
 	"FunctionToConstantFixer":                         2,
 	"SimpleToComplexStringVariableFixer":              -10,
 	"StringLengthToEmptyFixer":                        1,
