@@ -8,8 +8,10 @@ import (
 
 func TestGenImportsNoUnneededImportAlias(t *testing.T) {
 	t.Parallel()
+	// "as" and the alias are cleared and the whitespace around them merged, as
+	// in PHP-CS-Fixer; NoSinglelineWhitespaceBeforeSemicolons tidies up after
 	got, changed := apply(t, NoUnneededImportAlias{}, "<?php use App\\Foo as Foo;")
-	if want := "<?php use App\\Foo;"; !changed || got != want {
+	if want := "<?php use App\\Foo  ;"; !changed || got != want {
 		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
 	// alias differs from the last segment - left alone
@@ -26,13 +28,23 @@ func TestGenImportsNoUnneededImportAlias(t *testing.T) {
 	}
 	// use function / use const
 	got, changed = apply(t, NoUnneededImportAlias{}, "<?php use function A\\b as b; use const A\\C as C;")
-	if want := "<?php use function A\\b; use const A\\C;"; !changed || got != want {
+	if want := "<?php use function A\\b  ; use const A\\C  ;"; !changed || got != want {
 		t.Fatalf("func/const: changed=%v got=%q want=%q", changed, got, want)
 	}
 	// grouped import
 	got, changed = apply(t, NoUnneededImportAlias{}, "<?php use App\\{Foo as Foo, Bar as Baz};")
-	if want := "<?php use App\\{Foo, Bar as Baz};"; !changed || got != want {
+	if want := "<?php use App\\{Foo  , Bar as Baz};"; !changed || got != want {
 		t.Fatalf("group: changed=%v got=%q want=%q", changed, got, want)
+	}
+	// several imports in one statement, and comments around "as"
+	got, changed = apply(t, NoUnneededImportAlias{}, "<?php use App\\X as X2, App\\Y as Y; use App\\Z /* c */ as /* d */ Z;")
+	if want := "<?php use App\\X as X2, App\\Y  ; use App\\Z /* c */  /* d */ ;"; !changed || got != want {
+		t.Fatalf("list/comments: changed=%v got=%q want=%q", changed, got, want)
+	}
+	// a trait adaptation is not an import: its walk back stops at "{" or "::"
+	trait := "<?php class K {\n    use T {\n        a as a;\n        T::b as b;\n    }\n    use U, V {\n        U::c insteadof V;\n        d as d;\n    }\n}"
+	if got, changed := apply(t, NoUnneededImportAlias{}, trait); changed {
+		t.Fatalf("trait adaptation must not change: %q", got)
 	}
 	// closure use must not be touched
 	if _, changed := apply(t, NoUnneededImportAlias{}, "<?php $f = function () use ($a) {};"); changed {
