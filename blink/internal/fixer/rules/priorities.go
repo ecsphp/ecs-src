@@ -67,6 +67,7 @@ var fixerPriority = map[string]int{
 	"NoSuperfluousElseifFixer":                        39,
 	"DeclareStrictTypesFixer":                         2,
 	"VoidReturnFixer":                                 5,
+	"StaticLambdaFixer":                               0,
 	"EmptyLoopBodyFixer":                              39,
 	"EmptyLoopConditionFixer":                         1,
 	"EncodingFixer":                                   100,

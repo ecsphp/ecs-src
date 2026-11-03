@@ -155,3 +155,63 @@ func taIsAnonymousClass(s *tokens.Stream, i int) bool {
 	}
 	return anonClassNewIndex(s, i) >= 0
 }
+
+// taIsConstruct reports whether the token at i is the language construct name
+// (exit, die, eval) that blink lexes as Ident, outside a name position.
+func taIsConstruct(s *tokens.Stream, i int, name string) bool {
+	if i < 0 || i >= s.Len() {
+		return false
+	}
+	t := s.At(i)
+	return (t.Kind == token.Ident || t.Kind == token.Keyword) && strings.EqualFold(t.Value, name) && !taInNamePosition(s, i)
+}
+
+// taIsClassy mirrors Token::isClassy: T_CLASS, T_INTERFACE, T_TRAIT or T_ENUM.
+// "::class" is an Ident in blink (PHP's CT::T_CLASS_CONSTANT), and "enum" is
+// only T_ENUM when an enum name follows.
+func taIsClassy(s *tokens.Stream, i int) bool {
+	if i < 0 || i >= s.Len() || s.At(i).Kind != token.Keyword {
+		return false
+	}
+	switch strings.ToLower(s.At(i).Value) {
+	case "class", "interface", "trait":
+		return !taIsNamedArgument(s, i)
+	case "enum":
+		n := sigNext(s, i)
+		return n >= 0 && s.At(n).Kind == token.Ident
+	}
+	return false
+}
+
+// taArrowFunctionEnd mirrors TokensAnalyzer::getLastTokenIndexOfArrowFunction
+// for the "fn" at i: the last meaningful token of its expression body.
+func taArrowFunctionEnd(s *tokens.Stream, i int) int {
+	index := nextPunctOfKind(s, i, "=>")
+	if index < 0 {
+		return -1
+	}
+	for {
+		index = sigNext(s, index)
+		if index < 0 {
+			return sigPrev(s, s.Len())
+		}
+		t := s.At(index)
+		if t.Kind == token.CloseTag || t.Kind == token.AttributeEnd {
+			break
+		}
+		if t.Kind == token.AttributeStart {
+			index = s.AttributeEnd(index)
+		} else if t.Kind == token.Punct {
+			switch t.Value {
+			case ")", "]", "}", ",", ";":
+				return sigPrev(s, index)
+			case "(", "[", "{":
+				index = s.MatchForward(index)
+			}
+		}
+		if index < 0 {
+			return sigPrev(s, s.Len())
+		}
+	}
+	return sigPrev(s, index)
+}

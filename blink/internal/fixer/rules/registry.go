@@ -226,6 +226,7 @@ func ConstructFixers() []fixer.Fixer {
 		GeneralPhpdocTagRename{},
 		DeclareStrictTypes{},
 		VoidReturn{},
+		StaticLambda{},
 	}
 }
 
