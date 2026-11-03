@@ -118,9 +118,10 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 
 		want := " "
 		if nextLine {
-			// depth-based so it stays correct regardless of the header's own
-			// (possibly wrong) indentation; statement_indentation fixes the rest
-			want = "\n" + strings.Repeat("    ", braceDepthAt(s, i))
+			// php-cs-fixer aligns the brace with the line holding the
+			// declaration keyword, not with the brace nesting depth: a method of
+			// an anonymous class inside an argument list sits deeper than that
+			want = "\n" + lineIndent(s, kw)
 		}
 		if i > 0 && s.At(i-1).Kind == token.Whitespace {
 			if s.At(i-1).Value != want {
