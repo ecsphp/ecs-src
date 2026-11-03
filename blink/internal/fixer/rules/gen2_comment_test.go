@@ -40,10 +40,18 @@ func TestGen2Comment(t *testing.T) {
 	}
 	idempotent(t, AlignMultilineComment{}, got)
 
-	// plain block comment (not a docblock) is realigned too
-	got, changed = apply(t, AlignMultilineComment{}, "<?php\n/*\n     * Foo\n   */\n")
+	// a plain block comment (not a docblock) is left alone by default:
+	// comment_type defaults to "phpdocs_only", matching PHP-CS-Fixer
+	plain := "<?php\n/*\n     * Foo\n   */\n"
+	if got, changed := apply(t, AlignMultilineComment{}, plain); changed || got != plain {
+		t.Fatalf("default must leave a plain block comment alone: changed=%v got=%q", changed, got)
+	}
+
+	// with an explicit wider comment_type the plain block comment is realigned
+	cfg := AlignMultilineComment{}.WithConfig(map[string]any{"comment_type": "all_multiline"})
+	got, changed = apply(t, cfg, plain)
 	if want := "<?php\n/*\n * Foo\n */\n"; !changed || got != want {
-		t.Fatalf("plain: changed=%v got=%q want=%q", changed, got, want)
+		t.Fatalf("all_multiline: changed=%v got=%q want=%q", changed, got, want)
 	}
 
 	// an inline comment (not preceded by a line break) is left alone

@@ -18,8 +18,8 @@ import (
 // Option `comment_type` selects which comments to align: "phpdocs_only" (doc
 // comments only), "phpdocs_like" (also block comments whose lines all start with
 // "*") or "all_multiline" (any multi-line comment, inserting a missing "*"). The
-// zero value keeps blink's existing behavior (both comment kinds, realigning only
-// lines that already start with "*").
+// zero value is "phpdocs_only", PHP-CS-Fixer's default, so a plain "/* ... */"
+// block comment is left untouched unless a wider comment_type is configured.
 type AlignMultilineComment struct {
 	commentType string
 }
@@ -43,6 +43,10 @@ func (f AlignMultilineComment) WithConfig(config map[string]any) fixer.Fixer {
 }
 
 func (f AlignMultilineComment) Fix(s *tokens.Stream) bool {
+	commentType := f.commentType
+	if commentType == "" {
+		commentType = "phpdocs_only" // PHP-CS-Fixer's default
+	}
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
@@ -54,7 +58,7 @@ func (f AlignMultilineComment) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		isComment := t.Kind == token.Comment
-		switch f.commentType {
+		switch commentType {
 		case "phpdocs_only":
 			if isComment {
 				continue
@@ -68,12 +72,7 @@ func (f AlignMultilineComment) Fix(s *tokens.Stream) bool {
 		if !ok {
 			continue
 		}
-		var nv string
-		if f.commentType == "" {
-			nv = realignCommentLines(v, indent)
-		} else {
-			nv = alignMultilineCommentFull(v, indent)
-		}
+		nv := alignMultilineCommentFull(v, indent)
 		if nv != v {
 			s.SetValue(i, nv)
 			changed = true
@@ -135,18 +134,4 @@ func commentOpeningIndent(s *tokens.Stream, i int) (string, bool) {
 		return "", false
 	}
 	return whitespace[cut+1:], true
-}
-
-// realignCommentLines rewrites the leading whitespace of every interior line
-// whose trimmed content starts with "*", aligning it to indent + one space.
-func realignCommentLines(v, indent string) string {
-	lines := strings.Split(v, "\n")
-	for k := 1; k < len(lines); k++ {
-		trimmed := strings.TrimLeft(lines[k], " \t")
-		if !strings.HasPrefix(trimmed, "*") {
-			continue
-		}
-		lines[k] = indent + " " + trimmed
-	}
-	return strings.Join(lines, "\n")
 }
