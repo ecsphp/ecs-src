@@ -37,13 +37,16 @@ func TestRunPerRuleSkipPaths(t *testing.T) {
 	}
 
 	cases := []struct {
-		name  string
-		paths []string
-		want  []string
+		name   string
+		groups [][]string // one skip list per configured class resolving to the rule
+		want   []string
 	}{
-		{"glob reaches subfolders", []string{filepath.Join(root, "old/*.php")}, []string{"e.php", "web/handler/c.php", "web/other/d.php"}},
-		{"directory", []string{filepath.Join(root, "web/handler")}, []string{"e.php", "old/a.php", "old/sub/b.php", "web/other/d.php"}},
-		{"no paths matched", []string{filepath.Join(root, "nope")}, []string{"e.php", "old/a.php", "old/sub/b.php", "web/handler/c.php", "web/other/d.php"}},
+		{"glob reaches subfolders", [][]string{{filepath.Join(root, "old/*.php")}}, []string{"e.php", "web/handler/c.php", "web/other/d.php"}},
+		{"directory", [][]string{{filepath.Join(root, "web/handler")}}, []string{"e.php", "old/a.php", "old/sub/b.php", "web/other/d.php"}},
+		{"no paths matched", [][]string{{filepath.Join(root, "nope")}}, []string{"e.php", "old/a.php", "old/sub/b.php", "web/handler/c.php", "web/other/d.php"}},
+		// a deprecated alias and its successor both configured: the rule is off
+		// only where both classes are skipped
+		{"two classes", [][]string{{filepath.Join(root, "old")}, {filepath.Join(root, "*/b.php"), filepath.Join(root, "web")}}, []string{"e.php", "old/a.php", "web/handler/c.php", "web/other/d.php"}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -51,7 +54,7 @@ func TestRunPerRuleSkipPaths(t *testing.T) {
 				Paths:            []string{root},
 				Rules:            []fixer.Fixer{rule},
 				Jobs:             1,
-				PerPathRuleSkips: map[string][]string{ruleName: c.paths},
+				PerPathRuleSkips: map[string][][]string{ruleName: c.groups},
 			}
 			results, err := Run(context.Background(), cfg, false, nil)
 			if err != nil {

@@ -23,7 +23,9 @@ type Config struct {
 	Jobs  int // parallel workers
 	// PerPathRuleSkips disables a single rule on a subset of paths, keyed by the
 	// rule's name (its PHP-CS-Fixer FQCN); mirrors ECS's per-path skip config.
-	PerPathRuleSkips map[string][]string
+	// It holds one path list per configured class behind the rule (an alias and
+	// its successor are two checkers in ECS); the rule is off where all match.
+	PerPathRuleSkips map[string][][]string
 }
 
 // Configure returns a config seeded with the default psr12 + common sets,
