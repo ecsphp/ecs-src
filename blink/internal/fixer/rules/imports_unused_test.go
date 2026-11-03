@@ -24,7 +24,7 @@ func TestNoUnusedImportsBraceNamespaceUsed(t *testing.T) {
 func TestNoUnusedImportsBraceNamespaceUnused(t *testing.T) {
 	t.Parallel()
 	src := "<?php\n\nnamespace {\n    use Foo\\Bar\\Baz;\n\n    function run(): void {\n    }\n}\n"
-	want := "<?php\n\nnamespace {\n    \n    function run(): void {\n    }\n}\n"
+	want := "<?php\n\nnamespace {\n\n    function run(): void {\n    }\n}\n"
 	if got, changed := apply(t, NoUnusedImports{}, src); !changed || got != want {
 		t.Fatalf("unused brace-namespace import must be removed; changed=%v got=%q want=%q", changed, got, want)
 	}
@@ -53,5 +53,71 @@ func TestNoUnusedImportsSameNamespaceIsCaseSensitive(t *testing.T) {
 	want := "<?php\n\nnamespace Acme\\Shop;\n\n\nfinal class Cart implements CartInterface\n{\n}\n"
 	if got, changed := apply(t, NoUnusedImports{}, same); !changed || got != want {
 		t.Fatalf("import of the current namespace must be removed; changed=%v got=%q want=%q", changed, got, want)
+	}
+}
+
+// A comment between "use" and the imported name is not part of the name: the
+// import of the current namespace is still recognised as redundant. As in
+// PHP-CS-Fixer, removing an import keeps the comments inside it, and the line
+// break before the import moves after them.
+func TestNoUnusedImportsCommentInsideImport(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nnamespace Acme\\Shop;\n\nuse /** @noinspection PhpUnusedAliasInspection */ Acme\\Shop\\CartInterface;\nuse /* kept */ Vendor\\Lib\\Money;\n\nfinal class Cart implements CartInterface\n{\n    public Money $total;\n}\n"
+	want := "<?php\n\nnamespace Acme\\Shop;/** @noinspection PhpUnusedAliasInspection */\n\nuse /* kept */ Vendor\\Lib\\Money;\n\nfinal class Cart implements CartInterface\n{\n    public Money $total;\n}\n"
+	if got, changed := apply(t, NoUnusedImports{}, src); !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
+	src = "<?php\nnamespace App;\nuse Vendor\\Foo; // trailing\nuse Vendor\\Bar;\n  use /* x */ Vendor\\Baz /* y */;\nuse Vendor\\Qux;\n\nnew Qux();\n"
+	want = "<?php\nnamespace App;\n// trailing/* x *//* y */\nuse Vendor\\Qux;\n\nnew Qux();\n"
+	if got, changed := apply(t, NoUnusedImports{}, src); !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
+}
+
+// PHP's T_OPEN_TAG includes the whitespace character after "<?php", so removing
+// an import on the open tag's line keeps "<?php " apart from the next token
+// (outputs from PHP-CS-Fixer).
+func TestNoUnusedImportsOnOpenTagLine(t *testing.T) {
+	t.Parallel()
+	for src, want := range map[string]string{
+		"<?php use Foo\\A; new B;":     "<?php new B;",
+		"<?php  use Foo\\A;  new B;\n": "<?php new B;\n",
+		"<html><?php use Foo\\A; ?>":   "<html><?php ?>",
+		"<?php use Foo\\A;\nnew B;\n":  "<?php new B;\n",
+		"<?php\nuse Foo\\A;\nnew B;\n": "<?php\nnew B;\n",
+	} {
+		if got, changed := apply(t, NoUnusedImports{}, src); !changed || got != want {
+			t.Errorf("%q: changed=%v got=%q want=%q", src, changed, got, want)
+		}
+	}
+}
+
+// A comment between "use" and "function"/"const" does not turn the import
+// into a class import (PHP-CS-Fixer reads the next meaningful token).
+func TestNoUnusedImportsCommentBeforeImportKind(t *testing.T) {
+	t.Parallel()
+	for _, src := range []string{
+		"<?php\nuse /* c */ function Foo\\bar;\nbar();\n",
+		"<?php\nuse /** x */ const Foo\\BAR;\necho BAR;\n",
+	} {
+		if got, changed := apply(t, NoUnusedImports{}, src); changed || got != src {
+			t.Errorf("used import must be kept: changed=%v got=%q", changed, got)
+		}
+	}
+}
+
+// PHP-CS-Fixer removes an unused import of the current namespace twice (once
+// as unused, once as redundant), and the second pass eats one more line break.
+func TestNoUnusedImportsUnusedSameNamespaceRemovedTwice(t *testing.T) {
+	t.Parallel()
+	src := "<?php\nnamespace Acme;\n\nuse Acme\\Foo;\n\nclass X {}\n"
+	want := "<?php\nnamespace Acme;\n\nclass X {}\n"
+	if got, changed := apply(t, NoUnusedImports{}, src); !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
+	src = "<?php\nnamespace Acme;\n\nuse Acme\\Foo;\n\nclass X extends Foo {}\n"
+	want = "<?php\nnamespace Acme;\n\n\nclass X extends Foo {}\n"
+	if got, changed := apply(t, NoUnusedImports{}, src); !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
 	}
 }

@@ -68,3 +68,29 @@ func TestOrderedImportsAliasInSortKey(t *testing.T) {
 		t.Fatalf("alias vs deeper path: changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+// PHP-CS-Fixer strips "/* ... */" comments from an import before comparing it,
+// so a comment between "use" and the name does not change its place.
+func TestOrderedImportsIgnoresCommentBeforeName(t *testing.T) {
+	t.Parallel()
+	src := "<?php\nuse Alpha\\One;\nuse /** @noinspection PhpUnusedAliasInspection */ Beta\\Two;\nuse Gamma\\Three;\n"
+	if got, changed := apply(t, OrderedImports{}, src); changed || got != src {
+		t.Fatalf("sorted imports must stay; changed=%v got=%q", changed, got)
+	}
+	unsorted := "<?php\nuse /* first? */ Gamma\\Three;\nuse Alpha\\One;\n"
+	want := "<?php\nuse Alpha\\One;\nuse /* first? */ Gamma\\Three;\n"
+	if got, changed := apply(t, OrderedImports{}, unsorted); !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
+}
+
+// The length algorithm measures the whole import, alias included, as
+// PHP-CS-Fixer's sortByLength does.
+func TestOrderedImportsLengthCountsAlias(t *testing.T) {
+	t.Parallel()
+	cfg := OrderedImports{}.WithConfig(map[string]any{"sort_algorithm": "length"})
+	src := "<?php\nuse Abcdef\\Gh;\nuse Ab\\Cd as Efghijkl;\n"
+	if got, changed := apply(t, cfg, src); changed || got != src {
+		t.Fatalf("length must count the alias; changed=%v got=%q", changed, got)
+	}
+}

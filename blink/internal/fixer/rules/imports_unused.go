@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"slices"
 	"strings"
 
 	"blink/internal/token"
@@ -38,12 +37,13 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 		if t.Kind != token.Keyword || strings.ToLower(t.Value) != "use" || inClassLikeBody(s, i) {
 			continue
 		}
-		j := skipWhitespace(s, i+1)
-		if j < s.Len() && s.At(j).Kind == token.Punct && s.At(j).Value == "(" {
+		// comments are skipped too: "use /* x */ function Foo\bar;" imports a function
+		j := nextMeaningfulIndex(s, i)
+		if j >= 0 && s.At(j).Kind == token.Punct && s.At(j).Value == "(" {
 			continue // closure use
 		}
 		kind := "class"
-		if j < s.Len() && s.At(j).Kind == token.Keyword {
+		if j >= 0 && s.At(j).Kind == token.Keyword {
 			switch strings.ToLower(s.At(j).Value) {
 			case "function":
 				kind = "function"
@@ -95,38 +95,57 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 		return false
 	}
 
-	regionOf := func(idx int) nsRegion {
-		for _, r := range regions {
+	regionOf := func(idx int) int {
+		for ri, r := range regions {
 			if idx >= r.start && idx <= r.end {
-				return r
+				return ri
 			}
 		}
-		return nsRegion{start: 0, end: s.Len() - 1}
+		return -1
 	}
 
 	// Decide first, remove after: usage detection ignores import token ranges,
-	// so removals never change another import's used-ness, and deciding on the
-	// pristine stream avoids stale indices from earlier removals.
-	var toRemove []importInfo
+	// so removals never change another import's used-ness. The removals then
+	// replay PHP-CS-Fixer's order, namespace by namespace: first the unused
+	// imports, then the imports of the current namespace ("namespace\Name"),
+	// which PHP removes a second time when they were also unused.
+	var removals []importInfo
+	var unused, redundant []importInfo
+	flush := func() {
+		removals = append(removals, unused...)
+		removals = append(removals, redundant...)
+		unused, redundant = nil, nil
+	}
+	curRegion := -2
 	for _, im := range imports {
-		r := regionOf(im.start)
-		// an import of the current namespace ("namespace\Name") is redundant;
+		ri := regionOf(im.start)
+		if ri != curRegion {
+			flush()
+			curRegion = ri
+		}
+		r := nsRegion{start: 0, end: s.Len() - 1}
+		if ri >= 0 {
+			r = regions[ri]
+		}
+		if !importIsUsed(s, im, r.start, r.end, inImport) {
+			unused = append(unused, im)
+		}
 		// PHP-CS-Fixer compares the paths case-sensitively (strncmp), so a path
 		// that differs from the namespace only by case is another name
-		redundant := !im.aliased && r.name != "" &&
-			strings.HasPrefix(im.full, r.name+`\`) &&
-			!strings.Contains(im.full[len(r.name)+1:], `\`)
-		if !redundant && importIsUsed(s, im, r.start, r.end, inImport) {
-			continue
+		if !im.aliased && r.name != "" && strings.HasPrefix(im.full, r.name+`\`) &&
+			!strings.Contains(im.full[len(r.name)+1:], `\`) {
+			redundant = append(redundant, im)
 		}
-		toRemove = append(toRemove, im)
 	}
-	if len(toRemove) == 0 {
+	flush()
+	if len(removals) == 0 {
 		return false
 	}
-	for _, im := range slices.Backward(toRemove) {
-		removeImport(s, im)
+	ts := newClearableTokens(s)
+	for _, im := range removals {
+		ts.removeUseDeclaration(ts.at[im.start], ts.at[im.semi])
 	}
+	ts.writeBack(s)
 	return true
 }
 
@@ -291,9 +310,9 @@ func isIdentByte(c byte) bool {
 // importParts returns the imported short name, full path and whether it is
 // aliased, for the use statement spanning (useIdx, semi).
 func importParts(s *tokens.Stream, useIdx, semi int, kind string) (short, full string, aliased bool) {
-	j := skipWhitespace(s, useIdx+1)
+	j := nextMeaningfulIndex(s, useIdx)
 	if kind != "class" {
-		j = skipWhitespace(s, j+1) // skip "function"/"const"
+		j++ // past "function"/"const"; the loop skips whitespace and comments
 	}
 	var path strings.Builder
 	alias := ""
@@ -305,7 +324,7 @@ func importParts(s *tokens.Stream, useIdx, semi int, kind string) (short, full s
 			aliased = true
 			continue
 		}
-		if t.Kind == token.Whitespace {
+		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
 			continue
 		}
 		if inAlias {
@@ -401,12 +420,197 @@ func matchCloseBrace(s *tokens.Stream, open int) int {
 	return s.Len() - 1
 }
 
-func removeImport(s *tokens.Stream, im importInfo) {
-	s.ReplaceRange(im.start, im.semi, nil)
-	// drop just the statement's own line break, keeping any blank line
-	if im.start < s.Len() && s.At(im.start).Kind == token.Whitespace {
-		if v := s.At(im.start).Value; strings.HasPrefix(v, "\n") {
-			s.SetValue(im.start, v[1:])
+// clearableTokens mirrors PHP-CS-Fixer's Tokens for the import removal: a
+// removed token is cleared in place (an empty token) instead of being cut out,
+// so indices stay stable across successive removals and the cleanup helpers
+// see cleared tokens as PHP does (as empty whitespace). The open tag carries
+// its first whitespace character ("<?php " or "<?php\n"), as T_OPEN_TAG does,
+// so the clean-up never joins "<?php" to the next token; at maps a stream
+// index to its index here.
+type clearableTokens struct {
+	toks    []token.Token
+	cleared []bool
+	at      []int
+}
+
+func newClearableTokens(s *tokens.Stream) *clearableTokens {
+	src := s.Tokens()
+	c := &clearableTokens{toks: make([]token.Token, 0, len(src)), at: make([]int, len(src))}
+	for i := 0; i < len(src); i++ {
+		t := src[i]
+		c.at[i] = len(c.toks)
+		if t.Kind == token.OpenTag && !strings.HasPrefix(t.Value, "<?=") && i+1 < len(src) && src[i+1].Kind == token.Whitespace {
+			n := src[i+1]
+			head := n.Value[:1]
+			if strings.HasPrefix(n.Value, "\r\n") {
+				head = "\r\n"
+			}
+			t.Value += head
+			c.toks = append(c.toks, t)
+			i++
+			c.at[i] = len(c.toks) - 1
+			if rest := n.Value[len(head):]; rest != "" {
+				c.at[i] = len(c.toks)
+				c.toks = append(c.toks, token.Token{Kind: token.Whitespace, Value: rest, Pos: n.Pos + len(head)})
+			}
+			continue
 		}
+		c.toks = append(c.toks, t)
+	}
+	c.cleared = make([]bool, len(c.toks))
+	return c
+}
+
+// writeBack replaces the stream's tokens with the non-cleared ones, splitting
+// the open tag back into blink's shape and merging the whitespace runs that
+// clearing left side by side.
+func (c *clearableTokens) writeBack(s *tokens.Stream) {
+	out := make([]token.Token, 0, len(c.toks))
+	push := func(t token.Token) {
+		if t.Value == "" {
+			return
+		}
+		if l := len(out) - 1; l >= 0 && t.Kind == token.Whitespace && out[l].Kind == token.Whitespace {
+			out[l].Value += t.Value
+			return
+		}
+		out = append(out, t)
+	}
+	for i, t := range c.toks {
+		if c.cleared[i] {
+			continue
+		}
+		if tag := strings.TrimRight(t.Value, " \t\r\n"); t.Kind == token.OpenTag && tag != t.Value {
+			push(token.Token{Kind: token.OpenTag, Value: tag, Pos: t.Pos})
+			push(token.Token{Kind: token.Whitespace, Value: t.Value[len(tag):], Pos: t.Pos + len(tag)})
+			continue
+		}
+		push(t)
+	}
+	s.ReplaceRange(0, s.Len()-1, out)
+}
+
+func (c *clearableTokens) clear(i int) { c.cleared[i] = true }
+
+// isWhitespace is Token::isWhitespace(): a whitespace token or a cleared one.
+func (c *clearableTokens) isWhitespace(i int) bool {
+	return c.cleared[i] || c.toks[i].Kind == token.Whitespace
+}
+
+func (c *clearableTokens) isComment(i int) bool {
+	return !c.cleared[i] && (c.toks[i].Kind == token.Comment || c.toks[i].Kind == token.DocComment)
+}
+
+func (c *clearableTokens) value(i int) string {
+	if c.cleared[i] {
+		return ""
+	}
+	return c.toks[i].Value
+}
+
+// setWhitespace is Tokens::ensureWhitespaceAtIndex($i, 0, $v) on a token that
+// is (or was cleared to) whitespace: an empty value clears it.
+func (c *clearableTokens) setWhitespace(i int, v string) {
+	if v == "" {
+		c.clear(i)
+		return
+	}
+	c.toks[i] = token.Token{Kind: token.Whitespace, Value: v, Pos: c.toks[i].Pos}
+	c.cleared[i] = false
+}
+
+// nonEmptySibling is Tokens::getNonEmptySibling(): the next index in direction
+// dir that is not cleared, or -1.
+func (c *clearableTokens) nonEmptySibling(i, dir int) int {
+	for i += dir; i >= 0 && i < len(c.toks); i += dir {
+		if !c.cleared[i] {
+			return i
+		}
+	}
+	return -1
+}
+
+// prevNonWhitespace is Tokens::getPrevNonWhitespace(), or -1.
+func (c *clearableTokens) prevNonWhitespace(i int) int {
+	for i--; i >= 0; i-- {
+		if !c.isWhitespace(i) {
+			return i
+		}
+	}
+	return -1
+}
+
+// clearAndMergeSurroundingWhitespace is Tokens::clearTokenAndMergeSurroundingWhitespace().
+func (c *clearableTokens) clearAndMergeSurroundingWhitespace(i int) {
+	c.clear(i)
+	if i == len(c.toks)-1 {
+		return
+	}
+	next := c.nonEmptySibling(i, 1)
+	if next < 0 || !c.isWhitespace(next) {
+		return
+	}
+	prev := c.nonEmptySibling(i, -1)
+	switch {
+	case prev >= 0 && c.isWhitespace(prev):
+		c.setWhitespace(prev, c.value(prev)+c.value(next))
+	case prev+1 < len(c.toks) && c.cleared[prev+1]:
+		c.setWhitespace(prev+1, c.value(next))
+	}
+	c.clear(next)
+}
+
+// removeUseDeclaration ports NoUnusedImportsFixer::removeUseDeclaration() for a
+// single (non-group) import spanning [start, semi]: comments inside it are
+// kept, everything else is cleared, then the surrounding line breaks are
+// tidied by cleanUpSurroundingNewLines.
+func (c *clearableTokens) removeUseDeclaration(start, semi int) {
+	for i := semi - 1; i >= start; i-- {
+		if c.isComment(i) {
+			continue
+		}
+		if !c.isWhitespace(i) || !strings.Contains(c.value(i), "\n") {
+			c.clear(i)
+			continue
+		}
+		// a multi-line whitespace keeps its line feed (and indent) after a comment
+		if p := c.prevNonWhitespace(i); p >= 0 && c.isComment(p) {
+			v := c.value(i)
+			c.setWhitespace(i, v[strings.LastIndex(v, "\n"):])
+		} else {
+			c.clearAndMergeSurroundingWhitespace(i)
+		}
+	}
+	if !c.cleared[semi] && c.toks[semi].Kind == token.Punct && c.toks[semi].Value == ";" {
+		c.clear(semi)
+	}
+	c.cleanUpSurroundingNewLines(start, semi)
+}
+
+// cleanUpSurroundingNewLines ports NoUnusedImportsFixer::cleanUpSurroundingNewLines().
+func (c *clearableTokens) cleanUpSurroundingNewLines(start, end int) {
+	prev := start - 1
+	if prev >= 0 && c.isWhitespace(prev) {
+		c.setWhitespace(prev, strings.TrimRight(c.value(prev), " \t"))
+	}
+	if end+1 >= len(c.toks) {
+		return
+	}
+	next := c.nonEmptySibling(end, 1)
+	if next < 0 {
+		return
+	}
+	if c.isWhitespace(next) {
+		v := strings.TrimLeft(c.value(next), " \t")
+		if strings.HasPrefix(v, "\r\n") {
+			v = v[2:]
+		} else if strings.HasPrefix(v, "\n") {
+			v = v[1:]
+		}
+		c.setWhitespace(next, v)
+	}
+	if prev >= 0 && c.isWhitespace(prev) && c.isWhitespace(next) {
+		c.setWhitespace(next, c.value(prev)+c.value(next))
+		c.clear(prev)
 	}
 }
