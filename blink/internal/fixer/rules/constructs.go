@@ -587,7 +587,8 @@ func (f UnaryOperatorSpaces) WithConfig(config map[string]any) fixer.Fixer {
 }
 
 // unaryOperatorSpacesIsDynamicBraceClose reports whether the "}" at i closes a
-// dynamic property, variable or index brace ("$a->{$b}", "${$b}", "$a{0}"),
+// dynamic property, variable or index brace ("$a->{$b}", "${$b}", "$a{0}",
+// "$a->b{0}", "$a[0]{1}"),
 // which PHP-CS-Fixer's TokensAnalyzer counts as the end of an operand.
 func unaryOperatorSpacesIsDynamicBraceClose(s *tokens.Stream, i int) bool {
 	open := s.MatchBackward(i)
@@ -599,10 +600,22 @@ func unaryOperatorSpacesIsDynamicBraceClose(s *tokens.Stream, i int) bool {
 		return false
 	}
 	t := s.At(p)
-	if t.Kind == token.Variable {
+	switch t.Kind {
+	case token.Variable:
 		return true
+	case token.Ident:
+		// "$a->b{0}": an index brace on a property
+		pp := sigPrev(s, p)
+		return pp >= 0 && s.At(pp).Kind == token.Punct && (s.At(pp).Value == "->" || s.At(pp).Value == "?->")
+	case token.Punct:
+		switch t.Value {
+		case "->", "?->", "::", "$", "]":
+			return true
+		case "}":
+			return unaryOperatorSpacesIsDynamicBraceClose(s, p)
+		}
 	}
-	return t.Kind == token.Punct && (t.Value == "->" || t.Value == "?->" || t.Value == "::" || t.Value == "$")
+	return false
 }
 
 // unaryOperatorSpacesIsSuccessor is TokensAnalyzer::isUnarySuccessorOperator:
