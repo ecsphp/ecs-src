@@ -241,6 +241,7 @@ func ConstructFixers() []fixer.Fixer {
 		ErrorSuppression{},
 		GetClassToClassKeyword{},
 		LogicalOperators{},
+		TernaryToElvisOperator{},
 	}
 }
 

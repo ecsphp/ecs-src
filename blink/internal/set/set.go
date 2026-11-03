@@ -176,6 +176,7 @@ var perCSRules = []setRule{
 	"ErrorSuppressionFixer":       true,
 	"GetClassToClassKeywordFixer": true,
 	"LogicalOperatorsFixer":       true,
+	"TernaryToElvisOperatorFixer": true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
