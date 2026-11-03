@@ -62,14 +62,15 @@ Drop a `blink.json` in your project root (auto-loaded, or point at one with
 ```
 
 - `sets` - enable a prepared set: `spaces`, `casing`, `psr12`, `per-cs`, `common`.
-  `per-cs` mirrors PHP-CS-Fixer's `@PER-CS` (as ECS's `SetList::PER_CS`) and adds
-  `single_line_empty_body` on top of the full set.
+  `per-cs` is exactly ECS's `SetList::PER_CS` (PHP-CS-Fixer's `@PER-CS`): the rules
+  of `config/set/per-cs.php`, each with that file's configuration.
 - `level` - gradual adoption: `{"spaces": N}` enables the first N rules of the
   spaces set (safest first), so you can raise coverage one step at a time.
 - `rules` - enable individual fixers by name.
 - `paths` / `skip` - files to scan and glob patterns to ignore.
 
-With no config file, every fixer runs. CLI path arguments override `paths`.
+With no config file (or none of `sets`, `level` and `rules`), the default
+`psr12` + `common` sets run. CLI path arguments override `paths`.
 
 ### Consuming an ECS config
 
