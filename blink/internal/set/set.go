@@ -174,6 +174,7 @@ var perCSRules = []setRule{
 	{`PhpCsFixer\Fixer\Operator\TernaryOperatorSpacesFixer`, nil},
 	{`PhpCsFixer\Fixer\Whitespace\TypesSpacesFixer`, nil},
 	"NativeConstantInvocationFixer": true,
+	"GlobalNamespaceImportFixer":    true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
