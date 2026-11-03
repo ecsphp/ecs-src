@@ -45,9 +45,6 @@ func NewPathMatcher(patterns []string) *PathMatcher {
 
 // Match reports whether path is skipped by any of the matcher's patterns.
 func (m *PathMatcher) Match(path string) bool {
-	if m == nil {
-		return false
-	}
 	glob := slashed(path)
 	var real string
 	resolved, realOK := false, false
