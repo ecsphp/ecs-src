@@ -97,7 +97,8 @@ func scanChunk(v string, head, afterExpr bool) chunkEdges {
 
 // encapsedHasNewline reports whether the String token t holds a
 // T_ENCAPSED_AND_WHITESPACE with a newline: text of an interpolated literal or
-// the body of a heredoc or nowdoc (a plain T_CONSTANT_ENCAPSED_STRING holds none).
+// a backtick one, or the body of a heredoc or nowdoc (a plain
+// T_CONSTANT_ENCAPSED_STRING holds none).
 func encapsedHasNewline(t token.Token) bool {
 	if t.Kind != token.String {
 		return false
@@ -105,7 +106,7 @@ func encapsedHasNewline(t token.Token) bool {
 	_, v := token.SplitBinaryPrefix(t.Value)
 	if strings.HasPrefix(v, "<<<") && (t.Part == token.Whole || t.Part == token.Head) {
 		v = v[strings.IndexByte(v, '\n')+1:]
-	} else if t.Part == token.Whole && !strings.Contains(v, "${") {
+	} else if t.Part == token.Whole && !t.IsShellExec() && !strings.Contains(v, "${") {
 		return false
 	}
 	return strings.Contains(v, "\n")

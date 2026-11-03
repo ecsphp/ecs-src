@@ -77,9 +77,12 @@ func (Include) Fix(s *tokens.Stream) bool {
 		}
 		// Directly adjacent argument: insert a single space. Only the token kinds
 		// that can legally abut the keyword are handled ("include$x", "include'x'",
-		// "include\\Foo"); the paren form is skipped.
+		// "include\\Foo"); the paren form is skipped. PHP-CS-Fixer takes a
+		// T_CONSTANT_ENCAPSED_STRING, not an interpolated string, heredoc or
+		// backtick literal.
 		switch {
-		case nt.Kind == token.Variable || nt.Kind == token.String:
+		case nt.Kind == token.Variable:
+		case nt.IsLiteral() && !nt.StartsHeredoc() && !nt.IsShellExec() && !isInterpolatedString(nt):
 		case nt.Kind == token.Punct && nt.Value == `\`:
 		default:
 			continue

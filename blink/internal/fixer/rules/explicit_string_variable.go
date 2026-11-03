@@ -12,7 +12,8 @@ import (
 // ExplicitStringVariable wraps simple variable interpolation in double-quoted
 // strings and heredocs in the explicit "{$...}" form: "$a" -> "{$a}",
 // "$a->b" -> "{$a->b}", "$a[key]" -> "{$a['key']}". Already-explicit ("{$a}",
-// "${a}"), single-quoted strings and nowdocs are left untouched.
+// "${a}"), single-quoted strings, nowdocs and backtick literals are left
+// untouched.
 type ExplicitStringVariable struct{}
 
 func (ExplicitStringVariable) Name() string {
@@ -25,12 +26,18 @@ func (ExplicitStringVariable) SourceURL() string {
 
 func (ExplicitStringVariable) Fix(s *tokens.Stream) bool {
 	changed := false
-	// go backwards so the edits of a literal never shift a later one
+	// like PHP-CS-Fixer, skip every literal between two "`" tokens, nested
+	// ones included; going backwards keeps the edits from shifting a later literal
+	backticks := 0
 	for i := s.Len() - 1; i >= 0; i-- {
-		if t := s.At(i); t.Kind == token.String && t.Part == token.Head {
+		t := s.At(i)
+		if t.Kind == token.String && t.Part == token.Head && backticks%2 == 0 {
 			if chunks := literalChunks(s, i); chunks != nil && explicitStringVariables(s, chunks) {
 				changed = true
 			}
+		}
+		if t.IsShellExec() && t.Part != token.Whole {
+			backticks++
 		}
 	}
 	return changed

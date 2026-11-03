@@ -150,3 +150,58 @@ func TestLexHeredocInterpolationExposesCode(t *testing.T) {
 		t.Errorf("code tokens\n got %s\nwant %s", got, want)
 	}
 }
+
+// Backtick literals split like double-quoted strings; a backtick in the code of
+// a "{$...}" does not close the literal.
+func TestLexBacktick(t *testing.T) {
+	cases := []struct{ src, want string }{
+		{"<?php $x = `ls -la`;", "StringW \"`ls -la`\"\n"},
+		{"<?php $x = ``;", "StringW \"``\"\n"},
+		{"<?php $x = `echo intval(1) # x // y /* z`;", "StringW \"`echo intval(1) # x // y /* z`\"\n"},
+		{"<?php $x = `a \\` \\$b \"$c\" '${d}'`;", `StringH "` + "`a \\\\` \\\\$b \\\"" + `"
+Variable "$c"
+StringT "\" '${d}'` + "`" + `"
+`},
+		{"<?php $x = `echo {$a[\"`\"]} $b->c`;", `StringH "` + "`echo {" + `"
+Variable "$a"
+Punct "["
+StringW "\"` + "`" + `\""
+Punct "]"
+StringM "} "
+Variable "$b"
+Punct "->"
+Ident "c"
+StringT "` + "`" + `"
+`},
+		{"<?php $x = `{$f(`pwd`)}`;", `StringH "` + "`{" + `"
+Variable "$f"
+Punct "("
+StringW "` + "`pwd`" + `"
+Punct ")"
+StringT "}` + "`" + `"
+`},
+		{"<?php $x = \"a `$b` c\";", `StringH "\"a ` + "`" + `"
+Variable "$b"
+StringT "` + "`" + ` c\""
+`},
+	}
+	for _, c := range cases {
+		if got := interpolationDump(c.src); got != c.want {
+			t.Errorf("%q:\n got:\n%s\nwant:\n%s", c.src, got, c.want)
+		}
+	}
+}
+
+func TestIsShellExec(t *testing.T) {
+	src := "<?php $a = `ls $b x`; $c = \"`ls`\"; $d = 'x`'; $e = `pwd`;"
+	var got []string
+	for _, tk := range Lex(src) {
+		if tk.Kind == token.String {
+			got = append(got, fmt.Sprintf("%s:%v", string("WHMT"[tk.Part]), tk.IsShellExec()))
+		}
+	}
+	want := "H:true T:true W:false W:false W:true"
+	if g := strings.Join(got, " "); g != want {
+		t.Errorf("got %s, want %s", g, want)
+	}
+}

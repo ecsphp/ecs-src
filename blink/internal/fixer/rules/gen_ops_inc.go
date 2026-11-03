@@ -403,6 +403,14 @@ func (LongToShorthandOperator) Fix(s *tokens.Stream) bool {
 		if operandIdx < 0 || !shortOperand(s.At(operandIdx)) {
 			continue
 		}
+		// an interpolated string or backtick literal is one operand, up to its Tail
+		if s.At(operandIdx).Part == token.Head {
+			chunks := literalChunks(s, operandIdx)
+			if chunks == nil {
+				continue
+			}
+			operandIdx = chunks[len(chunks)-1]
+		}
 		endIdx := sigNext(s, operandIdx)
 		if endIdx < 0 || s.At(endIdx).Value != ";" {
 			continue

@@ -221,8 +221,8 @@ func (l *lexer) lexPHP() {
 	case (c == 'b' || c == 'B') && l.lexBinaryString(start):
 	case c == '\'':
 		l.lexString(start, '\'')
-	case c == '"':
-		l.lexString(start, '"')
+	case c == '"' || c == '`':
+		l.lexString(start, c)
 	case isDigit(c) || (c == '.' && l.pos+1 < len(l.src) && isDigit(l.src[l.pos+1])):
 		l.pos = l.scanNumber(l.pos)
 		l.emit(token.Number, start)
@@ -515,12 +515,12 @@ func (l *lexer) lexBlockComment(start int) {
 }
 
 func (l *lexer) lexString(start int, quote byte) {
-	// double-quoted strings may carry a complex "{$...}" interpolation whose inner
-	// expression is split out as real tokens (so array fixers can reflow it); the
-	// literal chunks keep the quote, the "{" and the "}" so Render stays lossless.
-	if quote == '"' {
+	// a double-quoted string and a backtick (shell-exec) literal interpolate:
+	// see lexEncapsed. The closing quote is the first unescaped one outside the
+	// interpolated code, so a quote in "{$a["`"]}" does not end the literal.
+	if quote == '"' || quote == '`' {
 		l.lexEncapsed(start, l.pos+1, func(p int) int {
-			if l.src[p] == '"' {
+			if l.src[p] == quote {
 				return p + 1
 			}
 			return -1

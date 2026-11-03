@@ -64,8 +64,8 @@ func SplitBinaryPrefix(v string) (prefix, rest string) {
 type Token struct {
 	Kind Kind
 	// Part tells which piece of a string literal a String token is: an
-	// interpolated string or heredoc is split like token_get_all splits it,
-	// with its code lexed as ordinary tokens.
+	// interpolated string, heredoc or backtick literal is split like
+	// token_get_all splits it, with its code lexed as ordinary tokens.
 	Part  Part
 	Value string
 	Pos   int // byte offset in source
@@ -76,9 +76,9 @@ type Part uint8
 
 const (
 	Whole Part = iota // the whole literal: nothing in it lexed as code
-	Head              // opens an interpolated literal: "..., <<<EOT\n... (up to "{", "${" or "$")
+	Head              // opens an interpolated literal: "..., `..., <<<EOT\n... (up to "{", "${" or "$")
 	Mid               // literal text between two interpolated parts
-	Tail              // closes an interpolated literal: ..." or ...\nEOT
+	Tail              // closes an interpolated literal: ...", ...` or ...\nEOT
 )
 
 // IsLiteral reports whether t is a whole string literal (one token, no code in it).
@@ -89,6 +89,21 @@ func (t Token) OpensString() bool { return t.Kind == String && (t.Part == Whole 
 
 // ClosesString reports whether t is a whole string literal or the Tail of one.
 func (t Token) ClosesString() bool { return t.Kind == String && (t.Part == Whole || t.Part == Tail) }
+
+// IsShellExec reports whether t is the whole, Head or Tail String token of a
+// backtick (shell-exec) literal, which is never a constant string for PHP.
+func (t Token) IsShellExec() bool {
+	if t.Kind != String || t.Value == "" {
+		return false
+	}
+	switch t.Part {
+	case Whole, Head:
+		return t.Value[0] == '`'
+	case Tail:
+		return t.Value[len(t.Value)-1] == '`'
+	}
+	return false
+}
 
 // StartsHeredoc reports whether t opens a heredoc or nowdoc (T_START_HEREDOC).
 func (t Token) StartsHeredoc() bool {

@@ -23,6 +23,8 @@ func FuzzLexLossless(f *testing.F) {
 		"<?php <<<EOT\n$a {$b[<<<IN\n$c\nIN]} ${d\n  EOT;\n",
 		"<?php \"${",
 		"<?php \"$a[",
+		"<?php `ls $a {$b[\"`\"]} ${c}` . \"`$d`\";",
+		"<?php `ls {$a",
 	}
 	for _, s := range seeds {
 		f.Add(s)

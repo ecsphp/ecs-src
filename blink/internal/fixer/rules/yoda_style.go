@@ -132,8 +132,9 @@ func isYodaLiteral(t token.Token) bool {
 	case token.Number:
 		return true
 	case token.String:
-		// a double-quoted string with interpolation ("...{$x}...", "${x}") is not a constant
-		return t.IsLiteral() && !isInterpolatedString(t)
+		// a double-quoted string with interpolation ("...{$x}...", "${x}") or a
+		// backtick shell-exec is not a constant (T_CONSTANT_ENCAPSED_STRING)
+		return t.IsLiteral() && !isInterpolatedString(t) && !t.IsShellExec()
 	case token.Ident:
 		return true
 	case token.Keyword:

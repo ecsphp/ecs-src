@@ -31,3 +31,40 @@ func TestRulesOnInterpolatedLiterals(t *testing.T) {
 		}
 	}
 }
+
+// The command text of a backtick literal is not code for any rule, and the
+// literal is never a constant (cases checked against PHP-CS-Fixer).
+func TestRulesOnBacktickLiterals(t *testing.T) {
+	t.Parallel()
+	cmd := "<?php\n$a = `echo STRLEN(1) TRUE a=b ECHO \"x\"   \n  next`;\n"
+	yoda := YodaStyle{}.WithConfig(map[string]any{"equal": true, "identical": true}).(fixerRule)
+	cases := []struct {
+		name      string
+		f         fixerRule
+		src, want string
+	}{
+		{"NativeFunctionCasing leaves the command", NativeFunctionCasing{}, cmd, cmd},
+		{"ConstantCase leaves the command", ConstantCase{}, cmd, cmd},
+		{"LowercaseKeywords leaves the command", LowercaseKeywords{}, cmd, cmd},
+		{"SingleQuote leaves the command", SingleQuote{}, cmd, cmd},
+		{"BinaryOperatorSpaces leaves the command", BinaryOperatorSpaces{}, cmd, cmd},
+		{"NoTrailingWhitespace leaves the command", NoTrailingWhitespace{}, cmd, cmd},
+		{"ESV skips backtick literals and what they nest", ExplicitStringVariable{},
+			"<?php $a = `ls $b $c->d {$e}`;\n$f = `ls {$b[\"x $c\"]}` . \"$d\";\n$g = \"{$h[`ls $i`]} $j\";\n",
+			"<?php $a = `ls $b $c->d {$e}`;\n$f = `ls {$b[\"x $c\"]}` . \"{$d}\";\n$g = \"{$h[`ls $i`]} {$j}\";\n"},
+		{"YodaStyle: a shell-exec is not a constant", YodaStyle{}, "<?php if (`ls` === $x) {}", "<?php if (`ls` === $x) {}"},
+		{"YodaStyle yoda: a shell-exec is not a constant", yoda, "<?php if ($y == `pwd`) {}", "<?php if ($y == `pwd`) {}"},
+		{"LongToShorthand over a split literal", LongToShorthandOperator{},
+			"<?php\n$x = $x . `e $a`;\n$y = $y . \"e $a\";\n$z = $z . `e`;\n",
+			"<?php\n$x .= `e $a`;\n$y .= \"e $a\";\n$z .= `e`;\n"},
+		{"Include spaces only a constant string", Include{}, "<?php\ninclude`x`;\ninclude\"x$a\";\ninclude\"x\";\n", "<?php\ninclude`x`;\ninclude\"x$a\";\ninclude \"x\";\n"},
+		{"MethodArgumentSpace: no reflow on a line inside a backtick literal",
+			MethodArgumentSpace{}.WithConfig(map[string]any{"on_multiline": "ensure_fully_multiline"}).(fixerRule),
+			"<?php\n$x = `a\nb` . foo($a,\n    $b);\n", "<?php\n$x = `a\nb` . foo($a,\n    $b);\n"},
+	}
+	for _, c := range cases {
+		if got, _ := apply(t, c.f, c.src); got != c.want {
+			t.Errorf("%s:\n got=%q\nwant=%q", c.name, got, c.want)
+		}
+	}
+}
