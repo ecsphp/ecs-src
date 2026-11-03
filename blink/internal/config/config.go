@@ -76,13 +76,20 @@ func Load(path string) (*Config, error) {
 
 // resolve turns a config file into a Config, collecting rules from sets, levels
 // and explicit names, de-duplicated and kept in canonical (safest-first) order.
+// A set's rules keep the configuration the set gives them, and a later set wins;
+// a level or an explicit name only enables a rule.
 func resolve(f file) (*Config, error) {
 	c := &Config{Paths: f.Paths, Skip: f.Skip, Jobs: runtime.NumCPU()}
 	if len(c.Paths) == 0 {
 		c.Paths = []string{"."}
 	}
 
-	wanted := map[string]bool{}
+	wanted := map[string]fixer.Fixer{}
+	enable := func(fx fixer.Fixer) {
+		if _, ok := wanted[fx.Name()]; !ok {
+			wanted[fx.Name()] = fx
+		}
+	}
 	selective := false
 
 	for _, name := range f.Sets {
@@ -92,7 +99,7 @@ func resolve(f file) (*Config, error) {
 		}
 		selective = true
 		for _, fx := range fixers {
-			wanted[fx.Name()] = true
+			wanted[fx.Name()] = fx
 		}
 	}
 
@@ -102,7 +109,7 @@ func resolve(f file) (*Config, error) {
 		}
 		selective = true
 		for _, fx := range set.SpacesLevel(n) {
-			wanted[fx.Name()] = true
+			enable(fx)
 		}
 	}
 
@@ -112,7 +119,7 @@ func resolve(f file) (*Config, error) {
 			return nil, fmt.Errorf("unknown rule %q", name)
 		}
 		selective = true
-		wanted[fx.Name()] = true
+		enable(fx)
 	}
 
 	if !selective {
@@ -120,8 +127,8 @@ func resolve(f file) (*Config, error) {
 		return c, nil
 	}
 	for _, fx := range rules.All() {
-		if wanted[fx.Name()] {
-			c.Rules = append(c.Rules, fx)
+		if configured, ok := wanted[fx.Name()]; ok {
+			c.Rules = append(c.Rules, configured)
 		}
 	}
 	return c, nil
