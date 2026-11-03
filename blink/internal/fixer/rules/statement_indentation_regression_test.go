@@ -20,3 +20,14 @@ func TestStatementIndentationAttributedPromotedParam(t *testing.T) {
 		t.Fatalf("attributed promoted param must not be re-indented; changed=%v got=%q", changed, got)
 	}
 }
+
+// A PHP 8.4 "final" promoted constructor property is still a param: "final"
+// before the visibility must not make it a class property, or the params after
+// it and the closing ") {" gain an extra indent level.
+func TestStatementIndentationFinalPromotedParam(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nfinal class Flag\n{\n    public function __construct(\n        final public bool $on = false,\n        public int $level = 0,\n    ) {}\n}\n\nclass Box\n{\n    public function __construct(\n        public int $size = 0,\n        #[Marker]\n        final protected bool $open = false,\n    ) {\n    }\n}\n"
+	if got, changed := apply(t, StatementIndentation{}, src); changed || got != src {
+		t.Fatalf("final promoted param must not be re-indented; changed=%v got=%q", changed, got)
+	}
+}

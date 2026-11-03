@@ -732,8 +732,11 @@ func stmtIsPropertyStart(s *tokens.Stream, index int) bool {
 	}
 	// a promoted constructor parameter ("(private A $a, protected B $b)") is not a
 	// class property: its modifier chain is preceded by "(" or "," (across a leading
-	// param attribute, e.g. "#[\SensitiveParameter] public $a")
+	// param attribute, e.g. "#[\SensitiveParameter] public $a", and a PHP 8.4 "final")
 	before := prevMeaningfulSkippingAttributes(s, chainStart)
+	for before >= 0 && kwIs(s.At(before), "final") {
+		before = prevMeaningfulSkippingAttributes(s, before)
+	}
 	if before >= 0 && s.At(before).Kind == token.Punct && (s.At(before).Value == "(" || s.At(before).Value == ",") {
 		return false
 	}
