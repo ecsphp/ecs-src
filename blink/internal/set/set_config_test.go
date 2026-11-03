@@ -41,6 +41,8 @@ func TestSetsKeepECSRuleConfiguration(t *testing.T) {
 		{"common", Common(), "ClassDefinitionFixer", "<?php\ninterface I extends J,\n    K\n{\n}", "<?php\ninterface I extends J, K\n{\n}"},
 		{"per-cs", PERCS(), "ClassDefinitionFixer", "<?php\ninterface I extends J,\n    K\n{\n}\n$a = new class(\n    $b\n) {};", "<?php\ninterface I extends J,\n    K\n{\n}\n$a = new class (\n    $b\n) {};"},
 		{"psr12", PSR12(), "ClassDefinitionFixer", "<?php\n$a = new class(\n    $b\n) {};", "<?php\n$a = new class($b) {};"},
+		{"per-cs", PERCS(), "SingleSpaceAroundConstructFixer", "<?php\nif ($a) {\n}\nelse {\n}\necho  1;", "<?php\nif ($a) {\n} else {\n}\necho  1;"},
+		{"psr12", PSR12(), "SingleSpaceAroundConstructFixer", "<?php\nif ($a) {\n}\nelse {\n}\necho  1;", "<?php\nif ($a) {\n}\nelse {\n}\necho 1;"},
 		{"psr12", PSR12(), "ConcatSpaceFixer", "<?php\n$a = 'x'.'y';", "<?php\n$a = 'x' . 'y';"},
 		{"spaces", Spaces(), "ConcatSpaceFixer", "<?php\n$a = 'x'.'y';", "<?php\n$a = 'x' . 'y';"},
 		{"per-cs", PERCS(), "ConcatSpaceFixer", "<?php\n$a = 'x'.'y';", "<?php\n$a = 'x' . 'y';"},
