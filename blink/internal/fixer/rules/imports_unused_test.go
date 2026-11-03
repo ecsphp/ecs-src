@@ -141,3 +141,94 @@ func TestNoUnusedImportsUsageLikePhpCsFixer(t *testing.T) {
 		t.Fatalf("named argument and goto label are not usages; changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+// The expected outputs below were produced by PHP-CS-Fixer's NoUnusedImportsFixer
+// (through ECS) on the same inputs.
+func TestNoUnusedImportsMatchesPHPCSFixer(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ name, src, want string }{
+		// multi-use: only the unused name is removed
+		{"multi1", "<?php\nnamespace App;\nuse Foo\\Used, Bar\\Unused;\nnew Used();\n", "<?php\nnamespace App;\nuse Foo\\Used;\nnew Used();\n"},
+		{"multi2", "<?php\nnamespace App;\nuse Foo\\Unused, Bar\\Used;\nnew Used();\n", "<?php\nnamespace App;\nuse Bar\\Used;\nnew Used();\n"},
+		// multi-use with every name unused: the statement goes
+		{"multi3", "<?php\nnamespace App;\nuse Foo\\A, Bar\\B;\nnew C();\n", "<?php\nnamespace App;\nnew C();\n"},
+		// multi-line multi-use; PHP-CS-Fixer drops the ";" here too
+		{"multi4", "<?php\nnamespace App;\nuse Foo\\A,\n    Bar\\B,\n    Baz\\C;\nnew B();\n", "<?php\nnamespace App;\nuse \n    Bar\\B\nnew B();\n"},
+		{"multi5", "<?php\nnamespace App;\nuse Foo\\A as X, Bar\\B as Y;\nnew Y();\n", "<?php\nnamespace App;\nuse Bar\\B as Y;\nnew Y();\n"},
+		// multi-use with an import of the current namespace
+		{"multi6", "<?php\nnamespace App;\nuse App\\A, Bar\\B;\nnew A(); new B();\n", "<?php\nnamespace App;\nuse Bar\\B;\nnew A(); new B();\n"},
+		{"multi7", "<?php\nnamespace App;\nuse function Foo\\a, Foo\\b;\nb();\n", "<?php\nnamespace App;\nuse function Foo\\b;\nb();\n"},
+		// group use: the unused name is pruned
+		{"group1", "<?php\nnamespace App;\nuse Foo\\{A, B};\nnew A();\n", "<?php\nnamespace App;\nuse Foo\\{A};\nnew A();\n"},
+		{"group2", "<?php\nnamespace App;\nuse Foo\\{A, B};\nnew B();\n", "<?php\nnamespace App;\nuse Foo\\{B};\nnew B();\n"},
+		// group use with every name unused
+		{"group3", "<?php\nnamespace App;\nuse Foo\\{A, B};\nnew C();\n", "<?php\nnamespace App;\nnew C();\n"},
+		{"group4", "<?php\nnamespace App;\nuse Foo\\{\n    A,\n    B,\n    C,\n};\nnew B();\n", "<?php\nnamespace App;\nuse Foo\\{\n    B,\n};\nnew B();\n"},
+		{"group5", "<?php\nnamespace App;\nuse Foo\\{\n    A,\n    B\n};\nnew A();\n", "<?php\nnamespace App;\nuse Foo\\{\n    A\n};\nnew A();\n"},
+		// a group use is not a usage of another import
+		{"group6", "<?php\nnamespace App;\nuse function A\\{foo};\nuse B\\Foo;\nfoo();\n", "<?php\nnamespace App;\nuse function A\\{foo};\nfoo();\n"},
+		{"group7", "<?php\nnamespace App;\nuse Foo\\{A, B as C, D\\E};\nnew E(); new C();\n", "<?php\nnamespace App;\nuse Foo\\{B as C, D\\E};\nnew E(); new C();\n"},
+		{"group9", "<?php\nnamespace App;\nuse Foo\\{A, B};\nuse Bar\\{C};\nnew A();\n", "<?php\nnamespace App;\nuse Foo\\{A};\nnew A();\n"},
+		{"group10", "<?php\nnamespace Foo;\nuse Foo\\{A, B};\nnew A(); new B();\n", "<?php\nnamespace Foo;\nnew A(); new B();\n"},
+		{"trailing", "<?php\nnamespace App;\nuse Foo\\{A, B,};\nnew A();\n", "<?php\nnamespace App;\nuse Foo\\{A,};\nnew A();\n"},
+		// "?>" ends a use statement and stays
+		{"close1", "<?php\nuse Foo\\Bar ?>\nhello <?php echo 1;\n", "<?php\n?>\nhello <?php echo 1;\n"},
+		{"close2", "<?php\nuse Foo\\Bar ?>\nhello <?php new Bar;\n", "<?php\nuse Foo\\Bar ?>\nhello <?php new Bar;\n"},
+		{"close3", "<?php use Foo\\A, Foo\\B ?>\n<?php new B;\n", "<?php use Foo\\B ?>\n<?php new B;\n"},
+		// a bare name is a constant: a class import is unused
+		{"const1", "<?php\nnamespace App;\nuse Foo\\Bar;\necho Bar;\n", "<?php\nnamespace App;\necho Bar;\n"},
+		{"const2", "<?php\nnamespace App;\nuse Foo\\Bar;\n$a ? 1 : Bar;\n", "<?php\nnamespace App;\n$a ? 1 : Bar;\n"},
+		// "new BAR" is a class: a const import is unused
+		{"const3", "<?php\nnamespace App;\nuse const Foo\\BAR;\nnew BAR;\n", "<?php\nnamespace App;\nnew BAR;\n"},
+		{"const4", "<?php\nnamespace App;\nuse const Foo\\BAR;\n$x instanceof BAR;\n", "<?php\nnamespace App;\n$x instanceof BAR;\n"},
+		{"const5", "<?php\nnamespace App;\nuse const Foo\\BAR;\necho BAR | 1;\n", "<?php\nnamespace App;\nuse const Foo\\BAR;\necho BAR | 1;\n"},
+		// types: union, nullable return
+		{"const6", "<?php\nnamespace App;\nuse Foo\\Bar;\nfunction f(Bar|null $x): ?Bar { return null; }\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nfunction f(Bar|null $x): ?Bar { return null; }\n"},
+		{"const7", "<?php\nnamespace App;\nuse Foo\\Bar;\nuse Foo\\Baz;\nfunction f(): Bar|Baz {}\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nuse Foo\\Baz;\nfunction f(): Bar|Baz {}\n"},
+		// non-capturing catch
+		{"const8", "<?php\nnamespace App;\nuse Foo\\Bar;\ntry {} catch (Bar) {}\n", "<?php\nnamespace App;\nuse Foo\\Bar;\ntry {} catch (Bar) {}\n"},
+		// by-reference parameter type
+		{"const9", "<?php\nnamespace App;\nuse Foo\\Bar;\nfunction f(Bar &$x) {}\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nfunction f(Bar &$x) {}\n"},
+		// bitwise and with a variable
+		{"const10", "<?php\nnamespace App;\nuse const Foo\\BAR;\n$y = BAR & $x;\n", "<?php\nnamespace App;\nuse const Foo\\BAR;\n$y = BAR & $x;\n"},
+		{"const11", "<?php\nnamespace App;\nuse Foo\\Bar;\nclass X extends Y implements Z, Bar {}\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nclass X extends Y implements Z, Bar {}\n"},
+		// switch case
+		{"const12", "<?php\nnamespace App;\nuse const Foo\\BAR;\nswitch ($a) { case BAR: break; }\n", "<?php\nnamespace App;\nuse const Foo\\BAR;\nswitch ($a) { case BAR: break; }\n"},
+		// enum case
+		{"const13", "<?php\nnamespace App;\nuse Foo\\Bar;\nenum E { case Bar; }\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nenum E { case Bar; }\n"},
+		// DNF type
+		{"const14", "<?php\nnamespace App;\nuse Foo\\Bar;\nuse Foo\\Baz;\nfunction f((Bar&Baz)|null $x) {}\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nuse Foo\\Baz;\nfunction f((Bar&Baz)|null $x) {}\n"},
+		// constant in a {$...} interpolation
+		{"const15", "<?php\nnamespace App;\nuse const Foo\\BAR;\necho \"{$a[BAR]}\";\n", "<?php\nnamespace App;\nuse const Foo\\BAR;\necho \"{$a[BAR]}\";\n"},
+		{"const16", "<?php\nnamespace App;\nuse Foo\\Bar;\nforeach (Bar as $x) {}\n", "<?php\nnamespace App;\nforeach (Bar as $x) {}\n"},
+		// promoted nullable property
+		{"const17", "<?php\nnamespace App;\nuse Foo\\Bar;\nclass C { public function __construct(private ?Bar $b) {} }\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nclass C { public function __construct(private ?Bar $b) {} }\n"},
+		{"const18", "<?php\nnamespace App;\nuse const Foo\\BAR;\n$a = [BAR => 1, 2 => BAR];\n", "<?php\nnamespace App;\nuse const Foo\\BAR;\n$a = [BAR => 1, 2 => BAR];\n"},
+		// variadic parameter type
+		{"const19", "<?php\nnamespace App;\nuse Foo\\Bar;\n$f = fn(Bar ...$b) => 1;\n", "<?php\nnamespace App;\nuse Foo\\Bar;\n$f = fn(Bar ...$b) => 1;\n"},
+		// class constant declaration
+		{"const20", "<?php\nnamespace App;\nuse Foo\\Bar;\nclass C { const Bar = 1; }\n", "<?php\nnamespace App;\nclass C { const Bar = 1; }\n"},
+		// comment in the namespace declaration is part of its name
+		{"ns1", "<?php\nnamespace /* x */ App;\nuse App\\A;\nnew A();\n", "<?php\nnamespace /* x */ App;\nuse App\\A;\nnew A();\n"},
+		// two namespaces
+		{"ns2", "<?php\nnamespace App;\nuse Foo\\A;\nnamespace Other;\nnew A();\n", "<?php\nnamespace App;\nnamespace Other;\nnew A();\n"},
+		// inline HTML before the open tag
+		{"ns3", "<html>\n<?php\nuse Foo\\A;\nnew B();\n", "<html>\n<?php\nnew B();\n"},
+		{"ns4", "<?php\nnamespace App {\n    use Foo\\A, Foo\\B;\n    new A();\n}\n", "<?php\nnamespace App {\n    use Foo\\A;\n    new A();\n}\n"},
+		{"crlf", "<?php\r\nnamespace App;\r\n\r\nuse Foo\\A;\r\nuse Foo\\B;\r\n\r\nnew B();\r\n", "<?php\r\nnamespace App;\r\n\r\nuse Foo\\B;\r\n\r\nnew B();\r\n"},
+		{"crlfmulti", "<?php\r\nnamespace App;\r\nuse Foo\\A,\r\n    Foo\\B;\r\nnew B();\r\n", "<?php\r\nnamespace App;\r\nuse \r\n    Foo\\B;\r\nnew B();\r\n"},
+		// comments inside a multi-use are kept
+		{"linecmt", "<?php\nnamespace App;\nuse Foo\\A, // first\n    Foo\\B; // second\nnew B();\n", "<?php\nnamespace App;\nuse // first\n    Foo\\B; // second\nnew B();\n"},
+		{"attr", "<?php\nnamespace App;\nuse const Foo\\BAR;\n#[Attr(BAR)]\nclass C {}\n", "<?php\nnamespace App;\nuse const Foo\\BAR;\n#[Attr(BAR)]\nclass C {}\n"},
+		{"goto", "<?php\nnamespace App;\nuse Foo\\Bar;\nBar:\ngoto Bar;\n", "<?php\nnamespace App;\nuse Foo\\Bar;\nBar:\ngoto Bar;\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, changed := apply(t, NoUnusedImports{}, tc.src)
+			if got != tc.want || changed != (tc.src != tc.want) {
+				t.Fatalf("changed=%v\ngot  %q\nwant %q", changed, got, tc.want)
+			}
+		})
+	}
+}
