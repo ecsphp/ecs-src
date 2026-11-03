@@ -8,7 +8,10 @@ import (
 )
 
 var sourceURLPattern = regexp.MustCompile(
-	`^https://github\.com/(PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src|symplify/coding-standard/blob/main/src|ecsphp/ecs-src/blob/main/packages/coding-standard/src)/Fixer/[A-Za-z]+/[A-Za-z]+Fixer\.php$`,
+	`^https://github\.com/(` +
+		`(PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src|symplify/coding-standard/blob/main/src|ecsphp/ecs-src/blob/main/packages/coding-standard/src)/Fixer/[A-Za-z]+/[A-Za-z]+Fixer|` +
+		`PHPCSStandards/PHP_CodeSniffer/blob/4\.x/src/Standards/[A-Za-z]+/Sniffs/[A-Za-z]+/[A-Za-z]+Sniff` +
+		`)\.php$`,
 )
 
 // TestEveryFixerHasSourceURL enforces the Fixer contract offline: every rule

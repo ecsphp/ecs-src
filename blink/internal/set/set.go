@@ -46,6 +46,8 @@ func PERCS() []fixer.Fixer {
 // renames classes from the file path and is opt-in only.
 var percsExcluded = map[string]bool{
 	"PsrAutoloadingFixer": true,
+	// a PHP_CodeSniffer sniff, not part of PHP-CS-Fixer's @PER-CS
+	"LanguageConstructSpacingSniff": true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
