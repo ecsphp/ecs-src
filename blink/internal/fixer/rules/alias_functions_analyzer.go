@@ -166,7 +166,7 @@ func aliasCastAt(s *tokens.Stream, open int) (closeIdx int, typ string, ok bool)
 // T_ELLIPSIS, not the CT::T_FIRST_CLASS_CALLABLE of "name(...)".
 func aliasIsEllipsis(s *tokens.Stream, i int) bool {
 	return isPunctVal(s, i, "...") &&
-		!(isPunctVal(s, aliasPrevMeaningful(s, i), "(") && isPunctVal(s, aliasNextMeaningful(s, i), ")"))
+		(!isPunctVal(s, aliasPrevMeaningful(s, i), "(") || !isPunctVal(s, aliasNextMeaningful(s, i), ")"))
 }
 
 // aliasBlockEnd returns the end of the block opened at i (Tokens::detectBlockType
@@ -268,7 +268,7 @@ func aliasIsGlobalFunctionCall(s *tokens.Stream, index int) bool {
 	if functionName == "set" {
 		// a property hook "set(...) {" or "set(...) =>" is no call; the hook
 		// brace is approximated by a plain "{"
-		if !(isPunctVal(s, prev, "{") || isPunctVal(s, prev, ";") || isPunctVal(s, prev, "}")) {
+		if !isPunctVal(s, prev, "{") && !isPunctVal(s, prev, ";") && !isPunctVal(s, prev, "}") {
 			return true
 		}
 		if c := s.MatchForward(open); c >= 0 {
@@ -431,7 +431,7 @@ func aliasNamespaceDeclarations(s *tokens.Stream) []aliasNamespace {
 		for j := index + 1; j < declEnd; j++ {
 			name.WriteString(s.At(j).Value)
 		}
-		scopeEnd := -1
+		var scopeEnd int
 		if isPunctVal(s, declEnd, "{") {
 			scopeEnd = s.MatchForward(declEnd)
 		} else {

@@ -48,7 +48,7 @@ func (EregToPreg) Fix(s *tokens.Stream) bool {
 				continue
 			}
 			// the first argument must be just the string
-			if next := aliasNextMeaningful(s, str); next < 0 || !(isPunctVal(s, next, ",") || isPunctVal(s, next, ")")) {
+			if next := aliasNextMeaningful(s, str); next < 0 || (!isPunctVal(s, next, ",") && !isPunctVal(s, next, ")")) {
 				continue
 			}
 
@@ -364,7 +364,7 @@ func (ps *eregPcreParser) hexDigits() bool {
 
 // eregIsEscapablePunct reports whether a backslash before c makes a literal.
 func eregIsEscapablePunct(c byte) bool {
-	return c >= ' ' && c <= '~' && !(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z')
+	return c >= ' ' && c <= '~' && (c < '0' || c > '9') && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z')
 }
 
 // group parses what follows a "(" up to its ")".

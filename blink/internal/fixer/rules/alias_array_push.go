@@ -41,8 +41,7 @@ func (ArrayPush) Fix(s *tokens.Stream) bool {
 			namespaceSeparatorIndex = index
 			index = aliasPrevMeaningful(s, index)
 		}
-		if !(isPunctVal(s, index, ";") || isPunctVal(s, index, "{") || isPunctVal(s, index, "}") ||
-			isPunctVal(s, index, ")") || aliasIsOpenTag(s, index)) {
+		if !isPunctVal(s, index, ";") && !isPunctVal(s, index, "{") && !isPunctVal(s, index, "}") && !isPunctVal(s, index, ")") && !aliasIsOpenTag(s, index) {
 			continue
 		}
 

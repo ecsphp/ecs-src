@@ -53,7 +53,7 @@ func (f ModernizeStrpos) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		isStrpos := strings.EqualFold(t.Value, "strpos")
-		if !isStrpos && !(f.ModernizeStripos && strings.EqualFold(t.Value, "stripos")) {
+		if !isStrpos && (!f.ModernizeStripos || !strings.EqualFold(t.Value, "stripos")) {
 			continue
 		}
 		if !aliasIsGlobalFunctionCall(s, index) {
@@ -178,7 +178,7 @@ func modernizeStrposCompareTokens(s *tokens.Stream, offsetIndex, dir int) (opera
 		return 0, 0, false
 	}
 	operand := s.At(operandIndex)
-	if !(operand.Kind == token.Number && operand.Value == "0") && !(operand.Kind == token.Ident && strings.EqualFold(operand.Value, "false")) {
+	if (operand.Kind != token.Number || operand.Value != "0") && (operand.Kind != token.Ident || !strings.EqualFold(operand.Value, "false")) {
 		return 0, 0, false
 	}
 	if p := aliasMeaningfulSibling(s, operandIndex, dir); p >= 0 && modernizeStrposIsOfHigherPrecedence(s.At(p)) {

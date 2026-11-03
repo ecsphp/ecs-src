@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/token"
@@ -41,8 +42,8 @@ func (BacktickToShellExec) Fix(s *tokens.Stream) bool {
 		i = last
 	}
 	changed := false
-	for k := len(literals) - 1; k >= 0; k-- {
-		first, last := literals[k][0], literals[k][1]
+	for _, literal := range slices.Backward(literals) {
+		first, last := literal[0], literal[1]
 		if !backtickConvertible(s, first, last) {
 			continue
 		}

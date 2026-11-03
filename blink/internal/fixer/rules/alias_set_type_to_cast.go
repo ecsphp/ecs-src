@@ -61,7 +61,7 @@ func (SetTypeToCast) Fix(s *tokens.Stream) bool {
 			continue // function must be overridden or used incorrectly
 		}
 		prev := aliasPrevMeaningful(s, c.fn)
-		if !(isPunctVal(s, prev, ";") || isPunctVal(s, prev, "{") || isPunctVal(s, prev, "}") || aliasIsOpenTag(s, prev)) {
+		if !isPunctVal(s, prev, ";") && !isPunctVal(s, prev, "{") && !isPunctVal(s, prev, "}") && !aliasIsOpenTag(s, prev) {
 			continue // return value of the function is used
 		}
 
