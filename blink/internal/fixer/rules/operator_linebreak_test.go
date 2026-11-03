@@ -28,6 +28,12 @@ func TestOperatorLinebreak(t *testing.T) {
 		t.Fatalf(":: move: changed=%v got=%q", changed, got)
 	}
 
+	// the PHP 8.5 pipe operator "|>" moves as one operator
+	got, changed = apply(t, f, "<?php\n$x = $a |>\n    f(...);\n")
+	if want := "<?php\n$x = $a\n    |> f(...);\n"; !changed || got != want {
+		t.Fatalf("|> move: changed=%v got=%q", changed, got)
+	}
+
 	if _, changed := apply(t, f, "<?php\n$a = $b\n    || $c;\n"); changed {
 		t.Fatal("already-correct must be a no-op")
 	}

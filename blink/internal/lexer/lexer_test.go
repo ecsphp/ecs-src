@@ -198,13 +198,14 @@ func TestKeywordAfterObjectOperatorIsIdent(t *testing.T) {
 
 func TestLexMultiCharOperators(t *testing.T) {
 	cases := map[string]string{
-		"<?php $a === $b;": "===",
-		"<?php $a=>$b;":    "=>",
-		"<?php $a->b;":     "->",
-		"<?php A::B;":      "::",
-		"<?php $a ?? $b;":  "??",
-		"<?php $a <=> $b;": "<=>",
-		"<?php $a ??= $b;": "??=",
+		"<?php $a === $b;":    "===",
+		"<?php $a=>$b;":       "=>",
+		"<?php $a->b;":        "->",
+		"<?php A::B;":         "::",
+		"<?php $a ?? $b;":     "??",
+		"<?php $a <=> $b;":    "<=>",
+		"<?php $a ??= $b;":    "??=",
+		"<?php $a |> f(...);": "|>",
 	}
 	for src, op := range cases {
 		found := false
