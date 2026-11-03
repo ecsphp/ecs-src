@@ -130,9 +130,10 @@ var (
 		"OrderedImportsFixer": {"imports_order": []any{"class", "function", "const"}},
 	}
 	perCSConfig = map[string]map[string]any{
-		"ClassDefinitionFixer": {"inline_constructor_arguments": false, "single_line": false, "space_before_parenthesis": true},
-		"ConcatSpaceFixer":     {"spacing": "one"},
-		"OrderedImportsFixer":  {"imports_order": []any{"class", "function", "const"}, "sort_algorithm": "none"},
+		"ClassDefinitionFixer":      {"inline_constructor_arguments": false, "single_line": false, "space_before_parenthesis": true},
+		"ConcatSpaceFixer":          {"spacing": "one"},
+		"OrderedClassElementsFixer": {"order": []any{"use_trait"}},
+		"OrderedImportsFixer":       {"imports_order": []any{"class", "function", "const"}, "sort_algorithm": "none"},
 		"SingleSpaceAroundConstructFixer": {
 			"constructs_followed_by_a_single_space": []any{
 				"abstract", "as", "case", "catch", "class", "const", "const_import", "do", "else", "elseif",
