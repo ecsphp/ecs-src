@@ -58,6 +58,11 @@ func TestFullyQualifiedStrictTypesDocNonTypes(t *testing.T) {
 		{"number constant", " * @param 1e3|0x1E3|\\Vendor\\Bar $a\n", " * @param 1e3|0x1E3|Bar $a\n"},
 		{"tag case", " * @Param \\Vendor\\Bar $a\n", ""},
 		{"shape value still shortened", " * @param list{\\Vendor\\Bar} $a\n", " * @param list{Bar} $a\n"},
+		{"keyed shape value", " * @param array{key:\\Vendor\\Bar} $a\n", " * @param array{key:Bar} $a\n"},
+		{"numeric-keyed shape value", " * @param array{0:\\Vendor\\Bar} $a\n", " * @param array{0:Bar} $a\n"},
+		{"optional-keyed shape value", " * @param array{key?:\\Vendor\\Bar} $a\n", " * @param array{key?:Bar} $a\n"},
+		{"class constant", " * @param \\Vendor\\Bar::LIMIT $a\n", " * @param Bar::LIMIT $a\n"},
+		{"callable return type", " * @param \\Closure():\\Vendor\\Bar $a\n", " * @param \\Closure():Bar $a\n"},
 	}
 	for _, c := range cases {
 		in := head + c.in + " */\nfunction f($a) {}\n"

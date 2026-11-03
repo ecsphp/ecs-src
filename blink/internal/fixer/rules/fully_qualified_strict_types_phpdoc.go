@@ -263,11 +263,12 @@ func fqShortenDocType(typeStr string, uses *fqUses, ns string, reserved map[stri
 
 // fqDocAtomShortenable guards against non-type atoms.
 func fqDocAtomShortenable(b []byte, start, end, n int) bool {
-	// preceded by `$` (variable), `:` (::member or value separator artefact)
-	// or a digit (the letters of a number constant: "1e3", "0x1F")
+	// preceded by `$` (variable), `::` (class constant / member) or a digit
+	// (the letters of a number constant: "1e3", "0x1F"); a single `:` is a
+	// shape value or callable return type ("array{key:\Foo}", "\Closure():\Foo")
 	if start > 0 {
 		p := b[start-1]
-		if p == '$' || p == ':' || (p >= '0' && p <= '9') {
+		if p == '$' || (p == ':' && start >= 2 && b[start-2] == ':') || (p >= '0' && p <= '9') {
 			return false
 		}
 	}
