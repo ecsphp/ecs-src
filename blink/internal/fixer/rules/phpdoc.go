@@ -107,6 +107,7 @@ func (PhpdocNoEmptyReturn) Fix(s *tokens.Stream) bool {
 var phpdocScalarMap = map[string]string{
 	"boolean": "bool", "integer": "int", "double": "float",
 	"real": "float", "str": "string", "callback": "callable",
+	"never-return": "never", "never-returns": "never", "no-return": "never",
 }
 
 var phpdocTypeTagRe = regexp.MustCompile(`(?i)^(@(?:param|return|var|throws|property|property-read|property-write|method)\s+)(\S+)(.*)$`)
@@ -115,8 +116,8 @@ var phpdocTypeTagRe = regexp.MustCompile(`(?i)^(@(?:param|return|var|throws|prop
 //
 // PhpdocScalar normalizes scalar type aliases in phpdoc tags (integer -> int,
 // boolean -> bool, double/real -> float, str -> string, callback -> callable).
-// Option `types` restricts which aliases are converted; a nil set converts all of
-// them (blink's default).
+// Option `types` selects which aliases are converted; the default is
+// PHP-CS-Fixer's (all but the never-return/never-returns/no-return ones).
 type PhpdocScalar struct {
 	types map[string]bool
 }
@@ -141,47 +142,31 @@ func (f PhpdocScalar) WithConfig(config map[string]any) fixer.Fixer {
 }
 
 func (f PhpdocScalar) Fix(s *tokens.Stream) bool {
+	enabled := f.types
+	if enabled == nil {
+		enabled = phpdocScalarDefaultTypes
+	}
 	return applyToDocblocks(s, func(d *docblock) bool {
-		changed := false
-		for i, l := range d.inner {
-			m := phpdocTypeTagRe.FindStringSubmatch(strings.TrimLeft(l.content, " "))
-			if m == nil {
-				continue
-			}
-			newType := normalizeScalarType(m[2], f.types)
-			if newType == m[2] {
-				continue
-			}
-			lead := l.content[:len(l.content)-len(strings.TrimLeft(l.content, " "))]
-			d.inner[i].content = lead + m[1] + newType + m[3]
-			changed = true
-		}
-		return changed
+		return fixPhpdocTypes(d, func(typ string) string { return normalizeScalarType(typ, enabled) })
 	})
 }
 
-// normalizeScalarType replaces scalar aliases in a phpdoc type, handling unions,
-// nullables and array suffixes ("integer[]|null" -> "int[]|null"). The lookup is
-// case-sensitive so a class named like an alias (e.g. Laravel's "Str") is safe.
+// phpdocScalarDefaultTypes is the default of the `types` option.
+var phpdocScalarDefaultTypes = map[string]bool{
+	"boolean": true, "callback": true, "double": true, "integer": true, "real": true, "str": true,
+}
+
+// normalizeScalarType replaces the enabled scalar aliases among the type names
+// of a phpdoc type ("integer[]|null" -> "int[]|null", "array<int, boolean>" ->
+// "array<int, bool>"). The lookup is case-sensitive so a class named like an
+// alias (e.g. Laravel's "Str") is safe.
 func normalizeScalarType(typ string, enabled map[string]bool) string {
-	nullable := strings.HasPrefix(typ, "?")
-	body := strings.TrimPrefix(typ, "?")
-	parts := strings.Split(body, "|")
-	for i, p := range parts {
-		base, suffix := p, ""
-		for strings.HasSuffix(base, "[]") {
-			base = base[:len(base)-2]
-			suffix = "[]" + suffix
+	return mapPhpdocTypeNames(typ, func(w string) string {
+		if repl, ok := phpdocScalarMap[w]; ok && enabled[w] {
+			return repl
 		}
-		if repl, ok := phpdocScalarMap[base]; ok && (enabled == nil || enabled[base]) {
-			parts[i] = repl + suffix
-		}
-	}
-	out := strings.Join(parts, "|")
-	if nullable {
-		out = "?" + out
-	}
-	return out
+		return w
+	})
 }
 
 // phpdocScalarStringList reads a config value as a list of strings.
