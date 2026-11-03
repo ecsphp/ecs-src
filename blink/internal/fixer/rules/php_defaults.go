@@ -10,7 +10,11 @@ import (
 // value behaves differently. ECS's dump-config drops options left at their
 // default, so the registry (All, ByName) applies these. A struct literal such as
 // YodaStyle{} keeps its zero values. JSON gives WithConfig the types of a dumped config.
-const phpDefaultsJSON = `{}`
+const phpDefaultsJSON = `{
+	"PhpCsFixer\\Fixer\\ControlStructure\\YodaStyleFixer": {
+		"equal": true, "identical": true, "less_and_greater": null
+	}
+}`
 
 var phpDefaults = func() map[string]map[string]any {
 	var m map[string]map[string]any

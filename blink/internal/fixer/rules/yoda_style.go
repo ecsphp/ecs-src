@@ -9,9 +9,8 @@ import (
 	"blink/internal/tokens"
 )
 
-// yodaMode is how a comparison group is normalized. The zero value (yodaNonYoda)
-// reproduces ECS's common-set configuration (equal/identical/less_and_greater
-// all false), which is blink's default.
+// yodaMode is how a comparison group is normalized. The zero value is
+// yodaNonYoda (option false).
 type yodaMode int
 
 const (
@@ -22,11 +21,13 @@ const (
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/YodaStyleFixer.php
 //
-// YodaStyle rewrites comparisons to the configured style per operator group.
-// The zero value follows ECS's common set (equal=false, identical=false,
-// less_and_greater=false): a constant on the left of a comparison and a variable
-// on the right are swapped so the variable comes first ("null === $x" -> "$x ===
-// null"). false is non-yoda, null leaves the group alone, true is yoda.
+// YodaStyle rewrites comparisons to the configured style per operator group:
+// false is non-yoda (a constant on the left and a variable on the right are
+// swapped so the variable comes first, "null === $x" -> "$x === null"), null
+// leaves the group alone, true is yoda. The struct zero value is non-yoda for
+// all three groups (ECS's common set); the registry hands out the rule with
+// PHP-CS-Fixer's defaults instead (equal=true, identical=true,
+// less_and_greater=null), see phpDefaultsJSON.
 type YodaStyle struct {
 	equal       yodaMode
 	identical   yodaMode
