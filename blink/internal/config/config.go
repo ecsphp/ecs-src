@@ -17,7 +17,7 @@ import (
 // the worker count, assembled from an ECS or blink config file.
 type Config struct {
 	Paths []string
-	Skip  []string // filepath.Match globs tested against each path
+	Skip  []string // ECS skip paths (globs, directories, files); see finder.PathMatcher
 	Rules []fixer.Fixer
 	Jobs  int // parallel workers
 	// PerPathRuleSkips disables a single rule on a subset of paths, keyed by the

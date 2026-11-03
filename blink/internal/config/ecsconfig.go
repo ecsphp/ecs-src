@@ -69,8 +69,8 @@ type ECSResolution struct {
 	// ConfigIgnored are mapped rules that carried configuration; blink applies
 	// its built-in behaviour for the fixer rather than the ECS options.
 	ConfigIgnored []string
-	// PerPathSkips are class-on-path skips applied project-wide, since blink
-	// cannot yet skip a single rule on a subset of files.
+	// PerPathSkips are the rules skipped only on some paths (class-on-path
+	// skips); blink disables each one on its paths, as ECS does.
 	PerPathSkips []string
 }
 
