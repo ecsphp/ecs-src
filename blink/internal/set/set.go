@@ -43,7 +43,8 @@ func PERCS() []fixer.Fixer {
 
 // percsExcluded are implemented fixers that @PER-CS does not enable, so the
 // per-cs set (which otherwise runs every fixer) leaves them out. PsrAutoloading
-// renames classes from the file path and is opt-in only.
+// renames classes from the file path and is opt-in only; the others are not
+// @PER-CS rules (most change code semantics) and run only when a config asks.
 var percsExcluded = map[string]bool{
 	"PsrAutoloadingFixer": true,
 	// a PHP_CodeSniffer sniff, not part of PHP-CS-Fixer's @PER-CS
@@ -62,6 +63,7 @@ var percsExcluded = map[string]bool{
 	"NonPrintableCharacterFixer":         true,
 	"NoHomoglyphNamesFixer":              true,
 	"ModernSerializationMethodsFixer":    true,
+	"DeclareStrictTypesFixer":            true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
