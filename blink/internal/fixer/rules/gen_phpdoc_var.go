@@ -73,7 +73,9 @@ func (PhpdocVarWithoutName) Fix(s *tokens.Stream) bool {
 				continue
 			}
 		}
-		if !isPropertyModifier(s.At(next)) {
+		// a promoted constructor parameter's visibility is not a property
+		// modifier to PHP-CS-Fixer (ConstructorPromotionTransformer)
+		if !isPropertyModifier(s.At(next)) || isPromotedVisibility(s, next) {
 			continue
 		}
 		d, ok := parseDoc(s.At(i).Value)
