@@ -53,6 +53,7 @@ var percsExcluded = map[string]bool{
 	"PhpUnitMockShortWillReturnFixer": true,
 	"PhpUnitTestAnnotationFixer":      true,
 	"DoctrineAnnotationBracesFixer":   true,
+	"GlobalKeywordSniff":              true,
 }
 
 var byName = map[string]func() []fixer.Fixer{

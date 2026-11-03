@@ -13,6 +13,7 @@ import (
 	"blink/internal/config"
 	"blink/internal/diff"
 	"blink/internal/finder"
+	"blink/internal/fixer"
 	"blink/internal/lexer"
 	"blink/internal/tokens"
 )
@@ -23,6 +24,8 @@ type FileResult struct {
 	AppliedRules []string // rules that changed this file, in application order
 	Diff         string   // unified diff (Original vs fixed)
 	After        string   // fixed content
+	// Errors are the errors found in the original contents, by line.
+	Errors []fixer.CodingStandardError
 }
 
 func (r FileResult) Changed() bool { return len(r.AppliedRules) > 0 }
@@ -67,7 +70,7 @@ func Run(ctx context.Context, cfg *config.Config, write bool, prog Progress) ([]
 					mu.Unlock()
 					continue
 				}
-				if res.Changed() {
+				if res.Changed() || len(res.Errors) > 0 {
 					results <- res
 				}
 			}
@@ -116,6 +119,18 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 	stream := tokens.New(lexer.Lex(original))
 	stream.SetPath(path)
 	res := FileResult{Path: path}
+
+	for _, rule := range cfg.Rules {
+		reporter, ok := rule.(fixer.ErrorReporter)
+		if !ok {
+			continue
+		}
+		if skipPatterns, ok := cfg.PerPathRuleSkips[rule.Name()]; ok && finder.Skipped(path, skipPatterns) {
+			continue
+		}
+		res.Errors = append(res.Errors, reporter.Errors(stream)...)
+	}
+	slices.SortStableFunc(res.Errors, func(a, b fixer.CodingStandardError) int { return cmp.Compare(a.Line, b.Line) })
 
 	for _, rule := range cfg.Rules {
 		if skipPatterns, ok := cfg.PerPathRuleSkips[rule.Name()]; ok && finder.Skipped(path, skipPatterns) {

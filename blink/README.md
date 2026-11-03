@@ -13,7 +13,7 @@ CI keeps it current.
 | tool | rules | of ECS |
 |---|---:|---:|
 | [ECS](https://github.com/symplify/easy-coding-standard) (baseline) | 207 | 100% |
-| blink | 218 | 105% |
+| blink | 219 | 105% |
 <!-- rule-counts:end -->
 
 ## Build
@@ -27,7 +27,8 @@ make build   # produces ./blink
 
 ## Usage
 
-Check your code (reports a diff of what would change, exit code 1 if issues):
+Check your code (reports a diff of what would change and the errors to fix by
+hand, exit code 1 if issues):
 
 ```bash
 ./blink src tests
@@ -78,6 +79,9 @@ blink fixers by class name. Any rule blink has no fixer for is reported and
 skipped, so the run is never silently narrower than the ECS config. Rule
 configuration is not modelled yet - a configured rule runs with blink's built-in
 behaviour, which is noted in the report.
+
+A sniff that only reports (such as GlobalKeywordSniff) prints ECS's table of
+errors to fix by hand and fails the run, as ECS does.
 
 ## Parity with ECS
 
