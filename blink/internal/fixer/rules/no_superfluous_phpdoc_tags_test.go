@@ -144,3 +144,16 @@ func TestNoSuperfluousPhpdocTagsPromotedProperty(t *testing.T) {
 		"<?php\nclass A\n{\n    public function __construct(\n        /**\n         */\n"+
 			"        readonly string $a,\n    ) {}\n}\n", true)
 }
+
+// "var" is not in PHP-CS-Fixer's MODIFIER_KINDS, so a docblock before a "var"
+// property documents nothing the fixer checks; a one-line docblock emptied by
+// the fixer becomes "/**  */".
+func TestNoSuperfluousPhpdocTagsVarAndEmptiedSingleLine(t *testing.T) {
+	t.Parallel()
+	f := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"allow_mixed": true}).(fixerRule)
+	kept := "<?php\nclass A\n{\n    /** @var string */\n    var string $a;\n}\n"
+	assertFix(t, f, kept, kept, false)
+	assertFix(t, f,
+		"<?php\nclass A\n{\n    /** @var string */\n    public string $a;\n    /** @return int */\n    public function f(): int {}\n}\n",
+		"<?php\nclass A\n{\n    /**  */\n    public string $a;\n    /**  */\n    public function f(): int {}\n}\n", true)
+}
