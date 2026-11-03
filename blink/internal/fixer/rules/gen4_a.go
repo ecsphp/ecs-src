@@ -2,6 +2,7 @@ package rules
 
 import (
 	"strings"
+	"unicode"
 
 	"blink/internal/fixer"
 	"blink/internal/token"
@@ -11,10 +12,9 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Comment/SingleLineCommentStyleFixer.php
 //
 // SingleLineCommentStyle normalizes single-line comments to the "//" form. A "#"
-// line comment becomes "//" (an "#[" attribute is never touched), and a genuinely
-// single-line "/* ... */" block comment at the end of its line becomes "// ...".
-// Multi-line "/* */" blocks and doc comments are left alone. CommentTypes is the
-// comment_types option ("asterisk", "hash"); nil keeps the default (both).
+// line comment becomes "//" (an "#[" attribute is never touched), and a "/* ... */"
+// block comment at the end of its line whose text sits on one line becomes
+// "// ...". CommentTypes is the comment_types option; nil means both types.
 type SingleLineCommentStyle struct {
 	CommentTypes []string
 }
@@ -60,15 +60,12 @@ func (f SingleLineCommentStyle) Fix(s *tokens.Stream) bool {
 			continue
 		}
 
-		// asterisk style: only a genuinely single-line "/* ... */" block
+		// asterisk style: a "/* ... */" block whose text sits on one line
 		if !asteriskEnabled || !strings.HasPrefix(v, "/*") || len(v) < 4 {
 			continue
 		}
-		if strings.ContainsAny(v, "\n\r") {
-			continue // conservative: never touch a multi-line block comment
-		}
 		content := v[2 : len(v)-2]
-		if strings.Contains(content, "?>") {
+		if strings.Contains(content, "?>") || commentTextSpansLines(content) {
 			continue
 		}
 		// the comment must sit at the end of its line, otherwise turning it into
@@ -80,7 +77,7 @@ func (f SingleLineCommentStyle) Fix(s *tokens.Stream) bool {
 			}
 		}
 
-		inner := strings.Trim(content, " \t\r\n\f\v*")
+		inner := strings.TrimFunc(content, isSpaceOrStar)
 		nv := "//"
 		if inner != "" {
 			nv = "// " + inner
@@ -98,6 +95,37 @@ func (f SingleLineCommentStyle) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+// isSpaceOrStar is the [\s\*] class of SingleLineCommentStyleFixer's patterns.
+func isSpaceOrStar(r rune) bool { return r == '*' || unicode.IsSpace(r) }
+
+// isPCRELineBreak reports whether r is matched by PCRE's \R in UTF mode.
+func isPCRELineBreak(r rune) bool {
+	switch r {
+	case '\n', '\v', '\f', '\r', 0x85, 0x2028, 0x2029:
+		return true
+	}
+	return false
+}
+
+// commentTextSpansLines mirrors Preg::match('/[^\s\*].*\R.*[^\s\*]/s', $content):
+// some text (neither whitespace nor "*") comes before a line break and some
+// comes after it.
+func commentTextSpansLines(content string) bool {
+	textBefore := false
+	breakAfterText := false
+	for _, r := range content {
+		switch {
+		case breakAfterText && !isSpaceOrStar(r):
+			return true
+		case textBefore && isPCRELineBreak(r):
+			breakAfterText = true
+		case !isSpaceOrStar(r):
+			textBefore = true
+		}
+	}
+	return false
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/NoNullPropertyInitializationFixer.php
