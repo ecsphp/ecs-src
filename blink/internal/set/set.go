@@ -63,6 +63,7 @@ var percsExcluded = map[string]bool{
 	"NoHomoglyphNamesFixer":              true,
 	"ModernSerializationMethodsFixer":    true,
 	"NativeConstantInvocationFixer":      true,
+	"GlobalNamespaceImportFixer":         true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
