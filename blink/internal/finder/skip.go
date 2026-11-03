@@ -261,3 +261,73 @@ func inCharClass(name string, ch byte) bool {
 	}
 	return false
 }
+
+// ResolveSkipPaths reads blink.json skip paths like ECS's SkippedCriteriaResolver
+// reads withSkip(): a path without "*" is kept only if it exists, then each one
+// is normalized.
+func ResolveSkipPaths(paths []string) []string {
+	resolved := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if !strings.Contains(path, "*") {
+			if _, err := os.Stat(path); err != nil {
+				continue
+			}
+		}
+		resolved = append(resolved, normalizePath(path))
+	}
+	return resolved
+}
+
+// normalizePath mirrors ECS's PathNormalizer: "\" becomes "/", runs of "/"
+// collapse, "." segments go and ".." drops the segment before it (textually),
+// a leading "/" and a "scheme://" prefix are kept, and a trailing "/" is not.
+func normalizePath(path string) string {
+	scheme := ""
+	if i := strings.Index(path, "://"); i > 0 && len(path) > i+3 && isLowerASCII(path[:i]) {
+		scheme, path = path[:i], path[i+3:]
+	}
+
+	path = strings.ReplaceAll(path, `\`, "/")
+	for strings.Contains(path, "//") {
+		path = strings.ReplaceAll(path, "//", "/")
+	}
+
+	root := ""
+	if strings.HasPrefix(path, "/") {
+		root = "/"
+	}
+	parts := make([]string, 0, strings.Count(path, "/")+1)
+	for part := range strings.SplitSeq(strings.Trim(path, "/"), "/") {
+		switch part {
+		case ".":
+			continue
+		case "..":
+			removed := ""
+			if len(parts) > 0 {
+				removed = parts[len(parts)-1]
+				parts = parts[:len(parts)-1]
+			}
+			// stepping out of a .phar drops the phar:// scheme
+			if scheme == "phar" && strings.HasSuffix(removed, ".phar") {
+				scheme = ""
+			}
+			continue
+		}
+		parts = append(parts, part)
+	}
+
+	start := ""
+	if scheme != "" {
+		start = scheme + "://"
+	}
+	return start + root + strings.Join(parts, "/")
+}
+
+func isLowerASCII(s string) bool {
+	for i := range len(s) {
+		if s[i] < 'a' || s[i] > 'z' {
+			return false
+		}
+	}
+	return true
+}

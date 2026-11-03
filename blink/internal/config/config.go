@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 
+	"blink/internal/finder"
 	"blink/internal/fixer"
 	"blink/internal/fixer/rules"
 	"blink/internal/set"
@@ -79,7 +80,7 @@ func Load(path string) (*Config, error) {
 // A set's rules keep the configuration the set gives them, and a later set wins;
 // a level or an explicit name only enables a rule.
 func resolve(f file) (*Config, error) {
-	c := &Config{Paths: f.Paths, Skip: f.Skip, Jobs: runtime.NumCPU()}
+	c := &Config{Paths: f.Paths, Skip: finder.ResolveSkipPaths(f.Skip), Jobs: runtime.NumCPU()}
 	if len(c.Paths) == 0 {
 		c.Paths = []string{"."}
 	}
