@@ -6,14 +6,15 @@ in the ECS repository and mirrors ECS's `psr12` + `common` output.
 
 ## Rule coverage
 
-How many ECS rules blink implements. Regenerate with `bin/rule-counts.sh`;
-CI keeps it current.
+Share of the fixer universe blink implements - every PHP-CS-Fixer and Symplify
+fixer plus the PHP_CodeSniffer sniffs ECS references from its sets. Regenerate
+with `bin/rule-counts.sh`; CI keeps it current.
 
 <!-- rule-counts:start -->
-| tool | rules | of ECS |
+| tool | rules | coverage |
 |---|---:|---:|
-| [ECS](https://github.com/symplify/easy-coding-standard) (baseline) | 207 | 100% |
-| blink | 220 | 106% |
+| fixer universe (PHP-CS-Fixer + Symplify + in-set sniffs) | 338 | 100% |
+| blink | 220 | 64% |
 <!-- rule-counts:end -->
 
 ## Build

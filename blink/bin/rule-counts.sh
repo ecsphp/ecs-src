@@ -1,43 +1,44 @@
 #!/usr/bin/env bash
-# Rule coverage counter. Counts the rules blink implements against the ECS
-# baseline and renders them into the README between the rule-counts markers.
-# Run with --check in CI to fail when the README is stale.
+# Rule coverage counter. Counts the rules blink implements against the full
+# fixer universe and renders them into the README between the rule-counts
+# markers. Run with --check in CI to fail when the README is stale.
 #
 #   bin/rule-counts.sh          update README in place
 #   bin/rule-counts.sh --check  fail (exit 1) if README is out of date
 #
 # Sources:
-#   ECS   - tracked baseline from ecs-rules.txt ("N rules configured")
-#   blink - `blink list-checkers`
+#   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers plus the
+#              PHP_CodeSniffer sniffs ECS references from its sets
+#   blink    - `blink list-checkers`
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 README="$ROOT/README.md"
-RULES_TXT="$ROOT/ecs-rules.txt"
 ALL_FIXERS="$ROOT/ecs-all-fixers.txt"
 START="<!-- rule-counts:start -->"
 END="<!-- rule-counts:end -->"
 
-ecs=$(grep -oE '[0-9]+ rules configured in ECS' "$RULES_TXT" | grep -oE '^[0-9]+')
-
 go build -C "$ROOT" -o /tmp/blink-count . >&2
 go_count=$(/tmp/blink-count list-checkers | grep -cE '^[[:space:]]*- ')
 
-# rules ECS configures (across its sets) that blink does not implement yet
-missing=""
-if [ -f "$ALL_FIXERS" ]; then
-    /tmp/blink-count list-checkers | sed 's/^[[:space:]]*-[[:space:]]*//' | LC_ALL=C sort -u > /tmp/blink-impl.txt
-    missing=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u "$ALL_FIXERS") /tmp/blink-impl.txt | sed -E 's#.*\\##')
-fi
+# the universe blink is measured against (parity denominator)
+go run -C "$ROOT" ./cmd/list-universe > /tmp/blink-universe.txt
+ecs=$(grep -c . /tmp/blink-universe.txt)
+
+# universe fixers blink has not ported yet
+/tmp/blink-count list-checkers | sed 's/^[[:space:]]*-[[:space:]]*//' | LC_ALL=C sort -u > /tmp/blink-impl.txt
+missing=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | sed -E 's#.*\\##')
 missing_count=$(printf '%s' "$missing" | grep -c . || true)
 
-go_pct=$(( go_count * 100 / ecs ))
+# blink rules within the universe; blink's own extras never push parity past 100%
+implemented=$(( ecs - missing_count ))
+go_pct=$(( implemented * 100 / ecs ))
 
 block=$(cat <<EOF
 $START
-| tool | rules | of ECS |
+| tool | rules | coverage |
 |---|---:|---:|
-| [ECS](https://github.com/symplify/easy-coding-standard) (baseline) | $ecs | 100% |
+| fixer universe (PHP-CS-Fixer + Symplify + in-set sniffs) | $ecs | 100% |
 | blink | $go_count | ${go_pct}% |
 $END
 EOF
@@ -54,12 +55,12 @@ new=$(awk -v start="$START" -v end="$END" -v block="$block" '
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     {
         echo "### Rule coverage"
-        echo "| tool | rules | of ECS |"
+        echo "| tool | rules | coverage |"
         echo "|---|---:|---:|"
-        echo "| ECS (baseline) | $ecs | 100% |"
+        echo "| fixer universe | $ecs | 100% |"
         echo "| blink | $go_count | ${go_pct}% |"
         echo ""
-        echo "### Missing in blink ($missing_count of $(LC_ALL=C sort -u "$ALL_FIXERS" 2>/dev/null | grep -c . || echo 0) ECS fixers)"
+        echo "### Missing in blink ($missing_count of $ecs universe fixers)"
         if [ -n "$missing" ]; then
             printf '%s\n' "$missing" | sed 's/^/- `/; s/$/`/'
         else
@@ -80,8 +81,14 @@ if [ "${1:-}" = "--check" ]; then
         diff "$README" <(printf '%s\n' "$new") || true
         exit 1
     fi
-    echo "Rule counts up to date: ECS $ecs, blink $go_count"
+    if ! diff "$ALL_FIXERS" /tmp/blink-universe.txt >/dev/null; then
+        echo "ecs-all-fixers.txt is stale. Run: bin/rule-counts.sh" >&2
+        diff "$ALL_FIXERS" /tmp/blink-universe.txt || true
+        exit 1
+    fi
+    echo "Rule counts up to date: universe $ecs, blink $go_count"
 else
     printf '%s\n' "$new" > "$README"
-    echo "Updated README: ECS $ecs, blink $go_count"
+    cp /tmp/blink-universe.txt "$ALL_FIXERS"
+    echo "Updated README and ecs-all-fixers.txt: universe $ecs, blink $go_count"
 fi
