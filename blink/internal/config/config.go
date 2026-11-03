@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 
+	"blink/internal/finder"
 	"blink/internal/fixer"
 	"blink/internal/fixer/rules"
 	"blink/internal/set"
@@ -77,7 +78,7 @@ func Load(path string) (*Config, error) {
 // resolve turns a config file into a Config, collecting rules from sets, levels
 // and explicit names, de-duplicated and kept in canonical (safest-first) order.
 func resolve(f file) (*Config, error) {
-	c := &Config{Paths: f.Paths, Skip: f.Skip, Jobs: runtime.NumCPU()}
+	c := &Config{Paths: f.Paths, Skip: finder.ResolveSkipPaths(f.Skip), Jobs: runtime.NumCPU()}
 	if len(c.Paths) == 0 {
 		c.Paths = []string{"."}
 	}

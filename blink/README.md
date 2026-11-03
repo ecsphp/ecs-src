@@ -67,7 +67,9 @@ Drop a `blink.json` in your project root (auto-loaded, or point at one with
 - `level` - gradual adoption: `{"spaces": N}` enables the first N rules of the
   spaces set (safest first), so you can raise coverage one step at a time.
 - `rules` - enable individual fixers by name.
-- `paths` / `skip` - files to scan and glob patterns to ignore.
+- `paths` / `skip` - files to scan and paths to ignore. Skips work like ECS's
+  `withSkip()` paths: an entry without `*` must exist, a directory skips
+  everything below it, and `*` also crosses `/`.
 
 With no config file, every fixer runs. CLI path arguments override `paths`.
 

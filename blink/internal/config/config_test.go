@@ -1,8 +1,10 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"blink/internal/fixer/rules"
@@ -101,4 +103,44 @@ func jsonEscape(s string) string {
 		out = append(out, r)
 	}
 	return string(out)
+}
+
+// Expected values are ECS's SkippedCriteriaResolver output under PHP on the
+// same tree.
+func TestLoadSkipResolvesLikeECS(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []string{"src/Legacy/A.php", "src/LegacyOld/B.php", "src/C.php", "lib/D.php"} {
+		full := filepath.Join(root, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte("<?php\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Chdir(root)
+
+	skip := []string{
+		"Foo.php", "C.php", "src/C.php", "./src/C.php", "src//Legacy/", "*/Fixture/*", "./*.php",
+		"src/Nope/../C.php", "src/Legacy/../C.php", root + "//src/./Legacy/", `src\Legacy`, "./", `a\*\b`, "",
+		"src/LegacyOld/../../lib",
+	}
+	body, err := json.Marshal(map[string][]string{"skip": skip})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := Load(write(t, string(body)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"src/C.php", "src/C.php", "src/Legacy", "*/Fixture/*", "*.php",
+		"src/C.php", root + "/src/Legacy", "", "a/*/b", "lib",
+	}
+	if !slices.Equal(c.Skip, want) {
+		t.Fatalf("skip = %q, want %q", c.Skip, want)
+	}
 }
