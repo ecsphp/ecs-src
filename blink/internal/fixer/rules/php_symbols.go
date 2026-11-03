@@ -645,7 +645,7 @@ func (sc *symScan) isClassyInvocation(i int) bool {
 	}
 	for {
 		prev = sc.prevM(prev)
-		if !(sc.isPunct(prev, ",") || sc.isPunct(prev, `\`) || sc.isTString(prev) || sc.isNamespaceOperator(prev)) {
+		if !sc.isPunct(prev, ",") && !sc.isPunct(prev, `\`) && !sc.isTString(prev) && !sc.isNamespaceOperator(prev) {
 			break
 		}
 	}
@@ -832,7 +832,7 @@ func (sc *symScan) isPropertyHookBrace(i int) bool {
 	return sawVar
 }
 
-// funcScan answers FunctionsAnalyzer::isGlobalFunctionCall / isGlobalFunctionUsage.
+// funcScan answers FunctionsAnalyzer::isGlobalFunctionUsage.
 type funcScan struct {
 	*symScan
 	decls   []int
@@ -849,7 +849,6 @@ func newFuncScan(sc *symScan) *funcScan {
 	return f
 }
 
-func (f *funcScan) isGlobalFunctionCall(i int) bool  { return f.globalFunction(i, true) }
 func (f *funcScan) isGlobalFunctionUsage(i int) bool { return f.globalFunction(i, false) }
 
 func (f *funcScan) globalFunction(i int, callOnly bool) bool {
@@ -881,7 +880,7 @@ func (f *funcScan) globalFunction(i int, callOnly bool) bool {
 	}
 	name := strings.ToLower(sc.s.At(i).Value)
 	if name == "set" {
-		if !(sc.isPropertyHookBrace(prev) || sc.isPunct(prev, ";") || sc.isPunct(prev, "}")) {
+		if !sc.isPropertyHookBrace(prev) && !sc.isPunct(prev, ";") && !sc.isPunct(prev, "}") {
 			return true
 		}
 		if c := sc.match[open]; c >= 0 {

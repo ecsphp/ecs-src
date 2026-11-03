@@ -458,7 +458,7 @@ func (m docTypeMatcher) identifier(p int) int {
 	if !isDocIdentChar(m.at(p)) {
 		return -1
 	}
-	if docD.at(m.src, p, m.utf) > 0 && !(p > 0 && m.src[p-1] == '*') {
+	if docD.at(m.src, p, m.utf) > 0 && (p <= 0 || m.src[p-1] != '*') {
 		return -1
 	}
 	for isDocIdentChar(m.at(p)) {
@@ -928,7 +928,7 @@ func (m docTypeMatcher) constant(p int) int {
 	}
 	e := m.digitsSep(q, docD)
 	if e < 0 {
-		if !(m.at(q) == '.' && docD.at(m.src, q+1, m.utf) > 0) {
+		if m.at(q) != '.' || docD.at(m.src, q+1, m.utf) <= 0 {
 			return -1
 		}
 		e = q
