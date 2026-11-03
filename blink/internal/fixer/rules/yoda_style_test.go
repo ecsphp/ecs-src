@@ -72,3 +72,23 @@ func TestYodaStyleSourceURL(t *testing.T) {
 		t.Fatalf("SourceURL %q, want %q", got, want)
 	}
 }
+
+func TestYodaStyleYodaMode(t *testing.T) {
+	t.Parallel()
+	f := YodaStyle{}.WithConfig(map[string]any{"equal": true, "identical": true, "less_and_greater": nil})
+
+	assertFix(t, f, "<?php\nif ($x === null) {}", "<?php\nif (null === $x) {}", true)
+	assertFix(t, f, "<?php\nif ($a->b($c) !== 'x') {}", "<?php\nif ('x' !== $a->b($c)) {}", true)
+	assertFix(t, f, "<?php\nif (isset($a) === true) {}", "<?php\nif (true === isset($a)) {}", true)
+	// a group as the base of a member access is part of the variable side
+	assertFix(t, f, "<?php\nif ((new A())->b() === null) {}", "<?php\nif (null === (new A())->b()) {}", true)
+	// less_and_greater=null leaves "<" alone
+	assertFix(t, f, "<?php\nif ($b < 3) {}", "<?php\nif ($b < 3) {}", false)
+
+	// a bare parenthesized group is not a variable (always_move_variable=false):
+	// the comparison stays as it is, wherever the group starts
+	assertFix(t, f, "<?php\nif (($a ?? '') === 'x') {}", "<?php\nif (($a ?? '') === 'x') {}", false)
+	assertFix(t, f, "<?php\nif ((($x = f($y))) !== null) {}", "<?php\nif ((($x = f($y))) !== null) {}", false)
+	assertFix(t, f, "<?php\nreturn ($a[0] ?? false) === true;", "<?php\nreturn ($a[0] ?? false) === true;", false)
+	assertFix(t, f, "<?php\n$v = ($a == $b ?: ($c ?? false) === '1');", "<?php\n$v = ($a == $b ?: ($c ?? false) === '1');", false)
+}
