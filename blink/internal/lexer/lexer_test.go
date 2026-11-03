@@ -219,3 +219,30 @@ func TestLexMultiCharOperators(t *testing.T) {
 		}
 	}
 }
+
+func TestLexAsymmetricVisibilityIsOneKeyword(t *testing.T) {
+	cases := map[string]string{
+		"<?php class A { public private(set) int $a; }":                       "private(set)",
+		"<?php class A { public function __construct(protected(set) $a) {} }": "protected(set)",
+		"<?php class A { PUBLIC(Set) int $a; }":                               "PUBLIC(Set)",
+	}
+	for src, want := range cases {
+		found := false
+		for _, tk := range Lex(src) {
+			if tk.Value == want {
+				found = tk.Kind == token.Keyword
+			}
+		}
+		if !found {
+			t.Errorf("%q not lexed as one Keyword in %q", want, src)
+		}
+	}
+	// "private (set)" with a space, or a method call, is not the modifier
+	for _, src := range []string{"<?php private (set);", "<?php $o->private(set);", "<?php private(settings);"} {
+		for _, tk := range Lex(src) {
+			if strings.Contains(tk.Value, "(") && tk.Kind != token.Punct {
+				t.Errorf("%q lexed as %s in %q", tk.Value, tk.Kind, src)
+			}
+		}
+	}
+}

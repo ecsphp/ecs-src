@@ -12,6 +12,7 @@ import (
 var memberModifiers = map[string]bool{
 	"public": true, "private": true, "protected": true, "static": true,
 	"abstract": true, "final": true, "readonly": true, "var": true,
+	"public(set)": true, "protected(set)": true, "private(set)": true,
 }
 
 var visibilityModifiers = map[string]bool{

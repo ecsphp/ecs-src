@@ -16,6 +16,7 @@ var structuralSkipKeywords = map[string]bool{
 	"function": true, "fn": true, "abstract": true, "const": true,
 	"namespace": true, "require": true, "require_once": true,
 	"include": true, "include_once": true, "final": true, "readonly": true,
+	"public(set)": true, "protected(set)": true, "private(set)": true,
 }
 
 var classyKeywords = map[string]bool{

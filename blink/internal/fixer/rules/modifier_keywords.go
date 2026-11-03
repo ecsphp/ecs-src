@@ -112,6 +112,9 @@ func (f ModifierKeywords) orderModifierKeywords(s *tokens.Stream, m int) bool {
 		if !memberModifiers[lw] {
 			break // "const", "function" or a type keyword: modifier run ends
 		}
+		if isSetVisibility(lw) {
+			return false // set-visibility "public(set)" is left untouched
+		}
 		// set-visibility "public(set)" is not representable on the flat lexer
 		if next := skipWhitespace(s, k+1); next < s.Len() && s.At(next).Kind == token.Punct && s.At(next).Value == "(" {
 			return false
@@ -180,4 +183,10 @@ func (f ModifierKeywords) orderModifierKeywords(s *tokens.Stream, m int) bool {
 	}
 	s.ReplaceRange(m, after-1, repl)
 	return true
+}
+
+// isSetVisibility reports whether the lowercased keyword is one of PHP 8.4's
+// set-visibility modifiers (T_PUBLIC_SET, T_PROTECTED_SET, T_PRIVATE_SET).
+func isSetVisibility(lw string) bool {
+	return lw == "public(set)" || lw == "protected(set)" || lw == "private(set)"
 }

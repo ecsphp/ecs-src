@@ -175,7 +175,11 @@ func (l *lexer) lexPHP() {
 		for l.pos < len(l.src) && isIdent(l.src[l.pos]) {
 			l.pos++
 		}
-		l.emit(l.identKind(l.src[start:l.pos]), start)
+		kind := l.identKind(l.src[start:l.pos])
+		if kind == token.Keyword && l.atSetModifierSuffix(l.src[start:l.pos]) {
+			l.pos += len("(set)")
+		}
+		l.emit(kind, start)
 	default:
 		if op := l.matchOperator(); op > 0 {
 			l.pos += op
@@ -207,6 +211,16 @@ func (l *lexer) identKind(word string) token.Kind {
 		return token.Keyword
 	}
 	return token.Ident
+}
+
+// atSetModifierSuffix reports whether the visibility keyword word is directly
+// followed by "(set)": PHP 8.4 lexes "private(set)" as one token (T_PRIVATE_SET).
+func (l *lexer) atSetModifierSuffix(word string) bool {
+	switch strings.ToLower(word) {
+	case "public", "protected", "private":
+		return l.pos+len("(set)") <= len(l.src) && strings.EqualFold(l.src[l.pos:l.pos+len("(set)")], "(set)")
+	}
+	return false
 }
 
 // lastSignificant returns the value of the last non-trivia token emitted so far.

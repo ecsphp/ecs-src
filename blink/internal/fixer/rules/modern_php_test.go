@@ -11,6 +11,7 @@ func TestModernSyntaxIsLeftIntact(t *testing.T) {
 	}{
 		{"pipe operator", BinaryOperatorSpaces{}, "<?php\n$out = $items |> array_values(...) |> count(...);\n"},
 		{"pipe operator on a new line", BinaryOperatorSpaces{}, "<?php\n$out = $items\n    |> array_unique(...)\n    |> array_values(...);\n"},
+		{"asymmetric visibility", SingleSpaceAroundConstruct{}, "<?php\nclass Box {\n    public private(set) bool $open = false;\n    public function __construct(public protected(set) int $size, PUBLIC(SET) $id) {}\n}\n"},
 		{"pipe operator, other operators configured", BinaryOperatorSpaces{}.WithConfig(map[string]any{"operators": map[string]any{"|": "no_space", ">": "no_space"}}).(fixerRule), "<?php\n$out = $items |> f(...);\n"},
 	}
 	for _, c := range cases {
