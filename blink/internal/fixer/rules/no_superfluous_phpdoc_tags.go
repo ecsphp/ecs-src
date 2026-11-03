@@ -98,11 +98,19 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 		if f.removeInheritdoc && nspRemoveInheritDoc(&d) {
 			docChanged = true
 		}
+		emptied := false
 		if sig, ok := signatureAfter(s, i); ok && f.filterSuperfluous(&d, sig, ctx) {
 			docChanged = true
+			// a one-line docblock losing its only tag ends up empty, which
+			// PHP-CS-Fixer writes as "/**  */"
+			emptied = d.single && (len(d.inner) == 0 || d.inner[0].content == "")
 		}
 		if docChanged {
-			s.SetValue(i, d.render())
+			if emptied {
+				s.SetValue(i, "/**  */")
+			} else {
+				s.SetValue(i, d.render())
+			}
 			changed = true
 		}
 	}
@@ -312,7 +320,11 @@ func signatureAfter(s *tokens.Stream, doc int) (funcSig, bool) {
 			if visibilityModifiers[lv] && inConstructorParams(s, j) {
 				return funcSig{}, false
 			}
-			if lv == "var" || isFuncModifier(lv) || lv == "readonly" || isSetVisibility(lv) {
+			// nor is "var": MODIFIER_KINDS leaves T_VAR out
+			if lv == "var" {
+				return funcSig{}, false
+			}
+			if isFuncModifier(lv) || lv == "readonly" || isSetVisibility(lv) {
 				sawModifier = true
 				j++
 				continue
