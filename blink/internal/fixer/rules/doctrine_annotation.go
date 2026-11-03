@@ -130,7 +130,7 @@ func daInsertAt(toks []daToken, index int, t daToken) []daToken {
 // daFixSpacesAroundParentheses mirrors fixSpacesAroundParentheses.
 func daFixSpacesAroundParentheses(toks []daToken) {
 	inAnnotationUntil := -1
-	for index := 0; index < len(toks); index++ {
+	for index := range toks {
 		if inAnnotationUntil >= 0 {
 			if index == inAnnotationUntil {
 				inAnnotationUntil = -1
