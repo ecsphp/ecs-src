@@ -51,6 +51,12 @@ func Run(ctx context.Context, cfg *config.Config, write bool, prog Progress) ([]
 
 	jobs := max(cfg.Jobs, 1)
 
+	// prepare each rule's skip paths once, not per file
+	ruleSkips := make(map[string]*finder.PathMatcher, len(cfg.PerPathRuleSkips))
+	for rule, patterns := range cfg.PerPathRuleSkips {
+		ruleSkips[rule] = finder.NewPathMatcher(patterns)
+	}
+
 	paths := make(chan string)
 	results := make(chan FileResult)
 	var mu sync.Mutex
@@ -60,7 +66,7 @@ func Run(ctx context.Context, cfg *config.Config, write bool, prog Progress) ([]
 	for range jobs {
 		wg.Go(func() {
 			for path := range paths {
-				res, err := fixFile(cfg, path, write)
+				res, err := fixFile(cfg, ruleSkips, path, write)
 				if prog != nil {
 					prog.Advance()
 				}
@@ -109,7 +115,7 @@ func Run(ctx context.Context, cfg *config.Config, write bool, prog Progress) ([]
 	return collected, nil
 }
 
-func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
+func fixFile(cfg *config.Config, ruleSkips map[string]*finder.PathMatcher, path string, write bool) (FileResult, error) {
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return FileResult{}, err
@@ -125,7 +131,7 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 		if !ok {
 			continue
 		}
-		if skipPatterns, ok := cfg.PerPathRuleSkips[rule.Name()]; ok && finder.Skipped(path, skipPatterns) {
+		if ruleSkips[rule.Name()].Match(path) {
 			continue
 		}
 		res.Errors = append(res.Errors, reporter.Errors(stream)...)
@@ -133,7 +139,7 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 	slices.SortStableFunc(res.Errors, func(a, b fixer.CodingStandardError) int { return cmp.Compare(a.Line, b.Line) })
 
 	for _, rule := range cfg.Rules {
-		if skipPatterns, ok := cfg.PerPathRuleSkips[rule.Name()]; ok && finder.Skipped(path, skipPatterns) {
+		if ruleSkips[rule.Name()].Match(path) {
 			continue
 		}
 		if rule.Fix(stream) {
