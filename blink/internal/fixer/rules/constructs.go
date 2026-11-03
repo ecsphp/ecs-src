@@ -17,6 +17,12 @@ var constructKeywords = map[string]bool{
 	"interface": true, "namespace": true, "new": true, "private": true,
 	"protected": true, "public": true, "readonly": true, "static": true,
 	"switch": true, "trait": true, "try": true, "use": true, "while": true,
+	"private(set)": true, "protected(set)": true, "public(set)": true,
+}
+
+// singleSpaceSetModifiers maps the set-visibility option names to their keyword.
+var singleSpaceSetModifiers = map[string]string{
+	"private_set": "private(set)", "protected_set": "protected(set)", "public_set": "public(set)",
 }
 
 // singleSpaceKnownKeywords are the plain keywords the options may name; virtual
@@ -69,6 +75,9 @@ func (f SingleSpaceAroundConstruct) WithConfig(config map[string]any) fixer.Fixe
 			}
 			if singleSpaceKnownKeywords[name] {
 				f.Followed[name] = true
+			}
+			if kw, ok := singleSpaceSetModifiers[name]; ok {
+				f.Followed[kw] = true
 			}
 		}
 	}

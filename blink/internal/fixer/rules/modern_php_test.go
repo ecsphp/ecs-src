@@ -21,3 +21,23 @@ func TestModernSyntaxIsLeftIntact(t *testing.T) {
 		}
 	}
 }
+
+func TestModernSyntaxNeighboursAreFixed(t *testing.T) {
+	t.Parallel()
+	setOnly := SingleSpaceAroundConstruct{}.WithConfig(map[string]any{"constructs_followed_by_a_single_space": []any{"private_set"}}).(fixerRule)
+	cases := []struct {
+		name string
+		rule fixerRule
+		src  string
+		want string
+	}{
+		{"asymmetric visibility followed by two spaces", SingleSpaceAroundConstruct{}, "<?php\nclass Box {\n    public private(set)  bool $open;\n}\n", "<?php\nclass Box {\n    public private(set) bool $open;\n}\n"},
+		{"asymmetric visibility configured by name", setOnly, "<?php\nclass Box {\n    public  private(set)  bool $open;\n}\n", "<?php\nclass Box {\n    public  private(set) bool $open;\n}\n"},
+	}
+	for _, c := range cases {
+		got, _ := apply(t, c.rule, c.src)
+		if got != c.want {
+			t.Errorf("%s:\n got: %q\nwant: %q", c.name, got, c.want)
+		}
+	}
+}
