@@ -1,10 +1,15 @@
 package finder
 
-import "strings"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 // PathMatcher matches file paths against ECS skip paths like ECS's
 // FileInfoMatcher: a path is skipped when it equals a pattern, starts or ends
-// with it, or matches it with fnmatch (where "*" crosses "/").
+// with it, matches it with fnmatch (where "*" crosses "/"), or lies under it
+// after realpath.
 type PathMatcher struct {
 	patterns []skipPattern
 }
@@ -13,6 +18,9 @@ type skipPattern struct {
 	raw        string // as configured, for the exact-equality check
 	normalized string // after FnMatchPathNormalizer; "" matches nothing more
 	glob       string // normalized with "\" as "/", for fnmatch
+	real       string // realpath of normalized, "/"-separated; "" if it does not resolve
+	realIsFile bool
+	realIsDir  bool
 }
 
 // NewPathMatcher prepares patterns for matching.
@@ -22,6 +30,13 @@ func NewPathMatcher(patterns []string) *PathMatcher {
 		p := skipPattern{raw: raw, normalized: normalizeForFnmatch(raw)}
 		if p.normalized != "" {
 			p.glob = slashed(p.normalized)
+			if real, ok := realpath(p.normalized); ok {
+				p.real = slashed(real)
+				if info, err := os.Stat(p.real); err == nil {
+					p.realIsFile = info.Mode().IsRegular()
+					p.realIsDir = info.IsDir()
+				}
+			}
 		}
 		m.patterns = append(m.patterns, p)
 	}
@@ -34,6 +49,8 @@ func (m *PathMatcher) Match(path string) bool {
 		return false
 	}
 	glob := slashed(path)
+	var real string
+	resolved, realOK := false, false
 	for _, p := range m.patterns {
 		if path == p.raw {
 			return true
@@ -47,6 +64,32 @@ func (m *PathMatcher) Match(path string) bool {
 		if fnmatch(p.glob, glob) || fnmatch("*/"+p.glob, glob) {
 			return true
 		}
+		if p.real == "" {
+			continue
+		}
+		if !resolved {
+			resolved = true
+			if r, ok := realpath(path); ok {
+				real, realOK = slashed(r), true
+			}
+		}
+		if !realOK {
+			continue
+		}
+		if p.realIsFile {
+			if real == p.real {
+				return true
+			}
+			continue
+		}
+		prefix := p.real
+		if p.realIsDir {
+			// a directory covers what is below it, not a sibling it prefixes
+			prefix = strings.TrimRight(prefix, "/") + "/"
+		}
+		if strings.HasPrefix(real, prefix) {
+			return true
+		}
 	}
 	return false
 }
@@ -56,7 +99,32 @@ func normalizeForFnmatch(path string) string {
 	if strings.HasPrefix(path, "*") || strings.HasSuffix(path, "*") {
 		return "*" + strings.Trim(path, "*") + "*"
 	}
+	if strings.Contains(path, "..") {
+		real, ok := realpath(path)
+		if !ok {
+			return ""
+		}
+		return real
+	}
 	return path
+}
+
+// realpath mirrors PHP's realpath(). It avoids filepath.Abs, which would clean
+// ".." before resolving the symlink in front of it.
+func realpath(path string) (string, bool) {
+	abs := path
+	if !filepath.IsAbs(path) {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", false
+		}
+		abs = wd + string(filepath.Separator) + path
+	}
+	real, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return "", false
+	}
+	return real, true
 }
 
 func slashed(path string) string {

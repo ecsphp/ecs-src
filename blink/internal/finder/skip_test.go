@@ -6,7 +6,8 @@ import (
 	"testing"
 )
 
-// skipTree builds a small project and returns its root.
+// skipTree builds a small project and returns its symlink-free root, so that
+// realpath-based cases compare like with like.
 func skipTree(t *testing.T) string {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
@@ -32,16 +33,23 @@ func skipTree(t *testing.T) string {
 			t.Fatal(err)
 		}
 	}
+	if err := os.Symlink(filepath.Join(root, "old"), filepath.Join(root, "link")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(root, "old", "sub"), filepath.Join(root, "deeplink")); err != nil {
+		t.Fatal(err)
+	}
 	return root
 }
 
 // TestSkippedMatchesECS mirrors ECS's FileInfoMatcher: exact path, prefix,
-// suffix, fnmatch (where "*" crosses "/"), then "*/"-relative fnmatch. Rows
-// marked "quirk" are ECS behaviour that looks surprising but is what the PHP
-// engine does, so blink must do it too.
+// suffix, fnmatch (where "*" crosses "/"), "*/"-relative fnmatch, then
+// realpath containment. Rows marked "quirk" are ECS behaviour that looks
+// surprising but is what the PHP engine does, so blink must do it too.
 func TestSkippedMatchesECS(t *testing.T) {
 	root := skipTree(t)
 	t.Chdir(root)
+	// not filepath.Join: it would clean "." and ".." out of the rows that test them
 	abs := func(rel string) string { return root + "/" + rel }
 
 	cases := []struct {
@@ -78,7 +86,8 @@ func TestSkippedMatchesECS(t *testing.T) {
 		{"trailing slash child", abs("old") + "/", abs("old/sub/b.php"), true},
 		{"trailing slash sibling", abs("old") + "/", abs("old2/d.php"), false},
 
-		// relative patterns: "*/" fnmatch or suffix
+		// relative patterns: "*/" fnmatch, suffix, or realpath against cwd
+		{"relative dir via realpath", "old", abs("old/sub/b.php"), true},
 		{"relative dir sibling", "old", abs("old2/d.php"), false},
 		{"relative glob", "old/*.php", abs("old/sub/deep/c.php"), true},
 		{"relative glob sibling", "old/*.php", abs("old2/d.php"), false},
@@ -101,6 +110,28 @@ func TestSkippedMatchesECS(t *testing.T) {
 		{"bracket", abs("src/[FZ]oo.php"), abs("src/Zoo.php"), true},
 		{"bracket negated", abs("src/[!FZ]oo.php"), abs("src/Zoo.php"), false},
 		{"bracket range", abs("src/[A-Z]oo.php"), abs("src/Foo.php"), true},
+
+		// ".." is resolved with realpath, then matched as a directory
+		{"dotdot dir child", abs("src/../old"), abs("old/sub/b.php"), true},
+		{"dotdot dir unrelated", abs("src/../old"), abs("src/Foo.php"), false},
+		{"dotdot missing", abs("nope/../../gone"), abs("old/a.php"), false},
+
+		// realpath: a symlinked directory, from either side
+		{"symlinked pattern", abs("link"), abs("old/sub/b.php"), true},
+		{"symlinked file path", abs("old"), abs("link/a.php"), true},
+		{"symlinked pattern unrelated", abs("link"), abs("src/Foo.php"), false},
+
+		// realpath resolves ".." after the symlink before it, as PHP does, not
+		// textually; and a missing directory before ".." makes it fail
+		{"dotdot after symlink in pattern", abs("deeplink/../a.php"), abs("old/a.php"), true},
+		{"relative dotdot after symlink in pattern", "deeplink/../a.php", abs("old/a.php"), true},
+		{"dotdot after symlink not textual", "deeplink/../a.php", abs("a.php"), false},
+		{"dotdot after symlink dir pattern", abs("deeplink/.."), abs("old/sub/b.php"), true},
+		{"dotdot after symlink in path", abs("old"), abs("deeplink/../a.php"), true},
+		{"dotdot after missing dir", abs("src/Nope/../Foo.php"), abs("src/Foo.php"), false},
+		// realpath: a pattern that resolves to a file matches only that file
+		{"realpath file", abs("src/./Foo.php"), abs("src/Foo.php"), true},
+		{"realpath file other", abs("src/./Foo.php"), abs("src/Zoo.php"), false},
 
 		{"empty pattern", "", abs("src/Foo.php"), false},
 	}
