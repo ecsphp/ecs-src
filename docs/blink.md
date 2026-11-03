@@ -60,6 +60,28 @@ The ecs-go binary is looked up in this order:
 
 If none is found, `--blink` fails with an error explaining how to provide the binary.
 
+## Custom fixers
+
+blink can't run PHP fixers. To use your own, port them to Go and build your own blink binary with the `github.com/ecsphp/ecs-src/blink/extend` package:
+
+```go
+package main
+
+import "github.com/ecsphp/ecs-src/blink/extend"
+
+func main() {
+	extend.Register(MyFixer{}, 0) // the PHP fixer's getPriority()
+	extend.Main()
+}
+```
+
+- `Name()` returns the PHP fixer's class name. The rule stays in `ecs.php` as usual.
+- A fixer runs only when the config lists it. It is never part of a set or the default run.
+- `WithConfig` gets only the options that differ from the PHP defaults, so it must apply those defaults itself.
+- Fixers with the same priority run in class-name order.
+
+Build it (`go get github.com/ecsphp/ecs-src/blink@<commit>`) and point ECS at it with `ECS_BLINK_BIN`. See [`blink/examples/customfixer`](../blink/examples/customfixer/main.go).
+
 ## Prototype caveat
 
 This is an RFC-stage prototype. ecs-go reads the rules and skips from your `ecs.php` (not just the paths), and because every ecs-go fixer is named by its PHP-CS-Fixer class, the rules map straight across by name. Every rule ecs-go has no fixer for is reported and skipped, and a configured rule runs with ecs-go's built-in behaviour (its configuration is not modelled yet) and is noted in the report. So a blink run is never silently narrower than your config, but it is not yet equivalent to a full ECS run.
