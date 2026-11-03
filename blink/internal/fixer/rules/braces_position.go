@@ -222,32 +222,59 @@ func (f BracesPosition) wantNextLine(category string, s *tokens.Stream, brace in
 	return !funcSignatureMultiline(s, brace), true
 }
 
-// funcSignatureMultiline reports whether the parameter list's closing ")" is on
-// its own line (a newline directly precedes it). This is the
-// next_line_unless_newline_at_signature_end exception: only then does the body
-// brace stay on the ")" line. A merely multiline parameter list whose ")" shares
-// a line with the last argument does not qualify.
+// funcSignatureMultiline is the next_line_unless_newline_at_signature_end
+// exception of PHP-CS-Fixer's BracesPositionFixer: from the "{", step back over
+// the tokens that can end a signature; the brace stays only when that lands on
+// a ")" with a newline (or a newline and a comment) right before it.
 func funcSignatureMultiline(s *tokens.Stream, brace int) bool {
-	closeParen := -1
-	for j := brace - 1; j >= 0; j-- {
-		t := s.At(j)
-		if t.Kind == token.AttributeEnd {
-			return false // a leading attribute's parens are not the signature (e.g. a class header)
-		}
-		if t.Kind != token.Punct {
-			continue
-		}
-		if t.Value == ")" {
-			closeParen = j
-			break
-		}
-		if t.Value == "{" || t.Value == "}" || t.Value == ";" {
-			return false
-		}
+	p := prevMeaningfulIndex(s, brace)
+	for p >= 0 && bpIsSignatureEndToken(s, p) {
+		p = prevMeaningfulIndex(s, p)
 	}
-	if closeParen <= 0 {
+	if p <= 0 || !isPunctVal(s, p, ")") {
 		return false
 	}
-	prev := s.At(closeParen - 1)
+	p--
+	if k := s.At(p).Kind; (k == token.Comment || k == token.DocComment) && p > 0 {
+		p--
+	}
+	prev := s.At(p)
 	return prev.Kind == token.Whitespace && hasNewline(prev.Value)
+}
+
+// bpIsSignatureEndToken reports whether the token at i is one of the kinds
+// BracesPositionFixer steps back over: T_STRING, T_NS_SEPARATOR, T_STATIC,
+// T_CALLABLE, CT::T_ARRAY_TYPEHINT, CT::T_TYPE_COLON, CT::T_NULLABLE_TYPE,
+// CT::T_TYPE_ALTERNATION, CT::T_TYPE_INTERSECTION and DNF parentheses.
+func bpIsSignatureEndToken(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	switch t.Kind {
+	case token.Ident:
+		return true
+	case token.Keyword:
+		return isKeywordValue(t, "static", "array", "callable")
+	case token.Punct:
+		switch t.Value {
+		case ":", "?", `\`, "|", "&":
+			return true
+		case "(":
+			return bpIsDNFParens(s, i, s.MatchForward(i))
+		case ")":
+			return bpIsDNFParens(s, s.MatchBackward(i), i)
+		}
+	}
+	return false
+}
+
+// bpIsDNFParens reports whether the parentheses at open/closeIdx are a DNF
+// type group: the "(" follows a "|" or the ")" precedes one.
+func bpIsDNFParens(s *tokens.Stream, open, closeIdx int) bool {
+	if open < 0 || closeIdx < 0 {
+		return false
+	}
+	if p := prevMeaningfulIndex(s, open); p >= 0 && isPunctVal(s, p, "|") {
+		return true
+	}
+	n := nextMeaningfulIndex(s, closeIdx)
+	return n >= 0 && isPunctVal(s, n, "|")
 }
