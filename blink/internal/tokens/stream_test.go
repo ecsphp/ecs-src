@@ -63,3 +63,33 @@ func TestReplaceRange(t *testing.T) {
 		t.Fatalf("replace: got %q", got)
 	}
 }
+
+func TestClearEmptyTokens(t *testing.T) {
+	s := mk("", "a", "", "", "b", "")
+	s.ClearEmptyTokens()
+	if s.Len() != 2 || s.At(0).Value != "a" || s.At(1).Value != "b" {
+		t.Fatalf("got %v", s.Tokens())
+	}
+}
+
+// Every write that can add an empty token makes the next ClearEmptyTokens scan.
+func TestClearEmptyTokensAfterEachWrite(t *testing.T) {
+	writes := map[string]func(*Stream){
+		"Set":           func(s *Stream) { s.Set(1, token.Token{}) },
+		"SetValue":      func(s *Stream) { s.SetValue(1, "") },
+		"InsertAt":      func(s *Stream) { s.InsertAt(1, token.Token{}) },
+		"InsertSliceAt": func(s *Stream) { s.InsertSliceAt(1, []token.Token{{Value: "x"}, {}}) },
+		"ReplaceRange":  func(s *Stream) { s.ReplaceRange(1, 1, []token.Token{{}, {Value: "b"}}) },
+	}
+	for name, write := range writes {
+		s := mk("a", "b", "c")
+		s.ClearEmptyTokens()
+		write(s)
+		s.ClearEmptyTokens()
+		for i := range s.Len() {
+			if s.At(i).Value == "" {
+				t.Errorf("%s: empty token survived at %d", name, i)
+			}
+		}
+	}
+}

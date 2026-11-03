@@ -36,18 +36,8 @@ func (LambdaNotUsedImport) Fix(s *tokens.Stream) bool {
 			fixLambdaImports(s, useIdx)
 		}
 	}
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 	return s.Render() != before
-}
-
-// compactEmptyTokens drops the empty placeholder tokens left by clearing, so the
-// rest of the pipeline sees a normal stream. It never changes the rendered bytes.
-func compactEmptyTokens(s *tokens.Stream) {
-	for i := s.Len() - 1; i >= 0; i-- {
-		if s.At(i).Kind == token.Whitespace && s.At(i).Value == "" {
-			s.RemoveAt(i)
-		}
-	}
 }
 
 // lambdaUseIndex returns the "use" keyword index of the closure declared at
