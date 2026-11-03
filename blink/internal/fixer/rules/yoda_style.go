@@ -567,8 +567,14 @@ func yodaLeftPrimaryStart(s *tokens.Stream, end int) int {
 				return -1
 			}
 			p := prevSignificantIndex(s, o)
-			if p < 0 {
-				return -1 // a bare "(...)" group, not a variable primary
+			if p < 0 || !yodaGroupContinuesPrimary(s.At(p)) {
+				// a bare "(...)" or "[...]" group: on its own it is not a variable
+				// (always_move_variable=false), so the comparison is left alone; as
+				// the base of a member access ("(new X())->y()") it starts the primary
+				if cur == end {
+					return -1
+				}
+				return o
 			}
 			cur = p
 			continue
@@ -587,6 +593,25 @@ func yodaLeftPrimaryStart(s *tokens.Stream, end int) int {
 		}
 		return cur
 	}
+}
+
+// yodaGroupContinuesPrimary reports whether a "(...)" or "[...]" group preceded
+// by t is a call or an index on the primary ending at t ("f(...)", "$a[...]",
+// "$a->b(...)", "isset(...)") rather than a standalone parenthesized group or array literal.
+func yodaGroupContinuesPrimary(t token.Token) bool {
+	switch t.Kind {
+	case token.Variable, token.Ident:
+		return true
+	case token.Keyword:
+		switch strings.ToLower(t.Value) {
+		case "isset", "empty":
+			return true
+		}
+		return isPrimaryKeyword(t.Value)
+	case token.Punct:
+		return t.Value == ")" || t.Value == "]"
+	}
+	return false
 }
 
 // yodaIsPrimaryEndToken reports whether t can end a primary (variable) expression.
