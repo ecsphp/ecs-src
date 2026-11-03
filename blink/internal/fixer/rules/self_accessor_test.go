@@ -141,3 +141,28 @@ func TestSelfAccessorQualifiedAndCase(t *testing.T) {
 		t.Fatalf("global namespace: changed=%v got=%q", changed, got)
 	}
 }
+
+// In a method signature PHP-CS-Fixer rewrites the name after "(", ",", "?",
+// "|" or the return-type ":", whatever precedes the union: a keyword type or a
+// DNF group. A DNF group's own "(" and an intersection "&" do not count.
+func TestSelfAccessorSignatureUnions(t *testing.T) {
+	t.Parallel()
+	src := "<?php\nclass Cart\n{\n    public function a(): array|Cart {}\n    public function b(): static|Cart {}\n    public function c(): (A&B)|Cart {}\n    public function d((Cart&B)|null $x, int|Cart $y): (Cart&B)|null {}\n    public function e($v = Cart::X, $w = new Cart()): Cart {}\n    public function f(): A&Cart {}\n}\n"
+	want := "<?php\nclass Cart\n{\n    public function a(): array|self {}\n    public function b(): static|self {}\n    public function c(): (A&B)|self {}\n    public function d((Cart&B)|null $x, int|self $y): (Cart&B)|null {}\n    public function e($v = self::X, $w = new self()): self {}\n    public function f(): A&Cart {}\n}\n"
+	if got, changed := apply(t, SelfAccessor{}, src); !changed || got != want {
+		t.Fatalf("changed=%v\n got=%q\nwant=%q", changed, got, want)
+	}
+}
+
+// PHP-CS-Fixer continues after a class body, so a named class declared inside
+// one of its methods is walked as part of the outer class: the outer name
+// becomes "self" there and the inner name is kept. Anonymous classes, with
+// attributes or "readonly", are skipped.
+func TestSelfAccessorClassInsideMethod(t *testing.T) {
+	t.Parallel()
+	src := "<?php\nclass Outer\n{\n    public function f()\n    {\n        class Inner\n        {\n            public function g(Outer $o, Inner $i): Inner\n            {\n                return Outer::X + Inner::Y;\n            }\n        }\n        return new readonly class { public function h() { return Outer::X; } };\n    }\n}\nclass Next\n{\n    public function n(): Next { return new #[A] class { public function m() { return Next::X; } }; }\n}\n"
+	want := "<?php\nclass Outer\n{\n    public function f()\n    {\n        class Inner\n        {\n            public function g(self $o, Inner $i): Inner\n            {\n                return self::X + Inner::Y;\n            }\n        }\n        return new readonly class { public function h() { return Outer::X; } };\n    }\n}\nclass Next\n{\n    public function n(): self { return new #[A] class { public function m() { return Next::X; } }; }\n}\n"
+	if got, changed := apply(t, SelfAccessor{}, src); !changed || got != want {
+		t.Fatalf("changed=%v\n got=%q\nwant=%q", changed, got, want)
+	}
+}
