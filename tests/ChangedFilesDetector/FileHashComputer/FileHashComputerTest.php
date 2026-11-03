@@ -49,20 +49,22 @@ final class FileHashComputerTest extends AbstractTestCase
 
     public function testInvalidateCacheOnLocalCheckerChange(): void
     {
-        $localSniffFile = __DIR__ . '/Source/LocalSniff.php';
-        $originalContents = $this->filesystem->readFile($localSniffFile);
-
-        $originalHash = $this->fileHashComputer->computeConfig(__DIR__ . '/Source/local_sniff_config.php');
-
-        try {
-            $this->filesystem->dumpFile($localSniffFile, $originalContents . "\n// changed\n");
-
-            $changedHash = $this->fileHashComputer->computeConfig(__DIR__ . '/Source/local_sniff_config.php');
-        } finally {
-            $this->filesystem->dumpFile($localSniffFile, $originalContents);
-        }
+        [$originalHash, $changedHash] = $this->computeConfigBeforeAndAfterChange(
+            __DIR__ . '/Source/local_sniff_config.php',
+            __DIR__ . '/Source/LocalSniff.php'
+        );
 
         $this->assertNotSame($originalHash, $changedHash);
+    }
+
+    public function testSkipBuiltInCheckerChange(): void
+    {
+        [$originalHash, $changedHash] = $this->computeConfigBeforeAndAfterChange(
+            __DIR__ . '/Source/built_in_sniff_config.php',
+            __DIR__ . '/Source/BuiltInSniff.php'
+        );
+
+        $this->assertSame($originalHash, $changedHash);
     }
 
     public function testPhpFileHash(): void
@@ -80,5 +82,22 @@ final class FileHashComputerTest extends AbstractTestCase
         $this->assertSame($expectedFileTwoHash, $fileTwoHash);
 
         $this->assertNotSame($fileOneHash, $fileTwoHash);
+    }
+
+    /**
+     * @return array{string, string}
+     */
+    private function computeConfigBeforeAndAfterChange(string $configFile, string $checkerFile): array
+    {
+        $originalContents = $this->filesystem->readFile($checkerFile);
+        $originalHash = $this->fileHashComputer->computeConfig($configFile);
+
+        try {
+            $this->filesystem->dumpFile($checkerFile, $originalContents . "\n// changed\n");
+
+            return [$originalHash, $this->fileHashComputer->computeConfig($configFile)];
+        } finally {
+            $this->filesystem->dumpFile($checkerFile, $originalContents);
+        }
     }
 }

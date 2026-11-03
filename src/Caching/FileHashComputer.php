@@ -17,6 +17,8 @@ use Webmozart\Assert\Assert;
  */
 final class FileHashComputer
 {
+    private const array BUILT_IN_NAMESPACES = ['PhpCsFixer\\', 'PHP_CodeSniffer\\', 'Symplify\\'];
+
     public function computeConfig(string $filePath): string
     {
         $callable = require $filePath;
@@ -25,13 +27,16 @@ final class FileHashComputer
         $ecsConfig = new ECSConfig();
         $callable($ecsConfig);
 
-        // hash the registered checkers, their configuration and the source of the local ones
+        // hash the registered checkers and their configuration
         $checkerConfiguration = $ecsConfig->getCheckerConfiguration();
-        $fileHash = sha1(
-            Json::encode($checkerConfiguration) . $this->hashLocalCheckerFiles(array_keys($checkerConfiguration))
-        );
+        $fileHash = sha1(Json::encode($checkerConfiguration));
 
-        return sha1($fileHash . SimpleParameterProvider::hash() . StaticVersionResolver::PACKAGE_VERSION);
+        // hash the code of local checkers, as it can change while their name and configuration stay the same
+        $localCheckersHash = $this->hashLocalCheckerFiles(array_keys($checkerConfiguration));
+
+        return sha1(
+            $fileHash . $localCheckersHash . SimpleParameterProvider::hash() . StaticVersionResolver::PACKAGE_VERSION
+        );
     }
 
     public function compute(string $filePath): string
@@ -45,47 +50,35 @@ final class FileHashComputer
     }
 
     /**
-     * A checker installed in vendor/ only changes with its package, but a project's own checker can change while its
-     * class name and configuration stay the same, so its code has to be part of the hash.
-     *
      * @param array<class-string> $checkerClasses
      */
     private function hashLocalCheckerFiles(array $checkerClasses): string
     {
         $fileHashes = [];
         foreach ($checkerClasses as $checkerClass) {
-            foreach ($this->resolveClassFileNames(new ReflectionClass($checkerClass)) as $fileName) {
-                if (str_contains($fileName, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR)) {
-                    continue;
+            // a local checker can extend a local parent class
+            for ($class = $checkerClass; $class !== false; $class = get_parent_class($class)) {
+                if ($this->isBuiltIn($class)) {
+                    break;
+                }
+
+                $fileName = new ReflectionClass($class)->getFileName();
+                if ($fileName === false || str_contains($fileName, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR)) {
+                    break;
                 }
 
                 $fileHashes[$fileName] = $this->compute($fileName);
             }
         }
 
-        // contents only, so that the same project checked out elsewhere keeps its cache
-        $fileHashes = array_values($fileHashes);
-        sort($fileHashes);
-
         return sha1(implode('', $fileHashes));
     }
 
-    /**
-     * @param ReflectionClass<object> $reflectionClass
-     * @return string[]
-     */
-    private function resolveClassFileNames(ReflectionClass $reflectionClass): array
+    private function isBuiltIn(string $class): bool
     {
-        $fileNames = [];
-        do {
-            $fileNames[] = $reflectionClass->getFileName();
-            foreach ($reflectionClass->getTraits() as $traitReflectionClass) {
-                $fileNames[] = $traitReflectionClass->getFileName();
-            }
-
-            $reflectionClass = $reflectionClass->getParentClass();
-        } while ($reflectionClass instanceof ReflectionClass);
-
-        return array_filter($fileNames, is_string(...));
+        return array_any(
+            self::BUILT_IN_NAMESPACES,
+            static fn (string $namespace): bool => str_starts_with($class, $namespace)
+        );
     }
 }
