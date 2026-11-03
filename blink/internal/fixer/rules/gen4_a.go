@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -12,8 +13,20 @@ import (
 // SingleLineCommentStyle normalizes single-line comments to the "//" form. A "#"
 // line comment becomes "//" (an "#[" attribute is never touched), and a genuinely
 // single-line "/* ... */" block comment at the end of its line becomes "// ...".
-// Multi-line "/* */" blocks and doc comments are left alone.
-type SingleLineCommentStyle struct{}
+// Multi-line "/* */" blocks and doc comments are left alone. CommentTypes is the
+// comment_types option ("asterisk", "hash"); nil keeps the default (both).
+type SingleLineCommentStyle struct {
+	CommentTypes []string
+}
+
+func (f SingleLineCommentStyle) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["comment_types"]; ok {
+		if list, ok := arrayNotationStringList(v); ok {
+			f.CommentTypes = append([]string{}, list...)
+		}
+	}
+	return f
+}
 
 func (SingleLineCommentStyle) Name() string {
 	return `PhpCsFixer\Fixer\Comment\SingleLineCommentStyleFixer`
@@ -23,7 +36,12 @@ func (SingleLineCommentStyle) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Comment/SingleLineCommentStyleFixer.php"
 }
 
-func (SingleLineCommentStyle) Fix(s *tokens.Stream) bool {
+func (f SingleLineCommentStyle) Fix(s *tokens.Stream) bool {
+	hashEnabled, asteriskEnabled := true, true
+	if f.CommentTypes != nil {
+		hashEnabled = arrayNotationContains(f.CommentTypes, "hash")
+		asteriskEnabled = arrayNotationContains(f.CommentTypes, "asterisk")
+	}
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		// only plain comments (T_COMMENT); doc blocks keep their "/** */" form
@@ -33,7 +51,7 @@ func (SingleLineCommentStyle) Fix(s *tokens.Stream) bool {
 		v := s.At(i).Value
 
 		// hash style: "# foo" -> "// foo"; "#[...]" is an attribute, not a comment
-		if strings.HasPrefix(v, "#") {
+		if hashEnabled && strings.HasPrefix(v, "#") {
 			if len(v) >= 2 && v[1] == '[' {
 				continue
 			}
@@ -43,7 +61,7 @@ func (SingleLineCommentStyle) Fix(s *tokens.Stream) bool {
 		}
 
 		// asterisk style: only a genuinely single-line "/* ... */" block
-		if !strings.HasPrefix(v, "/*") || len(v) < 4 {
+		if !asteriskEnabled || !strings.HasPrefix(v, "/*") || len(v) < 4 {
 			continue
 		}
 		if strings.ContainsAny(v, "\n\r") {
