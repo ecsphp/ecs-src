@@ -208,8 +208,9 @@ func TestSingleSpaceAroundConstruct(t *testing.T) {
 	if _, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php return new static($x);"); changed {
 		t.Fatal("new static( should not gain a space")
 	}
-	if got, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php return new static ($x);"); !changed || got != "<?php return new static($x);" {
-		t.Fatalf("new static (: changed=%v got=%q", changed, got)
+	// nor does it lose one: PHP-CS-Fixer leaves "new static (" alone
+	if _, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php return new static ($x);"); changed {
+		t.Fatal("new static ( should be left alone")
 	}
 	if _, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php $o = new class($a) {};"); changed {
 		t.Fatal("new class( should not gain a space")
