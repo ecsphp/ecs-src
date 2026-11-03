@@ -213,7 +213,7 @@ func oceElements(s *tokens.Stream, open int) []oceElement {
 				e.visibility = strings.ToLower(t.Value)
 				continue
 			}
-			if !(kwIs(t, "use") || kwIs(t, "case") || kwIs(t, "const") || t.Kind == token.Variable || kwIs(t, "function")) {
+			if !kwIs(t, "use") && !kwIs(t, "case") && !kwIs(t, "const") && t.Kind != token.Variable && !kwIs(t, "function") {
 				continue
 			}
 			break

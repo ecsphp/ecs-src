@@ -154,7 +154,7 @@ func (f ClassDefinition) fixClassyDefinition(s *tokens.Stream, classy int) {
 		end = prevSignificantIndex(s, info.open)
 	}
 	if info.anonymous && !f.inlineConstructorArguments {
-		for !(s.At(end).Kind == token.Punct && s.At(end).Value == ")") && !kwIs(s.At(end), "class") {
+		for (s.At(end).Kind != token.Punct || s.At(end).Value != ")") && !kwIs(s.At(end), "class") {
 			// anonymous class with extends and/or implements
 			start := sigPrev(s, end)
 			f.makeSingleLine(s, start, end)
@@ -336,7 +336,7 @@ func (f ClassDefinition) makeSingleLine(s *tokens.Stream, start, end int) {
 				}
 				continue
 			}
-			if (!(prev.Kind == token.Punct && prev.Value == ",") && next.Kind == token.Punct && (next.Value == "," || next.Value == ")")) ||
+			if ((prev.Kind != token.Punct || prev.Value != ",") && next.Kind == token.Punct && (next.Value == "," || next.Value == ")")) ||
 				(prev.Kind == token.Punct && prev.Value == "(") {
 				clearTokenAt(s, i)
 				continue

@@ -290,8 +290,8 @@ func (f SingleSpaceAroundConstruct) fixFollowed(s *tokens.Stream) {
 				continue
 			}
 			nt := s.At(n)
-			if !(kwIs(nt, "fn") || kwIs(nt, "function") || isPunctVal(s, n, `\`) || nt.Kind == token.Ident ||
-				nt.Kind == token.Variable || kwIs(nt, "array") || isPunctVal(s, n, "?")) {
+			if !kwIs(nt, "fn") && !kwIs(nt, "function") && !isPunctVal(s, n, `\`) && nt.Kind != token.Ident &&
+				nt.Kind != token.Variable && !kwIs(nt, "array") && !isPunctVal(s, n, "?") {
 				continue
 			}
 		}
