@@ -114,6 +114,7 @@ func CommonFixers() []fixer.Fixer {
 		NoUselessReturn{},
 		SimplifiedNullReturn{},
 		FunctionToConstant{},
+		NativeConstantInvocation{},
 		SelfAccessor{},
 		RemoveUselessDefaultComment{},
 		ProtectedToPrivate{},
