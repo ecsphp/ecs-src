@@ -67,6 +67,13 @@ type ConfigurableFixer interface {
 	WithConfig(config map[string]any) Fixer
 }
 
+// RawConfigurableFixer is a ConfigurableFixer that needs the order of its
+// config's keys, which a map loses. The ECS loader calls WithRawConfig instead.
+type RawConfigurableFixer interface {
+	ConfigurableFixer
+	WithRawConfig(raw []byte) Fixer
+}
+
 // SourceURLFor derives the canonical PHP-CS-Fixer source URL from a fixer Name
 // (an FQCN like `PhpCsFixer\Fixer\Semicolon\SpaceAfterSemicolonFixer`).
 func SourceURLFor(name string) string {

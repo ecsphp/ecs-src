@@ -1,6 +1,9 @@
 package rules
 
-import "unicode/utf8"
+import (
+	"unicode"
+	"unicode/utf8"
+)
 
 // PHP-CS-Fixer's Preg adds /u to every pattern, and PHP compiles /u with
 // PCRE2_UCP: \s, \h, \v, \w and \b then match Unicode characters, unlike
@@ -52,4 +55,17 @@ func pcreSkip(s string, i int, is func(rune) bool) int {
 		i += n
 	}
 	return i
+}
+
+// pcreIsWord is \w under UCP: letters, numbers, non-spacing marks and
+// connector punctuation (which includes "_").
+func pcreIsWord(r rune) bool {
+	return r == '_' || unicode.IsLetter(r) || unicode.IsNumber(r) || unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Pc, r)
+}
+
+// pcreWordBoundary reports whether \b matches at byte offset i.
+func pcreWordBoundary(s string, i int) bool {
+	before, _ := utf8.DecodeLastRuneInString(s[:i])
+	after, _ := pcreRuneAt(s, i)
+	return (i > 0 && pcreIsWord(before)) != pcreIsWord(after)
 }

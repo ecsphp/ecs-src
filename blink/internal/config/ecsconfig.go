@@ -17,10 +17,26 @@ import (
 // the rules map by name without a translation table.
 
 // ecsConfiguredRule is one ECS sniff or fixer: a fully qualified class name and
-// its configuration.
+// its configuration, decoded and as dumped (for fixers that need its key order).
 type ecsConfiguredRule struct {
-	Class  string         `json:"class"`
-	Config map[string]any `json:"config"`
+	Class     string          `json:"class"`
+	Config    map[string]any  `json:"config"`
+	RawConfig json.RawMessage `json:"-"`
+}
+
+func (r *ecsConfiguredRule) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Class  string          `json:"class"`
+		Config json.RawMessage `json:"config"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*r = ecsConfiguredRule{Class: raw.Class, RawConfig: raw.Config}
+	if len(raw.Config) == 0 {
+		return nil
+	}
+	return json.Unmarshal(raw.Config, &r.Config)
 }
 
 // ecsSkip is one ECS skip entry: a path to exclude, a rule to disable, or a rule
@@ -173,7 +189,9 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 		}
 
 		if len(rule.Config) > 0 {
-			if configurable, ok := resolved.(fixer.ConfigurableFixer); ok {
+			if configurable, ok := resolved.(fixer.RawConfigurableFixer); ok && len(rule.RawConfig) > 0 {
+				resolved = configurable.WithRawConfig(rule.RawConfig)
+			} else if configurable, ok := resolved.(fixer.ConfigurableFixer); ok {
 				resolved = configurable.WithConfig(rule.Config)
 			} else {
 				resolution.ConfigIgnored = append(resolution.ConfigIgnored, rule.Class)

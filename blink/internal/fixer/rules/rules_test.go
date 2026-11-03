@@ -14,9 +14,12 @@ type fixerRule interface {
 }
 
 // configuredFromJSON configures f from a config JSON object the way the ECS
-// loader does.
+// loader does: the raw JSON for a RawConfigurableFixer, else the decoded map.
 func configuredFromJSON(t *testing.T, f fixer.ConfigurableFixer, raw string) fixerRule {
 	t.Helper()
+	if rf, ok := f.(fixer.RawConfigurableFixer); ok {
+		return rf.WithRawConfig([]byte(raw)).(fixerRule)
+	}
 	var config map[string]any
 	if err := json.Unmarshal([]byte(raw), &config); err != nil {
 		t.Fatal(err)
