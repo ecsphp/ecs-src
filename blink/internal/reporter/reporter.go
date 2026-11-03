@@ -193,11 +193,14 @@ func newFormatter(w io.Writer) formatter {
 	return formatter{w: w, width: width, color: color}
 }
 
-// relativePath resolves an absolute file path against cwd, matching ECS's
+// relativePath resolves a file path against cwd, matching ECS's
 // StaticRelativeFilePathHelper output. An empty cwd yields the path unchanged.
 func relativePath(cwd, path string) string {
 	if cwd == "" {
 		return path
+	}
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(cwd, path)
 	}
 	rel, err := filepath.Rel(cwd, path)
 	if err != nil {

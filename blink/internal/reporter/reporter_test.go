@@ -66,3 +66,19 @@ func TestReportFixed(t *testing.T) {
 		}
 	}
 }
+
+func TestRelativePathReadsRelativePathsFromCwd(t *testing.T) {
+	cases := map[string]string{
+		"/p/src/A.php":   "src/A.php",
+		"./src/A.php":    "src/A.php",
+		"src//A.php":     "src/A.php",
+		"../lib/B.php":   "../lib/B.php",
+		"/other/C.php":   "../other/C.php",
+		"./sub/../D.php": "D.php",
+	}
+	for path, want := range cases {
+		if got := relativePath("/p", path); got != want {
+			t.Errorf("relativePath(/p, %q) = %q, want %q", path, got, want)
+		}
+	}
+}
