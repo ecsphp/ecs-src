@@ -239,9 +239,17 @@ var nseTerminators = []nseKind{
 var nseIfElseElseif = []nseKind{{kw: "if"}, {kw: "else"}, {kw: "elseif"}}
 var nseParenSemiColon = []nseKind{{punct: ")"}, {punct: ";"}, {punct: ":"}}
 
-func nseMatchKind(t token.Token, k nseKind) bool {
+func nseMatchKind(s *tokens.Stream, j int, k nseKind) bool {
+	t := s.At(j)
 	if k.close {
 		return t.Kind == token.CloseTag
+	}
+	if k.kw != "" && taIsNamedArgument(s, j) {
+		return false // a named-argument label spelling a keyword is a T_STRING
+	}
+	if k.kw == "exit" || k.kw == "die" {
+		// blink lexes the exit/die construct (PHP's T_EXIT) as an Ident
+		return taIsConstruct(s, j, k.kw)
 	}
 	if k.kw != "" {
 		return t.Kind == token.Keyword && strings.EqualFold(t.Value, k.kw)
@@ -253,9 +261,8 @@ func nseMatchKind(t token.Token, k nseKind) bool {
 // idx for the first token matching any spec.
 func nsePrevTokenOfKind(s *tokens.Stream, idx int, kinds []nseKind) int {
 	for j := idx - 1; j >= 0; j-- {
-		t := s.At(j)
 		for _, k := range kinds {
-			if nseMatchKind(t, k) {
+			if nseMatchKind(s, j, k) {
 				return j
 			}
 		}
