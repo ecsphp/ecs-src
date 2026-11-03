@@ -349,10 +349,21 @@ func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 			if p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "function") {
 				continue
 			}
-		case prev.Kind == token.Punct && (prev.Value == ")" || prev.Value == "]"):
-			// chained call "$f() ()" or "$a[0] ()"; a cast "(int) ($x)" is a
-			// single token in PHP, so its ")" never closes a call target
-			if prev.Value == ")" && isCastCloseParen(s, last) {
+			// "from" in "yield from (expr)" is part of the construct, not a call
+			if strings.EqualFold(prev.Value, "from") && p >= 0 &&
+				s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "yield") {
+				continue
+			}
+		case prev.Kind == token.Punct && prev.Value == ")":
+			// "$f() ()", but not after a cast or "(new Foo)": PHP and
+			// PHP-CS-Fixer give those ")" other token kinds
+			if isCastCloseParen(s, last) || isClassInstantiationCloseParen(s, last) {
+				continue
+			}
+		case prev.Kind == token.Punct && prev.Value == "]":
+			// "$a[0] ()", but not an array literal "[$o, 'm'] ()", whose "]"
+			// is CT::T_ARRAY_BRACKET_CLOSE
+			if o := s.MatchBackward(last); o < 0 || isArrayLiteralOpen(s, o) {
 				continue
 			}
 		case prev.Kind == token.Punct && prev.Value == "}":
@@ -389,6 +400,41 @@ func isCastCloseParen(s *tokens.Stream, closeIdx int) bool {
 		j--
 	}
 	return j >= 0 && s.At(j).Kind == token.Punct && s.At(j).Value == "("
+}
+
+// isClassInstantiationCloseParen reports whether the ")" at closeIdx closes
+// "(new Foo)" as PHP-CS-Fixer's BraceClassInstantiationTransformer sees it.
+func isClassInstantiationCloseParen(s *tokens.Stream, closeIdx int) bool {
+	open := s.MatchBackward(closeIdx)
+	if open < 0 {
+		return false
+	}
+	if n := sigNext(s, open); n < 0 || s.At(n).Kind != token.Keyword || !strings.EqualFold(s.At(n).Value, "new") {
+		return false
+	}
+	p := sigPrev(s, open)
+	if p < 0 {
+		return true
+	}
+	t := s.At(p)
+	switch t.Kind {
+	case token.Ident, token.Variable:
+		return false
+	case token.Punct:
+		switch t.Value {
+		case "]":
+			return false
+		case ")":
+			// a cast is one token in PHP; any other ")" blocks the transformation
+			return isCastCloseParen(s, p)
+		}
+	case token.Keyword:
+		switch strings.ToLower(t.Value) {
+		case "array", "class", "elseif", "for", "foreach", "if", "static", "switch", "while":
+			return false
+		}
+	}
+	return true
 }
 
 func isCastPadding(t token.Token) bool {

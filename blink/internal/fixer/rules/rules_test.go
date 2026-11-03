@@ -285,6 +285,14 @@ func TestNoSpacesAfterFunctionName(t *testing.T) {
 	if got, changed := apply(t, NoSpacesAfterFunctionName{}, comments); changed {
 		t.Fatalf("comments: got=%q", got)
 	}
+	// PHP-CS-Fixer gives the "]" of an array literal and the ")" of "(new Foo)"
+	// their own token kinds, which are not call targets; an index "]" and a
+	// parenthesis before "(new Foo)" are
+	closers := "<?php\n$a = [$o, 'm'] (1);\n$b = (new Foo) (2);\n$c = $arr[0] (3);\n$d = foo() [0] (4);\n$e = f(1) (new Foo) (5);\n$f = (new A) (new B) (6);\nif (1) {} (new Foo) (7);\n"
+	wantClosers := "<?php\n$a = [$o, 'm'] (1);\n$b = (new Foo) (2);\n$c = $arr[0](3);\n$d = foo() [0](4);\n$e = f(1)(new Foo)(5);\n$f = (new A) (new B)(6);\nif (1) {} (new Foo) (7);\n"
+	if got, _ := apply(t, NoSpacesAfterFunctionName{}, closers); got != wantClosers {
+		t.Fatalf("closers: got=%q want=%q", got, wantClosers)
+	}
 }
 
 func TestNoSpacesInsideParenthesis(t *testing.T) {
