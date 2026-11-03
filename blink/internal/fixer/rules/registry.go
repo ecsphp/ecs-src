@@ -122,6 +122,7 @@ func CommonFixers() []fixer.Fixer {
 		NoUnreachableDefaultArgumentValue{},
 		DirConstant{},
 		CombineNestedDirname{},
+		ImplodeCall{},
 	}
 }
 
