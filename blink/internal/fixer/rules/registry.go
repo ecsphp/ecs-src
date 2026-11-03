@@ -121,6 +121,7 @@ func CommonFixers() []fixer.Fixer {
 		NoAliasLanguageConstructCall{},
 		NoUnreachableDefaultArgumentValue{},
 		DirConstant{},
+		CombineNestedDirname{},
 	}
 }
 

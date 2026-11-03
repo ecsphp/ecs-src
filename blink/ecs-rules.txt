@@ -43,4 +43,5 @@ GeneralPhpdocTagRename, DoctrineAnnotationArrayAssignment,
 DoctrineAnnotationIndentation, StandaloneLinePlainConstructorParam,
 StandaloneLineRequiredParam, StandaloneLineSymfonyAttributeParam,
 ControlStructureBraces, NoAlternativeSyntax, NoUnneededBraces
-(NoUnneededCurlyBraces), NoUnreachableDefaultArgumentValue, DirConstant.
+(NoUnneededCurlyBraces), NoUnreachableDefaultArgumentValue, DirConstant,
+CombineNestedDirname.
