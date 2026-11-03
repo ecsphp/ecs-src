@@ -70,7 +70,7 @@ func (f ControlStructureContinuationPosition) Fix(s *tokens.Stream) bool {
 			if hasNewline(ws.Value) {
 				continue // already on its own line
 			}
-			s.SetValue(pi+1, "\n"+lineIndent(s, pi))
+			s.SetValue(pi+1, "\n"+detectIndent(s, i))
 			changed = true
 		} else {
 			if !hasNewline(ws.Value) {

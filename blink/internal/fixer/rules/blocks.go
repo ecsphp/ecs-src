@@ -129,33 +129,54 @@ func classMemberStarts(s *tokens.Stream, open int) []int {
 	return starts
 }
 
-// braceDepthAt returns the number of "{" still open before index idx.
-func braceDepthAt(s *tokens.Stream, idx int) int {
-	d := 0
-	for j := range idx {
-		if s.At(j).Kind != token.Punct {
+// lineIndent is PHP-CS-Fixer's IndentationTrait::getLineIndentation: the
+// spaces and tabs after the last line break of the nearest whitespace or
+// inline-HTML token before idx that has one.
+func lineIndent(s *tokens.Stream, idx int) string {
+	for j := idx - 1; j >= 0; j-- {
+		t := s.At(j)
+		if t.Kind != token.Whitespace && t.Kind != token.InlineHTML {
 			continue
 		}
-		switch s.At(j).Value {
-		case "{":
-			d++
-		case "}":
-			if d > 0 {
-				d--
-			}
+		if _, rest := splitTagWhitespace(s, j); rest == "" {
+			continue // PHP has no such token: the tag before it owns all of it
 		}
-	}
-	return d
-}
-
-// lineIndent returns the leading indentation of the line containing token idx.
-func lineIndent(s *tokens.Stream, idx int) string {
-	for j := idx; j >= 0; j-- {
-		if s.At(j).Kind == token.Whitespace {
-			if v := s.At(j).Value; strings.Contains(v, "\n") {
-				return v[strings.LastIndexByte(v, '\n')+1:]
-			}
+		// the tag's part counts too: PHP adds it back (computeNewLineContent)
+		v := t.Value
+		nl := strings.LastIndexAny(v, "\r\n")
+		if nl < 0 {
+			continue
 		}
+		line := v[nl+1:]
+		return line[:len(line)-len(strings.TrimLeft(line, " \t"))]
 	}
 	return ""
+}
+
+// splitTagWhitespace splits token j where PHP's lexer differs from blink's:
+// PHP gives "<?php" the space, tab or line break after it, and "?>" the line
+// break after it. tag is that part, rest the remainder.
+func splitTagWhitespace(s *tokens.Stream, j int) (tag, rest string) {
+	v := s.At(j).Value
+	if j == 0 {
+		return "", v
+	}
+	prev := s.At(j - 1)
+	switch {
+	case prev.Kind == token.OpenTag && strings.EqualFold(prev.Value, "<?php") && s.At(j).Kind == token.Whitespace:
+		if v != "" && (v[0] == ' ' || v[0] == '\t') {
+			return v[:1], v[1:]
+		}
+	case prev.Kind == token.CloseTag && s.At(j).Kind == token.InlineHTML:
+	default:
+		return "", v
+	}
+	n := 0
+	switch {
+	case strings.HasPrefix(v, "\r\n"):
+		n = 2
+	case strings.HasPrefix(v, "\n"), strings.HasPrefix(v, "\r"):
+		n = 1
+	}
+	return v[:n], v[n:]
 }

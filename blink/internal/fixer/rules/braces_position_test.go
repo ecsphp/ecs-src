@@ -122,3 +122,20 @@ func TestBracesPositionClassAfterMultilineAttribute(t *testing.T) {
 		t.Fatalf("class brace after attribute; changed=%v got=%q", changed, got)
 	}
 }
+
+// TestBracesPositionUsesDeclarationLineIndent puts a next-line brace at the
+// indentation of the line holding the declaration keyword, as php-cs-fixer
+// does, not at the brace nesting depth: a method of an anonymous class passed
+// as an argument sits deeper than its brace depth and must stay put.
+func TestBracesPositionUsesDeclarationLineIndent(t *testing.T) {
+	t.Parallel()
+	inArgs := "<?php\n$x = run(\n    new class implements Countable {\n        public function count(): int\n        {\n            return 0;\n        }\n    },\n);\n$y = [new stdClass(), new class extends stdClass {\n    public function size(): int\n    {\n        return 1;\n    }\n}];\n"
+	if got, changed := apply(t, BracesPosition{}, inArgs); changed {
+		t.Fatalf("anonymous-class method braces inside an argument list must stay:\n got: %q", got)
+	}
+	got, changed := apply(t, BracesPosition{}, "<?php\nclass B {\n      public function off() {\n          return 2;\n      }\n}\n")
+	want := "<?php\nclass B\n{\n      public function off()\n      {\n          return 2;\n      }\n}\n"
+	if !changed || got != want {
+		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
+	}
+}
