@@ -565,7 +565,8 @@ func spacesInsideParenthesesEdge(s *tokens.Stream, wsIdx, insertAt, innerIdx int
 //
 // UnaryOperatorSpaces removes whitespace between an operand and ++ or --
 // ("$i ++" -> "$i++"). With Full set (only_dec_inc: false) it also removes the
-// whitespace after the unary "!", "~", "@", "+" and "-" ("! $a" -> "!$a").
+// whitespace after the unary "!", "~", "@", "+", "-", "&" and "..." ("! $a" ->
+// "!$a", "= & $b" -> "= &$b", "f(... $args)" -> "f(...$args)").
 type UnaryOperatorSpaces struct {
 	Full bool
 }
@@ -585,50 +586,125 @@ func (f UnaryOperatorSpaces) WithConfig(config map[string]any) fixer.Fixer {
 	return f
 }
 
-// unaryOperatorSpacesIsPredecessor reports whether the "!", "~", "@", "+" or "-"
-// at i is a prefix (unary) operator.
-func unaryOperatorSpacesIsPredecessor(s *tokens.Stream, i int) bool {
-	switch s.At(i).Value {
-	case "!", "~", "@":
+// unaryOperatorSpacesIsDynamicBraceClose reports whether the "}" at i closes a
+// dynamic property, variable or index brace ("$a->{$b}", "${$b}", "$a{0}"),
+// which PHP-CS-Fixer's TokensAnalyzer counts as the end of an operand.
+func unaryOperatorSpacesIsDynamicBraceClose(s *tokens.Stream, i int) bool {
+	open := s.MatchBackward(i)
+	if open < 0 {
+		return false
+	}
+	p := sigPrev(s, open)
+	if p < 0 {
+		return false
+	}
+	t := s.At(p)
+	if t.Kind == token.Variable {
 		return true
-	case "+", "-":
-		prev, ok := prevSignificant(s, i)
-		if !ok {
-			return true
-		}
-		switch prev.Kind {
-		case token.Variable, token.Ident, token.Number, token.String:
-			return false
-		}
-		switch prev.Value {
-		case ")", "]", "}", "++", "--":
-			return false
-		}
+	}
+	return t.Kind == token.Punct && (t.Value == "->" || t.Value == "?->" || t.Value == "::" || t.Value == "$")
+}
+
+// unaryOperatorSpacesIsSuccessor is TokensAnalyzer::isUnarySuccessorOperator:
+// a "++" or "--" right after a variable, a name, "]" or a dynamic brace.
+func unaryOperatorSpacesIsSuccessor(s *tokens.Stream, i int) bool {
+	if v := s.At(i).Value; v != "++" && v != "--" {
+		return false
+	}
+	p := sigPrev(s, i)
+	if p < 0 {
+		return false
+	}
+	t := s.At(p)
+	switch t.Kind {
+	case token.Variable, token.Ident:
 		return true
+	case token.Punct:
+		return t.Value == "]" || (t.Value == "}" && unaryOperatorSpacesIsDynamicBraceClose(s, p))
 	}
 	return false
 }
 
+// unaryOperatorSpacesIsPredecessor is TokensAnalyzer::isUnaryPredecessorOperator.
+// "!", "~", "@" and "..." always are; "+", "-" and "&" are unless an operand
+// ends right before them; "++"/"--" are when they are not a successor.
+func unaryOperatorSpacesIsPredecessor(s *tokens.Stream, i int) bool {
+	v := s.At(i).Value
+	switch v {
+	case "++", "--":
+		return !unaryOperatorSpacesIsSuccessor(s, i)
+	case "!", "~", "@", "...":
+		return true
+	case "+", "-", "&":
+	default:
+		return false
+	}
+	p := sigPrev(s, i)
+	if p < 0 {
+		return true
+	}
+	prev := s.At(p)
+	operandEnd := false
+	switch prev.Kind {
+	case token.Variable, token.Ident, token.Number:
+		operandEnd = true
+	case token.String:
+		// a heredoc/nowdoc ends with T_END_HEREDOC, which is not an operand end
+		operandEnd = !strings.HasPrefix(prev.Value, "<<<")
+	case token.Punct:
+		switch prev.Value {
+		case "]", "}", "++", "--":
+			operandEnd = true
+		case ")":
+			// a cast is a single token in PHP, after which the operator is unary
+			open := s.MatchBackward(p)
+			operandEnd = open < 0 || !isCastParen(s, open)
+		}
+	}
+	if !operandEnd {
+		return true
+	}
+	if v != "&" || prev.Kind != token.Ident {
+		return false
+	}
+	// "Type & $param": a by-reference parameter after its type
+	for j := i - 1; j >= 0; j-- {
+		t := s.At(j)
+		switch {
+		case t.Kind == token.OpenTag:
+			return false
+		case t.Kind == token.Punct && (t.Value == ";" || t.Value == "{" || t.Value == "}" || t.Value == "=>"):
+			return false
+		case t.Kind == token.Keyword && (strings.EqualFold(t.Value, "fn") || strings.EqualFold(t.Value, "function")):
+			return true
+		}
+	}
+	return false
+}
+
+// Fix ports UnaryOperatorSpacesFixer::applyFix: the whitespace (newlines
+// included) before a unary successor and after a unary predecessor operator is
+// removed, right to left.
 func (f UnaryOperatorSpaces) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := 0; i < s.Len(); i++ {
+	for i := s.Len() - 1; i >= 0; i-- {
 		t := s.At(i)
-		if f.Full && t.Kind == token.Punct && unaryOperatorSpacesIsPredecessor(s, i) {
-			if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) {
-				s.RemoveAt(i + 1)
-				changed = true
+		if t.Kind != token.Punct {
+			continue
+		}
+		if !f.Full && t.Value != "++" && t.Value != "--" {
+			continue
+		}
+		if unaryOperatorSpacesIsSuccessor(s, i) {
+			if i >= 1 && s.At(i-1).Kind == token.Whitespace {
+				if p := i - 2; p < 0 || (s.At(p).Kind != token.Comment && s.At(p).Kind != token.DocComment) {
+					s.RemoveAt(i - 1)
+					changed = true
+				}
 			}
 			continue
 		}
-		if t.Kind != token.Punct || (t.Value != "++" && t.Value != "--") {
-			continue
-		}
-		if i >= 2 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) && isOperand(s.At(i-2)) {
-			s.RemoveAt(i - 1)
-			i--
-			changed = true
-		}
-		if i+2 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) && isOperand(s.At(i+2)) {
+		if unaryOperatorSpacesIsPredecessor(s, i) && i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace {
 			s.RemoveAt(i + 1)
 			changed = true
 		}
