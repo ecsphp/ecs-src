@@ -82,6 +82,7 @@ var fixerPriority = map[string]int{
 	"ModernSerializationMethodsFixer":                 0,
 	"ErrorSuppressionFixer":                           0,
 	"GetClassToClassKeywordFixer":                     1,
+	"LogicalOperatorsFixer":                           0,
 	"HeredocToNowdocFixer":                            0,
 	"IncludeFixer":                                    0,
 	"IndentationTypeFixer":                            50,
