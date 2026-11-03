@@ -57,6 +57,7 @@ var percsExcluded = map[string]bool{
 	// risky, not part of PHP-CS-Fixer's @PER-CS
 	"NativeFunctionInvocationFixer":      true,
 	"SimpleToComplexStringVariableFixer": true,
+	"StringLineEndingFixer":              true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
