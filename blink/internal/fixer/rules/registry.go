@@ -128,6 +128,7 @@ func CommonFixers() []fixer.Fixer {
 		FopenFlagOrder{},
 		SimpleToComplexStringVariable{},
 		StringLineEnding{},
+		NonPrintableCharacter{},
 	}
 }
 

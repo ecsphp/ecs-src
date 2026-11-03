@@ -45,4 +45,5 @@ StandaloneLineRequiredParam, StandaloneLineSymfonyAttributeParam,
 ControlStructureBraces, NoAlternativeSyntax, NoUnneededBraces
 (NoUnneededCurlyBraces), NoUnreachableDefaultArgumentValue, DirConstant,
 CombineNestedDirname, ImplodeCall, NoUselessSprintf, ModernizeTypesCasting,
-FopenFlagOrder, SimpleToComplexStringVariable, StringLineEnding.
+FopenFlagOrder, SimpleToComplexStringVariable, StringLineEnding,
+NonPrintableCharacter.
