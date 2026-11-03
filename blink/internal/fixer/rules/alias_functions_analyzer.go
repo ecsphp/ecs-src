@@ -319,6 +319,10 @@ func aliasIsPossibleKind(s *tokens.Stream, i int) bool {
 	t := s.At(i)
 	switch t.Kind {
 	case token.Ident:
+		// PHP lexes "yield from" as one T_YIELD_FROM token, so its "from" is no name
+		if strings.EqualFold(t.Value, "from") && aliasIsKeyword(s, aliasPrevMeaningful(s, i), "yield") {
+			return false
+		}
 		return aliasIsTString(s, i)
 	case token.AttributeStart:
 		return true
