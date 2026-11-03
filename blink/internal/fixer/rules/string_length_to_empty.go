@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/lexer"
@@ -29,8 +30,8 @@ func (StringLengthToEmpty) Fix(s *tokens.Stream) bool {
 	calls := strlenEmptyFindCalls(s)
 	changed := false
 	// last call first, as PHP-CS-Fixer does; cleared tokens keep indexes stable
-	for c := len(calls) - 1; c >= 0; c-- {
-		fn, open, closeIdx := calls[c][0], calls[c][1], calls[c][2]
+	for _, call := range slices.Backward(calls) {
+		fn, open, closeIdx := call[0], call[1], call[2]
 		if !strlenEmptySingleArgument(s, open, closeIdx) {
 			continue
 		}

@@ -69,10 +69,7 @@ func appendEncapsedParts(v string, base int, out *[]encPart) bool {
 			return false
 		}
 		startEnd := nl + 1
-		endStart := strings.LastIndexByte(v, '\n') + 1
-		if endStart < startEnd {
-			endStart = startEnd
-		}
+		endStart := max(strings.LastIndexByte(v, '\n')+1, startEnd)
 		add(encStartHeredoc, 0, startEnd)
 		if strings.TrimLeft(v[3:], " \t")[0] == '\'' {
 			add(encText, startEnd, endStart) // nowdoc: no interpolation

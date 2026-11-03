@@ -63,8 +63,8 @@ func (ModernSerializationMethods) Fix(s *tokens.Stream) bool {
 	}
 	// insert "array $data" after each "(", last first so indexes stay valid
 	slices.Sort(inserts)
-	for k := len(inserts) - 1; k >= 0; k-- {
-		at := inserts[k] + 1
+	for _, insert := range slices.Backward(inserts) {
+		at := insert + 1
 		s.InsertSliceAt(at, []token.Token{
 			{Kind: token.Keyword, Value: "array"},
 			{Kind: token.Whitespace, Value: " "},

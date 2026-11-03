@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	npZWSP  = "​" // ZERO WIDTH SPACE
-	npFigSp = " " // FIGURE SPACE
-	npNNBSP = " " // NARROW NO-BREAK SPACE
-	npNBSP  = " " // NO-BREAK SPACE
+	npZWSP  = "\u200b" // ZERO WIDTH SPACE
+	npFigSp = "\u2007" // FIGURE SPACE
+	npNNBSP = "\u202f" // NARROW NO-BREAK SPACE
+	npNBSP  = "\u00a0" // NO-BREAK SPACE
 )
 
 // Cases ported from PHP-CS-Fixer's NonPrintableCharacterFixerTest.

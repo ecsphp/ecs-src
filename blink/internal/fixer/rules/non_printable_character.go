@@ -36,11 +36,11 @@ func (f NonPrintableCharacter) WithConfig(config map[string]any) fixer.Fixer {
 
 // nonPrintableSymbols are the characters, their plain replacement and their escape code point.
 var nonPrintableSymbols = []struct{ char, replacement, codepoint string }{
-	{"​", "", "200b"},  // ZERO WIDTH SPACE
-	{" ", " ", "2007"}, // FIGURE SPACE
-	{" ", " ", "202f"}, // NARROW NO-BREAK SPACE
-	{"⁠", "", "2060"},  // WORD JOINER
-	{" ", " ", "a0"},   // NO-BREAK SPACE
+	{"\u200b", "", "200b"},  // ZERO WIDTH SPACE
+	{"\u2007", " ", "2007"}, // FIGURE SPACE
+	{"\u202f", " ", "202f"}, // NARROW NO-BREAK SPACE
+	{"\u2060", "", "2060"},  // WORD JOINER
+	{"\u00a0", " ", "a0"},   // NO-BREAK SPACE
 }
 
 var (
