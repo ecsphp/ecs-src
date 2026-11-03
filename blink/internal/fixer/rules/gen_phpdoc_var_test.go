@@ -76,3 +76,19 @@ func TestGenPhpdocVarSourceURLs(t *testing.T) {
 		t.Fatalf("PhpdocVarWithoutName SourceURL %q, want %q", got, want)
 	}
 }
+
+// A promoted constructor parameter's public/protected/private is a custom token
+// in PHP-CS-Fixer, not a property modifier, so its docblock keeps the name; a
+// promotion led by "readonly", or a parameter of another method, is fixed.
+func TestGenPhpdocVarWithoutNamePromoted(t *testing.T) {
+	t.Parallel()
+	f := PhpdocVarWithoutName{}
+	kept := "<?php\nclass A{\npublic function __construct(\n/**\n * @var list<int> $a\n */\npublic array $a,\n" +
+		"/** @var int $b */\nprotected readonly int $b,\n/** @var int $c */\nint $c,\n) {}\n}"
+	assertFix(t, f, kept, kept, false)
+	assertFix(t, f,
+		"<?php\nclass A{\npublic function __construct(\n/** @var int $a */\nreadonly public int $a,\n) {}\n"+
+			"public function other(\n/** @var int $b */\npublic int $b,\n) {}\n}",
+		"<?php\nclass A{\npublic function __construct(\n/** @var int */\nreadonly public int $a,\n) {}\n"+
+			"public function other(\n/** @var int */\npublic int $b,\n) {}\n}", true)
+}

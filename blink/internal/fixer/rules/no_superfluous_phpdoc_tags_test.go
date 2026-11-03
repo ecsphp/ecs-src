@@ -128,3 +128,19 @@ func TestNoSuperfluousPhpdocTagsAttributedParam(t *testing.T) {
 		t.Fatalf("attributed-param @param must be removed; changed=%v got=%q", changed, got)
 	}
 }
+
+// PHP-CS-Fixer's findDocumentedElement stops at a promoted constructor
+// parameter's visibility (a custom token), so such a docblock is never checked;
+// one before a "readonly"-led promotion or a plain parameter documents a property.
+func TestNoSuperfluousPhpdocTagsPromotedProperty(t *testing.T) {
+	t.Parallel()
+	f := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"allow_mixed": true}).(fixerRule)
+	kept := "<?php\nclass A\n{\n    public function __construct(\n        /**\n         * @var string\n         */\n" +
+		"        public string $a,\n        /**\n         * @var int\n         */\n        private readonly int $b,\n    ) {}\n}\n"
+	assertFix(t, f, kept, kept, false)
+	assertFix(t, f,
+		"<?php\nclass A\n{\n    public function __construct(\n        /**\n         * @var string\n         */\n"+
+			"        readonly string $a,\n    ) {}\n}\n",
+		"<?php\nclass A\n{\n    public function __construct(\n        /**\n         */\n"+
+			"        readonly string $a,\n    ) {}\n}\n", true)
+}
