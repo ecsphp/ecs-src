@@ -2,6 +2,7 @@ package rules
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -150,12 +151,7 @@ func vrHasVoidReturn(s *tokens.Stream, startIndex, endIndex int) bool {
 // hasReturnAnnotation (!wantVoid): whether the function's docblock has a
 // "@return" whose types are exactly ["void"], or one whose types are not.
 func vrHasReturnAnnotation(s *tokens.Stream, index int, wantVoid bool) bool {
-	for _, isVoid := range vrReturnAnnotations(s, index) {
-		if isVoid == wantVoid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(vrReturnAnnotations(s, index), wantVoid)
 }
 
 // vrReturnAnnotations mirrors findReturnAnnotations: for each "@return" of the

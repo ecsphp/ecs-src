@@ -199,9 +199,10 @@ func taArrowFunctionEnd(s *tokens.Stream, i int) int {
 		if t.Kind == token.CloseTag || t.Kind == token.AttributeEnd {
 			break
 		}
-		if t.Kind == token.AttributeStart {
+		switch t.Kind {
+		case token.AttributeStart:
 			index = s.AttributeEnd(index)
-		} else if t.Kind == token.Punct {
+		case token.Punct:
 			switch t.Value {
 			case ")", "]", "}", ",", ";":
 				return sigPrev(s, index)
