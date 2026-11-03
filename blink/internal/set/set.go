@@ -175,6 +175,7 @@ var perCSRules = []setRule{
 	{`PhpCsFixer\Fixer\Whitespace\TypesSpacesFixer`, nil},
 	"ErrorSuppressionFixer":       true,
 	"GetClassToClassKeywordFixer": true,
+	"LogicalOperatorsFixer":       true,
 }
 
 var byName = map[string]func() []fixer.Fixer{

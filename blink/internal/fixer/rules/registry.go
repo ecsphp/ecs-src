@@ -240,6 +240,7 @@ func ConstructFixers() []fixer.Fixer {
 		NoPhp4Constructor{},
 		ErrorSuppression{},
 		GetClassToClassKeyword{},
+		LogicalOperators{},
 	}
 }
 
