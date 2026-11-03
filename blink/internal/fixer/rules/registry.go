@@ -125,6 +125,7 @@ func CommonFixers() []fixer.Fixer {
 		ImplodeCall{},
 		NoUselessSprintf{},
 		ModernizeTypesCasting{},
+		FopenFlagOrder{},
 	}
 }
 
