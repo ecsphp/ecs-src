@@ -100,3 +100,58 @@ outer:
 	}
 	return nil
 }
+
+// taKw reports whether the token at i is the keyword name (case-insensitive).
+func taKw(s *tokens.Stream, i int, name string) bool {
+	return i >= 0 && i < s.Len() && kwIs(s.At(i), name)
+}
+
+// taIsNamedArgument reports whether the token at i is a named-argument label
+// ("foo(class: $x)"), which PHP tokenizes as T_STRING rather than a keyword.
+func taIsNamedArgument(s *tokens.Stream, i int) bool {
+	n := sigNext(s, i)
+	if n < 0 || !isPunctVal(s, n, ":") {
+		return false
+	}
+	p := sigPrev(s, i)
+	return p >= 0 && (isPunctVal(s, p, "(") || isPunctVal(s, p, ","))
+}
+
+// taIsClassKw reports whether the token at i is a T_CLASS.
+func taIsClassKw(s *tokens.Stream, i int) bool {
+	return taKw(s, i, "class") && !taIsNamedArgument(s, i)
+}
+
+// taIsLambda mirrors TokensAnalyzer::isLambda for the "function"/"fn" at i: the
+// next meaningful token, after an optional "&", is "(".
+func taIsLambda(s *tokens.Stream, i int) bool {
+	n := sigNext(s, i)
+	if isPunctVal(s, n, "&") {
+		n = sigNext(s, n)
+	}
+	return isPunctVal(s, n, "(")
+}
+
+// taIsModifier reports whether the token at i is a method modifier keyword.
+func taIsModifier(s *tokens.Stream, i int) bool {
+	if s.At(i).Kind != token.Keyword {
+		return false
+	}
+	switch strings.ToLower(s.At(i).Value) {
+	case "public", "protected", "private", "final", "abstract", "static":
+		return true
+	}
+	return false
+}
+
+// taIsAnonymousClass mirrors TokensAnalyzer::isAnonymousClass for the classy
+// token at i: a T_CLASS preceded (past "readonly" and attributes) by "new".
+func taIsAnonymousClass(s *tokens.Stream, i int) bool {
+	if !taIsClassKw(s, i) {
+		return false
+	}
+	if p := sigPrev(s, i); taKw(s, p, "readonly") {
+		i = p
+	}
+	return anonClassNewIndex(s, i) >= 0
+}
