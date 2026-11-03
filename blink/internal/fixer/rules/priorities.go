@@ -82,6 +82,7 @@ var fixerPriority = map[string]int{
 	"DirConstantFixer":                                40,
 	"CombineNestedDirnameFixer":                       35,
 	"ImplodeCallFixer":                                37,
+	"NoUselessSprintfFixer":                           42,
 	"LineEndingFixer":                                 0,
 	"ListSyntaxFixer":                                 2,
 	"LongToShorthandOperatorFixer":                    17,

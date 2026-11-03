@@ -123,6 +123,7 @@ func CommonFixers() []fixer.Fixer {
 		DirConstant{},
 		CombineNestedDirname{},
 		ImplodeCall{},
+		NoUselessSprintf{},
 	}
 }
 

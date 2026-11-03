@@ -44,4 +44,4 @@ DoctrineAnnotationIndentation, StandaloneLinePlainConstructorParam,
 StandaloneLineRequiredParam, StandaloneLineSymfonyAttributeParam,
 ControlStructureBraces, NoAlternativeSyntax, NoUnneededBraces
 (NoUnneededCurlyBraces), NoUnreachableDefaultArgumentValue, DirConstant,
-CombineNestedDirname, ImplodeCall.
+CombineNestedDirname, ImplodeCall, NoUselessSprintf.
