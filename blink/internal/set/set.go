@@ -215,10 +215,19 @@ type setConfig map[string]map[string]any
 // in perCSRules.
 var (
 	commonConfig = setConfig{
-		"YodaStyleFixer": {"equal": false, "identical": false, "less_and_greater": false},
+		"ConcatSpaceFixer":                   {"spacing": "one"},
+		"GeneralPhpdocAnnotationRemoveFixer": {"annotations": []any{"author", "package", "group", "category"}},
+		"NoSuperfluousPhpdocTagsFixer":       {"allow_mixed": true, "remove_inheritdoc": true},
+		"OrderedImportsFixer":                {"imports_order": []any{"class", "function", "const"}},
+		"YodaStyleFixer":                     {"equal": false, "identical": false, "less_and_greater": false},
 	}
-	psr12Config  = setConfig{}
-	spacesConfig = setConfig{}
+	psr12Config = setConfig{
+		"ConcatSpaceFixer":    {"spacing": "one"},
+		"OrderedImportsFixer": {"imports_order": []any{"class", "function", "const"}},
+	}
+	spacesConfig = setConfig{
+		"ConcatSpaceFixer": {"spacing": "one"},
+	}
 )
 
 // defaultConfig is psr12Config then commonConfig, a later option winning.
