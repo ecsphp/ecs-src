@@ -29,3 +29,26 @@ func TestTrailingCommaConfigCases(t *testing.T) {
 		}
 	}
 }
+
+// TestNoTrailingCommaInSinglelineKeepsAttributeArguments checks that the
+// argument list of an attribute keeps its trailing comma, as PHP-CS-Fixer's
+// "arguments" element skips attributes, while a call nested inside the
+// attribute's arguments is still fixed.
+func TestNoTrailingCommaInSinglelineKeepsAttributeArguments(t *testing.T) {
+	t.Parallel()
+	f := NoTrailingCommaInSingleline{}.WithConfig(map[string]any{
+		"elements": []any{"arguments", "array", "array_destructuring", "group_import"},
+	}).(fixerRule)
+	cases := []struct{ in, want string }{
+		{"<?php\n#[Attr(a: 1,)]\nclass C {}", "<?php\n#[Attr(a: 1,)]\nclass C {}"},
+		{"<?php\n#[Foo, Ns\\Attr(a: B::C,)]\nclass C {}", "<?php\n#[Foo, Ns\\Attr(a: B::C,)]\nclass C {}"},
+		{"<?php\n#[\\Attr(1,)]\nfunction f() {}", "<?php\n#[\\Attr(1,)]\nfunction f() {}"},
+		{"<?php\n#[Attr(new B(1,),)]\nclass C {}", "<?php\n#[Attr(new B(1),)]\nclass C {}"},
+		{"<?php\n$x = attr(1,);", "<?php\n$x = attr(1);"},
+	}
+	for _, c := range cases {
+		if got, _ := apply(t, f, c.in); got != c.want {
+			t.Errorf("got %q want %q", got, c.want)
+		}
+	}
+}
