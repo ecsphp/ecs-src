@@ -225,6 +225,7 @@ func ConstructFixers() []fixer.Fixer {
 		ParamReturnAndVarTagMalforms{},
 		GeneralPhpdocTagRename{},
 		ErrorSuppression{},
+		GetClassToClassKeyword{},
 	}
 }
 
