@@ -135,6 +135,7 @@ func CommonFixers() []fixer.Fixer {
 		ArrayPush{},
 		SetTypeToCast{},
 		PowToExponentiation{},
+		EregToPreg{},
 	}
 }
 
