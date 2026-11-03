@@ -132,6 +132,7 @@ func CommonFixers() []fixer.Fixer {
 		NonPrintableCharacter{},
 		NoHomoglyphNames{},
 		ModernSerializationMethods{},
+		ArrayPush{},
 	}
 }
 
