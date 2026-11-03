@@ -16,7 +16,12 @@ func isOffsetOpen(s *tokens.Stream, open int) bool {
 	if prev.Kind == token.Variable || prev.Kind == token.Ident || prev.Kind == token.String {
 		return true
 	}
-	return prev.Value == ")" || prev.Value == "]"
+	if prev.Value == ")" {
+		// "(object)[...]" casts an array literal
+		o := s.MatchBackward(prevSignificantIndex(s, open))
+		return o < 0 || !isCastParen(s, o)
+	}
+	return prev.Value == "]"
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Whitespace/NoSpacesAroundOffsetFixer.php
