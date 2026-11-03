@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -48,8 +49,8 @@ func (f NullableTypeDeclaration) Fix(s *tokens.Stream) bool {
 	changed := false
 	// Right-to-left, as the PHP fixer does, so a rewrite never shifts an
 	// element still to be visited.
-	for k := len(elements) - 1; k >= 0; k-- {
-		e := elements[k]
+	for _, e := range slices.Backward(elements) {
+
 		if e.property {
 			changed = ntdNormalize(s, ntdPropertyType(s, e.index), union) || changed
 			continue
@@ -64,8 +65,8 @@ func (f NullableTypeDeclaration) Fix(s *tokens.Stream) bool {
 		}
 		changed = ntdNormalize(s, ntdReturnType(s, closeIdx), union) || changed
 		args := ntdArguments(s, open, closeIdx)
-		for a := len(args) - 1; a >= 0; a-- {
-			changed = ntdNormalize(s, ntdArgumentType(s, args[a][0], args[a][1]), union) || changed
+		for _, arg := range slices.Backward(args) {
+			changed = ntdNormalize(s, ntdArgumentType(s, arg[0], arg[1]), union) || changed
 		}
 	}
 	return changed
@@ -326,7 +327,7 @@ func ntdNormalize(s *tokens.Stream, idxs []int, union bool) bool {
 	if strings.HasPrefix(name, "?") {
 		name, nullable = name[1:], true
 	} else {
-		for _, m := range strings.Split(strings.ToLower(name), "|") {
+		for m := range strings.SplitSeq(strings.ToLower(name), "|") {
 			if strings.TrimSpace(m) == "null" {
 				nullable = true
 			}

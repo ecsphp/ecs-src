@@ -3,6 +3,7 @@ package rules
 import (
 	"blink/internal/token"
 	"blink/internal/tokens"
+	"slices"
 )
 
 // TernaryOperatorSpaces ensures a single space around the ternary "?" and ":"
@@ -52,8 +53,8 @@ func (TernaryOperatorSpaces) Fix(s *tokens.Stream) bool {
 
 	changed := false
 	// Right-to-left so insertions never shift an index still to be visited.
-	for k := len(ops) - 1; k >= 0; k-- {
-		i := ops[k]
+	for _, i := range slices.Backward(ops) {
+
 		if s.At(i).Value == "?" {
 			if isPunctVal(s, nextSignificantIndex(s, i), ":") {
 				// elvis "$a ? : $b": no whitespace between "?" and ":"
