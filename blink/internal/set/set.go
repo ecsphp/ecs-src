@@ -47,9 +47,10 @@ func PERCS() []fixer.Fixer {
 var percsExcluded = map[string]bool{
 	"PsrAutoloadingFixer": true,
 	// a PHP_CodeSniffer sniff, not part of PHP-CS-Fixer's @PER-CS
-	"LanguageConstructSpacingSniff": true,
-	"PhpUnitConstructFixer":         true,
-	"PhpUnitFqcnAnnotationFixer":    true,
+	"LanguageConstructSpacingSniff":   true,
+	"PhpUnitConstructFixer":           true,
+	"PhpUnitFqcnAnnotationFixer":      true,
+	"PhpUnitMockShortWillReturnFixer": true,
 }
 
 var byName = map[string]func() []fixer.Fixer{

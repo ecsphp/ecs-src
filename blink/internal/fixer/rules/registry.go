@@ -202,6 +202,7 @@ func ConstructFixers() []fixer.Fixer {
 		PhpUnitSetUpTearDownVisibility{},
 		PhpUnitConstruct{},
 		PhpUnitFqcnAnnotation{},
+		PhpUnitMockShortWillReturn{},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
 		PhpdocToComment{},
