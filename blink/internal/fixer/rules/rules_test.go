@@ -1,14 +1,27 @@
 package rules
 
 import (
+	"encoding/json"
 	"testing"
 
+	"blink/internal/fixer"
 	"blink/internal/lexer"
 	"blink/internal/tokens"
 )
 
 type fixerRule interface {
 	Fix(*tokens.Stream) bool
+}
+
+// configuredFromJSON configures f from a config JSON object the way the ECS
+// loader does.
+func configuredFromJSON(t *testing.T, f fixer.ConfigurableFixer, raw string) fixerRule {
+	t.Helper()
+	var config map[string]any
+	if err := json.Unmarshal([]byte(raw), &config); err != nil {
+		t.Fatal(err)
+	}
+	return f.WithConfig(config).(fixerRule)
 }
 
 func apply(t *testing.T, r fixerRule, src string) (string, bool) {

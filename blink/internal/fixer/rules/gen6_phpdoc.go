@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"regexp"
 	"strings"
 
 	"blink/internal/tokens"
@@ -78,38 +77,4 @@ func summaryRange(d *docblock) (int, int) {
 		last = i
 	}
 	return first, last
-}
-
-// PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTagTypeFixer.php
-//
-// PhpdocTagType normalizes a standalone inline "{@inheritDoc}" to its annotation
-// form "@inheritDoc" (the default tags => ['inheritDoc' => 'annotation']). Inline
-// occurrences inside descriptive text are left as-is.
-type PhpdocTagType struct{}
-
-func (PhpdocTagType) Name() string {
-	return `PhpCsFixer\Fixer\Phpdoc\PhpdocTagTypeFixer`
-}
-
-func (PhpdocTagType) SourceURL() string {
-	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTagTypeFixer.php"
-}
-
-var inlineInheritDocRe = regexp.MustCompile(`^\{@([a-zA-Z]+)\}$`)
-
-func (PhpdocTagType) Fix(s *tokens.Stream) bool {
-	return applyToDocblocks(s, func(d *docblock) bool {
-		changed := false
-		for i, l := range d.inner {
-			trimmed := strings.TrimLeft(l.content, " ")
-			m := inlineInheritDocRe.FindStringSubmatch(strings.TrimRight(trimmed, " "))
-			if m == nil || !strings.EqualFold(m[1], "inheritDoc") {
-				continue
-			}
-			lead := l.content[:len(l.content)-len(strings.TrimLeft(l.content, " "))]
-			d.inner[i].content = lead + "@" + m[1]
-			changed = true
-		}
-		return changed
-	})
 }
