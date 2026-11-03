@@ -62,6 +62,15 @@ func TestBlankLineAfterOpeningTag(t *testing.T) {
 	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php $a = 1;\n"); changed {
 		t.Fatal("code on tag line must not change")
 	}
+	// only a monolithic PHP file: the data after __halt_compiler is inline HTML,
+	// the newline right after "?>" is not
+	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php\n$a = 1;\n__halt_compiler();\ndata"); changed {
+		t.Fatal("file with data after __halt_compiler must not change")
+	}
+	got, changed = apply(t, BlankLineAfterOpeningTag{}, "<?php\n$a = 1;\n?>\n")
+	if want := "<?php\n\n$a = 1;\n?>\n"; !changed || got != want {
+		t.Fatalf("close tag: changed=%v got=%q want=%q", changed, got, want)
+	}
 }
 
 func TestNoLeadingNamespaceWhitespace(t *testing.T) {

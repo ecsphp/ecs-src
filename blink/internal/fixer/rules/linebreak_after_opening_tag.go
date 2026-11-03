@@ -30,6 +30,10 @@ func (LinebreakAfterOpeningTag) Fix(s *tokens.Stream) bool {
 	if s.At(0).Kind != token.OpenTag || !strings.EqualFold(s.At(0).Value, "<?php") {
 		return false
 	}
+	// PHP-CS-Fixer only fixes a monolithic PHP file (isMonolithicPhp)
+	if !nasIsMonolithic(s) {
+		return false
+	}
 	next := s.At(1)
 	if next.Kind != token.Whitespace {
 		return false // "<?php" not followed by a whitespace separator

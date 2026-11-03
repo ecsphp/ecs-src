@@ -53,7 +53,8 @@ func (f SpaceAfterSemicolon) Fix(s *tokens.Stream) bool {
 			changed = true
 			continue
 		}
-		if next.Kind == token.Whitespace || next.Kind == token.CloseTag {
+		// inline data (after "__halt_compiler();") is not code to space
+		if next.Kind == token.Whitespace || next.Kind == token.CloseTag || next.Kind == token.InlineHTML {
 			continue
 		}
 		// a space is still inserted before a following ";" (empty for condition:

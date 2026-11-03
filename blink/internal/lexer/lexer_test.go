@@ -363,3 +363,28 @@ func TestDocCommentNeedsWhitespaceAfterOpening(t *testing.T) {
 		}
 	}
 }
+
+// token_get_all returns everything after "__halt_compiler();" (three
+// significant tokens after the name) as one T_INLINE_HTML.
+func TestLexStopsAfterHaltCompiler(t *testing.T) {
+	cases := []struct{ src, data string }{
+		{"<?php echo 1; __halt_compiler();\nstrlen('x'); <?php echo 2;", "\nstrlen('x'); <?php echo 2;"},
+		{"<?php __HALT_COMPILER ( /* c */ ) ; rest", " rest"},
+		{"<?php __halt_compiler() ?>rest <?php echo 1;", "rest <?php echo 1;"},
+		{"<?php __halt_compiler();", ""},
+		{"<?php $o->__halt_compiler(); echo 2;", ""},
+	}
+	for _, c := range cases {
+		toks := Lex(c.src)
+		last := toks[len(toks)-1]
+		if c.data == "" {
+			if last.Kind == token.InlineHTML {
+				t.Errorf("%q: unexpected inline data %q", c.src, last.Value)
+			}
+			continue
+		}
+		if last.Kind != token.InlineHTML || last.Value != c.data {
+			t.Errorf("%q: last token %s %q, want inline data %q", c.src, last.Kind, last.Value, c.data)
+		}
+	}
+}

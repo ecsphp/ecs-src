@@ -57,6 +57,8 @@ type lexer struct {
 	pos   int
 	inPHP bool
 	toks  []token.Token
+	// halt counts the tokens still to lex after __halt_compiler: "(", ")", ";"
+	halt int
 }
 
 func (l *lexer) emit(k token.Kind, start int) {
@@ -65,12 +67,57 @@ func (l *lexer) emit(k token.Kind, start int) {
 
 func (l *lexer) run() {
 	for l.pos < len(l.src) {
+		n := len(l.toks)
 		if l.inPHP {
 			l.lexPHP()
 		} else {
 			l.lexHTML()
 		}
+		if l.haltedAfter(n) {
+			// token_get_all returns the data after "__halt_compiler();" as
+			// one T_INLINE_HTML, whatever it holds
+			if l.pos < len(l.src) {
+				l.toks = append(l.toks, token.Token{Kind: token.InlineHTML, Value: l.src[l.pos:], Pos: l.pos})
+				l.pos = len(l.src)
+			}
+			return
+		}
 	}
+}
+
+// haltedAfter tracks "__halt_compiler" through the tokens emitted from index n
+// on, and reports whether the three tokens after which PHP stops lexing are in.
+func (l *lexer) haltedAfter(n int) bool {
+	for i := n; i < len(l.toks); i++ {
+		tk := l.toks[i]
+		switch {
+		case l.halt > 0:
+			if tk.Kind != token.Whitespace && tk.Kind != token.Comment && tk.Kind != token.DocComment {
+				l.halt--
+				if l.halt == 0 {
+					return true
+				}
+			}
+		case tk.Kind == token.Ident && strings.EqualFold(tk.Value, "__halt_compiler"):
+			if p := l.significantBeforeIndex(i); p != "->" && p != "?->" {
+				l.halt = 3
+			}
+		}
+	}
+	return false
+}
+
+// significantBeforeIndex returns the value of the last non-trivia token before
+// index i, or "".
+func (l *lexer) significantBeforeIndex(i int) string {
+	for j := i - 1; j >= 0; j-- {
+		switch l.toks[j].Kind {
+		case token.Whitespace, token.Comment, token.DocComment:
+			continue
+		}
+		return l.toks[j].Value
+	}
+	return ""
 }
 
 func (l *lexer) lexHTML() {

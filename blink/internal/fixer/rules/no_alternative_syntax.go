@@ -25,13 +25,19 @@ func (f NoAlternativeSyntax) WithConfig(config map[string]any) fixer.Fixer {
 	return f
 }
 
+// nasIsMonolithic is PHP-CS-Fixer's Tokens::isMonolithicPhp: one open tag and
+// no inline HTML but a leading shebang line. PHP's T_CLOSE_TAG takes the
+// newline right after "?>", so that newline alone is not inline HTML.
 func nasIsMonolithic(s *tokens.Stream) bool {
 	opens, html := 0, 0
 	for i := 0; i < s.Len(); i++ {
-		switch s.At(i).Kind {
+		switch t := s.At(i); t.Kind {
 		case token.OpenTag:
 			opens++
 		case token.InlineHTML:
+			if i > 0 && s.At(i-1).Kind == token.CloseTag && (t.Value == "\n" || t.Value == "\r\n") {
+				continue
+			}
 			html++
 		}
 	}

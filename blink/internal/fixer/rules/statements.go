@@ -60,7 +60,9 @@ func (NoMultipleStatementsPerLine) Fix(s *tokens.Stream) bool {
 			inlineWS = true
 			nextIdx++
 		}
-		if nextIdx >= s.Len() {
+		// PHP-CS-Fixer never looks at the last token of the file, which is where
+		// the inline data after "__halt_compiler();" sits
+		if nextIdx >= s.Len()-1 {
 			continue
 		}
 		nt := s.At(nextIdx)
