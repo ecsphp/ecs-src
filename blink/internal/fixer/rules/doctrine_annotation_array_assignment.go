@@ -1,13 +1,22 @@
 package rules
 
-import "blink/internal/tokens"
+import (
+	"blink/internal/fixer"
+	"blink/internal/tokens"
+)
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/DoctrineAnnotation/DoctrineAnnotationArrayAssignmentFixer.php
 //
 // DoctrineAnnotationArrayAssignment makes array assignments inside a Doctrine
-// annotation use the configured operator ("=" by default), so `{bar : "baz"}`
-// becomes `{bar = "baz"}`.
-type DoctrineAnnotationArrayAssignment struct{}
+// annotation use the configured operator option ("=" by default, or ":"), so
+// `{bar : "baz"}` becomes `{bar = "baz"}`. The ignored_tags option replaces the
+// default list of tags that are not Doctrine annotations.
+type DoctrineAnnotationArrayAssignment struct {
+	// Operator is the operator option; "" keeps the default "=".
+	Operator string
+	// ignoredTags is the ignored_tags option; nil keeps the default list.
+	ignoredTags map[string]bool
+}
 
 func (DoctrineAnnotationArrayAssignment) Name() string {
 	return `PhpCsFixer\Fixer\DoctrineAnnotation\DoctrineAnnotationArrayAssignmentFixer`
@@ -17,8 +26,26 @@ func (DoctrineAnnotationArrayAssignment) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/DoctrineAnnotation/DoctrineAnnotationArrayAssignmentFixer.php"
 }
 
-func (DoctrineAnnotationArrayAssignment) Fix(s *tokens.Stream) bool {
-	return applyToDoctrineAnnotations(s, func(toks []daToken) bool {
+func (f DoctrineAnnotationArrayAssignment) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["operator"].(string); ok {
+		f.Operator = v
+	}
+	if tags, ok := doctrineIgnoredTagsOption(config); ok {
+		f.ignoredTags = tags
+	}
+	return f
+}
+
+func (f DoctrineAnnotationArrayAssignment) Fix(s *tokens.Stream) bool {
+	operator := f.Operator
+	if operator == "" {
+		operator = "="
+	}
+	ignored := f.ignoredTags
+	if ignored == nil {
+		ignored = doctrineIgnoredTags
+	}
+	return applyToDoctrineAnnotationsWith(s, ignored, func(toks []daToken) ([]daToken, bool) {
 		changed := false
 		var scopes []string
 		for i := range toks {
@@ -32,12 +59,12 @@ func (DoctrineAnnotationArrayAssignment) Fix(s *tokens.Stream) bool {
 					scopes = scopes[:len(scopes)-1]
 				}
 			case daTEquals, daTColon:
-				if len(scopes) > 0 && scopes[len(scopes)-1] == "array" && toks[i].content != "=" {
-					toks[i].content = "="
+				if len(scopes) > 0 && scopes[len(scopes)-1] == "array" && toks[i].content != operator {
+					toks[i].content = operator
 					changed = true
 				}
 			}
 		}
-		return changed
+		return toks, changed
 	})
 }
