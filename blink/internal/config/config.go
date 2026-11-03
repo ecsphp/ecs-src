@@ -82,7 +82,13 @@ func resolve(f file) (*Config, error) {
 		c.Paths = []string{"."}
 	}
 
-	wanted := map[string]bool{}
+	// the first set naming a rule decides its options; a bare rule name gets the registry's
+	wanted := map[string]fixer.Fixer{}
+	want := func(fx fixer.Fixer) {
+		if _, seen := wanted[fx.Name()]; !seen {
+			wanted[fx.Name()] = fx
+		}
+	}
 	selective := false
 
 	for _, name := range f.Sets {
@@ -92,7 +98,7 @@ func resolve(f file) (*Config, error) {
 		}
 		selective = true
 		for _, fx := range fixers {
-			wanted[fx.Name()] = true
+			want(fx)
 		}
 	}
 
@@ -102,7 +108,7 @@ func resolve(f file) (*Config, error) {
 		}
 		selective = true
 		for _, fx := range set.SpacesLevel(n) {
-			wanted[fx.Name()] = true
+			want(fx)
 		}
 	}
 
@@ -112,7 +118,7 @@ func resolve(f file) (*Config, error) {
 			return nil, fmt.Errorf("unknown rule %q", name)
 		}
 		selective = true
-		wanted[fx.Name()] = true
+		want(fx)
 	}
 
 	if !selective {
@@ -120,8 +126,8 @@ func resolve(f file) (*Config, error) {
 		return c, nil
 	}
 	for _, fx := range rules.All() {
-		if wanted[fx.Name()] {
-			c.Rules = append(c.Rules, fx)
+		if chosen, ok := wanted[fx.Name()]; ok {
+			c.Rules = append(c.Rules, chosen)
 		}
 	}
 	return c, nil

@@ -11,20 +11,36 @@ import (
 )
 
 // Spaces is the ordered spaces set (safest first), matching ECS SpacesLevel.
-func Spaces() []fixer.Fixer { return rules.SpacingFixers() }
+func Spaces() []fixer.Fixer { return fromRegistry(rules.SpacingFixers(), spacesConfig) }
+
+// Casing is the casing set.
+func Casing() []fixer.Fixer { return fromRegistry(rules.CasingFixers()) }
+
+// fromRegistry swaps each fixer for the registry's, which holds PHP-CS-Fixer's
+// defaults, then applies configs.
+func fromRegistry(fixers []fixer.Fixer, configs ...map[string]map[string]any) []fixer.Fixer {
+	var out []fixer.Fixer
+	for _, f := range fixers {
+		if registered, ok := rules.ByName(f.Name()); ok {
+			f = registered
+		}
+		out = append(out, configure(f, configs...))
+	}
+	return out
+}
 
 // PSR12 is the @PSR-12 rule set as ECS exposes it (withPreparedSets(psr12: true)),
 // restricted to the fixers blink implements.
-func PSR12() []fixer.Fixer { return selectMembers(psr12Members) }
+func PSR12() []fixer.Fixer { return selectMembers(psr12Members, psr12Config) }
 
 // Common is ECS's common prepared set (array, casing, cleanup, comments,
 // control-structures, docblock, namespaces, spaces, clean-code), restricted to
 // the fixers blink implements.
-func Common() []fixer.Fixer { return selectMembers(commonMembers) }
+func Common() []fixer.Fixer { return selectMembers(commonMembers, commonConfig) }
 
 // Default is what blink runs with no config: psr12 + common, exactly the pair
 // ECS's default prepared sets enable. It is the union of PSR12 and Common.
-func Default() []fixer.Fixer { return selectMembers(defaultMembers) }
+func Default() []fixer.Fixer { return selectMembers(defaultMembers, psr12Config, commonConfig) }
 
 // PERCS mirrors PHP-CS-Fixer's @PER-CS (as exposed by ECS SetList::PER_CS): the
 // full rule set plus single_line_empty_body, which is PER-CS-specific and not
@@ -36,7 +52,7 @@ func PERCS() []fixer.Fixer {
 		if percsExcluded[shortName(f.Name())] {
 			continue
 		}
-		out = append(out, f)
+		out = append(out, configure(f, commonConfig, perCSConfig))
 	}
 	return append(out, rules.SingleLineEmptyBody{})
 }
@@ -60,23 +76,54 @@ var percsExcluded = map[string]bool{
 
 var byName = map[string]func() []fixer.Fixer{
 	"spaces": Spaces,
-	"casing": rules.CasingFixers,
+	"casing": Casing,
 	"psr12":  PSR12,
 	"per-cs": PERCS,
 	"common": Common,
 }
 
 // selectMembers keeps the built-in fixers whose short class name is in members,
-// preserving All()'s priority-sorted execution order.
-func selectMembers(members map[string]bool) []fixer.Fixer {
+// preserving All()'s priority-sorted execution order, configured by configs.
+func selectMembers(members map[string]bool, configs ...map[string]map[string]any) []fixer.Fixer {
 	var out []fixer.Fixer
 	for _, f := range rules.All() {
 		if members[shortName(f.Name())] {
-			out = append(out, f)
+			out = append(out, configure(f, configs...))
 		}
 	}
 	return out
 }
+
+// configure applies the options configs give f (by short class name), later
+// configs taking precedence.
+func configure(f fixer.Fixer, configs ...map[string]map[string]any) fixer.Fixer {
+	configurable, ok := f.(fixer.ConfigurableFixer)
+	if !ok {
+		return f
+	}
+	name := shortName(f.Name())
+	for _, c := range configs {
+		if options, ok := c[name]; ok {
+			f = configurable.WithConfig(options)
+			configurable = f.(fixer.ConfigurableFixer)
+		}
+	}
+	return f
+}
+
+// The options ECS's prepared sets configure, for members whose blink default
+// (PHP-CS-Fixer's) differs from what the set wants. commonConfig mirrors the
+// RULE_CONFIGURATIONS of src/Config/Level/*Level.php, psr12Config
+// config/set/psr12.php, perCSConfig config/set/per-cs.php and spacesConfig
+// SpacesLevel.
+var (
+	commonConfig = map[string]map[string]any{
+		"YodaStyleFixer": {"equal": false, "identical": false, "less_and_greater": false},
+	}
+	psr12Config  = map[string]map[string]any{}
+	perCSConfig  = map[string]map[string]any{}
+	spacesConfig = map[string]map[string]any{}
+)
 
 // shortName returns the class name without its namespace ("...\FooFixer" -> "FooFixer").
 func shortName(name string) string {
