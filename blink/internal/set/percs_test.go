@@ -91,11 +91,11 @@ func parseECSSet(src string) (map[string]map[string]any, error) {
 		fqcn := m[1]
 		imports[fqcn[strings.LastIndexByte(fqcn, '\\')+1:]] = fqcn
 	}
-	start := strings.Index(src, "ECSConfig::configure()")
-	if start < 0 {
+	_, after, ok := strings.Cut(src, "ECSConfig::configure()")
+	if !ok {
 		return nil, fmt.Errorf("no ECSConfig::configure() builder")
 	}
-	p := &phpParser{src: src[start+len("ECSConfig::configure()"):]}
+	p := &phpParser{src: after}
 	out := map[string]map[string]any{}
 	class := func(v any) (string, error) {
 		ref, ok := v.(classRef)
