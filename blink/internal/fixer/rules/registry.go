@@ -129,6 +129,7 @@ func PhpdocFixers() []fixer.Fixer {
 		DoctrineAnnotationSpaces{},
 		DoctrineAnnotationArrayAssignment{},
 		DoctrineAnnotationIndentation{},
+		DoctrineAnnotationBraces{},
 		NoSuperfluousPhpdocTags{},
 		PhpdocNoUselessInheritdoc{},
 		PhpdocScalar{},

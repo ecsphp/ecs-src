@@ -1,6 +1,9 @@
 package rules
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestDoctrineAnnotationSpaces(t *testing.T) {
 	t.Parallel()
@@ -47,5 +50,17 @@ func TestDoctrineAnnotationSpacesNoOp(t *testing.T) {
 		if got, changed := apply(t, DoctrineAnnotationSpaces{}, src); changed || got != src {
 			t.Fatalf("expected no-op, changed=%v\n src=%q\n got=%q", changed, src, got)
 		}
+	}
+}
+
+// TestDoctrineAnnotationSpacesCandidates follows nextElementAcceptsDoctrineAnnotations,
+// as the other Doctrine annotation rules do: a "static", "var" or "array"
+// member, or a function outside a class, is no candidate.
+func TestDoctrineAnnotationSpacesCandidates(t *testing.T) {
+	t.Parallel()
+	in := "<?php\nclass C\n{\n    /** @A(a = 1) */\n    public static $s;\n\n    /** @B(a = 1) */\n    var $v;\n\n    /** @C(a = 1) */\n    private array $l;\n\n    /** @D(a = 1) */\n    public $p;\n\n    /** @E(a = 1) */\n    private(set) int $q;\n}\n\n/** @F(a = 1) */\nfunction f() {}\n"
+	want := strings.NewReplacer("@D(a = 1)", "@D(a=1)", "@E(a = 1)", "@E(a=1)").Replace(in)
+	if got, changed := apply(t, DoctrineAnnotationSpaces{}, in); !changed || got != want {
+		t.Fatalf("changed=%v\n got=%q\nwant=%q", changed, got, want)
 	}
 }

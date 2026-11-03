@@ -13,7 +13,7 @@ CI keeps it current.
 | tool | rules | of ECS |
 |---|---:|---:|
 | [ECS](https://github.com/symplify/easy-coding-standard) (baseline) | 207 | 100% |
-| blink | 217 | 104% |
+| blink | 218 | 105% |
 <!-- rule-counts:end -->
 
 ## Build

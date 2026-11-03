@@ -33,6 +33,7 @@ var fixerPriority = map[string]int{
 	"BlankLineAfterOpeningTagFixer":            1,
 	"DoctrineAnnotationArrayAssignmentFixer":   1,
 	"DoctrineAnnotationSpacesFixer":            0,
+	"DoctrineAnnotationBracesFixer":            0,
 	"PhpUnitConstructFixer":                    -8,
 	"PhpUnitFqcnAnnotationFixer":               -9,
 	"PhpUnitMockShortWillReturnFixer":          0,
