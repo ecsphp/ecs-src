@@ -407,16 +407,20 @@ func detectIndent(s *tokens.Stream, index int) string {
 		if wi < 0 {
 			return ""
 		}
-		w := s.At(wi).Value
+		// PHP's "<?php" tag owns the whitespace character after it
+		tag, w := splitTagWhitespace(s, wi)
+		if w == "" {
+			idx = wi
+			continue
+		}
 		if strings.Contains(w, "\n") {
 			parts := strings.Split(w, "\n")
 			return parts[len(parts)-1]
 		}
 		if wi-1 >= 0 {
 			prev := s.At(wi - 1)
-			if (prev.Kind == token.OpenTag || prev.Kind == token.Comment) && strings.HasSuffix(prev.Value, "\n") {
-				parts := strings.Split(w, "\n")
-				return parts[len(parts)-1]
+			if (prev.Kind == token.OpenTag && strings.HasSuffix(prev.Value+tag, "\n")) || (prev.Kind == token.Comment && strings.HasSuffix(prev.Value, "\n")) {
+				return w
 			}
 		}
 		idx = wi
