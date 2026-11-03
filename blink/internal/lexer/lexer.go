@@ -237,6 +237,9 @@ func (l *lexer) lexPHP() {
 		if kind == token.Keyword && l.atSetModifierSuffix(l.src[start:l.pos]) {
 			l.pos += len("(set)")
 		}
+		if kind == token.Keyword && strings.EqualFold(l.src[start:l.pos], "yield") {
+			l.pos = l.yieldFromEnd(l.pos)
+		}
 		l.emit(kind, start)
 	default:
 		if op := l.matchOperator(); op > 0 {
@@ -445,6 +448,16 @@ func (l *lexer) byteAt(p int) byte {
 		return 0
 	}
 	return l.src[p]
+}
+
+// yieldFromEnd returns the end of a "yield from" whose "yield" ends at p, or p.
+// PHP's scanner makes one T_YIELD_FROM token of it, comments included.
+func (l *lexer) yieldFromEnd(p int) int {
+	next := l.skipTrivia(p)
+	if next == p || !l.wordAt(next, "from") {
+		return p
+	}
+	return next + len("from")
 }
 
 // atSetModifierSuffix reports whether the visibility keyword word is directly

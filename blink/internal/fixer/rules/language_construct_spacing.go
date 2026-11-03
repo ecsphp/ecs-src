@@ -37,23 +37,15 @@ func (LanguageConstructSpacing) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.Keyword || !langConstructTriggers[strings.ToLower(t.Value)] {
+		if t.Kind != token.Keyword || !(langConstructTriggers[strings.ToLower(t.Value)] || isYieldFrom(t)) {
 			continue
 		}
-		// "yield from": collapse the gap to one space, then space the content
-		// after "from"; a comment between the words is left untouched, as the
-		// sniff cannot auto-fix it.
-		if strings.EqualFold(t.Value, "yield") {
-			if n := sigNext(s, i); n >= 0 && s.At(n).Kind == token.Ident && strings.EqualFold(s.At(n).Value, "from") {
-				if n == i+2 && s.At(i+1).Kind == token.Whitespace && s.At(i+1).Value != " " {
-					s.SetValue(i+1, " ")
-					changed = true
-				}
-				if langConstructSpaceAfter(s, n) {
-					changed = true
-				}
-				i = n
-				continue
+		// "yield from" is one token: collapse the gap between the words to one
+		// space, unless it holds a comment, which the sniff cannot auto-fix
+		if v := t.Value; isYieldFrom(t) && !strings.ContainsAny(v, "/#") {
+			if fixed := v[:len("yield")] + " " + v[len(v)-len("from"):]; fixed != v {
+				s.SetValue(i, fixed)
+				changed = true
 			}
 		}
 		if langConstructSpaceAfter(s, i) {

@@ -455,3 +455,23 @@ func TestLexBinaryStringPrefix(t *testing.T) {
 		t.Errorf("bare b: got %s %q", toks[4].Kind, toks[4].Value)
 	}
 }
+
+// "yield from" is one T_YIELD_FROM token, whitespace and comments included
+// (PHP 8.3's scanner).
+func TestLexYieldFromIsOneKeyword(t *testing.T) {
+	cases := map[string]string{
+		"yield from g();":         "yield from",
+		"yield\n    from g();":    "yield\n    from",
+		"YIELD /* c */ FROM g();": "YIELD /* c */ FROM",
+		"yield // c\nfrom g();":   "yield // c\nfrom",
+		"yield/**/from(g());":     "yield/**/from",
+		"yield fromage();":        "yield",
+		"yield;":                  "yield",
+	}
+	for src, want := range cases {
+		toks := Lex("<?php function f() { " + src + " }")
+		if got := toks[10]; got.Kind != token.Keyword || got.Value != want {
+			t.Errorf("%q: got %s %q, want keyword %q", src, got.Kind, got.Value, want)
+		}
+	}
+}

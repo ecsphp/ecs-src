@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"regexp"
 	"strings"
 
 	"blink/internal/fixer"
@@ -79,6 +80,9 @@ func (f SingleSpaceAroundConstruct) WithConfig(config map[string]any) fixer.Fixe
 			if kw, ok := singleSpaceSetModifiers[name]; ok {
 				f.Followed[kw] = true
 			}
+			if name == "yield_from" {
+				f.Followed["yield from"] = true
+			}
 		}
 	}
 	if list, ok := singleSpaceStringList(config["constructs_preceded_by_a_single_space"]); ok {
@@ -121,20 +125,29 @@ func (f SingleSpaceAroundConstruct) followedKeyword(kw string) bool {
 	return constructKeywords[kw]
 }
 
+// fixYieldFrom collapses each whitespace run inside a "yield from" token to one
+// space, as PHP-CS-Fixer's Preg::replace('/\s+/', ' ', ...) does.
 func (f SingleSpaceAroundConstruct) fixYieldFrom(s *tokens.Stream) bool {
 	changed := false
-	for i := s.Len() - 3; i >= 0; i-- {
+	for i := range s.Len() {
 		t := s.At(i)
-		if t.Kind != token.Keyword || strings.ToLower(t.Value) != "yield" ||
-			s.At(i+1).Kind != token.Whitespace || s.At(i+1).Value == " " {
+		if !isYieldFrom(t) || strings.ToLower(t.Value) == "yield from" {
 			continue
 		}
-		if n := s.At(i + 2); (n.Kind == token.Ident || n.Kind == token.Keyword) && strings.ToLower(n.Value) == "from" {
-			s.SetValue(i+1, " ")
+		if v := phpWhitespaceRunRe.ReplaceAllString(t.Value, " "); v != t.Value {
+			s.SetValue(i, v)
 			changed = true
 		}
 	}
 	return changed
+}
+
+// phpWhitespaceRunRe is PCRE's \s+ (space, \t, \n, \v, \f, \r).
+var phpWhitespaceRunRe = regexp.MustCompile(`[ \t\n\v\f\r]+`)
+
+// isYieldFrom reports whether t is the "yield from" keyword token.
+func isYieldFrom(t token.Token) bool {
+	return t.Kind == token.Keyword && len(t.Value) > len("yield") && strings.EqualFold(t.Value[:len("yield")], "yield")
 }
 
 func (f SingleSpaceAroundConstruct) fixPreceded(s *tokens.Stream) bool {
@@ -229,14 +242,17 @@ func (f SingleSpaceAroundConstruct) Fix(s *tokens.Stream) bool {
 	i := 0
 	for i < s.Len() {
 		t := s.At(i)
-		if t.Kind != token.Keyword || !f.followedKeyword(strings.ToLower(t.Value)) || i+1 >= s.Len() {
+		kw := strings.ToLower(t.Value)
+		if isYieldFrom(t) {
+			kw = "yield from"
+		}
+		if t.Kind != token.Keyword || !f.followedKeyword(kw) || i+1 >= s.Len() {
 			i++
 			continue
 		}
 		next := s.At(i + 1)
 		// "static" and "class" directly before "(" are a class reference, not a
 		// construct: "new static(...)", "new class(...)". They take no space.
-		kw := strings.ToLower(t.Value)
 		classRef := kw == "static" || kw == "class"
 		if next.Kind == token.Whitespace {
 			if classRef && !hasNewline(next.Value) && i+2 < s.Len() &&
@@ -330,11 +346,6 @@ func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 			p := sigPrev(s, last)
 			// "function foo ()" is a definition, not a call
 			if p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "function") {
-				continue
-			}
-			// "from" in "yield from (expr)" is part of the construct, not a call
-			if strings.EqualFold(prev.Value, "from") && p >= 0 &&
-				s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "yield") {
 				continue
 			}
 		case prev.Kind == token.Punct && (prev.Value == ")" || prev.Value == "]"):
