@@ -203,6 +203,7 @@ func ConstructFixers() []fixer.Fixer {
 		PhpUnitConstruct{},
 		PhpUnitFqcnAnnotation{},
 		PhpUnitMockShortWillReturn{},
+		PhpUnitTestAnnotation{},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
 		PhpdocToComment{},
