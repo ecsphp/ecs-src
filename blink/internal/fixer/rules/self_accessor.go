@@ -12,6 +12,9 @@ import (
 // SelfAccessor replaces a reference to the containing class's own name with
 // "self" inside the class body: "new Foo()" -> "new self()",
 // "Foo::CONST" -> "self::CONST", type declarations "Foo $x" -> "self $x".
+// Like PHP-CS-Fixer it only visits classes and interfaces (not enums or
+// traits), compares the name case-insensitively and also rewrites the name
+// qualified with the current namespace ("\App\Foo::CONST").
 type SelfAccessor struct{}
 
 func (SelfAccessor) Name() string {
@@ -25,7 +28,10 @@ func (SelfAccessor) SourceURL() string {
 func (SelfAccessor) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind != token.Keyword || !isClassLikeKeyword(strings.ToLower(s.At(i).Value)) {
+		if s.At(i).Kind != token.Keyword {
+			continue
+		}
+		if lw := strings.ToLower(s.At(i).Value); lw != "class" && lw != "interface" {
 			continue
 		}
 		// skip "new class" (anonymous) and "::class"
@@ -42,6 +48,7 @@ func (SelfAccessor) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		className := s.At(nameIdx).Value
+		namespace := selfAccessorNamespace(s, i)
 		open := findBodyBrace(s, nameIdx)
 		if open < 0 {
 			continue
@@ -86,11 +93,16 @@ func (SelfAccessor) Fix(s *tokens.Stream) bool {
 					}
 				}
 			}
-			if s.At(k).Kind != token.Ident || s.At(k).Value != className {
+			if s.At(k).Kind != token.Ident || !strings.EqualFold(s.At(k).Value, className) {
 				continue
 			}
-			if selfAccessorRef(s, k) {
+			if start, ok := selfAccessorRef(s, k, namespace); ok {
 				s.SetValue(k, "self")
+				if start < k {
+					s.ReplaceRange(start, k-1, nil)
+					closeIdx -= k - start
+					k = start
+				}
 				changed = true
 			}
 		}
@@ -186,41 +198,104 @@ func findBodyBrace(s *tokens.Stream, nameIdx int) int {
 	return -1
 }
 
-// selfAccessorRef reports whether the class-name token at k is a reference to the
-// class (a "new"/"instanceof" operand, a "::" access, or a type declaration)
-// rather than a name in another position.
-func selfAccessorRef(s *tokens.Stream, k int) bool {
-	prev, hasPrev := prevSignificant(s, k)
-	nextIdx := nextSignificantIndex(s, k)
+// selfAccessorNamespace returns the segments of the namespace declared before
+// the class keyword at i (nil for the global namespace).
+func selfAccessorNamespace(s *tokens.Stream, i int) []string {
+	for j := i - 1; j >= 0; j-- {
+		if s.At(j).Kind != token.Keyword || !strings.EqualFold(s.At(j).Value, "namespace") {
+			continue
+		}
+		var segs []string
+		k := sigNext(s, j)
+		for k >= 0 && s.At(k).Kind == token.Ident {
+			segs = append(segs, s.At(k).Value)
+			k = sigNext(s, k)
+			if k < 0 || s.At(k).Kind != token.Punct || s.At(k).Value != `\` {
+				break
+			}
+			k = sigNext(s, k)
+		}
+		if k >= 0 && s.At(k).Kind == token.Punct && (s.At(k).Value == ";" || s.At(k).Value == "{") {
+			return segs
+		}
+		// "namespace\Foo" is a relative name, not a declaration
+	}
+	return nil
+}
 
-	if hasPrev {
+// selfAccessorRef reports whether the class-name token at k is a reference
+// PHP-CS-Fixer turns into "self": a "new"/"instanceof" operand, a "::" access,
+// or a type in a method signature. A name qualified with the current namespace
+// counts too; start is then the index of its leading "\", else k.
+func selfAccessorRef(s *tokens.Stream, k int, namespace []string) (start int, ok bool) {
+	nextIdx := sigNext(s, k)
+	if nextIdx >= 0 && s.At(nextIdx).Kind == token.Punct && s.At(nextIdx).Value == `\` {
+		return 0, false // heads a namespaced name
+	}
+	start = k
+	p := sigPrev(s, k)
+	if p >= 0 && s.At(p).Kind == token.Punct && s.At(p).Value == `\` {
+		if start = selfAccessorQualifiedStart(s, k, namespace); start < 0 {
+			return 0, false
+		}
+		p = sigPrev(s, start)
+	}
+	if p >= 0 {
+		prev := s.At(p)
+		if prev.Kind == token.Ident {
+			return 0, false
+		}
 		if prev.Kind == token.Punct {
 			switch prev.Value {
-			case "->", "?->", "::", `\`:
-				return false
+			case "->", "?->", "::":
+				return 0, false
 			}
 		}
 		if prev.Kind == token.Keyword {
 			switch strings.ToLower(prev.Value) {
-			case "function", "const", "extends", "implements", "use", "namespace", "as":
-				return false
 			case "new", "instanceof":
-				return true
+				return start, true
 			}
 		}
 	}
-	if nextIdx >= 0 && s.At(nextIdx).Kind == token.Punct && s.At(nextIdx).Value == `\` {
-		return false // heads a namespaced name
-	}
 	if nextIdx >= 0 && s.At(nextIdx).Kind == token.Punct && s.At(nextIdx).Value == "::" {
-		return true
+		return start, true
 	}
-	// a type declaration only counts inside a parameter list or a return type;
-	// property types are left untouched by ECS
-	if enclosingFuncParamOpen(s, k) >= 0 {
-		return true
+	// a type only counts in a method signature, right after "(", ",", "?", "|"
+	// or the return-type ":"; property types are left untouched
+	if p < 0 || s.At(p).Kind != token.Punct {
+		return 0, false
 	}
-	return selfAccessorInReturnType(s, k)
+	switch s.At(p).Value {
+	case "(", ",":
+		return start, enclosingFuncParamOpen(s, start) >= 0
+	case "?", "|":
+		return start, enclosingFuncParamOpen(s, start) >= 0 || selfAccessorInReturnType(s, start)
+	case ":":
+		return start, isReturnTypeColon(s, p)
+	}
+	return 0, false
+}
+
+// selfAccessorQualifiedStart walks back from the name at k over "\"-separated
+// segments that must spell the current namespace with a leading "\", and
+// returns the index of that leading "\", or -1.
+func selfAccessorQualifiedStart(s *tokens.Stream, k int, namespace []string) int {
+	idx := k
+	for i := len(namespace) - 1; i >= -1; i-- {
+		idx = sigPrev(s, idx)
+		if idx < 0 || s.At(idx).Kind != token.Punct || s.At(idx).Value != `\` {
+			return -1
+		}
+		if i < 0 {
+			return idx
+		}
+		idx = sigPrev(s, idx)
+		if idx < 0 || s.At(idx).Kind != token.Ident || !strings.EqualFold(s.At(idx).Value, namespace[i]) {
+			return -1
+		}
+	}
+	return -1
 }
 
 // selfAccessorInReturnType reports whether the type token at k sits in a return
