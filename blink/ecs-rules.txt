@@ -1,16 +1,19 @@
-ECS rules NOT yet implemented in blink
-=======================================
+Fixer universe vs blink coverage
+================================
 
-Source: every Fixer/Sniff referenced across ecs-src config/set/* and
-src/Config/Level/*, listed in ecs-all-fixers.txt. Fixers that implement
-PHP-CS-Fixer's DeprecatedFixerInterface are excluded (not counted, not ported).
-
-207 rules configured in ECS. The live implemented/missing counts are in the
-README (bin/rule-counts.sh keeps them current). Regenerate the list below with:
+The README parity is measured against the full fixer universe blink draws
+from: every PHP-CS-Fixer fixer, every Symplify coding-standard fixer, and the
+PHP_CodeSniffer sniffs ECS references from its sets. That universe is generated
+by cmd/list-universe into ecs-all-fixers.txt; bin/rule-counts.sh keeps the
+counts in the README current. blink is a subset of the universe, so coverage
+never exceeds 100%. List the universe fixers blink has not ported yet with:
 
   comm -23 <(sort -u blink/ecs-all-fixers.txt) \
            <(./blink list-checkers | sed 's/^[[:space:]]*-[[:space:]]*//' | sort -u) \
     | sed -E 's#.*\\##'
+
+Every fixer/sniff ECS actually enables in a set is implemented; the remaining
+universe backlog is PHP-CS-Fixer fixers no ECS set turns on.
 
 A few "missing" names below are already implemented under the fixer's newer
 PHP-CS-Fixer name and only differ by alias:
