@@ -396,7 +396,8 @@ func fqIsTypeBoundaryBefore(s *tokens.Stream, p int) bool {
 	}
 	if t.Kind == token.Keyword {
 		switch strings.ToLower(t.Value) {
-		case "public", "protected", "private", "readonly", "static", "var", "const", "function", "fn":
+		case "public", "protected", "private", "readonly", "static", "var", "const", "function", "fn",
+			"public(set)", "protected(set)", "private(set)":
 			return true
 		}
 	}

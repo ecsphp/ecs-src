@@ -81,7 +81,8 @@ func isNullableTypePos(s *tokens.Stream, i int) bool {
 	}
 	if pt.Kind == token.Keyword {
 		switch strings.ToLower(pt.Value) {
-		case "public", "private", "protected", "readonly", "static", "var":
+		case "public", "private", "protected", "readonly", "static", "var",
+			"public(set)", "protected(set)", "private(set)":
 			return true
 		}
 	}
