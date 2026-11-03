@@ -388,3 +388,41 @@ func TestLexStopsAfterHaltCompiler(t *testing.T) {
 		}
 	}
 }
+
+// Number literals are one token each, as PHP's scanner reads them.
+func TestLexNumbers(t *testing.T) {
+	cases := map[string][]string{
+		"1e-3 + 1.5E+3":     {"1e-3", "1.5E+3"},
+		"1.e3 .5e1 3.":      {"1.e3", ".5e1", "3."},
+		"1_000.5_0e1_0":     {"1_000.5_0e1_0"},
+		"0x1F 0b101 0o17":   {"0x1F", "0b101", "0o17"},
+		"0O17 07_7":         {"0O17", "07_7"},
+		"1..2":              {"1.", ".2"},
+		"1e + 1__0 + 0X_1;": {"1", "1", "0"},
+	}
+	for src, want := range cases {
+		var got []string
+		for _, tk := range Lex("<?php " + src) {
+			if tk.Kind == token.Number {
+				got = append(got, tk.Value)
+			}
+		}
+		if strings.Join(got, " ") != strings.Join(want, " ") {
+			t.Errorf("%q: numbers %q, want %q", src, got, want)
+		}
+	}
+}
+
+func TestIsIntegerLiteral(t *testing.T) {
+	cases := map[string]bool{
+		"1": true, "1_000": true, "0x1F": true, "0b101": true, "0o17": true, "017": true,
+		"9223372036854775807": true, "0x7FFFFFFFFFFFFFFF": true,
+		"9223372036854775808": false, "99999999999999999999": false, "0x8000000000000000": false,
+		"01777777777777777777777": false, "1.5": false, ".5": false, "1e3": false, "3.": false,
+	}
+	for v, want := range cases {
+		if got := IsIntegerLiteral(v); got != want {
+			t.Errorf("IsIntegerLiteral(%q) = %v, want %v", v, got, want)
+		}
+	}
+}

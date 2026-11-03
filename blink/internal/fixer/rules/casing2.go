@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/lexer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -152,7 +153,8 @@ func (IntegerLiteralCase) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
-		if t.Kind != token.Number || len(t.Value) < 2 || t.Value[0] != '0' {
+		// only an integer (T_LNUMBER): an overflowing "0XFF..." is a float
+		if t.Kind != token.Number || len(t.Value) < 2 || t.Value[0] != '0' || !lexer.IsIntegerLiteral(t.Value) {
 			continue
 		}
 		var fixed string

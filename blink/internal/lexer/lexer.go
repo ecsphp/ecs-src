@@ -9,7 +9,9 @@
 package lexer
 
 import (
+	"errors"
 	"slices"
+	"strconv"
 	"strings"
 
 	"blink/internal/token"
@@ -224,10 +226,7 @@ func (l *lexer) lexPHP() {
 	case c == '"':
 		l.lexString(start, '"')
 	case isDigit(c) || (c == '.' && l.pos+1 < len(l.src) && isDigit(l.src[l.pos+1])):
-		// a leading-dot float (".1") is one DNUMBER in PHP's context-free scanner
-		for l.pos < len(l.src) && isNumber(l.src[l.pos]) {
-			l.pos++
-		}
+		l.pos = l.scanNumber(l.pos)
 		l.emit(token.Number, start)
 	case isIdentStart(c):
 		for l.pos < len(l.src) && isIdent(l.src[l.pos]) {
@@ -674,10 +673,84 @@ func (l *lexer) scanHeredoc() int {
 	return len(src)
 }
 
+// scanNumber returns the end of the number literal starting at p, following
+// PHP's scanner: HNUM "0x1F", BNUM "0b101", ONUM "0o17", LNUM "1_000",
+// DNUM "1.5", ".5", "1." and EXPONENT_DNUM "1e-3", "1.5E+3", with "_"
+// allowed only between digits.
+func (l *lexer) scanNumber(p int) int {
+	if digit := l.basedDigit(p); digit != nil {
+		return l.scanDigits(p+2, digit)
+	}
+	end := l.scanDigits(p, isDigit)
+	if l.byteAt(end) == '.' && (end > p || isDigit(l.byteAt(end+1))) {
+		end = l.scanDigits(end+1, isDigit)
+	}
+	if c := l.byteAt(end); c == 'e' || c == 'E' {
+		e := end + 1
+		if c := l.byteAt(e); c == '+' || c == '-' {
+			e++
+		}
+		if isDigit(l.byteAt(e)) {
+			end = l.scanDigits(e, isDigit)
+		}
+	}
+	return end
+}
+
+// basedDigit returns the digit test of the "0x", "0b" or "0o" literal at p, or
+// nil when there is none.
+func (l *lexer) basedDigit(p int) func(byte) bool {
+	var digit func(byte) bool
+	switch l.byteAt(p + 1) {
+	case 'x', 'X':
+		digit = isHexDigit
+	case 'b', 'B':
+		digit = func(c byte) bool { return c == '0' || c == '1' }
+	case 'o', 'O':
+		digit = func(c byte) bool { return c >= '0' && c <= '7' }
+	}
+	if l.byteAt(p) != '0' || digit == nil || !digit(l.byteAt(p+2)) {
+		return nil
+	}
+	return digit
+}
+
+// scanDigits returns the end of the run of digits starting at p, where a "_"
+// may separate two digits.
+func (l *lexer) scanDigits(p int, digit func(byte) bool) int {
+	for p < len(l.src) && (digit(l.src[p]) || (l.src[p] == '_' && p > 0 && digit(l.src[p-1]) && digit(l.byteAt(p+1)))) {
+		p++
+	}
+	return p
+}
+
+// IsIntegerLiteral reports whether a Number token is an integer literal
+// (T_LNUMBER) rather than a float (T_DNUMBER): PHP's scanner reads a decimal
+// with a "." or an exponent, and an integer literal too large for a 64-bit
+// int, as a float.
+func IsIntegerLiteral(v string) bool {
+	v = strings.ReplaceAll(v, "_", "")
+	base := 10
+	switch {
+	case len(v) > 2 && v[0] == '0' && (v[1] == 'x' || v[1] == 'X'):
+		base, v = 16, v[2:]
+	case len(v) > 2 && v[0] == '0' && (v[1] == 'b' || v[1] == 'B'):
+		base, v = 2, v[2:]
+	case len(v) > 2 && v[0] == '0' && (v[1] == 'o' || v[1] == 'O'):
+		base, v = 8, v[2:]
+	case strings.ContainsAny(v, ".eE"):
+		return false
+	case len(v) > 1 && v[0] == '0':
+		base = 8 // a legacy octal "017"
+	}
+	_, err := strconv.ParseInt(v, base, 64)
+	return err == nil || !errors.Is(err, strconv.ErrRange)
+}
+
 func isSpace(c byte) bool { return c == ' ' || c == '\t' || c == '\n' || c == '\r' }
 func isDigit(c byte) bool { return c >= '0' && c <= '9' }
-func isNumber(c byte) bool {
-	return isDigit(c) || c == '.' || c == '_' || c == 'x' || c == 'X' || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+func isHexDigit(c byte) bool {
+	return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
 }
 func isIdentStart(c byte) bool {
 	return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c >= 0x80
