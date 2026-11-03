@@ -74,6 +74,11 @@ func TestIntegerLiteralCase(t *testing.T) {
 	if _, changed := apply(t, IntegerLiteralCase{}, "<?php $a = 255;"); changed {
 		t.Fatal("decimal literal must not change")
 	}
+	// an octal literal is one token; an overflowing hex literal is a float
+	got, _ = apply(t, IntegerLiteralCase{}, "<?php $a = 0O17; $b = 0XFFFFFFFFFFFFFFFFFF;")
+	if want := "<?php $a = 0o17; $b = 0XFFFFFFFFFFFFFFFFFF;"; got != want {
+		t.Fatalf("got=%q want=%q", got, want)
+	}
 }
 
 func TestNoEmptyComment(t *testing.T) {

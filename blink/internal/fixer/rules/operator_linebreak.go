@@ -44,7 +44,7 @@ var operatorLinebreakPunct = map[string]bool{
 	"-=": true, "*=": true, "/=": true, "%=": true, "**=": true, "&=": true,
 	"|=": true, "^=": true, "<<=": true, ">>=": true, "??=": true, "^": true,
 	"<<": true, ">>": true, "|": true, "&": true, ":": true, "?": true,
-	"->": true, "?->": true, "::": true,
+	"->": true, "?->": true, "::": true, "|>": true,
 }
 
 func (OperatorLinebreak) Name() string {

@@ -28,7 +28,8 @@ func isTypeUnionPart(t token.Token) bool {
 // that can precede a typed property or a promoted constructor parameter.
 func isVisibilityModifier(v string) bool {
 	switch strings.ToLower(v) {
-	case "public", "private", "protected", "readonly", "static", "var":
+	case "public", "private", "protected", "readonly", "static", "var",
+		"public(set)", "protected(set)", "private(set)":
 		return true
 	}
 	return false

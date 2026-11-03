@@ -32,7 +32,8 @@ func isKeywordValue(t token.Token, vals ...string) bool {
 // isPropertyModifier reports whether t is an access/property modifier keyword,
 // i.e. the docblock in front of it documents a class property.
 func isPropertyModifier(t token.Token) bool {
-	return isKeywordValue(t, "private", "protected", "public", "var", "readonly")
+	return isKeywordValue(t, "private", "protected", "public", "var", "readonly",
+		"private(set)", "protected(set)", "public(set)")
 }
 
 var (

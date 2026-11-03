@@ -110,8 +110,10 @@ func TestPhpdocNoAccess(t *testing.T) {
 
 func TestPhpdocSingleLineVarSpacing(t *testing.T) {
 	t.Parallel()
+	// a plain comment "/**@var" becomes a doc comment; PHP-CS-Fixer's pattern
+	// takes "int$x" for the type
 	got, changed := apply(t, PhpdocSingleLineVarSpacing{}, "<?php\n/**@var int$x*/\n$x = 1;")
-	if want := "<?php\n/** @var int $x */\n$x = 1;"; !changed || got != want {
+	if want := "<?php\n/** @var int$x */\n$x = 1;"; !changed || got != want {
 		t.Fatalf("glued: changed=%v got=%q want=%q", changed, got, want)
 	}
 	idempotent(t, PhpdocSingleLineVarSpacing{}, got)
@@ -121,10 +123,13 @@ func TestPhpdocSingleLineVarSpacing(t *testing.T) {
 		t.Fatalf("runs: got %q", got)
 	}
 
-	// @param with a description, whitespace runs collapsed
-	got, _ = apply(t, PhpdocSingleLineVarSpacing{}, "<?php\n/** @param string $name  the   name */\nfunction f($name) {}")
-	if want := "<?php\n/** @param string $name the name */\nfunction f($name) {}"; got != want {
-		t.Fatalf("param desc: got %q", got)
+	// only @var, and the description keeps its inner spacing
+	if _, changed := apply(t, PhpdocSingleLineVarSpacing{}, "<?php\n/** @param string $name  the   name */\nfunction f($name) {}"); changed {
+		t.Fatal("@param must not change")
+	}
+	got, _ = apply(t, PhpdocSingleLineVarSpacing{}, "<?php\n/** @var int $z   desc   here  */\n$z = 1;")
+	if want := "<?php\n/** @var int $z desc   here */\n$z = 1;"; got != want {
+		t.Fatalf("var desc: got %q", got)
 	}
 
 	// already correct is a no-op

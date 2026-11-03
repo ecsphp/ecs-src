@@ -73,6 +73,11 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
 			continue
 		}
+		// a property hook list is CT::T_PROPERTY_HOOK_BRACE_OPEN in
+		// PHP-CS-Fixer, not a "{" this fixer moves
+		if isPropertyHookBrace(s, i) {
+			continue
+		}
 		kind, kw := classifyBrace(s, i)
 
 		var category string

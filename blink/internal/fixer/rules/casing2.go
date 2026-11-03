@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/lexer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -69,20 +70,69 @@ func (NativeFunctionCasing) Fix(s *tokens.Stream) bool {
 		if !nativeFunctions[lower] || t.Value == lower {
 			continue
 		}
-		// must be a function call, not a method or a namespaced name
-		if prev, ok := prevSignificant(s, i); ok {
-			switch strings.ToLower(prev.Value) {
-			case "->", "?->", "::", `\`, "function", "new":
-				continue
-			}
-		}
-		if nextSignificantValue(s, i) != "(" {
+		if !isGlobalFunctionCallAt(s, i) {
 			continue
 		}
 		s.SetValue(i, lower)
 		changed = true
 	}
 	return changed
+}
+
+// isGlobalFunctionCallAt follows PHP-CS-Fixer's FunctionsAnalyzer::isGlobalFunctionCall
+// for the name at i, without looking up the functions declared or imported in the file.
+func isGlobalFunctionCallAt(s *tokens.Stream, i int) bool {
+	if nextSignificantValue(s, i) != "(" {
+		return false
+	}
+	prev := prevMeaningfulIndex(s, i)
+	qualified := isPunctVal(s, prev, `\`)
+	if qualified {
+		prev = prevMeaningfulIndex(s, prev)
+	}
+	if prev >= 0 {
+		switch pt := s.At(prev); pt.Kind {
+		case token.Ident, token.AttributeStart:
+			return false
+		case token.Punct:
+			switch pt.Value {
+			case "::", "->", "?->":
+				return false
+			case "&": // a function returning by reference
+				if kwIs(s.At(max(prevMeaningfulIndex(s, prev), 0)), "function") {
+					return false
+				}
+			}
+		case token.Keyword:
+			switch strings.ToLower(pt.Value) {
+			case "function", "new":
+				return false
+			case "namespace": // the namespace operator "namespace\name("
+				if qualified {
+					return false
+				}
+			}
+		}
+	}
+	if isFirstClassCallableAt(s, i) {
+		return false
+	}
+	return qualified || !attributeNameAt(s, i)
+}
+
+// isFirstClassCallableAt reports whether the name at i opens a first-class
+// callable "name(...)": its "(" holds nothing but "...".
+func isFirstClassCallableAt(s *tokens.Stream, i int) bool {
+	open := nextMeaningfulIndex(s, i)
+	if open < 0 || s.At(open).Value != "(" {
+		return false
+	}
+	dots := nextMeaningfulIndex(s, open)
+	if dots < 0 || s.At(dots).Kind != token.Punct || s.At(dots).Value != "..." {
+		return false
+	}
+	closing := nextMeaningfulIndex(s, dots)
+	return closing >= 0 && s.At(closing).Value == ")"
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/IntegerLiteralCaseFixer.php
@@ -103,7 +153,8 @@ func (IntegerLiteralCase) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
-		if t.Kind != token.Number || len(t.Value) < 2 || t.Value[0] != '0' {
+		// only an integer (T_LNUMBER): an overflowing "0XFF..." is a float
+		if t.Kind != token.Number || len(t.Value) < 2 || t.Value[0] != '0' || !lexer.IsIntegerLiteral(t.Value) {
 			continue
 		}
 		var fixed string

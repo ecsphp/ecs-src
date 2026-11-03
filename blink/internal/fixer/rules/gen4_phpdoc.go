@@ -139,7 +139,8 @@ func phpdocLineSpanElementKind(s *tokens.Stream, i int) string {
 			continue
 		case token.Keyword:
 			switch strings.ToLower(t.Value) {
-			case "public", "protected", "private", "final", "abstract", "static", "readonly":
+			case "public", "protected", "private", "final", "abstract", "static", "readonly",
+				"public(set)", "protected(set)", "private(set)":
 				sawModifier = true
 				j++
 				continue
@@ -227,7 +228,7 @@ func documentsMember(s *tokens.Stream, i int) bool {
 		return false
 	}
 	lw := strings.ToLower(next.Value)
-	return visibilityModifiers[lw] || lw == "var"
+	return visibilityModifiers[lw] || isSetVisibility(lw) || lw == "var"
 }
 
 // insideFunctionBody reports whether the token at index i sits inside the "{...}"

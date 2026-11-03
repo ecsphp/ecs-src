@@ -84,7 +84,8 @@ func isNullableType(s *tokens.Stream, index int) bool {
 	ok := isPunctVal(s, prevIndex, "(") || isPunctVal(s, prevIndex, ",") || isTypeColon(s, prevIndex)
 	if !ok {
 		switch olKwLower(s.At(prevIndex)) {
-		case "public", "protected", "private", "var", "static", "const", "abstract", "final", "readonly":
+		case "public", "protected", "private", "var", "static", "const", "abstract", "final", "readonly",
+			"public(set)", "protected(set)", "private(set)":
 			ok = true
 		}
 	}

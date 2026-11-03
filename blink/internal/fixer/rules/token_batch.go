@@ -184,7 +184,8 @@ func typeContextPrev(s *tokens.Stream, i int) bool {
 	}
 	if pt.Kind == token.Keyword {
 		switch strings.ToLower(pt.Value) {
-		case "public", "private", "protected", "static", "readonly", "var":
+		case "public", "private", "protected", "static", "readonly", "var",
+			"public(set)", "protected(set)", "private(set)":
 			return true
 		}
 	}
@@ -302,11 +303,15 @@ func (HeredocToNowdoc) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.String || !strings.HasPrefix(t.Value, "<<<") {
+		if !t.IsLiteral() {
+			continue // a heredoc with interpolated parts stays one
+		}
+		prefix, v := token.SplitBinaryPrefix(t.Value)
+		if !strings.HasPrefix(v, "<<<") {
 			continue
 		}
-		if out, ok := heredocToNowdoc(t.Value); ok {
-			s.SetValue(i, out)
+		if out, ok := heredocToNowdoc(v); ok {
+			s.SetValue(i, prefix+out)
 			changed = true
 		}
 	}
@@ -353,7 +358,7 @@ func (f NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 	i := 0
 	for i < s.Len() {
 		t := s.At(i)
-		if t.Kind != token.String {
+		if !t.IsLiteral() {
 			i++
 			continue
 		}
@@ -368,7 +373,7 @@ func (f NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		k := nextSignificantIndex(s, j)
-		if k < 0 || s.At(k).Kind != token.String {
+		if k < 0 || !s.At(k).IsLiteral() {
 			i++
 			continue
 		}
@@ -398,8 +403,9 @@ func (f NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/StringNotation/NoBinaryStringFixer.php
 //
-// NoBinaryString drops the binary-string prefix "b"/"B" (b"x" -> "x"). The
-// lexer emits the prefix as a separate identifier directly before the string.
+// NoBinaryString drops the binary-string prefix "b"/"B" (b"x" -> "x"), which
+// the lexer keeps in the string token, of a string, an interpolated string or
+// a heredoc.
 type NoBinaryString struct{}
 
 func (NoBinaryString) Name() string {
@@ -414,21 +420,13 @@ func (NoBinaryString) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.Ident || (t.Value != "b" && t.Value != "B") {
+		if !t.OpensString() {
 			continue
 		}
-		if i+1 >= s.Len() || s.At(i+1).Kind != token.String {
-			continue
+		if prefix, _ := token.SplitBinaryPrefix(t.Value); prefix != "" {
+			s.SetValue(i, t.Value[1:])
+			changed = true
 		}
-		if prev, ok := prevSignificant(s, i); ok {
-			switch prev.Value {
-			case "->", "?->", "::", `\`:
-				continue
-			}
-		}
-		s.RemoveAt(i)
-		i--
-		changed = true
 	}
 	return changed
 }

@@ -38,3 +38,12 @@ func TestNoBreakComment(t *testing.T) {
 		t.Fatal("enum cases must be ignored")
 	}
 }
+
+// A named argument "default:" is not a switch's default label.
+func TestNoBreakCommentNamedArgumentDefault(t *testing.T) {
+	t.Parallel()
+	src := "<?php\nfunction pick($v) {\n    switch ($v) {\n        case 1:\n            return 'one';\n    }\n}\n$cmd\n    ->option('a', 'x', default: 1)\n    ->option('b', 'y', default: '')\n    ->option('c', 'z');\n"
+	if got, changed := apply(t, NoBreakComment{}, src); changed {
+		t.Fatalf("named argument default: must not gain a comment:\n got: %q", got)
+	}
+}

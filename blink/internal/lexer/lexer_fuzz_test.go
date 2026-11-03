@@ -19,6 +19,12 @@ func FuzzLexLossless(f *testing.F) {
 		"text <?= $v ?> more",
 		"<?php <<<EOT\nheredoc\nEOT;\n",
 		"<?xml version=\"1.0\"?><?php $a;",
+		"<?php \"$a[0] $b->c ${d} ${e[F]} {$g->h(\"$i\")}\";",
+		"<?php <<<EOT\n$a {$b[<<<IN\n$c\nIN]} ${d\n  EOT;\n",
+		"<?php \"${",
+		"<?php \"$a[",
+		"<?php `ls $a {$b[\"`\"]} ${c}` . \"`$d`\";",
+		"<?php `ls {$a",
 	}
 	for _, s := range seeds {
 		f.Add(s)

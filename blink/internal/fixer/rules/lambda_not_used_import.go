@@ -235,7 +235,7 @@ func findNotUsedLambdaImports(s *tokens.Stream, imports []lambdaImport, useClose
 			}
 		}
 		if t.Kind == token.String {
-			for _, name := range interpolatedVarNames(t.Value) {
+			for _, name := range interpolatedVarNames(t.Value, t.Part != token.Whole) {
 				if remaining[name] {
 					delete(remaining, name)
 					if len(remaining) == 0 {
@@ -349,8 +349,10 @@ func lambdaArgName(s *tokens.Stream, sp [2]int) string {
 // interpolation inside a string token value. Single-quoted strings and nowdocs
 // do not interpolate, so they yield nothing. Handles "$name", "{$name...}" and
 // "${name}" forms and respects backslash escaping.
-func interpolatedVarNames(value string) []string {
-	if !stringInterpolates(value) {
+// In a chunk of an interpolated literal (chunk set) only the name of a "${name"
+// is left: its "$name" parts are Variable tokens.
+func interpolatedVarNames(value string, chunk bool) []string {
+	if !chunk && !stringInterpolates(value) {
 		return nil
 	}
 	var names []string

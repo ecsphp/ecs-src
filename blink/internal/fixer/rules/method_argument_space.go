@@ -279,7 +279,7 @@ func reflowSingleArgOrMultiline(s *tokens.Stream) bool {
 			if ensureSingleLineForParen(s, open, closeIdx) {
 				changed = true
 			}
-		} else if reflowParen(s, open, closeIdx, true) {
+		} else if _, ok := lineIndentOutsideString(s, open); ok && reflowParen(s, open, closeIdx, true) {
 			changed = true
 		}
 	}
@@ -415,7 +415,7 @@ func reflowMultilineArgs(s *tokens.Stream) bool {
 		if sigNext(s, open) == closeIdx {
 			continue // empty ()
 		}
-		if reflowParen(s, open, closeIdx, true) {
+		if _, ok := lineIndentOutsideString(s, open); ok && reflowParen(s, open, closeIdx, true) {
 			changed = true
 		}
 	}

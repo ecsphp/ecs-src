@@ -187,7 +187,7 @@ func (f LineLength) shouldSkip(s *tokens.Stream, open, closeIdx int) bool {
 	if closeIdx-open <= 1 {
 		return true
 	}
-	if nx := sigNext(s, open); nx >= 0 && nx < closeIdx && llIsHeredoc(s.At(nx)) {
+	if nx := sigNext(s, open); nx >= 0 && nx < closeIdx && s.At(nx).StartsHeredoc() {
 		return true
 	}
 	for j := open + 1; j < closeIdx; j++ {
@@ -376,7 +376,7 @@ func (f LineLength) inlineItems(s *tokens.Stream, open, closeIdx int) bool {
 		}
 		prev := s.At(i - 1)
 		next := s.At(i + 1)
-		if llIsHeredoc(prev) {
+		if prev.EndsHeredoc() {
 			continue
 		}
 		if (prev.Kind == token.Punct && (prev.Value == "(" || prev.Value == "[")) ||
@@ -585,10 +585,6 @@ func llHasPromotedProperty(s *tokens.Stream, open, closeIdx int) bool {
 
 func llIsAttribute(t token.Token) bool {
 	return t.Kind == token.AttributeStart
-}
-
-func llIsHeredoc(t token.Token) bool {
-	return t.Kind == token.String && strings.HasPrefix(t.Value, "<<<")
 }
 
 func llIsClosureUse(s *tokens.Stream, pos int) bool {

@@ -35,6 +35,16 @@ func (NoAliasLanguageConstructCall) Fix(s *tokens.Stream) bool {
 		if memberPrev(s, i) {
 			continue
 		}
+		// a named argument "f(die: 1)" is a name (T_STRING for PHP-CS-Fixer)
+		if n := sigNext(s, i); n >= 0 && isNamedArgumentColon(s, n) {
+			continue
+		}
+		// an enum case "case Die;" or "case Die = 1;" is a name too
+		if p := sigPrev(s, i); p >= 0 && kwIs(s.At(p), "case") {
+			if n := sigNext(s, i); isPunctVal(s, n, ";") || isPunctVal(s, n, "=") {
+				continue
+			}
+		}
 		if prev, ok := prevSignificant(s, i); ok {
 			if prev.Kind == token.Punct && prev.Value == `\` {
 				continue

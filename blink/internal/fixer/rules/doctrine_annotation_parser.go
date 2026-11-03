@@ -300,6 +300,7 @@ var classModifierKw = map[string]bool{"abstract": true, "final": true, "readonly
 var memberModifierKw = map[string]bool{
 	"public": true, "protected": true, "private": true, "final": true,
 	"abstract": true, "readonly": true,
+	"public(set)": true, "protected(set)": true, "private(set)": true,
 }
 
 var daSetVisibility = map[string]bool{"public(set)": true, "protected(set)": true, "private(set)": true}

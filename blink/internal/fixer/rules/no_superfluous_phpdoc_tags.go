@@ -307,7 +307,12 @@ func signatureAfter(s *tokens.Stream, doc int) (funcSig, bool) {
 			if lv == "const" {
 				return funcSig{}, false
 			}
-			if lv == "var" || isFuncModifier(lv) || lv == "readonly" {
+			// PHP-CS-Fixer reads a promoting visibility as
+			// CT::T_CONSTRUCTOR_PROPERTY_PROMOTION_*, not as a modifier
+			if visibilityModifiers[lv] && inConstructorParams(s, j) {
+				return funcSig{}, false
+			}
+			if lv == "var" || isFuncModifier(lv) || lv == "readonly" || isSetVisibility(lv) {
 				sawModifier = true
 				j++
 				continue
@@ -355,6 +360,17 @@ func parseProperty(s *tokens.Stream, start int) (funcSig, bool) {
 		}
 	}
 	return funcSig{}, false
+}
+
+// inConstructorParams reports whether index i sits in the parameter list of a
+// "function __construct(".
+func inConstructorParams(s *tokens.Stream, i int) bool {
+	open := enclosingFuncParamOpen(s, i)
+	if open < 0 {
+		return false
+	}
+	name := prevMeaningfulIndex(s, open)
+	return name >= 0 && strings.EqualFold(s.At(name).Value, "__construct")
 }
 
 func isFuncModifier(v string) bool {
@@ -478,7 +494,8 @@ func parseParams(s *tokens.Stream, open, close int, sig *funcSig) {
 
 func isParamModifier(v string) bool {
 	switch v {
-	case "public", "private", "protected", "readonly":
+	case "public", "private", "protected", "readonly",
+		"public(set)", "protected(set)", "private(set)":
 		return true
 	}
 	return false

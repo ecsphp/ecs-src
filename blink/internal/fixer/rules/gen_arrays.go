@@ -61,7 +61,9 @@ func (NormalizeIndexBrace) Fix(s *tokens.Stream) bool {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
 			continue
 		}
-		if !isIndexBraceTarget(s, i) {
+		// PHP-CS-Fixer converts no index brace on PHP 8.4+, where hooks exist,
+		// so a hook list is left alone even with hook modifiers
+		if !isIndexBraceTarget(s, i) || propertyHookBraceAt(s, i, true) {
 			continue
 		}
 		closeIdx := s.MatchForward(i)
@@ -90,6 +92,46 @@ func isIndexBraceTarget(s *tokens.Stream, i int) bool {
 		return true
 	case prev.Kind == token.Punct && prev.Value == "]":
 		return true
+	}
+	return false
+}
+
+// isPropertyHookBrace reports whether the "{" at i opens a PHP 8.4 property
+// hook list, as PHP-CS-Fixer's BraceTransformer detects it: a "get" or "set"
+// hook followed by "(", "{", ";" or "=>".
+func isPropertyHookBrace(s *tokens.Stream, i int) bool { return propertyHookBraceAt(s, i, false) }
+
+// propertyHookBraceAt is isPropertyHookBrace; withModifiers also accepts the
+// "final" and "&" hook modifiers, which BraceTransformer does not.
+func propertyHookBraceAt(s *tokens.Stream, i int, withModifiers bool) bool {
+	j := nextMeaningfulIndex(s, i)
+	for j >= 0 {
+		if s.At(j).Kind == token.AttributeStart {
+			if j = s.AttributeEnd(j); j < 0 {
+				return false
+			}
+		} else if !withModifiers || (!kwIs(s.At(j), "final") && !isPunctVal(s, j, "&")) {
+			break
+		}
+		j = nextMeaningfulIndex(s, j)
+	}
+	if j < 0 || s.At(j).Kind != token.Ident || (!strings.EqualFold(s.At(j).Value, "get") && !strings.EqualFold(s.At(j).Value, "set")) {
+		return false
+	}
+	j = nextMeaningfulIndex(s, j)
+	if j < 0 || s.At(j).Kind != token.Punct {
+		return false
+	}
+	switch s.At(j).Value {
+	case "{", ";", "=>":
+		return true
+	case "(":
+		closing := s.MatchForward(j)
+		if closing < 0 {
+			return false
+		}
+		after := nextMeaningfulIndex(s, closing)
+		return after >= 0 && (s.At(after).Value == "{" || s.At(after).Value == "=>")
 	}
 	return false
 }

@@ -1,8 +1,6 @@
 package rules
 
 import (
-	"strings"
-
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -26,7 +24,7 @@ func (SpaceAfterCommaHereNowDoc) SourceURL() string {
 func (SpaceAfterCommaHereNowDoc) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := s.Len() - 1; i >= 0; i-- {
-		if s.At(i).Kind != token.String || !strings.HasPrefix(s.At(i).Value, "<<<") {
+		if !s.At(i).EndsHeredoc() {
 			continue
 		}
 		n := i + 1

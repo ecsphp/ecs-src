@@ -66,8 +66,15 @@ func (ProtectedToPrivate) Fix(s *tokens.Stream) bool {
 			}
 			// only this class's own members (depth 1), not a nested class body,
 			// and not a constant named "protected" (lexed as a keyword)
-			if depth == 1 && s.At(k).Kind == token.Keyword && strings.EqualFold(s.At(k).Value, "protected") && !isConstNamePosition(s, k) {
+			if depth != 1 || s.At(k).Kind != token.Keyword || isConstNamePosition(s, k) {
+				continue
+			}
+			switch strings.ToLower(s.At(k).Value) {
+			case "protected":
 				s.SetValue(k, "private")
+				changed = true
+			case "protected(set)":
+				s.SetValue(k, "private(set)")
 				changed = true
 			}
 		}

@@ -127,7 +127,7 @@ func (MultilineCommentOpeningClosing) Fix(s *tokens.Stream) bool {
 		}
 		nv := v
 		// the opening fix applies to plain comments only, never to doc blocks
-		if !isDocBlockOpening(nv) {
+		if t.Kind == token.Comment {
 			nv = fixCommentOpening(nv)
 		}
 		nv = fixCommentClosing(nv)
@@ -137,12 +137,6 @@ func (MultilineCommentOpeningClosing) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
-}
-
-// isDocBlockOpening mirrors PHP's tokenizer: "/**" followed by a non-asterisk,
-// non-slash character is a doc block; "/***" or "/**/" is a plain comment.
-func isDocBlockOpening(v string) bool {
-	return len(v) >= 4 && v[:3] == "/**" && v[3] != '*' && v[3] != '/'
 }
 
 // fixCommentOpening implements /^\/\*{2,}(?!\/)/ -> "/*".

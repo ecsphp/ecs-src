@@ -62,6 +62,15 @@ func TestBlankLineAfterOpeningTag(t *testing.T) {
 	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php $a = 1;\n"); changed {
 		t.Fatal("code on tag line must not change")
 	}
+	// only a monolithic PHP file: the data after __halt_compiler is inline HTML,
+	// the newline right after "?>" is not
+	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php\n$a = 1;\n__halt_compiler();\ndata"); changed {
+		t.Fatal("file with data after __halt_compiler must not change")
+	}
+	got, changed = apply(t, BlankLineAfterOpeningTag{}, "<?php\n$a = 1;\n?>\n")
+	if want := "<?php\n\n$a = 1;\n?>\n"; !changed || got != want {
+		t.Fatalf("close tag: changed=%v got=%q want=%q", changed, got, want)
+	}
 }
 
 func TestNoLeadingNamespaceWhitespace(t *testing.T) {
@@ -189,14 +198,16 @@ func TestSingleSpaceAroundConstruct(t *testing.T) {
 	if _, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php $o = new class($a) {};"); changed {
 		t.Fatal("new class( should not gain a space")
 	}
-	// "new Enum(" is a class reference; "enum" never opens a "(" as a construct,
-	// even when "enum" is in the followed list (as ECS configures it)
+	// the "Enum" of "new Enum (" is a name, left to NoSpacesAfterFunctionName
 	withEnum := SingleSpaceAroundConstruct{}.WithConfig(map[string]any{"constructs_followed_by_a_single_space": []any{"new", "enum"}}).(fixerRule)
 	if _, changed := apply(t, withEnum, "<?php $r = new Enum($type);"); changed {
 		t.Fatal("new Enum( should not gain a space")
 	}
-	if got, changed := apply(t, withEnum, "<?php $r = new Enum ($type);"); !changed || got != "<?php $r = new Enum($type);" {
-		t.Fatalf("new Enum (: changed=%v got=%q", changed, got)
+	if _, changed := apply(t, withEnum, "<?php $r = new Enum ($type);"); changed {
+		t.Fatal("new Enum ( is not a construct")
+	}
+	if got, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php $r = new Enum ($type);"); !changed || got != "<?php $r = new Enum($type);" {
+		t.Fatalf("new Enum ( in NoSpacesAfterFunctionName: changed=%v got=%q", changed, got)
 	}
 }
 
@@ -376,6 +387,10 @@ func TestFullOpeningTag(t *testing.T) {
 	}
 	if _, changed := apply(t, FullOpeningTag{}, "<?xml version=\"1.0\"?>"); changed {
 		t.Fatal("XML declaration must not be converted")
+	}
+	got, changed = apply(t, FullOpeningTag{}, "<?PHP\nfoo();\n")
+	if want := "<?php\nfoo();\n"; !changed || got != want {
+		t.Fatalf("uppercase: changed=%v got=%q want=%q", changed, got, want)
 	}
 }
 
