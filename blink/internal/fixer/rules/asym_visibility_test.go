@@ -17,6 +17,7 @@ func TestSetVisibilityInMemberRules(t *testing.T) {
 		{"properties before methods", OrderedClassElements{}, "<?php\nclass A { private(set) int $a = 1; public function x() {} protected(set) int $b = 2; }\n", "<?php\nclass A { private(set) int $a = 1; protected(set) int $b = 2; public function x() {} }\n"},
 		{"property docblock spans lines", PhpdocLineSpan{}, "<?php\nclass A {\n    /** @var Foo */\n    protected(set) Foo $b;\n}\n", "<?php\nclass A {\n    /**\n     * @var Foo\n     */\n    protected(set) Foo $b;\n}\n"},
 		{"property @var without name", PhpdocVarWithoutName{}, "<?php\nclass A {\n    /** @var int $a */\n    private(set) ?int $a = null;\n}\n", "<?php\nclass A {\n    /** @var int */\n    private(set) ?int $a = null;\n}\n"},
+		{"superfluous property @var", NoSuperfluousPhpdocTags{}, "<?php\nfinal class A {\n    /**\n     * @var int\n     */\n    private(set) int $b;\n}\n", "<?php\nfinal class A {\n    /**\n     */\n    private(set) int $b;\n}\n"},
 		{"compact nullable type", CompactNullableTypeDeclaration{}, "<?php\nclass A {\n    private(set) ? int $h = null;\n}\n", "<?php\nclass A {\n    private(set) ?int $h = null;\n}\n"},
 		{"type declaration spaces", TypeDeclarationSpaces{}, "<?php\nclass A {\n    public private(set)  int|string  $i;\n}\n", "<?php\nclass A {\n    public private(set)  int|string $i;\n}\n"},
 	}

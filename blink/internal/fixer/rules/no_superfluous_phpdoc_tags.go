@@ -307,7 +307,7 @@ func signatureAfter(s *tokens.Stream, doc int) (funcSig, bool) {
 			if lv == "const" {
 				return funcSig{}, false
 			}
-			if lv == "var" || isFuncModifier(lv) || lv == "readonly" {
+			if lv == "var" || isFuncModifier(lv) || lv == "readonly" || isSetVisibility(lv) {
 				sawModifier = true
 				j++
 				continue
@@ -478,7 +478,8 @@ func parseParams(s *tokens.Stream, open, close int, sig *funcSig) {
 
 func isParamModifier(v string) bool {
 	switch v {
-	case "public", "private", "protected", "readonly":
+	case "public", "private", "protected", "readonly",
+		"public(set)", "protected(set)", "private(set)":
 		return true
 	}
 	return false
