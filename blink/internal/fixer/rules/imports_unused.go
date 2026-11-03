@@ -12,7 +12,7 @@ type importInfo struct {
 	start, semi int
 	shortLower  string
 	kind        string // "class", "function" or "const"
-	fullLower   string // full imported path, lowercased, no leading "\"
+	full        string // full imported path as written, no leading "\"
 	aliased     bool
 }
 
@@ -76,7 +76,7 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 		}
 		imports = append(imports, importInfo{
 			start: i, semi: semi, shortLower: strings.ToLower(short),
-			kind: kind, fullLower: strings.ToLower(full), aliased: aliased,
+			kind: kind, full: full, aliased: aliased,
 		})
 		i = semi
 	}
@@ -110,11 +110,12 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 	var toRemove []importInfo
 	for _, im := range imports {
 		r := regionOf(im.start)
-		nsLower := r.nameLower
-		// an import of the current namespace ("namespace\Name") is redundant
-		redundant := !im.aliased && nsLower != "" &&
-			strings.HasPrefix(im.fullLower, nsLower+`\`) &&
-			!strings.Contains(im.fullLower[len(nsLower)+1:], `\`)
+		// an import of the current namespace ("namespace\Name") is redundant;
+		// PHP-CS-Fixer compares the paths case-sensitively (strncmp), so a path
+		// that differs from the namespace only by case is another name
+		redundant := !im.aliased && r.name != "" &&
+			strings.HasPrefix(im.full, r.name+`\`) &&
+			!strings.Contains(im.full[len(r.name)+1:], `\`)
 		if !redundant && importIsUsed(s, im, r.start, r.end, inImport) {
 			continue
 		}
@@ -327,10 +328,10 @@ func importParts(s *tokens.Stream, useIdx, semi int, kind string) (short, full s
 }
 
 // nsRegion is a namespace scope: the token index range [start, end] that a use
-// statement belongs to and whose usages count, plus the lowercased namespace name.
+// statement belongs to and whose usages count, plus the namespace name as written.
 type nsRegion struct {
 	start, end int
-	nameLower  string
+	name       string
 }
 
 // namespaceRegions partitions the stream into namespace scopes, mirroring PHP-CS-Fixer's
@@ -366,16 +367,16 @@ func namespaceRegions(s *tokens.Stream) []nsRegion {
 		if delim < 0 {
 			continue
 		}
-		nameLower := strings.ToLower(strings.TrimPrefix(name.String(), `\`))
+		nsName := strings.TrimPrefix(name.String(), `\`)
 		if brace {
-			regions = append(regions, nsRegion{start: delim, end: matchCloseBrace(s, delim), nameLower: nameLower})
+			regions = append(regions, nsRegion{start: delim, end: matchCloseBrace(s, delim), name: nsName})
 			continue
 		}
 		end := s.Len() - 1
 		if idx+1 < len(starts) {
 			end = starts[idx+1] - 1
 		}
-		regions = append(regions, nsRegion{start: ni, end: end, nameLower: nameLower})
+		regions = append(regions, nsRegion{start: ni, end: end, name: nsName})
 	}
 	return regions
 }

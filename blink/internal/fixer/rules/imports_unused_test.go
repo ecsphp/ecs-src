@@ -39,3 +39,19 @@ func TestNoUnusedImportsAttributeUsage(t *testing.T) {
 		t.Fatalf("attribute-used import must be kept; changed=%v got=%q", changed, got)
 	}
 }
+
+// PHP-CS-Fixer drops an import of the current namespace with a case-sensitive
+// prefix match: an import whose path differs from the namespace only by case
+// is a different name to it, so it stays when it is used.
+func TestNoUnusedImportsSameNamespaceIsCaseSensitive(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nnamespace acme\\Shop;\n\nuse Acme\\Shop\\CartInterface;\n\nfinal class Cart implements CartInterface\n{\n}\n"
+	if got, changed := apply(t, NoUnusedImports{}, src); changed || got != src {
+		t.Fatalf("import differing from the namespace by case must be kept; changed=%v got=%q", changed, got)
+	}
+	same := "<?php\n\nnamespace Acme\\Shop;\n\nuse Acme\\Shop\\CartInterface;\n\nfinal class Cart implements CartInterface\n{\n}\n"
+	want := "<?php\n\nnamespace Acme\\Shop;\n\n\nfinal class Cart implements CartInterface\n{\n}\n"
+	if got, changed := apply(t, NoUnusedImports{}, same); !changed || got != want {
+		t.Fatalf("import of the current namespace must be removed; changed=%v got=%q want=%q", changed, got, want)
+	}
+}
