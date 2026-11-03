@@ -79,8 +79,10 @@ func fnGlueAfter(s *tokens.Stream, i int) bool {
 // between "function" and "(" for a closure, and one space around a closure's
 // "use". A leading by-reference "&" is glued to the name ("function &foo()"), and
 // a static closure keeps one space after "static". Only "function" declarations
-// are touched, never a call; arrow "fn" and the "{"/"=>" and inner-parenthesis
-// spacing (owned by other fixers) are left alone.
+// are touched, never a call; of an arrow "fn" only the spacing after "fn" and the
+// trailing comma are handled, and the "{"/"=>" and inner-parenthesis spacing
+// (owned by other fixers) are left alone. trailing_comma_single_line false drops
+// the trailing comma of a single-line list.
 //
 // The fields mirror the fixer options; their zero values reproduce today's
 // behavior (one space for closures and arrow fns, trailing commas left in place):
@@ -107,26 +109,34 @@ func (f FunctionDeclaration) WithConfig(config map[string]any) fixer.Fixer {
 }
 
 // fnRemoveTrailingCommaSingleLine drops a trailing comma before the ")" that the
-// "(" at open matches, but only when the parenthesized list is on a single line.
-func fnRemoveTrailingCommaSingleLine(s *tokens.Stream, open int) bool {
+// "(" at open matches, when nothing from the "function"/"fn" keyword at kw to
+// that ")" spans a newline (PHP-CS-Fixer's isPartialCodeMultiline).
+func fnRemoveTrailingCommaSingleLine(s *tokens.Stream, kw, open int) bool {
 	closeParen := s.MatchForward(open)
 	if closeParen < 0 {
 		return false
 	}
-	for k := open; k <= closeParen; k++ {
-		if s.At(k).Kind == token.Whitespace && hasNewline(s.At(k).Value) {
+	for k := kw; k <= closeParen; k++ {
+		if strings.Contains(s.At(k).Value, "\n") {
 			return false // multiline signature: leave as-is
 		}
 	}
-	p := prevSignificantIndex(s, closeParen)
+	p := sigPrev(s, closeParen)
 	if p <= open || (s.At(p).Kind != token.Punct || s.At(p).Value != ",") {
 		return false
 	}
-	// drop any single-line whitespace between the comma and ")", then the comma
-	if p+1 < closeParen && s.At(p+1).Kind == token.Whitespace {
+	// clearTokenAndMergeSurroundingWhitespace: the whitespace after the comma
+	// takes its place (joined to a whitespace before it)
+	if p+1 < closeParen && s.At(p+1).Kind == token.Whitespace && p-1 >= 0 && s.At(p-1).Kind == token.Whitespace {
+		s.SetValue(p-1, s.At(p-1).Value+s.At(p+1).Value)
 		s.RemoveAt(p + 1)
 	}
 	s.RemoveAt(p)
+	closeParen = s.MatchForward(open)
+	// fixParenthesisInnerEdge then removes the whitespace left before ")"
+	if closeParen-1 > open && s.At(closeParen-1).Kind == token.Whitespace {
+		s.RemoveAt(closeParen - 1)
+	}
 	return true
 }
 
@@ -154,6 +164,11 @@ func (f FunctionDeclaration) Fix(s *tokens.Stream) bool {
 			// arrow function: spacing after "fn" (closure_fn_spacing). The "("
 			// follows directly, or after a by-reference "&" ("fn &() => ...").
 			if fnIsArrowFn(s, i) {
+				if f.removeTrailingCommaSingleLine {
+					if open := fnArrowParamOpen(s, i); open >= 0 && fnRemoveTrailingCommaSingleLine(s, i, open) {
+						changed = true
+					}
+				}
 				if f.closureFnSpacingNone {
 					if fnGlueAfter(s, i) {
 						changed = true
@@ -178,7 +193,7 @@ func (f FunctionDeclaration) fixFunctionDeclaration(s *tokens.Stream, fi int) bo
 
 	changed := false
 	if f.removeTrailingCommaSingleLine {
-		if fnRemoveTrailingCommaSingleLine(s, startParen) {
+		if fnRemoveTrailingCommaSingleLine(s, fi, startParen) {
 			changed = true
 		}
 	}
@@ -205,6 +220,12 @@ func (f FunctionDeclaration) fixFunctionDeclaration(s *tokens.Stream, fi int) bo
 		if closeParen := s.MatchForward(startParen); closeParen >= 0 {
 			u := nextSignificantIndex(s, closeParen)
 			if u >= 0 && s.At(u).Kind == token.Keyword && strings.ToLower(s.At(u).Value) == "use" {
+				if f.removeTrailingCommaSingleLine {
+					if open := nextSignificantIndex(s, u); open >= 0 && s.At(open).Value == "(" &&
+						fnRemoveTrailingCommaSingleLine(s, fi, open) {
+						changed = true
+					}
+				}
 				if fnEnsureSingleSpaceAfter(s, u) {
 					changed = true
 				}
@@ -249,6 +270,26 @@ func (f FunctionDeclaration) fixFunctionDeclaration(s *tokens.Stream, fi int) bo
 	}
 
 	return changed
+}
+
+// fnArrowParamOpen returns the "(" opening the parameter list of the arrow
+// function at fn, or -1.
+func fnArrowParamOpen(s *tokens.Stream, fn int) int {
+	for j := fn + 1; j < s.Len(); j++ {
+		t := s.At(j)
+		if t.Kind == token.CloseTag {
+			return -1
+		}
+		if t.Kind == token.Punct {
+			switch t.Value {
+			case "(":
+				return j
+			case ";":
+				return -1
+			}
+		}
+	}
+	return -1
 }
 
 // findFunctionParamOpen returns the index of the "(" that opens the parameter
