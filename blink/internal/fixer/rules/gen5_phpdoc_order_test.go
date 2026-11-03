@@ -8,7 +8,8 @@ import (
 
 func TestGen5PhpdocOrderTypesOrder(t *testing.T) {
 	t.Parallel()
-	f := PhpdocTypesOrder{}
+	// the @Symfony preset's config
+	f := PhpdocTypesOrder{}.WithConfig(map[string]any{"null_adjustment": "always_last", "sort_algorithm": "none"}).(fixerRule)
 
 	// null moves to the end, other members keep order: string|null|int -> string|int|null
 	assertFix(t, f,
@@ -35,17 +36,17 @@ func TestGen5PhpdocOrderTypesOrder(t *testing.T) {
 		"<?php\n/**\n * @param int $x\n */\nfunction f($x){}",
 		"<?php\n/**\n * @param int $x\n */\nfunction f($x){}", false)
 
-	// generics are skipped (contains '<')
+	// generic: null already last at both levels - no-op
 	assertFix(t, f,
 		"<?php\n/**\n * @param array<int,string>|null $x\n */\nfunction f($x){}",
 		"<?php\n/**\n * @param array<int,string>|null $x\n */\nfunction f($x){}", false)
 
-	// DNF is skipped (contains '(')
+	// DNF: null already last - no-op
 	assertFix(t, f,
 		"<?php\n/**\n * @param (A&B)|null $x\n */\nfunction f($x){}",
 		"<?php\n/**\n * @param (A&B)|null $x\n */\nfunction f($x){}", false)
 
-	// array shape is skipped (contains '{')
+	// array shape: null already last - no-op
 	assertFix(t, f,
 		"<?php\n/**\n * @var array{a:int}|null\n */\npublic $x;",
 		"<?php\n/**\n * @var array{a:int}|null\n */\npublic $x;", false)
