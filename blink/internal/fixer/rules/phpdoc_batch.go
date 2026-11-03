@@ -162,8 +162,8 @@ func mapPhpdocTypeNames(typ string, fn func(name string) string) string {
 	i := 0
 	for i < len(typ) {
 		c := typ[i]
-		switch {
-		case c == '\'' || c == '"':
+		switch c {
+		case '\'', '"':
 			j := strings.IndexByte(typ[i+1:], c)
 			if j < 0 {
 				i = len(typ)
@@ -171,9 +171,9 @@ func mapPhpdocTypeNames(typ string, fn func(name string) string) string {
 				i += j + 2
 			}
 			continue
-		case c == '<' || c == '{' || c == '(' || c == '[':
+		case '<', '{', '(', '[':
 			stack = append(stack, c)
-		case c == '>' || c == '}' || c == ')' || c == ']':
+		case '>', '}', ')', ']':
 			if len(stack) > 0 {
 				stack = stack[:len(stack)-1]
 			}

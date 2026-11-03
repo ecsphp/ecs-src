@@ -189,7 +189,7 @@ func (SingleLineEmptyBody) SourceURL() string {
 func (SingleLineEmptyBody) Fix(s *tokens.Stream) bool {
 	before := s.Render()
 	for index := s.Len() - 1; index > 0; index-- {
-		if !cdIsClassy(s, index) && !(kwIs(s.At(index), "function") && !slebIsFunctionImport(s, index)) {
+		if !cdIsClassy(s, index) && (!kwIs(s.At(index), "function") || slebIsFunctionImport(s, index)) {
 			continue
 		}
 		open := nextPunctOfKind(s, index, "{", ";")

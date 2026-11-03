@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -272,12 +273,7 @@ func ntdIsNullable(name string) bool {
 	if strings.HasPrefix(name, "?") {
 		return true
 	}
-	for _, m := range strings.Split(strings.ToLower(name), "|") {
-		if m == "null" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(strings.Split(strings.ToLower(name), "|"), "null")
 }
 
 // ntdRemoveNull is the use_nullable_type_declaration=false half of
