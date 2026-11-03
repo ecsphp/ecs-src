@@ -11,11 +11,10 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/LanguageConstruct/NullableTypeDeclarationFixer.php
 //
 // NullableTypeDeclaration standardises a nullable single type to the question
-// mark syntax (the fixer default): "int|null" and "null|int" become "?int". It
-// fires only for a two-member union whose sole other member is a single type
-// name, in a confirmed type position (parameter, return or typed property).
-// Unions of three or more members, intersections and DNF types are left alone.
-// With `syntax: union` the fixer goes the other way: "?int" becomes "int|null".
+// mark syntax (the fixer default): "int|null" and "null|int" become "?int".
+// With `syntax: union` it goes the other way: "?int" becomes "null|int".
+// Like the PHP fixer, it only looks at parameter and return types and at
+// class properties.
 type NullableTypeDeclaration struct {
 	// syntax is "question_mark" (the default when empty) or "union".
 	syntax string
@@ -36,132 +35,344 @@ func (f NullableTypeDeclaration) WithConfig(config map[string]any) fixer.Fixer {
 	return f
 }
 
-func (f NullableTypeDeclaration) Fix(s *tokens.Stream) bool {
-	if f.syntax == "union" {
-		return f.fixUnion(s)
-	}
-	return f.fixQuestionMark(s)
+// ntdElement is one entry of NullableTypeDeclarationFixer::getElements: a
+// property (index of its variable) or a function / fn keyword.
+type ntdElement struct {
+	index    int
+	property bool
 }
 
-// fixUnion rewrites a "?T" nullable marker to the explicit "T|null" union.
-func (f NullableTypeDeclaration) fixUnion(s *tokens.Stream) bool {
+func (f NullableTypeDeclaration) Fix(s *tokens.Stream) bool {
+	union := f.syntax == "union"
+	elements := ntdElements(s)
 	changed := false
-	for i := 0; i < s.Len(); i++ {
-		if !isPunctVal(s, i, "?") || !isNullableType(s, i) {
+	// Right-to-left, as the PHP fixer does, so a rewrite never shifts an
+	// element still to be visited.
+	for k := len(elements) - 1; k >= 0; k-- {
+		e := elements[k]
+		if e.property {
+			changed = ntdNormalize(s, ntdPropertyType(s, e.index), union) || changed
 			continue
 		}
-		j := i + 1
-		for j < s.Len() && s.At(j).Kind == token.Whitespace {
-			j++
+		open := ntdFunctionParamsOpen(s, e.index)
+		if open < 0 {
+			continue
 		}
-		start := j
-		for j < s.Len() {
-			t := s.At(j)
-			if t.Kind == token.Ident || t.Kind == token.Keyword || (t.Kind == token.Punct && t.Value == `\`) {
-				j++
-				continue
-			}
-			break
+		closeIdx := s.MatchForward(open)
+		if closeIdx < 0 {
+			continue
 		}
-		if j == start {
-			continue // no type name after "?"
+		changed = ntdNormalize(s, ntdReturnType(s, closeIdx), union) || changed
+		args := ntdArguments(s, open, closeIdx)
+		for a := len(args) - 1; a >= 0; a-- {
+			changed = ntdNormalize(s, ntdArgumentType(s, args[a][0], args[a][1]), union) || changed
 		}
-		repl := make([]token.Token, 0, j-start+2)
-		for k := start; k < j; k++ {
-			repl = append(repl, s.At(k))
-		}
-		repl = append(repl, token.Token{Kind: token.Punct, Value: "|"}, token.Token{Kind: token.Ident, Value: "null"})
-		s.ReplaceRange(i, j-1, repl)
-		changed = true
-		i += len(repl) - 1
 	}
 	return changed
 }
 
-func (f NullableTypeDeclaration) fixQuestionMark(s *tokens.Stream) bool {
-	changed := false
+// ntdElements lists the class properties (TokensAnalyzer::getClassyElements)
+// and every function / fn keyword, in source order.
+func ntdElements(s *tokens.Stream) []ntdElement {
+	properties := map[int]bool{}
 	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Punct || t.Value != "|" {
-			continue
+		if ntdIsClassy(s, i) {
+			ntdCollectProperties(s, i, properties)
 		}
-		if !isTypeUnionOperator(s, i) {
-			continue
+	}
+	var out []ntdElement
+	for i := 0; i < s.Len(); i++ {
+		switch {
+		case properties[i]:
+			out = append(out, ntdElement{index: i, property: true})
+		case kwIs(s.At(i), "function") || kwIs(s.At(i), "fn"):
+			out = append(out, ntdElement{index: i})
 		}
-		// significant token indices of the whole type run around this "|"
-		start := typeRunBoundaryPrev(s, i)
-		end := typeRunBoundaryNext(s, i)
-		if end < 0 {
-			continue
-		}
-		var parts []int
-		for j := start + 1; j < end; j++ {
-			if k := s.At(j).Kind; k == token.Whitespace || k == token.Comment || k == token.DocComment {
-				continue
+	}
+	return out
+}
+
+func ntdIsClassy(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	return kwIs(t, "class") || kwIs(t, "interface") || kwIs(t, "trait") || caseStructureKind(s, i) == "enum"
+}
+
+// ntdCollectProperties marks the variables declared at the top level of the
+// body of the class-like at classIdx (not inside parentheses, a method body
+// or a property hook block).
+func ntdCollectProperties(s *tokens.Stream, classIdx int, properties map[int]bool) {
+	open := -1
+	for j := classIdx + 1; j < s.Len() && open < 0; j++ {
+		switch {
+		case isPunctVal(s, j, "("): // anonymous class arguments
+			end := s.MatchForward(j)
+			if end < 0 {
+				return
 			}
-			parts = append(parts, j)
+			j = end
+		case isPunctVal(s, j, "{"):
+			open = j
+		case isPunctVal(s, j, ";"):
+			return
 		}
-		if len(parts) == 0 {
+	}
+	closeIdx := s.MatchForward(open)
+	if closeIdx < 0 {
+		return
+	}
+	curly, parens := 0, 0
+	for j := open + 1; j < closeIdx; j++ {
+		switch {
+		case s.Kind(j) == token.AttributeStart:
+			if end := s.AttributeEnd(j); end > j {
+				j = end
+			}
+		case isPunctVal(s, j, "("):
+			parens++
+		case isPunctVal(s, j, ")"):
+			parens--
+		case isPunctVal(s, j, "{"):
+			curly++
+		case isPunctVal(s, j, "}"):
+			curly--
+		case curly == 0 && parens == 0 && s.Kind(j) == token.Variable:
+			properties[j] = true
+		}
+	}
+}
+
+// ntdFunctionParamsOpen returns the "(" opening the parameter list of the
+// function / fn keyword at fi ("function [&] [name] (", "fn [&] ("), or -1.
+func ntdFunctionParamsOpen(s *tokens.Stream, fi int) int {
+	j := sigNext(s, fi)
+	if isPunctVal(s, j, "&") {
+		j = sigNext(s, j)
+	}
+	if j >= 0 && (s.Kind(j) == token.Ident || s.Kind(j) == token.Keyword) {
+		j = sigNext(s, j)
+	}
+	if !isPunctVal(s, j, "(") {
+		return -1
+	}
+	return j
+}
+
+// ntdReturnType mirrors FunctionsAnalyzer::getFunctionReturnType: the
+// significant tokens of the type after the ":" that follows the parameter list
+// (or the closure's "use (...)"), up to the body, ";" or "=>".
+func ntdReturnType(s *tokens.Stream, closeIdx int) []int {
+	colon := sigNext(s, closeIdx)
+	if colon >= 0 && kwIs(s.At(colon), "use") {
+		useClose := s.MatchForward(nextPunctOfKind(s, colon, "("))
+		if useClose < 0 {
+			return nil
+		}
+		colon = sigNext(s, useClose)
+	}
+	if !isPunctVal(s, colon, ":") {
+		return nil
+	}
+	var idxs []int
+	for j := colon + 1; j < s.Len(); j++ {
+		if isPunctVal(s, j, "{") || isPunctVal(s, j, ";") || isPunctVal(s, j, "=>") {
+			break
+		}
+		if !isTrivia(s, j) {
+			idxs = append(idxs, j)
+		}
+	}
+	return idxs
+}
+
+// ntdArguments mirrors ArgumentsAnalyzer::getArguments: the [start, end]
+// token ranges of the parameters between open and closeIdx.
+func ntdArguments(s *tokens.Stream, open, closeIdx int) [][2]int {
+	if sigNext(s, open) == closeIdx {
+		return nil
+	}
+	var args [][2]int
+	start := open + 1
+	j := open + 1
+	for ; j < closeIdx; j++ {
+		if s.Kind(j) == token.AttributeStart {
+			if end := s.AttributeEnd(j); end > j {
+				j = end
+			}
 			continue
 		}
-		// exactly one "|" and no "&"/"?" -> a plain two-member union
-		pipes := 0
-		bad := false
-		for _, p := range parts {
-			v := s.At(p).Value
-			if s.At(p).Kind == token.Punct {
-				switch v {
-				case "|":
-					pipes++
-				case "&", "?":
-					bad = true
+		if isPunctVal(s, j, "(") || isPunctVal(s, j, "[") || isPunctVal(s, j, "{") {
+			if end := s.MatchForward(j); end > j {
+				j = end
+			}
+			continue
+		}
+		if isPunctVal(s, j, ",") {
+			if sigNext(s, j) == closeIdx {
+				break // trailing comma
+			}
+			args = append(args, [2]int{start, j - 1})
+			start = j + 1
+		}
+	}
+	return append(args, [2]int{start, j - 1})
+}
+
+// ntdArgumentType mirrors ArgumentsAnalyzer::getArgumentInfo: the tokens
+// before the parameter's variable, minus attributes, modifiers, a by-reference
+// "&" and "...".
+// A parameter without a variable has no type.
+func ntdArgumentType(s *tokens.Stream, start, end int) []int {
+	var idxs []int
+	for j := start; j <= end; j++ {
+		switch {
+		case s.Kind(j) == token.AttributeStart:
+			if e := s.AttributeEnd(j); e > j {
+				j = e
+			}
+			continue
+		case isTrivia(s, j), isPunctVal(s, j, "..."), ntdIsReferenceAmp(s, j):
+			continue
+		case s.Kind(j) == token.Variable:
+			return idxs
+		}
+		if e := ntdModifierEnd(s, j); e >= 0 {
+			j = e
+			continue
+		}
+		idxs = append(idxs, j)
+	}
+	return nil
+}
+
+// ntdIsReferenceAmp reports whether j is a by-reference "&" ("int &$x",
+// "int &...$x"). An intersection "&" ("(A&B)|null") is CT::T_TYPE_INTERSECTION
+// in PHP-CS-Fixer, which getArgumentInfo keeps as part of the type.
+func ntdIsReferenceAmp(s *tokens.Stream, j int) bool {
+	if !isPunctVal(s, j, "&") {
+		return false
+	}
+	n := sigNext(s, j)
+	return n >= 0 && (s.Kind(n) == token.Variable || isPunctVal(s, n, "..."))
+}
+
+// ntdModifierEnd returns the last index of the promoted-property modifier
+// starting at j (ARGUMENT_INFO_SKIP_TYPES: final, public, protected, private,
+// readonly and the asymmetric "*(set)" ones, lexed as one token or four), or -1.
+func ntdModifierEnd(s *tokens.Stream, j int) int {
+	switch strings.ToLower(s.At(j).Value) {
+	case "private(set)", "protected(set)", "public(set)":
+		return j
+	}
+	switch olKwLower(s.At(j)) {
+	case "final", "readonly":
+		return j
+	case "public", "protected", "private":
+		if p := sigNext(s, j); isPunctVal(s, p, "(") {
+			if set := sigNext(s, p); set >= 0 && strings.EqualFold(s.At(set).Value, "set") {
+				if c := sigNext(s, set); isPunctVal(s, c, ")") {
+					return c
 				}
 			}
 		}
-		if bad || pipes != 1 {
-			continue
-		}
-		// split members on the single "|"
-		var left, right []int
-		seen := false
-		for _, p := range parts {
-			if !seen && s.At(p).Kind == token.Punct && s.At(p).Value == "|" {
-				seen = true
-				continue
-			}
-			if seen {
-				right = append(right, p)
-			} else {
-				left = append(left, p)
-			}
-		}
-		// one side must be exactly the single token "null"; keep the other as T
-		var typ []int
-		switch {
-		case isNullMember(s, right):
-			typ = left
-		case isNullMember(s, left):
-			typ = right
-		default:
-			continue
-		}
-		if len(typ) == 0 {
-			continue
-		}
-		// rebuild the run as "?T", dropping the null member, the "|" and any
-		// internal whitespace; ReplaceRange spans the first..last run token
-		repl := []token.Token{{Kind: token.Punct, Value: "?"}}
-		for _, p := range typ {
-			repl = append(repl, s.At(p))
-		}
-		s.ReplaceRange(parts[0], parts[len(parts)-1], repl)
-		changed = true
-		i = parts[0] // continue past the rewritten run
+		return j
 	}
-	return changed
+	return -1
 }
 
-// isNullMember reports whether idxs is a single token spelling "null".
-func isNullMember(s *tokens.Stream, idxs []int) bool {
-	return len(idxs) == 1 && strings.EqualFold(s.At(idxs[0]).Value, "null")
+// ntdPropertyType mirrors normalizePropertyType's type collection: the tokens
+// between the nearest property modifier before the variable and the variable.
+func ntdPropertyType(s *tokens.Stream, varIdx int) []int {
+	mod := sigPrev(s, varIdx)
+	for ; mod >= 0; mod = sigPrev(s, mod) {
+		if ntdIsPropertyModifier(s, mod) {
+			break
+		}
+		if isPunctVal(s, mod, "{") || isPunctVal(s, mod, "}") || isPunctVal(s, mod, ";") {
+			return nil
+		}
+	}
+	if mod < 0 {
+		return nil
+	}
+	var idxs []int
+	for j := mod + 1; j < varIdx; j++ {
+		if !isTrivia(s, j) {
+			idxs = append(idxs, j)
+		}
+	}
+	return idxs
+}
+
+// ntdIsPropertyModifier reports whether j is one of PROPERTY_MODIFIERS.
+func ntdIsPropertyModifier(s *tokens.Stream, j int) bool {
+	switch olKwLower(s.At(j)) {
+	case "private", "protected", "public", "static", "abstract", "final", "var", "readonly":
+		return true
+	}
+	return isAsymmetricVisibilityEnd(s, j)
+}
+
+// ntdNormalize ports isTypeNormalizable and normalizeNullableType for the type
+// made of the significant tokens idxs.
+func ntdNormalize(s *tokens.Stream, idxs []int, union bool) bool {
+	if len(idxs) == 0 {
+		return false
+	}
+	var b strings.Builder
+	for _, j := range idxs {
+		b.WriteString(s.At(j).Value)
+	}
+	name, nullable := b.String(), false
+	if strings.HasPrefix(name, "?") {
+		name, nullable = name[1:], true
+	} else {
+		for _, m := range strings.Split(strings.ToLower(name), "|") {
+			if strings.TrimSpace(m) == "null" {
+				nullable = true
+			}
+		}
+	}
+	if !nullable || strings.EqualFold(name, "null") || strings.Contains(name, "&") {
+		return false
+	}
+	lower := strings.ToLower(name)
+	if strings.Contains(name, "|") &&
+		(strings.Count(name, "|") != 1 || (!strings.HasSuffix(lower, "|null") && !strings.HasPrefix(lower, "null|"))) {
+		return false
+	}
+
+	var repl []token.Token
+	if union {
+		if strings.Contains(name, "|") {
+			return false // already a union
+		}
+		// "?T" -> "null|T"; idxs[0] is the "?"
+		repl = []token.Token{{Kind: token.Ident, Value: "null"}, {Kind: token.Punct, Value: "|"}}
+		for _, j := range idxs[1:] {
+			repl = append(repl, s.At(j))
+		}
+	} else {
+		if !strings.Contains(name, "|") {
+			return false // already "?T"
+		}
+		// "T|null" / "null|T" -> "?T": drop the null member and its "|"
+		pipe := 0
+		for pipe < len(idxs) && !isPunctVal(s, idxs[pipe], "|") {
+			pipe++
+		}
+		keep := idxs[:pipe]
+		if !strings.HasSuffix(lower, "|null") {
+			keep = idxs[pipe+1:]
+		}
+		repl = []token.Token{{Kind: token.Punct, Value: "?"}}
+		for _, j := range keep {
+			repl = append(repl, s.At(j))
+		}
+	}
+	start := idxs[0]
+	s.ReplaceRange(start, idxs[len(idxs)-1], repl)
+	if start > 0 && s.Kind(start-1) != token.Whitespace && !isPunctVal(s, start-1, "(") {
+		s.InsertAt(start, token.Token{Kind: token.Whitespace, Value: " "})
+	}
+	return true
 }
