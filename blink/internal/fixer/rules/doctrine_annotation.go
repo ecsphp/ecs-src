@@ -108,16 +108,14 @@ func (f DoctrineAnnotationSpaces) Fix(s *tokens.Stream) bool {
 	if f.opts != nil {
 		opts = *f.opts
 	}
-	return applyToDoctrineAnnotationsWith(s, opts.ignoredTags, func(toks []daToken) ([]daToken, bool) {
-		before := daGetCode(toks)
+	return applyToDoctrineAnnotations(s, opts.ignoredTags, func(toks []daToken) []daToken {
 		if opts.aroundParentheses {
 			daFixSpacesAroundParentheses(toks)
 		}
 		if opts.aroundCommas {
 			toks = daFixSpacesAroundCommas(toks)
 		}
-		toks = daFixAroundAssignments(toks, opts)
-		return toks, daGetCode(toks) != before
+		return daFixAroundAssignments(toks, opts)
 	})
 }
 

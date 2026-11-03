@@ -45,8 +45,7 @@ func (f DoctrineAnnotationArrayAssignment) Fix(s *tokens.Stream) bool {
 	if ignored == nil {
 		ignored = doctrineIgnoredTags
 	}
-	return applyToDoctrineAnnotationsWith(s, ignored, func(toks []daToken) ([]daToken, bool) {
-		changed := false
+	return applyToDoctrineAnnotations(s, ignored, func(toks []daToken) []daToken {
 		var scopes []string
 		for i := range toks {
 			switch toks[i].typ {
@@ -59,12 +58,11 @@ func (f DoctrineAnnotationArrayAssignment) Fix(s *tokens.Stream) bool {
 					scopes = scopes[:len(scopes)-1]
 				}
 			case daTEquals, daTColon:
-				if len(scopes) > 0 && scopes[len(scopes)-1] == "array" && toks[i].content != operator {
+				if len(scopes) > 0 && scopes[len(scopes)-1] == "array" {
 					toks[i].content = operator
-					changed = true
 				}
 			}
 		}
-		return toks, changed
+		return toks
 	})
 }

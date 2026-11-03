@@ -25,7 +25,7 @@ func (DoctrineAnnotationIndentation) SourceURL() string {
 var daIndentRe = regexp.MustCompile(`(\n( +\*)?) *(\r?\n)?$`)
 
 func (DoctrineAnnotationIndentation) Fix(s *tokens.Stream) bool {
-	return applyToDoctrineAnnotations(s, func(toks []daToken) bool {
+	return applyToDoctrineAnnotations(s, doctrineIgnoredTags, func(toks []daToken) []daToken {
 		var positions []daSpan
 		for index := 0; index < len(toks); index++ {
 			if toks[index].typ != daTAt {
@@ -33,13 +33,12 @@ func (DoctrineAnnotationIndentation) Fix(s *tokens.Stream) bool {
 			}
 			end := daGetAnnotationEnd(toks, index)
 			if end < 0 {
-				return false
+				return toks
 			}
 			positions = append(positions, daSpan{index, end})
 			index = end
 		}
 
-		changed := false
 		indentLevel := 0
 		for index := range toks {
 			if toks[index].typ != daTNone || !strings.Contains(toks[index].content, "\n") {
@@ -58,18 +57,14 @@ func (DoctrineAnnotationIndentation) Fix(s *tokens.Stream) bool {
 
 			repl := "${1}" + strings.Repeat(" ", 4*indentLevel+1)
 			if daIndentRe.MatchString(toks[index].content) {
-				fixed := daIndentRe.ReplaceAllString(toks[index].content, repl)
-				if fixed != toks[index].content {
-					toks[index].content = fixed
-					changed = true
-				}
+				toks[index].content = daIndentRe.ReplaceAllString(toks[index].content, repl)
 			}
 
 			if delta > 0 || mixedBraces {
 				indentLevel++
 			}
 		}
-		return changed
+		return toks
 	})
 }
 

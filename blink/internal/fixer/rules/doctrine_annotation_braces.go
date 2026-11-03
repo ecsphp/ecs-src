@@ -38,9 +38,9 @@ func (f DoctrineAnnotationBraces) Fix(s *tokens.Stream) bool {
 		ignored = doctrineIgnoredTags
 	}
 	if f.withBraces {
-		return applyToDoctrineAnnotationsWith(s, ignored, doctrineAnnotationAddBraces)
+		return applyToDoctrineAnnotations(s, ignored, doctrineAnnotationAddBraces)
 	}
-	return applyToDoctrineAnnotationsWith(s, ignored, doctrineAnnotationRemoveBraces)
+	return applyToDoctrineAnnotations(s, ignored, doctrineAnnotationRemoveBraces)
 }
 
 // daNextMeaningful mirrors Doctrine\Annotation\Tokens::getNextMeaningfulToken.
@@ -54,8 +54,7 @@ func daNextMeaningful(toks []daToken, index int) int {
 }
 
 // doctrineAnnotationAddBraces mirrors addBracesToAnnotations.
-func doctrineAnnotationAddBraces(toks []daToken) ([]daToken, bool) {
-	changed := false
+func doctrineAnnotationAddBraces(toks []daToken) []daToken {
 	for index := 0; index < len(toks); index++ {
 		if toks[index].typ != daTAt {
 			continue
@@ -65,14 +64,12 @@ func doctrineAnnotationAddBraces(toks []daToken) ([]daToken, bool) {
 		}
 		at := min(index+2, len(toks))
 		toks = append(toks[:at], append([]daToken{{typ: daTOpenParen, content: "("}, {typ: daTCloseParen, content: ")"}}, toks[at:]...)...)
-		changed = true
 	}
-	return toks, changed
+	return toks
 }
 
 // doctrineAnnotationRemoveBraces mirrors removesBracesFromAnnotations.
-func doctrineAnnotationRemoveBraces(toks []daToken) ([]daToken, bool) {
-	changed := false
+func doctrineAnnotationRemoveBraces(toks []daToken) []daToken {
 	for index := range toks {
 		if toks[index].typ != daTAt {
 			continue
@@ -88,7 +85,6 @@ func doctrineAnnotationRemoveBraces(toks []daToken) ([]daToken, bool) {
 		for i := index + 2; i <= closing; i++ {
 			toks[i].content = ""
 		}
-		changed = true
 	}
-	return toks, changed
+	return toks
 }
