@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -104,8 +105,8 @@ func (f NativeFunctionInvocation) Fix(s *tokens.Stream) bool {
 	changed := false
 	// walk regions back to front so index-shifting edits stay local to a region
 	regions := nativeNamespaceRegions(s)
-	for i := len(regions) - 1; i >= 0; i-- {
-		if f.fixRange(s, regions[i].start, regions[i].global) {
+	for _, region := range slices.Backward(regions) {
+		if f.fixRange(s, region.start, region.global) {
 			changed = true
 		}
 	}
