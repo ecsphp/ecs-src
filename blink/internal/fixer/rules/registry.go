@@ -137,6 +137,7 @@ func CommonFixers() []fixer.Fixer {
 		PowToExponentiation{},
 		EregToPreg{},
 		ModernizeStrpos{},
+		BacktickToShellExec{},
 	}
 }
 
