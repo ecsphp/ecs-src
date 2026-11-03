@@ -120,6 +120,7 @@ func CommonFixers() []fixer.Fixer {
 		AddMissingParamName{},
 		NoAliasLanguageConstructCall{},
 		NoUnreachableDefaultArgumentValue{},
+		DirConstant{},
 	}
 }
 

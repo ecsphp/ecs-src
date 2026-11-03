@@ -79,6 +79,7 @@ var fixerPriority = map[string]int{
 	"IndentationTypeFixer":                            50,
 	"IntegerLiteralCaseFixer":                         0,
 	"IsNullFixer":                                     1,
+	"DirConstantFixer":                                40,
 	"LineEndingFixer":                                 0,
 	"ListSyntaxFixer":                                 2,
 	"LongToShorthandOperatorFixer":                    17,
