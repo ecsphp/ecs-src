@@ -282,7 +282,8 @@ func buildRegistry() {
 		RemoveSuperfluousVarName{},
 		RemoveParamDescriptionDuplicateName{},
 		FixParamNameTypo{},
-		LanguageConstructSpacing{})
+		LanguageConstructSpacing{},
+		NativeFunctionInvocation{})
 	all = append(all, NoClosingTag{})
 	// run in PHP-CS-Fixer execution order: priority descending, then by rule name
 	// ascending - exactly how PHP-CS-Fixer's Utils::sortFixers breaks ties

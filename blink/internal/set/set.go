@@ -54,6 +54,8 @@ var percsExcluded = map[string]bool{
 	"PhpUnitTestAnnotationFixer":      true,
 	"DoctrineAnnotationBracesFixer":   true,
 	"GlobalKeywordSniff":              true,
+	// risky, not part of PHP-CS-Fixer's @PER-CS
+	"NativeFunctionInvocationFixer": true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
