@@ -110,7 +110,7 @@ func propertyHookBraceAt(s *tokens.Stream, i int, withModifiers bool) bool {
 			if j = s.AttributeEnd(j); j < 0 {
 				return false
 			}
-		} else if !withModifiers || !(kwIs(s.At(j), "final") || isPunctVal(s, j, "&")) {
+		} else if !withModifiers || (!kwIs(s.At(j), "final") && !isPunctVal(s, j, "&")) {
 			break
 		}
 		j = nextMeaningfulIndex(s, j)

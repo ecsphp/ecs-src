@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/token"
@@ -79,7 +80,7 @@ func explicitStringVariables(s *tokens.Stream, chunks []int) bool {
 			}
 		}
 	}
-	for g := len(groups) - 1; g >= 0; g-- {
+	for g := range slices.Backward(groups) {
 		first, last := groups[g].first, groups[g].last
 		for j := first + 1; j < last; j++ {
 			if t := s.At(j); t.Kind == token.Ident && s.At(j+1).Value == "]" {

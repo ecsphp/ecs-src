@@ -37,7 +37,7 @@ func (LanguageConstructSpacing) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.Keyword || !(langConstructTriggers[strings.ToLower(t.Value)] || isYieldFrom(t)) {
+		if t.Kind != token.Keyword || (!langConstructTriggers[strings.ToLower(t.Value)] && !isYieldFrom(t)) {
 			continue
 		}
 		// "yield from" is one token: collapse the gap between the words to one
