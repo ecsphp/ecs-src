@@ -93,8 +93,140 @@ func (PhpdocTypes) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/PhpdocTypesFixer.php"
 }
 
-// phpdocGenericTagRe matches type-carrying generic tags (@implements X<Y>, ...).
-var phpdocGenericTagRe = regexp.MustCompile(`(?i)^(@(?:implements|extends|use|template-extends|template-implements)\s+)(\S+)(.*)$`)
+// phpdocTypedTagRe matches the start of an annotation of Annotation::TAGS_WITH_TYPES,
+// minus phpstan-type and psalm-type, which PHP-CS-Fixer leaves unchanged.
+var phpdocTypedTagRe = regexp.MustCompile(`(?i)^@(?:extends|implements|method|param|param-out|phpstan-import-type|phpstan-var|property|property-read|property-write|psalm-import-type|psalm-var|return|throws|type|var)\s+`)
+
+// phpdocTypeSpan returns the length of the type expression at the start of
+// rest. Spaces inside brackets, around "|" and "&", and after a callable's ":"
+// belong to the type ("array<int, string>", "int | string").
+func phpdocTypeSpan(rest string) int {
+	depth := 0
+	i := 0
+	for i < len(rest) {
+		c := rest[i]
+		switch c {
+		case '\'', '"':
+			j := strings.IndexByte(rest[i+1:], c)
+			if j < 0 {
+				return len(rest)
+			}
+			i += j + 2
+			continue
+		case '<', '{', '(', '[':
+			depth++
+		case '>', '}', ')', ']':
+			if depth == 0 {
+				return i
+			}
+			depth--
+		case ' ', '\t':
+			if depth > 0 {
+				break
+			}
+			// glue around "|"/"&" and a callable's ": return" stay in the type
+			j := i
+			for j < len(rest) && (rest[j] == ' ' || rest[j] == '\t') {
+				j++
+			}
+			if j < len(rest) && (rest[j] == '|' || rest[j] == '&') {
+				i = j
+				continue
+			}
+			if p := i - 1; p >= 0 && (rest[p] == '|' || rest[p] == '&' || rest[p] == ':' || rest[p] == '?') {
+				i = j
+				continue
+			}
+			if j < len(rest) && rest[j] == ':' && i > 0 && rest[i-1] == ')' {
+				i = j
+				continue
+			}
+			return i
+		}
+		i++
+	}
+	return len(rest)
+}
+
+// phpdocTypeWordRe matches a name in a phpdoc type; "-" joins words
+// ("non-empty-string", "never-return").
+var phpdocTypeWordRe = regexp.MustCompile(`[$A-Za-z_\\](?:[A-Za-z0-9_\\]|-[A-Za-z0-9_])*`)
+
+// mapPhpdocTypeNames replaces each type name of a phpdoc type with fn's result,
+// like TypeExpression::mapTypes. Quoted literals, array-shape keys, class
+// constants ("Foo::BAR") and namespaced names are left alone.
+func mapPhpdocTypeNames(typ string, fn func(name string) string) string {
+	var b strings.Builder
+	var stack []byte
+	prev := 0
+	i := 0
+	for i < len(typ) {
+		c := typ[i]
+		switch {
+		case c == '\'' || c == '"':
+			j := strings.IndexByte(typ[i+1:], c)
+			if j < 0 {
+				i = len(typ)
+			} else {
+				i += j + 2
+			}
+			continue
+		case c == '<' || c == '{' || c == '(' || c == '[':
+			stack = append(stack, c)
+		case c == '>' || c == '}' || c == ')' || c == ']':
+			if len(stack) > 0 {
+				stack = stack[:len(stack)-1]
+			}
+		}
+		loc := phpdocTypeWordRe.FindStringIndex(typ[i:])
+		if loc == nil || loc[0] != 0 {
+			i++
+			continue
+		}
+		st, en := i, i+loc[1]
+		w := typ[st:en]
+		i = en
+		if strings.Contains(w, `\`) || (st > 0 && (typ[st-1] == ':' || typ[st-1] == '\\')) {
+			continue
+		}
+		if n := strings.TrimLeft(typ[en:], " \t?"); strings.HasPrefix(n, "::") {
+			continue
+		} else if len(stack) > 0 && stack[len(stack)-1] == '{' && strings.HasPrefix(n, ":") {
+			continue // an array-shape key
+		}
+		if nw := fn(w); nw != w {
+			b.WriteString(typ[prev:st])
+			b.WriteString(nw)
+			prev = en
+		}
+	}
+	b.WriteString(typ[prev:])
+	return b.String()
+}
+
+// fixPhpdocTypes rewrites the type of every typed annotation of d with
+// normalize, and reports whether anything changed.
+func fixPhpdocTypes(d *docblock, normalize func(typ string) string) bool {
+	changed := false
+	for i, l := range d.inner {
+		trimmed := strings.TrimLeft(l.content, " ")
+		loc := phpdocTypedTagRe.FindStringIndex(trimmed)
+		if loc == nil {
+			continue
+		}
+		rest := trimmed[loc[1]:]
+		n := phpdocTypeSpan(rest)
+		typ := rest[:n]
+		newType := normalize(typ)
+		if newType == typ {
+			continue
+		}
+		lead := l.content[:len(l.content)-len(trimmed)]
+		d.inner[i].content = lead + trimmed[:loc[1]] + newType + rest[n:]
+		changed = true
+	}
+	return changed
+}
 
 // phpdocTypesPossible are the type groups from PhpdocTypesFixer, used to build the
 // keyword set when the fixer is configured.
@@ -130,52 +262,20 @@ func (f PhpdocTypes) Fix(s *tokens.Stream) bool {
 		keywords = phpdocTypeKeywords
 	}
 	return applyToDocblocks(s, func(d *docblock) bool {
-		changed := false
-		for i, l := range d.inner {
-			trimmed := strings.TrimLeft(l.content, " ")
-			m := phpdocTypeTagRe.FindStringSubmatch(trimmed)
-			if m == nil {
-				m = phpdocGenericTagRe.FindStringSubmatch(trimmed)
-			}
-			if m == nil {
-				continue
-			}
-			newType := normalizePhpdocTypeCase(m[2], keywords)
-			if newType == m[2] {
-				continue
-			}
-			lead := l.content[:len(l.content)-len(trimmed)]
-			d.inner[i].content = lead + m[1] + newType + m[3]
-			changed = true
-		}
-		return changed
+		return fixPhpdocTypes(d, func(typ string) string { return normalizePhpdocTypeCase(typ, keywords) })
 	})
 }
 
-var phpdocTypeWordRe = regexp.MustCompile(`[$A-Za-z_\\][A-Za-z0-9_\\]*`)
-
-// normalizePhpdocTypeCase lowercases keyword bases anywhere in a phpdoc type -
-// unions, array suffixes, nullables and generics (Foo<Scalar> -> Foo<scalar>).
-// A word that is namespaced ("\Foo") or a class-constant/member reference
-// ("Ref::STATIC") is left as-is.
+// normalizePhpdocTypeCase lowercases the type names of a phpdoc type that are
+// known keywords, wherever they are: unions, array suffixes, nullables,
+// generics, shapes and callables ("array<int, Bool>" -> "array<int, bool>").
 func normalizePhpdocTypeCase(typ string, keywords map[string]bool) string {
-	var b strings.Builder
-	prev := 0
-	for _, loc := range phpdocTypeWordRe.FindAllStringIndex(typ, -1) {
-		st, en := loc[0], loc[1]
-		b.WriteString(typ[prev:st])
-		w := typ[st:en]
-		qualified := strings.Contains(w, `\`) || (st > 0 && (typ[st-1] == ':' || typ[st-1] == '\\'))
-		if !qualified {
-			if low := strings.ToLower(w); low != w && keywords[low] {
-				w = low
-			}
+	return mapPhpdocTypeNames(typ, func(w string) string {
+		if low := strings.ToLower(w); keywords[low] {
+			return low
 		}
-		b.WriteString(w)
-		prev = en
-	}
-	b.WriteString(typ[prev:])
-	return b.String()
+		return w
+	})
 }
 
 // phpdocBatchStringList reads a config value as a list of strings.
