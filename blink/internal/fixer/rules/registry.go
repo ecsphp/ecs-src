@@ -124,6 +124,7 @@ func CommonFixers() []fixer.Fixer {
 		CombineNestedDirname{},
 		ImplodeCall{},
 		NoUselessSprintf{},
+		ModernizeTypesCasting{},
 	}
 }
 
