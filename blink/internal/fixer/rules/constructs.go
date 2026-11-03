@@ -234,11 +234,10 @@ func (f SingleSpaceAroundConstruct) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		next := s.At(i + 1)
-		// "static", "class" and "enum" directly before "(" are a class reference,
-		// not a construct: "new static(...)", "new class(...)", "new Enum(...)".
-		// They take no space ("enum" never opens a "(" as a declaration keyword).
+		// "static" and "class" directly before "(" are a class reference, not a
+		// construct: "new static(...)", "new class(...)". They take no space.
 		kw := strings.ToLower(t.Value)
-		classRef := kw == "static" || kw == "class" || kw == "enum"
+		classRef := kw == "static" || kw == "class"
 		if next.Kind == token.Whitespace {
 			if classRef && !hasNewline(next.Value) && i+2 < s.Len() &&
 				s.At(i+2).Kind == token.Punct && s.At(i+2).Value == "(" {

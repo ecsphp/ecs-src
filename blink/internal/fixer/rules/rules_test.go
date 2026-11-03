@@ -189,14 +189,16 @@ func TestSingleSpaceAroundConstruct(t *testing.T) {
 	if _, changed := apply(t, SingleSpaceAroundConstruct{}, "<?php $o = new class($a) {};"); changed {
 		t.Fatal("new class( should not gain a space")
 	}
-	// "new Enum(" is a class reference; "enum" never opens a "(" as a construct,
-	// even when "enum" is in the followed list (as ECS configures it)
+	// the "Enum" of "new Enum (" is a name, left to NoSpacesAfterFunctionName
 	withEnum := SingleSpaceAroundConstruct{}.WithConfig(map[string]any{"constructs_followed_by_a_single_space": []any{"new", "enum"}}).(fixerRule)
 	if _, changed := apply(t, withEnum, "<?php $r = new Enum($type);"); changed {
 		t.Fatal("new Enum( should not gain a space")
 	}
-	if got, changed := apply(t, withEnum, "<?php $r = new Enum ($type);"); !changed || got != "<?php $r = new Enum($type);" {
-		t.Fatalf("new Enum (: changed=%v got=%q", changed, got)
+	if _, changed := apply(t, withEnum, "<?php $r = new Enum ($type);"); changed {
+		t.Fatal("new Enum ( is not a construct")
+	}
+	if got, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php $r = new Enum ($type);"); !changed || got != "<?php $r = new Enum($type);" {
+		t.Fatalf("new Enum ( in NoSpacesAfterFunctionName: changed=%v got=%q", changed, got)
 	}
 }
 

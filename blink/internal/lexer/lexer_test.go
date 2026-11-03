@@ -246,3 +246,71 @@ func TestLexAsymmetricVisibilityIsOneKeyword(t *testing.T) {
 		}
 	}
 }
+
+func TestReservedWordInNamePositionIsIdent(t *testing.T) {
+	cases := []struct {
+		src, word string
+		want      token.Kind
+	}{
+		// enum case names
+		{"<?php enum E: string { case Else = 'e'; }", "Else", token.Ident},
+		{"<?php enum E { case Default; }", "Default", token.Ident},
+		{"<?php enum E { case List /* c */ = 'l'; }", "List", token.Ident},
+		{"<?php switch ($a) { case static::X: }", "static", token.Keyword},
+		{"<?php switch ($a) { case new A(): }", "new", token.Keyword},
+		// named arguments
+		{"<?php f(else: 0);", "else", token.Ident},
+		{"<?php f($a, array : 1);", "array", token.Ident},
+		{"<?php #[A(class: B::class)] function f() {}", "class", token.Ident},
+		{"<?php f(static::X);", "static", token.Keyword},
+		{"<?php if ($a): else: endif;", "else", token.Keyword},
+		// "enum" is the keyword only before a name, as PHP's scanner reads it
+		{"<?php enum Suit: string {}", "enum", token.Keyword},
+		{"<?php enum /* c */ Suit {}", "enum", token.Keyword},
+		{"<?php $a = Enum::from(1);", "Enum", token.Ident},
+		{"<?php $a = new Enum($b);", "Enum", token.Ident},
+		{"<?php class enum extends B {}", "enum", token.Ident},
+		// constant names: in a list, typed, and the type itself
+		{"<?php class A { const A = 1, NEW = 2; }", "NEW", token.Ident},
+		{"<?php class A { const string DEFAULT = 'x'; }", "DEFAULT", token.Ident},
+		{"<?php class A { const int|string AS = 1; }", "AS", token.Ident},
+		{"<?php class A { const array LIST = []; }", "array", token.Keyword},
+		{"<?php class A { const array LIST = []; }", "LIST", token.Ident},
+		// token_get_all(TOKEN_PARSE) keeps the keyword when the value spells it
+		{"<?php class A { const PUBLIC = B::PUBLIC; }", "PUBLIC", token.Keyword},
+		{"<?php class A { const PUBLIC = B::public; }", "PUBLIC", token.Ident},
+		{"<?php class A { const NEW = 1, X = B::NEW; }", "X", token.Ident},
+		{"<?php enum E { case Default = B::Default; }", "Default", token.Ident},
+		// trait method aliases and the methods they rename
+		{"<?php class C { use T { foo as protected list; } }", "list", token.Ident},
+		{"<?php class C { use T { foo as final static; } }", "static", token.Ident},
+		{"<?php class C { use T { foo as new; } }", "new", token.Ident},
+		{"<?php class C { use T { foo as protected; } }", "protected", token.Keyword},
+		{"<?php class C { use T { list as protected; } }", "list", token.Ident},
+		{"<?php class C { use T { and as protected or; } }", "and", token.Ident},
+		{"<?php foreach ($a as list($b)) {}", "list", token.Keyword},
+		// a method returning by reference
+		{"<?php class C { public function &and() {} }", "and", token.Ident},
+		{"<?php $f = function &() use ($list) {};", "use", token.Keyword},
+		// a function named readonly, and the modifier before a DNF type
+		{"<?php $a = readonly('x');", "readonly", token.Ident},
+		{"<?php class A { readonly (A&B)|C $x; }", "readonly", token.Keyword},
+		{"<?php class A { public function __construct(readonly int $a) {} }", "readonly", token.Keyword},
+	}
+	for _, c := range cases {
+		// the first token spelling the word is the one under test
+		found := false
+		for _, tk := range Lex(c.src) {
+			if tk.Value == c.word && (tk.Kind == token.Keyword || tk.Kind == token.Ident) {
+				found = true
+				if tk.Kind != c.want {
+					t.Errorf("%q in %q: got %s, want %s", c.word, c.src, tk.Kind, c.want)
+				}
+				break
+			}
+		}
+		if !found {
+			t.Errorf("%q not found in %q", c.word, c.src)
+		}
+	}
+}

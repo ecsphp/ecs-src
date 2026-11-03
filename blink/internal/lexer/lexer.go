@@ -190,27 +190,203 @@ func (l *lexer) lexPHP() {
 	}
 }
 
-// identKind classifies an identifier run as Keyword or Ident. A name that
-// directly follows an object/static access operator (-> ?-> ::) is always a
-// property or method name, never a keyword.
+// identKind classifies an identifier run as Keyword or Ident. A reserved word
+// where PHP only accepts a name is an identifier, as token_get_all(TOKEN_PARSE)
+// reports it (T_STRING).
 func (l *lexer) identKind(word string) token.Kind {
+	lw := strings.ToLower(word)
+	if !keywords[lw] {
+		return token.Ident
+	}
 	prev := l.lastSignificant()
 	if prev == "->" || prev == "?->" || prev == "::" || prev == `\` {
 		return token.Ident // property/method name or namespace segment
 	}
-	// a name right after "function" or "const" (e.g. a method named "match") is
-	// an identifier, not the keyword it happens to spell
-	if lp := strings.ToLower(prev); lp == "function" || lp == "const" {
+	lp := strings.ToLower(prev)
+	// a function or method name, also "function &list()"
+	if lp == "function" || (lp == "&" && strings.EqualFold(l.significantBefore(1), "function")) {
 		return token.Ident
 	}
 	// a namespace segment like "Enum\Action" is an identifier, not a keyword
 	if l.pos < len(l.src) && l.src[l.pos] == '\\' {
 		return token.Ident
 	}
-	if keywords[strings.ToLower(word)] {
-		return token.Keyword
+	next := l.skipTrivia(l.pos)
+	// a constant or enum case name: no reserved word is followed by a single "="
+	if l.byteAt(next) == '=' {
+		if c := l.byteAt(next + 1); c != '=' && c != '>' {
+			// TOKEN_PARSE retags the last token spelled like the constant name,
+			// so "const PUBLIC = A::PUBLIC" keeps T_PUBLIC
+			if lp != "case" && l.wordInValue(next+1, word) {
+				return token.Keyword
+			}
+			return token.Ident
+		}
 	}
-	return token.Ident
+	// a constant name after "const", unless it is the type of "const array LIST"
+	if lp == "const" && !isIdentStart(l.byteAt(next)) && l.byteAt(next) != '|' && l.byteAt(next) != '&' {
+		return token.Ident
+	}
+	// a named argument "f(else: 1)"
+	if (prev == "(" || prev == ",") && l.byteAt(next) == ':' && l.byteAt(next+1) != ':' {
+		return token.Ident
+	}
+	// an enum case "case Default;"
+	if lp == "case" && l.byteAt(next) == ';' {
+		return token.Ident
+	}
+	// a trait method alias "foo as list;" or "foo as protected list;"
+	if l.byteAt(next) == ';' {
+		if lp == "as" && !memberModifiers[lw] {
+			return token.Ident
+		}
+		if memberModifiers[lp] && strings.EqualFold(l.significantBefore(1), "as") {
+			return token.Ident
+		}
+	}
+	// the method of a trait alias "{ list as protected; }"
+	if (prev == "{" || prev == ";") && l.wordAt(next, "as") {
+		return token.Ident
+	}
+	// a call to a function named readonly, unless "(" opens a DNF type
+	if lw == "readonly" && l.byteAt(next) == '(' && !l.dnfTypeAt(next) {
+		return token.Ident
+	}
+	// "enum" is the keyword only before a name ("enum Suit", not "Enum::from()")
+	if lw == "enum" && !l.enumKeywordAt(next) {
+		return token.Ident
+	}
+	return token.Keyword
+}
+
+// memberModifiers are the modifiers PHP accepts in a trait method alias
+// ("foo as protected bar;").
+var memberModifiers = map[string]bool{
+	"public": true, "protected": true, "private": true, "static": true,
+	"abstract": true, "final": true, "readonly": true,
+}
+
+// significantBefore returns the value of the non-trivia token emitted n
+// tokens before the last one (0 is lastSignificant), or "" when there is none.
+func (l *lexer) significantBefore(n int) string {
+	for _, tk := range slices.Backward(l.toks) {
+		switch tk.Kind {
+		case token.Whitespace, token.Comment, token.DocComment:
+			continue
+		}
+		if n == 0 {
+			return tk.Value
+		}
+		n--
+	}
+	return ""
+}
+
+// wordAt reports whether the source at p spells word, in any case, as a whole name.
+func (l *lexer) wordAt(p int, word string) bool {
+	if p+len(word) > len(l.src) || !strings.EqualFold(l.src[p:p+len(word)], word) {
+		return false
+	}
+	return !isIdent(l.byteAt(p + len(word)))
+}
+
+// wordInValue reports whether word (exact case) appears as a whole name in the
+// constant value starting at p, which ends at the first "," or ";" outside
+// brackets.
+func (l *lexer) wordInValue(p int, word string) bool {
+	depth := 0
+	for p < len(l.src) {
+		switch c := l.src[p]; {
+		case c == '(' || c == '[' || c == '{':
+			depth++
+		case c == ')' || c == ']' || c == '}':
+			if depth == 0 {
+				return false
+			}
+			depth--
+		case (c == ',' || c == ';') && depth == 0:
+			return false
+		case c == '\'' || c == '"':
+			for p++; p < len(l.src) && l.src[p] != c; p++ {
+				if l.src[p] == '\\' {
+					p++
+				}
+			}
+		case c == '/' && (l.byteAt(p+1) == '*' || l.byteAt(p+1) == '/'), c == '#':
+			p = l.skipTrivia(p)
+			continue
+		case isIdentStart(c):
+			start := p
+			for p < len(l.src) && isIdent(l.src[p]) {
+				p++
+			}
+			if l.src[start:p] == word {
+				return true
+			}
+			continue
+		}
+		p++
+	}
+	return false
+}
+
+// dnfTypeAt reports whether the "(" at p opens the conjunction of a DNF type,
+// "(A&B)|C": names, "\" and "&" up to ")", then "|".
+func (l *lexer) dnfTypeAt(p int) bool {
+	for p++; p < len(l.src) && l.src[p] != ')'; p++ {
+		if c := l.src[p]; !isIdent(c) && !isSpace(c) && c != '\\' && c != '&' {
+			return false
+		}
+	}
+	return l.byteAt(l.skipTrivia(p+1)) == '|'
+}
+
+// enumKeywordAt reports whether "enum", ending at l.pos, is T_ENUM: PHP's scanner
+// wants whitespace or comments, then a name other than extends or implements.
+func (l *lexer) enumKeywordAt(next int) bool {
+	if next == l.pos || next >= len(l.src) || !isIdentStart(l.src[next]) {
+		return false
+	}
+	rest := l.src[next:]
+	for _, kw := range []string{"extends", "implements"} {
+		if len(rest) >= len(kw) && strings.EqualFold(rest[:len(kw)], kw) {
+			return false
+		}
+	}
+	return true
+}
+
+// skipTrivia returns the offset of the first byte at or after p that is not
+// whitespace or part of a comment.
+func (l *lexer) skipTrivia(p int) int {
+	src := l.src
+	for p < len(src) {
+		switch {
+		case isSpace(src[p]):
+			p++
+		case strings.HasPrefix(src[p:], "/*"):
+			end := strings.Index(src[p+2:], "*/")
+			if end < 0 {
+				return len(src)
+			}
+			p += 2 + end + 2
+		case strings.HasPrefix(src[p:], "//") || (src[p] == '#' && !strings.HasPrefix(src[p:], "#[")):
+			for p < len(src) && src[p] != '\n' && !strings.HasPrefix(src[p:], "?>") {
+				p++
+			}
+		default:
+			return p
+		}
+	}
+	return p
+}
+
+// byteAt returns the source byte at p, or 0 past the end.
+func (l *lexer) byteAt(p int) byte {
+	if p < 0 || p >= len(l.src) {
+		return 0
+	}
+	return l.src[p]
 }
 
 // atSetModifierSuffix reports whether the visibility keyword word is directly
@@ -224,17 +400,7 @@ func (l *lexer) atSetModifierSuffix(word string) bool {
 }
 
 // lastSignificant returns the value of the last non-trivia token emitted so far.
-func (l *lexer) lastSignificant() string {
-	for _, tk := range slices.Backward(l.toks) {
-		switch tk.Kind {
-		case token.Whitespace, token.Comment, token.DocComment:
-			continue
-		default:
-			return tk.Value
-		}
-	}
-	return ""
-}
+func (l *lexer) lastSignificant() string { return l.significantBefore(0) }
 
 // matchOperator returns the byte length of the longest known multi-char operator
 // at the current position, or 0 when none matches (single-char punctuation).

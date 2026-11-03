@@ -16,17 +16,9 @@ func convertLongArray(s *tokens.Stream, name string) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.Keyword && t.Kind != token.Ident {
+		// a method named "list" lexes as an identifier
+		if t.Kind != token.Keyword || strings.ToLower(t.Value) != name {
 			continue
-		}
-		if strings.ToLower(t.Value) != name {
-			continue
-		}
-		if prev, ok := prevSignificant(s, i); ok {
-			switch prev.Value {
-			case "->", "?->", "::", "function":
-				continue
-			}
 		}
 		j := skipWhitespace(s, i+1)
 		if j >= s.Len() || s.At(j).Kind != token.Punct || s.At(j).Value != "(" {
