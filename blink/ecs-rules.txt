@@ -46,4 +46,4 @@ ControlStructureBraces, NoAlternativeSyntax, NoUnneededBraces
 (NoUnneededCurlyBraces), NoUnreachableDefaultArgumentValue, DirConstant,
 CombineNestedDirname, ImplodeCall, NoUselessSprintf, ModernizeTypesCasting,
 FopenFlagOrder, SimpleToComplexStringVariable, StringLineEnding,
-NonPrintableCharacter.
+NonPrintableCharacter, NoHomoglyphNames.

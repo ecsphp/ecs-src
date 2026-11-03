@@ -129,6 +129,7 @@ func CommonFixers() []fixer.Fixer {
 		SimpleToComplexStringVariable{},
 		StringLineEnding{},
 		NonPrintableCharacter{},
+		NoHomoglyphNames{},
 	}
 }
 

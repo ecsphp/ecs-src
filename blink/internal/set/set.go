@@ -59,6 +59,7 @@ var percsExcluded = map[string]bool{
 	"SimpleToComplexStringVariableFixer": true,
 	"StringLineEndingFixer":              true,
 	"NonPrintableCharacterFixer":         true,
+	"NoHomoglyphNamesFixer":              true,
 }
 
 var byName = map[string]func() []fixer.Fixer{
