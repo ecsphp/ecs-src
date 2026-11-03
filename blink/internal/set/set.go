@@ -173,7 +173,8 @@ var perCSRules = []setRule{
 	{`PhpCsFixer\Fixer\ControlStructure\SwitchCaseSpaceFixer`, nil},
 	{`PhpCsFixer\Fixer\Operator\TernaryOperatorSpacesFixer`, nil},
 	{`PhpCsFixer\Fixer\Whitespace\TypesSpacesFixer`, nil},
-	"ErrorSuppressionFixer": true,
+	"ErrorSuppressionFixer":       true,
+	"GetClassToClassKeywordFixer": true,
 }
 
 var byName = map[string]func() []fixer.Fixer{

@@ -239,6 +239,7 @@ func ConstructFixers() []fixer.Fixer {
 		NoUnneededFinalMethod{},
 		NoPhp4Constructor{},
 		ErrorSuppression{},
+		GetClassToClassKeyword{},
 	}
 }
 
