@@ -59,8 +59,9 @@ func arrayNotationContains(list []string, want string) bool {
 	return slices.Contains(list, want)
 }
 
+// arrayNotationIsHeredoc reports whether t ends a heredoc or nowdoc (T_END_HEREDOC).
 func arrayNotationIsHeredoc(t token.Token) bool {
-	return t.Kind == token.String && strings.HasPrefix(t.Value, "<<<")
+	return t.EndsHeredoc()
 }
 
 // arrayNotationEnclosing returns the index of the innermost unclosed opener before i, or -1.

@@ -3,9 +3,9 @@
 // than building an AST, so fixers can walk and mutate tokens by index.
 //
 // It classifies keywords vs names, emits multi-char operators (=> -> :: === ...)
-// as single Punct tokens, and captures heredoc/nowdoc as one opaque String
-// token. It is a pragmatic subset, not a full PHP grammar: string interpolation
-// is not split and casts are not tokenized. Enough for coding-standard fixers.
+// as single Punct tokens, and splits interpolated strings and heredocs like
+// token_get_all (see token.Part). It is a pragmatic subset, not a full PHP
+// grammar: casts are not tokenized. Enough for coding-standard fixers.
 package lexer
 
 import (
@@ -193,10 +193,7 @@ func (l *lexer) lexPHP() {
 		l.emit(token.CloseTag, start)
 		l.inPHP = false
 	case l.hasPrefix("<<<"):
-		if end := l.scanHeredoc(); end > l.pos {
-			l.pos = end
-			l.emit(token.String, start)
-		} else {
+		if !l.lexHeredoc(start) {
 			if op := l.matchOperator(); op > 0 {
 				l.pos += op
 			} else {
@@ -522,9 +519,13 @@ func (l *lexer) lexString(start int, quote byte) {
 	// expression is split out as real tokens (so array fixers can reflow it); the
 	// literal chunks keep the quote, the "{" and the "}" so Render stays lossless.
 	if quote == '"' {
-		if l.lexInterpolatedString(start) {
-			return
-		}
+		l.lexEncapsed(start, l.pos+1, func(p int) int {
+			if l.src[p] == '"' {
+				return p + 1
+			}
+			return -1
+		})
+		return
 	}
 	l.pos++ // opening quote
 	for l.pos < len(l.src) {
@@ -552,9 +553,7 @@ func (l *lexer) lexBinaryString(start int) bool {
 		return true
 	case strings.HasPrefix(l.src[start+1:], "<<<"):
 		l.pos = start + 1
-		if end := l.scanHeredoc(); end > l.pos {
-			l.pos = end
-			l.emit(token.String, start)
+		if l.lexHeredoc(start) {
 			return true
 		}
 		l.pos = start
@@ -562,79 +561,174 @@ func (l *lexer) lexBinaryString(start int) bool {
 	return false
 }
 
-// lexInterpolatedString splits a double-quoted string that contains a complex
-// "{$...}" interpolation into: a literal chunk ending with "{", the inner
-// expression's real tokens, then a chunk starting with "}", repeated, then the
-// closing chunk. It returns false (emitting nothing) when the string has no "{$"
-// so the caller lexes it as one opaque token.
-func (l *lexer) lexInterpolatedString(start int) bool {
-	// first pass: does the string contain a top-level "{$" before its close?
-	p := l.pos + 1
-	hasInterp := false
-	for p < len(l.src) {
-		c := l.src[p]
-		if c == '\\' && p+1 < len(l.src) {
-			p += 2
-			continue
-		}
-		if c == '"' {
-			break
-		}
-		if c == '{' && p+1 < len(l.src) && l.src[p+1] == '$' {
-			hasInterp = true
-			break
-		}
-		p++
-	}
-	if !hasInterp {
-		return false
-	}
-
-	l.pos++ // opening quote
+// lexEncapsed lexes the body of an interpolating literal, from body on, as
+// PHP's scanner does: a "$name" with one "[offset]" or "->name" after it, and
+// the expression of a "{$" or "${", lex as ordinary tokens; each run of text
+// between them is one String token, with the delimiters it touches. closeAt
+// returns the end of the closing delimiter that starts at p, or -1.
+func (l *lexer) lexEncapsed(start, body int, closeAt func(p int) int) {
+	l.pos = body
 	chunkStart := start
-	for l.pos < len(l.src) {
-		c := l.src[l.pos]
-		if c == '\\' && l.pos+1 < len(l.src) {
+	var chunks []int // indices of this literal's String tokens
+	emitChunk := func() {
+		if l.pos > chunkStart {
+			l.toks = append(l.toks, token.Token{Kind: token.String, Value: l.src[chunkStart:l.pos], Pos: chunkStart, Part: token.Mid})
+			chunks = append(chunks, len(l.toks)-1)
+		}
+	}
+	src := l.src
+	for l.pos < len(src) {
+		if end := closeAt(l.pos); end >= 0 {
+			l.pos = end
+			break
+		}
+		c := src[l.pos]
+		switch {
+		case c == '\\' && l.pos+1 < len(src):
 			l.pos += 2
 			continue
-		}
-		if c == '"' {
-			l.pos++ // closing quote
-			break
-		}
-		if c == '{' && l.pos+1 < len(l.src) && l.src[l.pos+1] == '$' {
-			l.pos++ // consume "{", keeping it in this chunk
-			l.emit(token.String, chunkStart)
-			// lex the inner expression as real tokens up to the matching "}"
-			depth := 1
-			for l.pos < len(l.src) {
-				if l.src[l.pos] == '}' && depth == 1 {
-					break // interpolation close; starts the next chunk
-				}
-				before := len(l.toks)
-				l.lexPHP()
-				if len(l.toks) == before {
-					break // defensive: no progress
-				}
-				tk := l.toks[len(l.toks)-1]
-				if tk.Kind == token.Punct {
-					switch tk.Value {
-					case "{":
-						depth++
-					case "}":
-						depth--
-					}
-				}
+		case c == '$' && l.pos+1 < len(src) && isIdentStart(src[l.pos+1]):
+			emitChunk()
+			l.lexSimpleInterpolation()
+			chunkStart = l.pos
+			continue
+		case c == '$' && l.pos+1 < len(src) && src[l.pos+1] == '{':
+			l.pos += 2
+			// ST_LOOKING_FOR_VARNAME: "${name}" / "${name[" names a variable
+			// (T_STRING_VARNAME, kept in the literal); else an expression follows
+			if p := l.labelEnd(l.pos); p > l.pos && p < len(src) && (src[p] == '[' || src[p] == '}') {
+				l.pos = p
 			}
+			if l.pos < len(src) && src[l.pos] == '}' {
+				continue // "${name}": nothing lexes as code
+			}
+			emitChunk()
+			l.lexInterpolatedExpr()
+			chunkStart = l.pos
+			continue
+		case c == '{' && l.pos+1 < len(src) && src[l.pos+1] == '$':
+			l.pos++ // the "{" (T_CURLY_OPEN) stays in this chunk
+			emitChunk()
+			l.lexInterpolatedExpr()
 			chunkStart = l.pos // the "}" begins the next literal chunk
 			continue
 		}
 		l.pos++
 	}
-	if l.pos > chunkStart {
-		l.emit(token.String, chunkStart)
+	emitChunk()
+	switch len(chunks) {
+	case 0:
+	case 1:
+		l.toks[chunks[0]].Part = token.Whole
+	default:
+		l.toks[chunks[0]].Part = token.Head
+		l.toks[chunks[len(chunks)-1]].Part = token.Tail
 	}
-	return true
+}
+
+// lexInterpolatedExpr lexes the expression of a "{$...}" or "${...}" from l.pos
+// as real tokens, up to (not including) its closing "}".
+func (l *lexer) lexInterpolatedExpr() {
+	depth := 1
+	for l.pos < len(l.src) {
+		if l.src[l.pos] == '}' && depth == 1 {
+			return
+		}
+		before := len(l.toks)
+		l.lexPHP()
+		if len(l.toks) == before {
+			return // defensive: no progress
+		}
+		if tk := l.toks[len(l.toks)-1]; tk.Kind == token.Punct {
+			switch tk.Value {
+			case "{":
+				depth++
+			case "}":
+				depth--
+			}
+		}
+	}
+}
+
+// lexSimpleInterpolation lexes a "$name" interpolated in a literal at l.pos,
+// with the one "[offset]", "->name" or "?->name" PHP's scanner takes after it
+// (ST_VAR_OFFSET, ST_LOOKING_FOR_PROPERTY).
+func (l *lexer) lexSimpleInterpolation() {
+	src := l.src
+	start := l.pos
+	l.pos = l.labelEnd(l.pos + 1)
+	l.emit(token.Variable, start)
+	switch {
+	case l.pos < len(src) && src[l.pos] == '[':
+		l.lexVarOffset()
+	case l.hasPrefix("->") && l.pos+2 < len(src) && isIdentStart(src[l.pos+2]):
+		l.emitPunctThenLabel(2)
+	case l.hasPrefix("?->") && l.pos+3 < len(src) && isIdentStart(src[l.pos+3]):
+		l.emitPunctThenLabel(3)
+	}
+}
+
+// emitPunctThenLabel emits the n-byte object operator at l.pos and the
+// property name after it (T_STRING).
+func (l *lexer) emitPunctThenLabel(n int) {
+	start := l.pos
+	l.pos += n
+	l.emit(token.Punct, start)
+	start = l.pos
+	l.pos = l.labelEnd(l.pos)
+	l.emit(token.Ident, start)
+}
+
+// lexVarOffset lexes the "[offset]" of a simple interpolation (ST_VAR_OFFSET)
+// starting at the "[" at l.pos: T_NUM_STRING, T_VARIABLE, T_STRING or a
+// one-character token, through the "]". A byte PHP rejects there ends the
+// offset; the literal resumes.
+func (l *lexer) lexVarOffset() {
+	src := l.src
+	start := l.pos
+	l.pos++
+	l.emit(token.Punct, start)
+	for l.pos < len(src) {
+		start = l.pos
+		c := src[l.pos]
+		switch {
+		case c == ']':
+			l.pos++
+			l.emit(token.Punct, start)
+			return
+		case isDigit(c):
+			l.pos = l.scanNumString(l.pos)
+			l.emit(token.Number, start)
+		case c == '$' && l.pos+1 < len(src) && isIdentStart(src[l.pos+1]):
+			l.pos = l.labelEnd(l.pos + 1)
+			l.emit(token.Variable, start)
+		case isIdentStart(c):
+			l.pos = l.labelEnd(l.pos)
+			l.emit(token.Ident, start)
+		case strings.IndexByte(" \t\n\r\\'#\"`", c) >= 0:
+			return
+		default:
+			l.pos++
+			l.emit(token.Punct, start)
+		}
+	}
+}
+
+// scanNumString returns the end of the T_NUM_STRING starting at p in an
+// interpolated offset: an LNUM, HNUM, BNUM or ONUM.
+func (l *lexer) scanNumString(p int) int {
+	if digit := l.basedDigit(p); digit != nil {
+		return l.scanDigits(p+2, digit)
+	}
+	return l.scanDigits(p, isDigit)
+}
+
+// labelEnd returns the end of the PHP label (identifier) starting at p.
+func (l *lexer) labelEnd(p int) int {
+	for p < len(l.src) && isIdent(l.src[p]) {
+		p++
+	}
+	return p
 }
 
 func (l *lexer) hasPrefix(s string) bool {
@@ -649,10 +743,10 @@ func (l *lexer) lexAttribute(start int) {
 	l.emit(token.AttributeStart, start)
 }
 
-// scanHeredoc returns the end offset of a heredoc/nowdoc starting at "<<<", or
-// -1 when the "<<<" is not a valid heredoc opener. The whole construct (through
-// the closing label) is treated as one opaque token so fixers never touch it.
-func (l *lexer) scanHeredoc() int {
+// lexHeredoc lexes the heredoc or nowdoc whose "<<<" is at l.pos and whose
+// token starts at start, or reports false when the "<<<" opens none. A nowdoc
+// is one String token; a heredoc interpolates like a double-quoted string.
+func (l *lexer) lexHeredoc(start int) bool {
 	src := l.src
 	p := l.pos + 3
 	for p < len(src) && (src[p] == ' ' || src[p] == '\t') {
@@ -664,47 +758,54 @@ func (l *lexer) scanHeredoc() int {
 		p++
 	}
 	labelStart := p
-	for p < len(src) && isIdent(src[p]) {
-		p++
-	}
-	if p == labelStart {
-		return -1 // no label -> not a heredoc
+	p = l.labelEnd(p)
+	if p == labelStart || isDigit(src[labelStart]) {
+		return false // no label -> not a heredoc
 	}
 	label := src[labelStart:p]
 	if quote != 0 {
 		if p >= len(src) || src[p] != quote {
+			return false
+		}
+		p++
+	}
+	// the opener must end the line
+	if p < len(src) && src[p] == '\r' {
+		p++
+	}
+	if p >= len(src) || src[p] != '\n' {
+		return false
+	}
+	body := p + 1
+	closeAt := func(p int) int {
+		if p != body && src[p-1] != '\n' {
 			return -1
 		}
-		p++
-	}
-	// opener must end the line
-	for p < len(src) && src[p] != '\n' {
-		p++
-	}
-	if p >= len(src) {
+		q := p
+		for q < len(src) && (src[q] == ' ' || src[q] == '\t') {
+			q++
+		}
+		if !strings.HasPrefix(src[q:], label) {
+			return -1
+		}
+		if after := q + len(label); after >= len(src) || !isIdent(src[after]) {
+			return after
+		}
 		return -1
 	}
-	// scan body lines for the closing label (PHP 7.3+ allows it indented)
-	for p < len(src) {
-		p++ // step past the newline to the start of the next line
-		lineStart := p
-		for lineStart < len(src) && (src[lineStart] == ' ' || src[lineStart] == '\t') {
-			lineStart++
-		}
-		if strings.HasPrefix(src[lineStart:], label) {
-			after := lineStart + len(label)
-			if after >= len(src) || !isIdent(src[after]) {
-				return after // closing marker found
+	if quote == '\'' {
+		l.pos = len(src) // unterminated: consume the rest
+		for q := body; q < len(src); q++ {
+			if end := closeAt(q); end >= 0 {
+				l.pos = end
+				break
 			}
 		}
-		for p < len(src) && src[p] != '\n' {
-			p++
-		}
-		if p >= len(src) {
-			return len(src) // unterminated; consume the rest
-		}
+		l.emit(token.String, start)
+		return true
 	}
-	return len(src)
+	l.lexEncapsed(start, body, closeAt)
+	return true
 }
 
 // scanNumber returns the end of the number literal starting at p, following

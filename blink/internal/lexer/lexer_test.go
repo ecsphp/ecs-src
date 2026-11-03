@@ -70,29 +70,16 @@ func TestDocCommentVsComment(t *testing.T) {
 	}
 }
 
-func TestLexHeredocNowdocOpaque(t *testing.T) {
+func TestLexNowdocAndPlainHeredocAreOneToken(t *testing.T) {
 	cases := []string{
-		"<?php $x = <<<EOT\nbody $a<$b if($c)\nEOT;\n",
-		"<?php $x = <<<'EOT'\nraw $a<$b\nEOT;\n",
+		"<?php $x = <<<EOT\nbody without interpolation, \\$a\nEOT;\n",
+		"<?php $x = <<<'EOT'\nraw $a<$b {$c}\nEOT;\n",
 		"<?php $x = <<<EOT\n    indented close is allowed\n    EOT;\n",
 	}
 	for _, src := range cases {
-		var heredoc string
-		for _, tk := range Lex(src) {
-			if tk.Kind == token.String && len(tk.Value) > 3 && tk.Value[:3] == "<<<" {
-				heredoc = tk.Value
-			}
-		}
-		if heredoc == "" {
-			t.Errorf("heredoc not captured as a single String token in %q", src)
-		}
-		// lossless
-		var got strings.Builder
-		for _, tk := range Lex(src) {
-			got.WriteString(tk.Value)
-		}
-		if got.String() != src {
-			t.Errorf("not lossless\n src: %q\n got: %q", src, got.String())
+		toks := Lex(src)
+		if tk := toks[6]; tk.Kind != token.String || tk.Part != token.Whole || !strings.HasPrefix(tk.Value, "<<<") || !strings.HasSuffix(tk.Value, "EOT") {
+			t.Errorf("%q: token 6 is %s %q (part %d), want the whole heredoc", src, tk.Kind, tk.Value, tk.Part)
 		}
 	}
 }

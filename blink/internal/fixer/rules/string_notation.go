@@ -37,7 +37,7 @@ func (f SingleQuote) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
-		if t.Kind != token.String {
+		if !t.IsLiteral() {
 			continue
 		}
 		prefix, v := token.SplitBinaryPrefix(t.Value) // b"x" keeps its prefix

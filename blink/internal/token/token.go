@@ -1,7 +1,9 @@
 package token
 
+import "strings"
+
 // Kind is the lexical category of a token.
-type Kind int
+type Kind uint8
 
 const (
 	Unknown    Kind = iota
@@ -60,7 +62,50 @@ func SplitBinaryPrefix(v string) (prefix, rest string) {
 // Token is a single lexical unit. The stream is lossless: concatenating every
 // Value in order reproduces the original source byte for byte.
 type Token struct {
-	Kind  Kind
+	Kind Kind
+	// Part tells which piece of a string literal a String token is: an
+	// interpolated string or heredoc is split like token_get_all splits it,
+	// with its code lexed as ordinary tokens.
+	Part  Part
 	Value string
 	Pos   int // byte offset in source
+}
+
+// Part is the place of a String token in its string literal.
+type Part uint8
+
+const (
+	Whole Part = iota // the whole literal: nothing in it lexed as code
+	Head              // opens an interpolated literal: "..., <<<EOT\n... (up to "{", "${" or "$")
+	Mid               // literal text between two interpolated parts
+	Tail              // closes an interpolated literal: ..." or ...\nEOT
+)
+
+// IsLiteral reports whether t is a whole string literal (one token, no code in it).
+func (t Token) IsLiteral() bool { return t.Kind == String && t.Part == Whole }
+
+// OpensString reports whether t is a whole string literal or the Head of one.
+func (t Token) OpensString() bool { return t.Kind == String && (t.Part == Whole || t.Part == Head) }
+
+// ClosesString reports whether t is a whole string literal or the Tail of one.
+func (t Token) ClosesString() bool { return t.Kind == String && (t.Part == Whole || t.Part == Tail) }
+
+// StartsHeredoc reports whether t opens a heredoc or nowdoc (T_START_HEREDOC).
+func (t Token) StartsHeredoc() bool {
+	_, v := SplitBinaryPrefix(t.Value)
+	return t.OpensString() && strings.HasPrefix(v, "<<<")
+}
+
+// EndsHeredoc reports whether t closes a heredoc or nowdoc (T_END_HEREDOC).
+func (t Token) EndsHeredoc() bool {
+	switch {
+	case t.Kind != String || t.Value == "":
+		return false
+	case t.Part == Whole:
+		return t.StartsHeredoc()
+	case t.Part == Tail:
+		last := t.Value[len(t.Value)-1]
+		return last != '"' && last != '`'
+	}
+	return false
 }

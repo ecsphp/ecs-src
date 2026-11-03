@@ -303,8 +303,8 @@ func (HeredocToNowdoc) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.String {
-			continue
+		if !t.IsLiteral() {
+			continue // a heredoc with interpolated parts stays one
 		}
 		prefix, v := token.SplitBinaryPrefix(t.Value)
 		if !strings.HasPrefix(v, "<<<") {
@@ -358,7 +358,7 @@ func (f NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 	i := 0
 	for i < s.Len() {
 		t := s.At(i)
-		if t.Kind != token.String {
+		if !t.IsLiteral() {
 			i++
 			continue
 		}
@@ -373,7 +373,7 @@ func (f NoUselessConcatOperator) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		k := nextSignificantIndex(s, j)
-		if k < 0 || s.At(k).Kind != token.String {
+		if k < 0 || !s.At(k).IsLiteral() {
 			i++
 			continue
 		}
@@ -420,7 +420,7 @@ func (NoBinaryString) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind != token.String {
+		if !t.OpensString() {
 			continue
 		}
 		if prefix, _ := token.SplitBinaryPrefix(t.Value); prefix != "" {

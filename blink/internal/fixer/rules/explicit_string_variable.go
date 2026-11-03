@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"strings"
+
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -23,222 +25,72 @@ func (ExplicitStringVariable) SourceURL() string {
 
 func (ExplicitStringVariable) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := range s.Len() {
-		if s.At(i).Kind != token.String {
-			continue
-		}
-		prefix, v := token.SplitBinaryPrefix(s.At(i).Value) // b"$x" interpolates too
-		start, ok := interpolatedBody(v)
-		if !ok {
-			continue
-		}
-		end := len(v) - suffixLen(v, start)
-		if end < start {
-			continue
-		}
-		// a chunk of a split interpolated string begins with "}" (right after a
-		// "{$...}" close), so a variable adjacent to it is a continuation PHP leaves
-		// alone
-		body, hit := wrapInterpolations(v[start:end], v[0] == '}')
-		if hit {
-			s.SetValue(i, prefix+v[:start]+body+v[end:])
-			changed = true
+	// go backwards so the edits of a literal never shift a later one
+	for i := s.Len() - 1; i >= 0; i-- {
+		if t := s.At(i); t.Kind == token.String && t.Part == token.Head {
+			if chunks := literalChunks(s, i); chunks != nil && explicitStringVariables(s, chunks) {
+				changed = true
+			}
 		}
 	}
 	return changed
 }
 
-// interpolatedBody returns the offset where the interpolated body begins for a
-// double-quoted string or a heredoc (not a nowdoc or single-quoted string), and
-// whether the token is one that interpolates at all.
-func interpolatedBody(v string) (int, bool) {
-	if len(v) > 0 && v[0] == '"' {
-		return 1, true
-	}
-	// a continuation chunk of a split interpolated string starts just after the
-	// "}" that closed the previous "{$...}"
-	if len(v) > 0 && v[0] == '}' {
-		return 1, true
-	}
-	if len(v) >= 3 && v[0] == '<' && v[1] == '<' && v[2] == '<' {
-		p := 3
-		for p < len(v) && (v[p] == ' ' || v[p] == '\t') {
-			p++
+// explicitStringVariables wraps the simple interpolations of one literal (its
+// chunk indices) in "{...}" as PHP-CS-Fixer does: each run of variables that
+// follows a string part is wrapped, a bareword offset quoted.
+func explicitStringVariables(s *tokens.Stream, chunks []int) bool {
+	type group struct{ first, last int }
+	var groups []group
+	collecting := false
+	afterExpr := false
+	brackets := 0 // PHP counts the "[" and "]" of the whole run
+	for k, c := range chunks[:len(chunks)-1] {
+		v := s.At(c).Value
+		e := scanChunk(v, k == 0, afterExpr)
+		afterExpr = e.opensExpr
+		switch {
+		case e.hasStringPart:
+			collecting, brackets = e.endsWithStringPart, 0
+		case strings.Contains(v, "${"):
+			collecting = false
 		}
-		if p < len(v) && v[p] == '\'' {
-			return 0, false // nowdoc
-		}
-		// heredoc: body starts after the opener line
-		for p < len(v) && v[p] != '\n' {
-			p++
-		}
-		if p < len(v) {
-			return p + 1, true
-		}
-	}
-	return 0, false
-}
-
-// suffixLen is the length of the trailing delimiter after the body: 1 for the
-// closing quote of a double-quoted string, or the closing heredoc label line.
-func suffixLen(v string, bodyStart int) int {
-	// a double-quoted string ends with the quote; a split-string chunk ends with
-	// the closing quote or with the "{" that opens the next "{$...}" - all length 1
-	if v[0] == '"' || v[0] == '}' {
-		return 1
-	}
-	// heredoc: the closing label sits on the last line; the body ends at the
-	// last newline before it.
-	last := -1
-	for i := bodyStart; i < len(v); i++ {
-		if v[i] == '\n' {
-			last = i
-		}
-	}
-	if last < 0 {
-		return 0
-	}
-	return len(v) - last // include the newline and the closing label
-}
-
-func wrapInterpolations(b string, initialAfterCurly bool) (string, bool) {
-	out := make([]byte, 0, len(b)+8)
-	changed := false
-	i := 0
-	afterCurly := initialAfterCurly
-	for i < len(b) {
-		c := b[i]
-		// A variable directly following a "{...}" interpolation is skipped by
-		// PHP: its preceding token is the closing brace, not a string part.
-		prevAfterCurly := afterCurly
-		afterCurly = false
-		if c == '\\' && i+1 < len(b) {
-			out = append(out, c, b[i+1])
-			i += 2
+		if e.opensExpr || !collecting {
 			continue
 		}
-		// already-explicit "{$...}" - copy the balanced block verbatim
-		if c == '{' && i+1 < len(b) && b[i+1] == '$' {
-			depth := 0
-			j := i
-			for j < len(b) {
-				if b[j] == '{' {
-					depth++
-				} else if b[j] == '}' {
-					depth--
-					if depth == 0 {
-						j++
-						break
-					}
+		// a run of simple interpolations up to the next chunk
+		for j := c + 1; j < chunks[k+1]; j++ {
+			t := s.At(j)
+			switch {
+			case t.Kind == token.Variable && brackets != 1:
+				groups = append(groups, group{j, j})
+			case len(groups) > 0:
+				groups[len(groups)-1].last = j
+				if t.Kind == token.Punct && (t.Value == "[" || t.Value == "]") {
+					brackets++
 				}
-				j++
-			}
-			out = append(out, b[i:j]...)
-			i = j
-			afterCurly = true
-			continue
-		}
-		if c == '$' && i+1 < len(b) {
-			// "${...}" complex syntax - leave as is
-			if b[i+1] == '{' {
-				out = append(out, '$', '{')
-				i += 2
-				continue
-			}
-			// "$$x" - first $ was literal; do not start an interpolation here
-			if i > 0 && b[i-1] == '$' {
-				out = append(out, c)
-				i++
-				continue
-			}
-			// "{$a}$b" - $b directly follows a curly interpolation; PHP leaves it
-			if prevAfterCurly {
-				out = append(out, c)
-				i++
-				continue
-			}
-			if isNameStart(b[i+1]) {
-				expr, end := parseSimpleVar(b, i)
-				out = append(out, '{')
-				out = append(out, expr...)
-				out = append(out, '}')
-				i = end
-				changed = true
-				continue
 			}
 		}
-		out = append(out, c)
-		i++
 	}
-	return string(out), changed
-}
-
-// parseSimpleVar reads a PHP simple-syntax interpolation starting at the "$" at
-// index i ("$name", "$name->prop", "$name[index]") and returns the expression
-// to place inside braces, quoting a bareword array key, plus the end offset.
-func parseSimpleVar(b string, i int) ([]byte, int) {
-	j := i + 1
-	for j < len(b) && isNameByte(b[j]) {
-		j++
-	}
-	expr := make([]byte, 0, j-i+4)
-	expr = append(expr, b[i:j]...) // "$name"
-
-	switch {
-	case j+2 < len(b) && b[j] == '-' && b[j+1] == '>' && isNameStart(b[j+2]):
-		k := j + 2
-		for k < len(b) && isNameByte(b[k]) {
-			k++
+	for g := len(groups) - 1; g >= 0; g-- {
+		first, last := groups[g].first, groups[g].last
+		for j := first + 1; j < last; j++ {
+			if t := s.At(j); t.Kind == token.Ident && s.At(j+1).Value == "]" {
+				s.Set(j, token.Token{Kind: token.String, Value: "'" + t.Value + "'", Pos: t.Pos})
+			}
 		}
-		expr = append(expr, b[j:k]...) // "->prop"
-		return expr, k
-	case j < len(b) && b[j] == '[':
-		k := j + 1
-		for k < len(b) && b[k] != ']' {
-			k++
+		if n := s.At(last + 1); n.Kind == token.String && n.Part != token.Whole {
+			s.SetValue(last+1, "}"+n.Value)
+		} else {
+			s.InsertAt(last+1, token.Token{Kind: token.String, Value: "}", Part: token.Mid})
 		}
-		if k < len(b) && b[k] == ']' {
-			idx := b[j+1 : k]
-			expr = append(expr, '[')
-			expr = append(expr, quoteIndex(idx)...)
-			expr = append(expr, ']')
-			return expr, k + 1
+		if p := s.At(first - 1); p.Kind == token.String && p.Part != token.Whole {
+			s.SetValue(first-1, p.Value+"{")
+		} else {
+			s.InsertAt(first, token.Token{Kind: token.String, Value: "{", Part: token.Mid})
 		}
 	}
-	return expr, j
-}
-
-// quoteIndex mirrors PHP's simple-syntax array access inside interpolation: a
-// numeric or variable index is kept, a bareword key is single-quoted.
-func quoteIndex(idx string) []byte {
-	if len(idx) == 0 {
-		return []byte(idx)
-	}
-	if idx[0] == '$' {
-		return []byte(idx)
-	}
-	numeric := true
-	s := idx
-	if s[0] == '-' {
-		s = s[1:]
-	}
-	if len(s) == 0 {
-		numeric = false
-	}
-	for k := 0; k < len(s); k++ {
-		if s[k] < '0' || s[k] > '9' {
-			numeric = false
-			break
-		}
-	}
-	if numeric {
-		return []byte(idx)
-	}
-	out := make([]byte, 0, len(idx)+2)
-	out = append(out, '\'')
-	out = append(out, idx...)
-	out = append(out, '\'')
-	return out
+	return len(groups) > 0
 }
 
 func isNameStart(c byte) bool {
