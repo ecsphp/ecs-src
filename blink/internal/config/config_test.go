@@ -3,10 +3,13 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"blink/internal/fixer/rules"
+	"blink/internal/lexer"
 	"blink/internal/set"
+	"blink/internal/tokens"
 )
 
 func write(t *testing.T, body string) string {
@@ -101,4 +104,33 @@ func jsonEscape(s string) string {
 		out = append(out, r)
 	}
 	return string(out)
+}
+
+// TestLoadSetKeepsSetRuleConfiguration checks that a set selected in blink.json
+// runs its members as the set configures them, while a rule named on its own
+// gets PHP-CS-Fixer's defaults.
+func TestLoadSetKeepsSetRuleConfiguration(t *testing.T) {
+	yoda := `PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer`
+	run := func(body string) string {
+		t.Helper()
+		c, err := Load(write(t, body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, f := range c.Rules {
+			if f.Name() == yoda {
+				s := tokens.New(lexer.Lex("<?php\nif ($x === null) {}"))
+				f.Fix(s)
+				return s.Render()
+			}
+		}
+		t.Fatalf("%s not enabled", yoda)
+		return ""
+	}
+	if got, want := run(`{"sets":["common"]}`), "<?php\nif ($x === null) {}"; got != want {
+		t.Errorf("common set: got %q want %q", got, want)
+	}
+	if got, want := run(`{"rules":["`+strings.ReplaceAll(yoda, `\`, `\\`)+`"]}`), "<?php\nif (null === $x) {}"; got != want {
+		t.Errorf("bare rule: got %q want %q", got, want)
+	}
 }
