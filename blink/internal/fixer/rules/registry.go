@@ -201,6 +201,7 @@ func ConstructFixers() []fixer.Fixer {
 		PhpUnitMethodCasing{},
 		PhpUnitSetUpTearDownVisibility{},
 		PhpUnitConstruct{},
+		PhpUnitFqcnAnnotation{},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
 		PhpdocToComment{},

@@ -34,6 +34,7 @@ var fixerPriority = map[string]int{
 	"DoctrineAnnotationArrayAssignmentFixer":   1,
 	"DoctrineAnnotationSpacesFixer":            0,
 	"PhpUnitConstructFixer":                    -8,
+	"PhpUnitFqcnAnnotationFixer":               -9,
 	// getPriority() is 0 upstream; raised to run before blank_line_after_opening_tag
 	// so blink reaches the same output in a single pass (PHP-CS-Fixer loops to fixpoint)
 	"LinebreakAfterOpeningTagFixer":                   2,

@@ -31,8 +31,8 @@ PsrAutoloading, runs off Stream.Path.
 
 RECENTLY IMPLEMENTED
 --------------------
-PhpUnitConstruct (in no ECS set, so not counted above; ported for configs that
-enable them),
+PhpUnitConstruct, PhpUnitFqcnAnnotation (in no ECS set, so not counted above;
+ported for configs that enable them),
 PsrAutoloading, NoBreakComment, LambdaNotUsedImport, ModifierKeywords,
 OperatorLinebreak, FullyQualifiedStrictTypes, PhpdocSeparation, PhpdocToComment,
 GeneralPhpdocTagRename, DoctrineAnnotationArrayAssignment,
