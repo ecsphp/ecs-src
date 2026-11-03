@@ -118,11 +118,33 @@ func configure(f fixer.Fixer, configs ...map[string]map[string]any) fixer.Fixer 
 // SpacesLevel.
 var (
 	commonConfig = map[string]map[string]any{
-		"YodaStyleFixer": {"equal": false, "identical": false, "less_and_greater": false},
+		"ConcatSpaceFixer":                   {"spacing": "one"},
+		"GeneralPhpdocAnnotationRemoveFixer": {"annotations": []any{"author", "package", "group", "category"}},
+		"NoSuperfluousPhpdocTagsFixer":       {"allow_mixed": true, "remove_inheritdoc": true},
+		"OrderedImportsFixer":                {"imports_order": []any{"class", "function", "const"}},
+		"YodaStyleFixer":                     {"equal": false, "identical": false, "less_and_greater": false},
 	}
-	psr12Config  = map[string]map[string]any{}
-	perCSConfig  = map[string]map[string]any{}
-	spacesConfig = map[string]map[string]any{}
+	psr12Config = map[string]map[string]any{
+		"ConcatSpaceFixer":    {"spacing": "one"},
+		"OrderedImportsFixer": {"imports_order": []any{"class", "function", "const"}},
+	}
+	perCSConfig = map[string]map[string]any{
+		"ConcatSpaceFixer":    {"spacing": "one"},
+		"OrderedImportsFixer": {"imports_order": []any{"class", "function", "const"}, "sort_algorithm": "none"},
+		"SingleSpaceAroundConstructFixer": {
+			"constructs_followed_by_a_single_space": []any{
+				"abstract", "as", "case", "catch", "class", "const", "const_import", "do", "else", "elseif",
+				"enum", "final", "finally", "for", "foreach", "function", "function_import", "if", "insteadof",
+				"interface", "match", "named_argument", "namespace", "new", "private", "protected", "public",
+				"readonly", "static", "switch", "trait", "try", "type_colon", "use", "use_lambda", "while",
+			},
+			"constructs_preceded_by_a_single_space": []any{"as", "else", "elseif", "use_lambda"},
+		},
+		"UnaryOperatorSpacesFixer": {"only_dec_inc": true},
+	}
+	spacesConfig = map[string]map[string]any{
+		"ConcatSpaceFixer": {"spacing": "one"},
+	}
 )
 
 // shortName returns the class name without its namespace ("...\FooFixer" -> "FooFixer").

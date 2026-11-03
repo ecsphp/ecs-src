@@ -9,13 +9,13 @@ import (
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Phpdoc/GeneralPhpdocAnnotationRemoveFixer.php
 //
-// GeneralPhpdocAnnotationRemove removes the configured phpdoc annotations. ECS's
-// psr12+common (via SetList::DOCBLOCK) configures it to strip author, package,
-// group and category, so those are the default set here.
+// GeneralPhpdocAnnotationRemove removes the configured phpdoc annotations. The
+// zero value strips author, package, group and category (ECS's common set); the
+// registry uses PHP-CS-Fixer's default, an empty list.
 //
 // Option `annotations` overrides the annotation set (an empty list removes
-// nothing, matching PHP-CS-Fixer's default). Option `case_sensitive` switches to
-// exact-case matching; the zero value keeps blink's case-insensitive match.
+// nothing). Option `case_sensitive` switches to exact-case matching; the zero
+// value keeps blink's case-insensitive match.
 type GeneralPhpdocAnnotationRemove struct {
 	annotations   []string
 	caseSensitive bool

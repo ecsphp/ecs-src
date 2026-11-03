@@ -66,7 +66,9 @@ Drop a `blink.json` in your project root (auto-loaded, or point at one with
   `single_line_empty_body` on top of the full set.
 - `level` - gradual adoption: `{"spaces": N}` enables the first N rules of the
   spaces set (safest first), so you can raise coverage one step at a time.
-- `rules` - enable individual fixers by name.
+- `rules` - enable individual fixers by name. A rule named here runs with
+  PHP-CS-Fixer's default options; a rule a set enables runs with the options
+  ECS's prepared set gives it (e.g. `common` keeps `yoda_style` non-yoda).
 - `paths` / `skip` - files to scan and glob patterns to ignore.
 
 With no config file, every fixer runs. CLI path arguments override `paths`.
@@ -77,9 +79,10 @@ With no config file, every fixer runs. CLI path arguments override `paths`.
 (its resolved paths, rules and skips) and runs blink over it. Because every
 blink fixer is named by its PHP-CS-Fixer class, the ECS rules map straight onto
 blink fixers by class name. Any rule blink has no fixer for is reported and
-skipped, so the run is never silently narrower than the ECS config. Rule
-configuration is not modelled yet - a configured rule runs with blink's built-in
-behaviour, which is noted in the report.
+skipped, so the run is never silently narrower than the ECS config. ECS dumps
+only the rule options that differ from the fixer's default, and blink resolves
+every option left out to PHP-CS-Fixer's default. A rule whose options blink does
+not model runs with its built-in behaviour, which is noted in the report.
 
 A sniff that only reports (such as GlobalKeywordSniff) prints ECS's table of
 errors to fix by hand and fails the run, as ECS does.
