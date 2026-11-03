@@ -379,6 +379,10 @@ func TestFullOpeningTag(t *testing.T) {
 	if _, changed := apply(t, FullOpeningTag{}, "<?xml version=\"1.0\"?>"); changed {
 		t.Fatal("XML declaration must not be converted")
 	}
+	got, changed = apply(t, FullOpeningTag{}, "<?PHP\nfoo();\n")
+	if want := "<?php\nfoo();\n"; !changed || got != want {
+		t.Fatalf("uppercase: changed=%v got=%q want=%q", changed, got, want)
+	}
 }
 
 func TestNoClosingTag(t *testing.T) {

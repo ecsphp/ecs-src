@@ -100,7 +100,7 @@ func (l *lexer) lexHTML() {
 // "<?=" always are; a bare "<?" short open tag is too, except "<?xml" which is
 // an XML declaration and stays inline HTML.
 func (l *lexer) isOpenTagHere() bool {
-	if l.hasPrefix("<?php") || l.hasPrefix("<?=") {
+	if l.atFullOpenTag() || l.hasPrefix("<?=") {
 		return true
 	}
 	rest := l.src[l.pos+2:]
@@ -110,10 +110,21 @@ func (l *lexer) isOpenTagHere() bool {
 	return true
 }
 
+// atFullOpenTag reports whether l.pos starts the full open tag: "<?php" in
+// any case, followed by whitespace or the end of the file, as PHP's scanner
+// reads it ("<?php$x" is the short tag "<?" then "php").
+func (l *lexer) atFullOpenTag() bool {
+	rest := l.src[l.pos:]
+	if len(rest) < len("<?php") || !strings.EqualFold(rest[:len("<?php")], "<?php") {
+		return false
+	}
+	return len(rest) == len("<?php") || isSpace(rest[len("<?php")])
+}
+
 func (l *lexer) lexOpenTag() {
 	start := l.pos
 	switch {
-	case l.hasPrefix("<?php"):
+	case l.atFullOpenTag():
 		l.pos += len("<?php")
 	case l.hasPrefix("<?="):
 		l.pos += len("<?=")

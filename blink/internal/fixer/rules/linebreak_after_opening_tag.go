@@ -27,7 +27,7 @@ func (LinebreakAfterOpeningTag) Fix(s *tokens.Stream) bool {
 	if s.Len() < 3 {
 		return false
 	}
-	if s.At(0).Kind != token.OpenTag || s.At(0).Value != "<?php" {
+	if s.At(0).Kind != token.OpenTag || !strings.EqualFold(s.At(0).Value, "<?php") {
 		return false
 	}
 	next := s.At(1)

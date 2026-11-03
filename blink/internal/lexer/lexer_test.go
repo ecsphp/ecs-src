@@ -314,3 +314,33 @@ func TestReservedWordInNamePositionIsIdent(t *testing.T) {
 		}
 	}
 }
+
+// PHP's scanner reads the full open tag in any case, followed by whitespace or
+// the end of the file; otherwise "<?" is the short open tag.
+func TestLexOpenTagAnyCase(t *testing.T) {
+	cases := []struct{ src, tag, next string }{
+		{"<?PHP\nfoo();", "<?PHP", "\n"},
+		{"<?PhP echo 1;", "<?PhP", " "},
+		{"<?PHP", "<?PHP", ""},
+		{"<?php$x = 1;", "<?", "php"},
+		{"<?PHPx ?>", "<?", "PHPx"},
+	}
+	for _, c := range cases {
+		toks := Lex(c.src)
+		if toks[0].Kind != token.OpenTag || toks[0].Value != c.tag {
+			t.Errorf("%q: open tag %s %q, want %q", c.src, toks[0].Kind, toks[0].Value, c.tag)
+			continue
+		}
+		next := ""
+		if len(toks) > 1 {
+			next = toks[1].Value
+		}
+		if next != c.next {
+			t.Errorf("%q: after the tag %q, want %q", c.src, next, c.next)
+		}
+	}
+	// no PHP code is lost to inline HTML
+	if toks := Lex("<?PHP\nfoo();"); toks[len(toks)-1].Kind != token.Punct {
+		t.Errorf("uppercase tag: code lexed as %s", toks[len(toks)-1].Kind)
+	}
+}

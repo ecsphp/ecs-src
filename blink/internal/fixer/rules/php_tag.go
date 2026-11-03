@@ -25,6 +25,11 @@ func (FullOpeningTag) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
+		if t.Kind == token.OpenTag && t.Value != "<?php" && strings.EqualFold(t.Value, "<?php") {
+			s.SetValue(i, "<?php") // "<?PHP"
+			changed = true
+			continue
+		}
 		if t.Kind != token.OpenTag || t.Value != "<?" {
 			continue
 		}
