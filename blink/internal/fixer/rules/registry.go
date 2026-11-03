@@ -200,6 +200,7 @@ func ConstructFixers() []fixer.Fixer {
 		OrderedTraits{},
 		PhpUnitMethodCasing{},
 		PhpUnitSetUpTearDownVisibility{},
+		PhpUnitConstruct{},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
 		PhpdocToComment{},
