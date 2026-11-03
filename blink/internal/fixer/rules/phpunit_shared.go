@@ -34,7 +34,7 @@ func puIsTheSameClassCall(s *tokens.Stream, index int) bool {
 		return false
 	}
 	op := sigPrev(s, index)
-	if op < 0 || !(puIsObjectOperator(s, op) || isPunctVal(s, op, "::")) {
+	if op < 0 || !puIsObjectOperator(s, op) && !isPunctVal(s, op, "::") {
 		return false
 	}
 	ref := sigPrev(s, op)

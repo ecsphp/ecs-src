@@ -73,7 +73,7 @@ func doctrineAnnotationAddBraces(toks []daToken) ([]daToken, bool) {
 // doctrineAnnotationRemoveBraces mirrors removesBracesFromAnnotations.
 func doctrineAnnotationRemoveBraces(toks []daToken) ([]daToken, bool) {
 	changed := false
-	for index := 0; index < len(toks); index++ {
+	for index := range toks {
 		if toks[index].typ != daTAt {
 			continue
 		}

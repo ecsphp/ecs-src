@@ -140,7 +140,7 @@ func errorTableWidth() int {
 func phpWordwrap(text string, width int) string {
 	b := []byte(text)
 	lastStart, lastSpace := 0, 0
-	for current := 0; current < len(b); current++ {
+	for current := range b {
 		switch {
 		case text[current] == '\n':
 			lastStart, lastSpace = current+1, current+1

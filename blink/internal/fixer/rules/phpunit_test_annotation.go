@@ -362,10 +362,10 @@ func puAnnotationDocBlockIndex(s *tokens.Stream, index int) int {
 			}
 		}
 		t := s.At(index)
-		switch {
-		case t.Kind == token.Comment, t.Kind == token.AttributeStart:
+		switch t.Kind {
+		case token.Comment, token.AttributeStart:
 			continue
-		case t.Kind == token.Keyword:
+		case token.Keyword:
 			switch strings.ToLower(t.Value) {
 			case "public", "protected", "private", "final", "abstract", "readonly":
 				continue
