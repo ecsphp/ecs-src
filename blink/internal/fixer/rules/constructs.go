@@ -324,7 +324,8 @@ func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "(" {
 			continue
 		}
-		last := sigPrev(s, i)
+		// getPrevNonWhitespace: a comment before "(" is not a call target
+		last := getPrevNonWhitespace(s, i)
 		if last < 0 {
 			continue
 		}
@@ -349,18 +350,49 @@ func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 				continue
 			}
 		case prev.Kind == token.Punct && (prev.Value == ")" || prev.Value == "]"):
-			// chained call "$f() ()" or "$a[0] ()"
+			// chained call "$f() ()" or "$a[0] ()"; a cast "(int) ($x)" is a
+			// single token in PHP, so its ")" never closes a call target
+			if prev.Value == ")" && isCastCloseParen(s, last) {
+				continue
+			}
+		case prev.Kind == token.Punct && prev.Value == "}":
+			// only a dynamic variable "${'name'} ()"
+			if o := s.MatchBackward(last); o < 1 || s.At(o-1).Kind != token.Variable || s.At(o-1).Value != "$" {
+				continue
+			}
 		default:
 			continue
 		}
 
-		if i >= 1 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
+		// PHP-CS-Fixer clears the whole whitespace token, newlines included
+		if i >= 1 && s.At(i-1).Kind == token.Whitespace {
 			s.RemoveAt(i - 1)
 			i--
 			changed = true
 		}
 	}
 	return changed
+}
+
+// isCastCloseParen reports whether the ")" at closeIdx ends a cast such as
+// "( int )", which PHP lexes as one token (only spaces or tabs inside).
+func isCastCloseParen(s *tokens.Stream, closeIdx int) bool {
+	j := closeIdx - 1
+	if j >= 0 && isCastPadding(s.At(j)) {
+		j--
+	}
+	if j < 0 || !isCastType(s.At(j)) {
+		return false
+	}
+	j--
+	if j >= 0 && isCastPadding(s.At(j)) {
+		j--
+	}
+	return j >= 0 && s.At(j).Kind == token.Punct && s.At(j).Value == "("
+}
+
+func isCastPadding(t token.Token) bool {
+	return t.Kind == token.Whitespace && strings.Trim(t.Value, " \t") == ""
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Whitespace/SpacesInsideParenthesesFixer.php

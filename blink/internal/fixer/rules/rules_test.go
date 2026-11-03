@@ -234,6 +234,24 @@ func TestNoSpacesAfterFunctionName(t *testing.T) {
 	if _, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php echo ('x') ? 'a' : 'b';"); changed {
 		t.Fatal("echo grouping parens must keep their space")
 	}
+	// a cast is one token in PHP, not a call target: "(int) ($x)" keeps its space,
+	// also after a chain of casts and with padding inside the cast
+	casts := "<?php $a = (int) ($b + 1); $c = (string) (int) ($d); $e = ( bool ) ($f); $g = (array) ($h ?? []);"
+	if got, changed := apply(t, NoSpacesAfterFunctionName{}, casts); changed {
+		t.Fatalf("casts: got=%q", got)
+	}
+	// a parenthesised callee and a dynamic variable are call targets; the whole
+	// whitespace goes, newlines included, as in php-cs-fixer
+	got, changed = apply(t, NoSpacesAfterFunctionName{}, "<?php ($f) (1); ($g)\n(2); foo\n(3); ${'h'} (4); $o->{'m'} (5);")
+	if want := "<?php ($f)(1); ($g)(2); foo(3); ${'h'}(4); $o->{'m'} (5);"; !changed || got != want {
+		t.Fatalf("callees: changed=%v got=%q want=%q", changed, got, want)
+	}
+	// a comment between the callee and "(" stops the fixer, which looks at the
+	// previous non-whitespace token: the call is never folded into the comment
+	comments := "<?php\nfoo // c\n(1);\nfoo # c\n(2);\nfoo /* c */ (3);\nbar /* c */\n(4);\nfoo /** d */ (5);\n"
+	if got, changed := apply(t, NoSpacesAfterFunctionName{}, comments); changed {
+		t.Fatalf("comments: got=%q", got)
+	}
 }
 
 func TestNoSpacesInsideParenthesis(t *testing.T) {
