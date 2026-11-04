@@ -130,6 +130,21 @@ func TestNoUnneededControlParenthesesClone(t *testing.T) {
 		{"foo(fn () => clone ($a), 1);", "foo(fn () => clone $a, 1);"},
 		{"switch ($a) { case clone ($b); }", "switch ($a) { case clone $b; }"},
 		{"$r = clone (\n    int\n);", "$r = clone \n    int\n;"},
+		{"$r = $f ? clone ($a)->b : $c;", "$r = $f ? clone $a->b : $c;"},
+		{"$r = $f ? clone ($a)[0] : $c;", "$r = $f ? clone $a[0] : $c;"},
+		{"$r = $f ? clone ($a)?->b : $c;", "$r = $f ? clone $a?->b : $c;"},
+		{"$r = $f ? clone ($a)::$b : $c;", "$r = $f ? clone $a ::$b : $c;"},
+		{"$r = $f ? clone ($a)() : $c;", "$r = $f ? clone $a () : $c;"},
+		{"$r = $f ? clone ($a) + 1 : $c;", "$r = $f ? clone $a + 1 : $c;"},
+		{"$r = $f ? clone ($a) and $g : $c;", "$r = $f ? clone $a and $g : $c;"},
+		{"$r = $f ? clone ($a) instanceof Foo : $c;", "$r = $f ? clone $a instanceof Foo : $c;"},
+		{"$r = $f ? clone ($a) ?: 1 : $c;", "$r = $f ? clone $a ?: 1 : $c;"},
+		{"$r = $f ? clone ( $a )->b : $c;", "$r = $f ? clone  $a ->b : $c;"},
+		{"$r = $f ? clone (/* c */ $a)->b : $c;", "$r = $f ? clone /* c */ $a->b : $c;"},
+		{"$r = $f ? clone (($a))->b : $c;", "$r = $f ? clone $a->b : $c;"},
+		{"$r = $f ? clone ($this)->b : $c;", "$r = $f ? clone $this->b : $c;"},
+		{"$r = $f ? clone ($a // c\n)->b : $c;", "$r = $f ? clone $a // c\n->b : $c;"},
+		{"$r = $f ? clone ($a)?:1 : $c;", "$r = $f ? clone $a ?:1 : $c;"},
 	}
 	for _, c := range cases {
 		got, changed := apply(t, NoUnneededControlParentheses{}, "<?php\n"+c.src+"\n")

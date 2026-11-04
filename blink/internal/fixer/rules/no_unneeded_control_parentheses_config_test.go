@@ -27,9 +27,9 @@ func TestNoUnneededControlParenthesesCloneAfterBlockWithoutCase(t *testing.T) {
 }
 
 // PHP-CS-Fixer removes these parentheses, which breaks most of them, so its output is no reference.
-func TestNoUnneededControlParenthesesCloneInTernaryKeepsPairBeforeAnythingButColon(t *testing.T) {
+func TestNoUnneededControlParenthesesCloneInTernaryKeepsPairOfOtherOperands(t *testing.T) {
 	t.Parallel()
-	operands := []string{"$a", "$o->b", "$a::$b", "FOO", "K::X", "__CLASS__", "1", "enum", "new Foo", "new Foo()", "new $a", "(new Foo)"}
+	operands := []string{"$o->b", "$a::$b", "FOO", "K::X", "__CLASS__", "1", "enum", "new Foo", "new Foo()", "new $a", "(new Foo)"}
 	for _, operand := range operands {
 		for _, next := range []string{"->b", "?->b", "::b", "[0]", "()", " and $g", " + 1", " instanceof Foo", " ?: 1"} {
 			src := "<?php\n$f ? clone (" + operand + ")" + next + " : 1;\n"
