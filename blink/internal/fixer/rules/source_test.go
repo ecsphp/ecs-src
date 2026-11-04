@@ -9,7 +9,7 @@ import (
 
 var sourceURLPattern = regexp.MustCompile(
 	`^https://github\.com/(` +
-		`(PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src|symplify/coding-standard/blob/main/src|ecsphp/ecs-src/blob/main/packages/coding-standard/src)/Fixer/[A-Za-z]+/[A-Za-z]+Fixer|` +
+		`(PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src|symplify/coding-standard/blob/main/src|ecsphp/ecs-src/blob/main/packages/coding-standard/src)/Fixer/[A-Za-z]+/[A-Za-z0-9]+Fixer|` +
 		`PHPCSStandards/PHP_CodeSniffer/blob/4\.x/src/Standards/[A-Za-z]+/Sniffs/[A-Za-z]+/[A-Za-z]+Sniff` +
 		`)\.php$`,
 )

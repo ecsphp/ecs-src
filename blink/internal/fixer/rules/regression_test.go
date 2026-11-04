@@ -57,7 +57,7 @@ func TestTernaryLeavesNullableTypes(t *testing.T) {
 func TestOperatorLinebreakKeepsNullFirstParenAssignment(t *testing.T) {
 	t.Parallel()
 	src := "<?php\n\nclass Sample\n{\n    public function resolve($user, $ability, array $arguments)\n    {\n        if (isset($arguments[0]) &&\n            ! is_null($policy = $this->getPolicyFor($arguments[0])) &&\n            $callback = $this->resolvePolicyCallback($user, $ability, $arguments, $policy)) {\n            return $callback;\n        }\n    }\n}\n"
-	want := "<?php\n\nclass Sample\n{\n    public function resolve($user, $ability, array $arguments)\n    {\n        if (isset($arguments[0])\n            && null !== ($policy = $this->getPolicyFor($arguments[0]))\n            && $callback = $this->resolvePolicyCallback($user, $ability, $arguments, $policy)) {\n            return $callback;\n        }\n    }\n}\n"
+	want := "<?php\n\ndeclare(strict_types=1);\n\nclass Sample\n{\n    public function resolve($user, $ability, array $arguments)\n    {\n        if (isset($arguments[0])\n            && null !== ($policy = $this->getPolicyFor($arguments[0]))\n            && $callback = $this->resolvePolicyCallback($user, $ability, $arguments, $policy)) {\n            return $callback;\n        }\n    }\n}\n"
 	if got := runAll(src); got != want {
 		t.Fatalf("parenthesized assignment must stay null-first\n got: %q\nwant: %q", got, want)
 	}

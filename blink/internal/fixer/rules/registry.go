@@ -224,6 +224,12 @@ func ConstructFixers() []fixer.Fixer {
 		PhpdocAlign{},
 		ParamReturnAndVarTagMalforms{},
 		GeneralPhpdocTagRename{},
+		DeclareStrictTypes{},
+		VoidReturn{},
+		StaticLambda{},
+		NoUselessElse{},
+		NoUnneededFinalMethod{},
+		NoPhp4Constructor{},
 	}
 }
 
