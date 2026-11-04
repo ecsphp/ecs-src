@@ -39,6 +39,11 @@ var fixerPriority = map[string]int{
 	"PhpUnitFqcnAnnotationFixer":               -9,
 	"PhpUnitMockShortWillReturnFixer":          0,
 	"PhpUnitTestAnnotationFixer":               10,
+	"PhpUnitStrictFixer":                       0,
+	"PhpUnitAssertNewNamesFixer":               -10,
+	"PhpUnitMockFixer":                         0,
+	"PhpUnitDedicateAssertInternalTypeFixer":   -16,
+	"PhpUnitNamespacedFixer":                   2,
 	"GlobalKeywordSniff":                       0,
 	// getPriority() is 0 upstream; raised to run before blank_line_after_opening_tag
 	// so blink reaches the same output in a single pass (PHP-CS-Fixer loops to fixpoint)
