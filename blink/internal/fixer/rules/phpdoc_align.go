@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
@@ -22,6 +23,11 @@ var (
 	// DEFAULT_TAGS = method,param,property,return,throws,type,var
 	phpAlignNoNameTags = []string{"return", "throws", "type", "var"}
 )
+
+// WithConfig does not read the options yet.
+func (f PhpdocAlign) WithConfig(map[string]any) fixer.Fixer {
+	return f
+}
 
 func (PhpdocAlign) Name() string {
 	return `PhpCsFixer\Fixer\Phpdoc\PhpdocAlignFixer`
