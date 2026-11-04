@@ -53,7 +53,7 @@ func (NoUnneededImportAlias) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	if changed {
-		compactEmptyTokens(s)
+		s.ClearEmptyTokens()
 	}
 	return changed
 }

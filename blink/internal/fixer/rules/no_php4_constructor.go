@@ -78,7 +78,7 @@ func (NoPhp4Constructor) Fix(s *tokens.Stream) bool {
 		np4FixConstructor(s, className, classStart, classEnd)
 		np4FixParent(s, classStart, classEnd)
 	}
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 	return s.Render() != before
 }
 
