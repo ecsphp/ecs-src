@@ -1,8 +1,6 @@
 package rules
 
 import (
-	"strings"
-
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
@@ -84,14 +82,8 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		switch kind {
 		case braceClassLike:
 			category = "classes"
-			// an anonymous class ("new class ... {", also "new #[Attr] class ... {")
-			// is configured separately; step back over any leading attribute
-			if kw >= 0 {
-				if p := prevMeaningfulSkippingAttributes(s, kw); p >= 0 {
-					if prev := s.At(p); prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "new") {
-						category = "anon_classes"
-					}
-				}
+			if taIsAnonymousClass(s, kw) {
+				category = "anon_classes"
 			}
 		case braceFunctionDecl:
 			category = "functions"
@@ -122,12 +114,15 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 				// php-cs-fixer aligns the brace with the line holding the keyword
 				want = "\n" + lineIndent(s, kw)
 			}
-			if i > 0 && s.At(i-1).Kind == token.Whitespace {
+			switch {
+			case !nextLine && bpFollowsLineComment(s, i):
+				// on one line with the "//" comment the brace would be part of it: keep the input
+			case i > 0 && s.At(i-1).Kind == token.Whitespace:
 				if s.At(i-1).Value != want {
 					s.SetValue(i-1, want)
 					changed = true
 				}
-			} else {
+			default:
 				s.InsertAt(i, token.Token{Kind: token.Whitespace, Value: want})
 				i++
 				changed = true
@@ -139,6 +134,14 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+func bpFollowsLineComment(s *tokens.Stream, open int) bool {
+	before := open - 1
+	if before >= 0 && s.At(before).Kind == token.Whitespace {
+		before--
+	}
+	return before >= 0 && isLineComment(s.At(before))
 }
 
 // closureBodyNeedsNewlines reports whether the body of the anonymous function

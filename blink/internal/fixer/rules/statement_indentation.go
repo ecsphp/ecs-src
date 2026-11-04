@@ -116,6 +116,8 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 			switch {
 			case t.Kind == token.Keyword && stmtKwIn(t.Value, "extends", "implements"):
 				ei = stmtNextValue(s, index, "{")
+			case t.Kind == token.AttributeStart:
+				ei = s.AttributeEnd(index)
 			case t.Kind == token.Punct && t.Value == ":":
 				if _, ok := caseBlockStarts[index]; ok {
 					ei, eiInclusive = f.findCaseBlockEnd(s, index)
@@ -342,7 +344,7 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 
 		if stmtIsComment(s, index) ||
 			(t.Kind == token.Punct && (t.Value == ";" || t.Value == "," || t.Value == "}")) ||
-			t.Kind == token.OpenTag || t.Kind == token.CloseTag {
+			t.Kind == token.OpenTag || t.Kind == token.CloseTag || t.Kind == token.AttributeEnd {
 			continue
 		}
 
@@ -427,6 +429,9 @@ func stmtIsDynamicMemberBrace(s *tokens.Stream, index int) bool {
 // stepped every token before index.
 func stmtIsBlockFirst(s *tokens.Stream, tr *arrayNotationTracker, index int) bool {
 	t := s.At(index)
+	if t.Kind == token.AttributeStart {
+		return true
+	}
 	if t.Kind != token.Punct {
 		return false
 	}
