@@ -304,6 +304,13 @@ func StructuralFixers() []fixer.Fixer {
 		StandaloneLineInMultilineArray{},
 		LineLength{},
 		ArrayIndentation{},
+		FinalInternalClass{},
+		FinalClass{},
+		FinalPublicMethodForAbstractClass{},
+		StaticPrivateMethod{},
+		StringableForToString{},
+		NoRedundantReadonlyProperty{},
+		PhpdocReadonlyClassCommentToKeyword{},
 		NoExtraBlankLines{}, // after import removal, which can leave extra blanks
 	}
 }
