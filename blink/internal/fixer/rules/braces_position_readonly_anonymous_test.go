@@ -34,6 +34,11 @@ func TestBracesPositionReadonlyAnonymousClass(t *testing.T) {
 		{"readonly final class A {\n}", "readonly final class A\n{\n}"},
 		{"abstract readonly class A {\n}", "abstract readonly class A\n{\n}"},
 		{"#[Foo] readonly class A {\n}", "#[Foo] readonly class A\n{\n}"},
+		{"$a = new readonly class // c\n{\n    public $x;\n};", "$a = new readonly class { // c\npublic $x;\n};"},
+		{"$a = new readonly class # c\n{\n    public $x;\n};", "$a = new readonly class { # c\npublic $x;\n};"},
+		{"$a = new readonly class($b) implements C // c\n{\n    public $x;\n};", "$a = new readonly class($b) implements C { // c\npublic $x;\n};"},
+		{"$a = new readonly class\n// c\n{\n    public $x;\n};", "$a = new readonly class {\n// c\npublic $x;\n};"},
+		{"$a = new readonly class /* c */ {\n    public $x;\n};", "$a = new readonly class { /* c */\n    public $x;\n};"},
 	}
 	for _, c := range cases {
 		got, changed := apply(t, BracesPosition{}, "<?php\n"+c.src+"\n")
