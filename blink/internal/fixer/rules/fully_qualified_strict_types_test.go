@@ -40,3 +40,38 @@ func TestFullyQualifiedStrictTypes(t *testing.T) {
 		t.Fatal("URLs in @see/@link must not be rewritten")
 	}
 }
+
+// Only what PHP-CS-Fixer's TypeExpression parses as a class name is shortened:
+// array/object-shape keys, the parts of a dashed pseudo-type ("key-of",
+// "positive-int"), the letters of a number constant and a tag spelled with
+// another case are not types, even when an import has the same short name.
+func TestFullyQualifiedStrictTypesDocNonTypes(t *testing.T) {
+	t.Parallel()
+	head := "<?php\nnamespace App;\nuse Vendor\\Limit;\nuse Vendor\\Key;\nuse Vendor\\Value;\nuse Vendor\\Positive;\nuse Vendor\\E3;\nuse Vendor\\Bar;\n/**\n"
+	cases := []struct{ name, in, want string }{
+		{"optional shape key", " * @param array{limit?: mixed, ...} $a\n", ""},
+		{"optional shape key unspaced", " * @param array{limit?:int} $a\n", ""},
+		{"object shape keys", " * @param object{limit:int,key?:int} $a\n", ""},
+		{"key-of", " * @param key-of<\\Vendor\\Bar> $a\n", " * @param key-of<Bar> $a\n"},
+		{"value-of", " * @param value-of<\\Vendor\\Value> $a\n", " * @param value-of<Value> $a\n"},
+		{"dashed pseudo-type", " * @param positive-int|non-empty-array<int> $a\n", ""},
+		{"number constant", " * @param 1e3|0x1E3|\\Vendor\\Bar $a\n", " * @param 1e3|0x1E3|Bar $a\n"},
+		{"tag case", " * @Param \\Vendor\\Bar $a\n", ""},
+		{"shape value still shortened", " * @param list{\\Vendor\\Bar} $a\n", " * @param list{Bar} $a\n"},
+		{"keyed shape value", " * @param array{key:\\Vendor\\Bar} $a\n", " * @param array{key:Bar} $a\n"},
+		{"numeric-keyed shape value", " * @param array{0:\\Vendor\\Bar} $a\n", " * @param array{0:Bar} $a\n"},
+		{"optional-keyed shape value", " * @param array{key?:\\Vendor\\Bar} $a\n", " * @param array{key?:Bar} $a\n"},
+		{"class constant", " * @param \\Vendor\\Bar::LIMIT $a\n", " * @param Bar::LIMIT $a\n"},
+		{"callable return type", " * @param \\Closure():\\Vendor\\Bar $a\n", " * @param \\Closure():Bar $a\n"},
+	}
+	for _, c := range cases {
+		in := head + c.in + " */\nfunction f($a) {}\n"
+		want := in
+		if c.want != "" {
+			want = head + c.want + " */\nfunction f($a) {}\n"
+		}
+		if got, _ := apply(t, FullyQualifiedStrictTypes{}, in); got != want {
+			t.Errorf("%s\n got: %q\nwant: %q", c.name, got, want)
+		}
+	}
+}

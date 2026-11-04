@@ -69,3 +69,43 @@ func TestOperatorLinebreak(t *testing.T) {
 		t.Fatalf("bitwise or move: changed=%v got=%q", changed, got)
 	}
 }
+
+// The context classifiers OperatorLinebreak shares with TernaryOperatorSpaces
+// leave a token alone when PHP-CS-Fixer's tokenizer gives it a non-operator
+// role. Expected outputs come from the PHP engine.
+func TestOperatorLinebreakTokenContexts(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ name, in, want string }{
+		{
+			"reserved-word named arguments",
+			"<?php\nf(default:\n    $x, new:\n    $y);\n",
+			"<?php\nf(default:\n    $x, new:\n    $y);\n",
+		},
+		{
+			"ternary in a case expression",
+			"<?php\nswitch ($a) {\n    case $b ?\n        1 :\n        2:\n        break;\n}\n",
+			"<?php\nswitch ($a) {\n    case $b\n        ? 1\n        : 2:\n        break;\n}\n",
+		},
+		{
+			"nullable after attribute and asymmetric visibility",
+			"<?php\nclass A { public function __construct(public private(set) ?\n    int $a, #[X] ?\n    int $b) {} }\nfunction f(#[X] ?\n    int $x) {}\n",
+			"<?php\nclass A { public function __construct(public private(set) ?\n    int $a, #[X] ?\n    int $b) {} }\nfunction f(#[X] ?\n    int $x) {}\n",
+		},
+		{
+			"brace switch nested in alternative switch",
+			"<?php\nswitch ($a):\n    case 1:\n        switch ($b) { case 2: break; }\n        break;\n    case 3:\n        break;\nendswitch;\n",
+			"<?php\nswitch ($a):\n    case 1:\n        switch ($b) { case 2: break; }\n        break;\n    case 3:\n        break;\nendswitch;\n",
+		},
+		{
+			"reserved-word function name before return type",
+			"<?php\nclass A { function &list():\n    int { return 1; } public function &print()\n    : int {} }\n",
+			"<?php\nclass A { function &list():\n    int { return 1; } public function &print()\n    : int {} }\n",
+		},
+	}
+	for _, c := range cases {
+		got, _ := apply(t, OperatorLinebreak{}, c.in)
+		if got != c.want {
+			t.Errorf("%s\n  in: %q\n got: %q\nwant: %q", c.name, c.in, got, c.want)
+		}
+	}
+}
