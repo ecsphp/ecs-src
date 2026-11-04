@@ -18,6 +18,15 @@ type Stream struct {
 	// mayHaveEmpty lets ClearEmptyTokens skip the scan when no empty value was
 	// written since its last call.
 	mayHaveEmpty bool
+	// version changes with every write, so Memo can tell an analysis built on
+	// the current tokens from a stale one.
+	version uint64
+	memo    map[any]memoEntry
+}
+
+type memoEntry struct {
+	version uint64
+	value   any
 }
 
 func New(toks []token.Token) *Stream {
@@ -41,14 +50,41 @@ func (s *Stream) At(i int) token.Token { return s.toks[i] }
 func (s *Stream) Kind(i int) token.Kind { return s.toks[i].Kind }
 
 func (s *Stream) Set(i int, t token.Token) {
+	if s.toks[i] == t {
+		return
+	}
 	s.toks[i] = t
 	s.noteEmpty(t.Value)
+	s.version++
 }
 
 // SetValue replaces only the Value of the token at i, keeping its kind.
 func (s *Stream) SetValue(i int, v string) {
+	if s.toks[i].Value == v {
+		return
+	}
 	s.toks[i].Value = v
 	s.noteEmpty(v)
+	s.version++
+}
+
+// Version changes whenever the tokens do, so a rule can tell whether anything
+// was written since it last looked.
+func (s *Stream) Version() uint64 { return s.version }
+
+// Memo returns the value build returned for key, building it again only when
+// the tokens changed since. Several rules can so share one analysis of a file.
+// The value must not change once built.
+func (s *Stream) Memo(key any, build func() any) any {
+	if e, ok := s.memo[key]; ok && e.version == s.version {
+		return e.value
+	}
+	if s.memo == nil {
+		s.memo = map[any]memoEntry{}
+	}
+	v := build()
+	s.memo[key] = memoEntry{version: s.version, value: v}
+	return v
 }
 
 func (s *Stream) noteEmpty(v string) {
@@ -65,11 +101,13 @@ func (s *Stream) noteEmptyIn(ts []token.Token) {
 
 func (s *Stream) RemoveAt(i int) {
 	s.toks = slices.Delete(s.toks, i, i+1)
+	s.version++
 }
 
 func (s *Stream) InsertAt(i int, t token.Token) {
 	s.toks = slices.Insert(s.toks, i, t)
 	s.noteEmpty(t.Value)
+	s.version++
 }
 
 // InsertSliceAt inserts ts at index i in one splice, so the tail shifts once
@@ -77,6 +115,7 @@ func (s *Stream) InsertAt(i int, t token.Token) {
 func (s *Stream) InsertSliceAt(i int, ts []token.Token) {
 	s.toks = slices.Insert(s.toks, i, ts...)
 	s.noteEmptyIn(ts)
+	s.version++
 }
 
 // MatchForward returns the index of the delimiter matching the opener at i
@@ -187,13 +226,18 @@ func (s *Stream) AttributeStartOf(i int) int {
 func (s *Stream) ReplaceRange(start, end int, repl []token.Token) {
 	s.toks = slices.Replace(s.toks, start, end+1, repl...)
 	s.noteEmptyIn(repl)
+	s.version++
 }
 
 // ClearEmptyTokens drops the empty tokens left by clearing, like PHP-CS-Fixer's
 // Tokens::clearEmptyTokens.
 func (s *Stream) ClearEmptyTokens() {
 	if s.mayHaveEmpty {
+		n := len(s.toks)
 		s.toks = slices.DeleteFunc(s.toks, func(t token.Token) bool { return t.Value == "" })
+		if len(s.toks) != n {
+			s.version++
+		}
 		s.mayHaveEmpty = false
 	}
 }

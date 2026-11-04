@@ -52,14 +52,14 @@ func (ClassDefinition) SourceURL() string {
 // empty) as PHP-CS-Fixer does, so the indices it computes stay valid, and the
 // empty tokens are dropped at the end.
 func (f ClassDefinition) Fix(s *tokens.Stream) bool {
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	for index := s.Len() - 4; index > 0; index-- {
 		if cdIsClassy(s, index) {
 			f.fixClassyDefinition(s, index)
 		}
 	}
 	s.ClearEmptyTokens()
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 // cdIsClassy reports whether the token at i is a T_CLASS, T_INTERFACE, T_TRAIT

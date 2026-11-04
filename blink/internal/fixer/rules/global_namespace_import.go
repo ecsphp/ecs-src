@@ -102,7 +102,7 @@ func (f GlobalNamespaceImport) Fix(s *tokens.Stream) bool {
 	if !isMonolithicPHPFile(s) {
 		return false
 	}
-	sc := newSymScan(s)
+	sc := sharedSymScan(s)
 	candidate, namespaces := false, 0
 	for i := range sc.n {
 		if sc.isKind(i, token.DocComment) || sc.isPunct(i, `\`) || sc.isImportUse(i) {

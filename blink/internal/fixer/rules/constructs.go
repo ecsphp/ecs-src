@@ -211,7 +211,7 @@ func (f SingleSpaceAroundConstruct) followedEnabled(name string) bool {
 }
 
 func (f SingleSpaceAroundConstruct) Fix(s *tokens.Stream) bool {
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	if f.Contain["yield_from"] {
 		ssacFixYieldFromContent(s)
 	}
@@ -219,7 +219,7 @@ func (f SingleSpaceAroundConstruct) Fix(s *tokens.Stream) bool {
 		f.fixPreceded(s)
 	}
 	f.fixFollowed(s)
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 // ssacFixYieldFromContent collapses each whitespace run inside a "yield from"

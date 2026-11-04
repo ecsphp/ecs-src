@@ -48,7 +48,7 @@ func (f DeclareStrictTypes) Fix(s *tokens.Stream) bool {
 	if !dstIsCandidate(s) {
 		return false
 	}
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	openTagIndex := 0
 	if s.At(0).Kind == token.InlineHTML {
 		openTagIndex = 1
@@ -74,7 +74,7 @@ func (f DeclareStrictTypes) Fix(s *tokens.Stream) bool {
 			}
 		}
 	}
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 var dstShebangRe = regexp.MustCompile(`\A#![^\n]+\n?\z`)

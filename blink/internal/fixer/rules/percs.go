@@ -187,7 +187,7 @@ func (SingleLineEmptyBody) SourceURL() string {
 // body (whitespace only, or already "{}") becomes "{}" one space after the
 // declaration, unless a comment stands before its "{".
 func (SingleLineEmptyBody) Fix(s *tokens.Stream) bool {
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	for index := s.Len() - 1; index > 0; index-- {
 		if !cdIsClassy(s, index) && (!kwIs(s.At(index), "function") || slebIsFunctionImport(s, index)) {
 			continue
@@ -212,7 +212,7 @@ func (SingleLineEmptyBody) Fix(s *tokens.Stream) bool {
 			s.InsertAt(open, token.Token{Kind: token.Whitespace, Value: " "})
 		}
 	}
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 // slebIsFunctionImport reports whether the "function" at i is the one of

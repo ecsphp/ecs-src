@@ -101,7 +101,7 @@ func (f NativeFunctionInvocation) included(name string) bool {
 }
 
 func (f NativeFunctionInvocation) Fix(s *tokens.Stream) bool {
-	sc := newSymScan(s)
+	sc := sharedSymScan(s)
 	fs := newFuncScan(sc)
 	edits := newStreamEdits()
 	if !f.namespaced {
