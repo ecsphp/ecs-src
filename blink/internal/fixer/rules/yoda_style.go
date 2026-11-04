@@ -313,17 +313,13 @@ func yodaIsLowerPrecedence(s *tokens.Stream, i int) bool {
 			return true
 		}
 	case token.Keyword:
+		if isYieldFrom(t) {
+			return true
+		}
 		switch strings.ToLower(t.Value) {
 		case "case", "echo", "goto", "and", "or", "xor", "print", "return", "throw", "yield",
 			"require", "require_once", "include", "include_once":
 			return true
-		}
-	case token.Ident:
-		// "from" of "yield from" (a single T_YIELD_FROM token in PHP)
-		if strings.EqualFold(t.Value, "from") {
-			if p := sigPrev(s, i); p >= 0 && kwIs(s.At(p), "yield") {
-				return true
-			}
 		}
 	}
 	return false
@@ -481,8 +477,8 @@ func yodaIsBinaryOperator(s *tokens.Stream, i int) bool {
 
 // yodaIsVariable is isVariable: whether [start, end] describes a variable.
 func yodaIsVariable(s *tokens.Stream, start, end int, strict bool) bool {
-	if start == end {
-		return s.At(start).Kind == token.Variable
+	if t := s.At(start); start == end && !t.IsShellExec() && !t.StartsHeredoc() {
+		return t.Kind == token.Variable
 	}
 	if yodaIsGroupParen(s, start) {
 		return true
@@ -509,7 +505,9 @@ func yodaIsVariable(s *tokens.Stream, start, end int, strict bool) bool {
 			index++
 			continue
 		}
-		if index == end {
+		// a shell-exec, heredoc or nowdoc is several tokens to PHP, so it is
+		// never the single variable token
+		if index == end && !current.IsShellExec() && !current.StartsHeredoc() {
 			if expectString {
 				return current.Kind == token.Ident
 			}
@@ -604,27 +602,14 @@ func yodaIsVariable(s *tokens.Stream, start, end int, strict bool) bool {
 }
 
 // yodaIsPlainString reports whether t is a T_CONSTANT_ENCAPSED_STRING: a quoted
-// string without interpolation (heredocs and nowdocs are not).
+// string without interpolation, "b" prefix allowed (heredocs, nowdocs and
+// shell-execs are not; an interpolated string is split into several tokens).
 func yodaIsPlainString(t token.Token) bool {
-	if t.Kind != token.String || t.Value == "" {
+	if !t.IsLiteral() {
 		return false
 	}
-	switch t.Value[0] {
-	case '\'':
-		return true
-	case '"':
-		for i := 1; i < len(t.Value)-1; i++ {
-			if t.Value[i] == '\\' {
-				i++
-				continue
-			}
-			if t.Value[i] == '$' || (t.Value[i] == '{' && t.Value[i+1] == '$') {
-				return false
-			}
-		}
-		return true
-	}
-	return false
+	_, v := token.SplitBinaryPrefix(t.Value)
+	return v != "" && (v[0] == '\'' || v[0] == '"')
 }
 
 // yodaIsConstant is isConstant.

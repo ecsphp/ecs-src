@@ -705,8 +705,9 @@ func unaryOperatorSpacesIsPredecessor(s *tokens.Stream, i int) bool {
 	case token.Variable, token.Ident, token.Number:
 		operandEnd = true
 	case token.String:
-		// a heredoc/nowdoc ends with T_END_HEREDOC, which is not an operand end
-		operandEnd = !strings.HasPrefix(prev.Value, "<<<")
+		// a string's end is: T_CONSTANT_ENCAPSED_STRING, the closing '"' or '`';
+		// a heredoc/nowdoc ends with T_END_HEREDOC, which is not
+		operandEnd = prev.ClosesString() && !prev.EndsHeredoc()
 	case token.Punct:
 		switch prev.Value {
 		case "]", "}", "++", "--":
