@@ -54,17 +54,29 @@ var docLexerRe = regexp.MustCompile(
 		`|\s+|\*+|(.)`,
 )
 
-// daScan tokenizes input the way DocLexer::scan does.
-func daScan(input string) []daToken {
-	var toks []daToken
-	for _, m := range docLexerRe.FindAllStringSubmatchIndex(input, -1) {
+// daScanner tokenizes input the way DocLexer::scan does, one token at a time,
+// so a caller that needs only the first few does not scan the rest of the input.
+type daScanner struct {
+	input string
+	at    int
+}
+
+func (sc *daScanner) next() (daToken, bool) {
+	for sc.at < len(sc.input) {
+		m := docLexerRe.FindStringSubmatchIndex(sc.input[sc.at:])
+		if m == nil {
+			sc.at = len(sc.input)
+			break
+		}
+		base := sc.at
+		sc.at = base + m[1]
 		// groups: 1 ident, 2 number, 3 string, 4 single char
 		for g := 1; g <= 4; g++ {
 			gs, ge := m[2*g], m[2*g+1]
 			if gs < 0 {
 				continue
 			}
-			value := input[gs:ge]
+			value := sc.input[base+gs : base+ge]
 			typ := daGetType(value)
 			// DocLexer::getType mutates a string value to its unescaped, unquoted
 			// form; createFromDocComment re-wraps it, so lengths still line up
@@ -77,11 +89,10 @@ func daScan(input string) []daToken {
 					value = ""
 				}
 			}
-			toks = append(toks, daToken{typ: typ, content: value, pos: gs})
-			break
+			return daToken{typ: typ, content: value, pos: base + gs}, true
 		}
 	}
-	return toks
+	return daToken{}, false
 }
 
 // daGetType mirrors DocLexer::getType; for a string it also returns the
@@ -162,12 +173,17 @@ func daCreateFromDocComment(content string, ignoredTags map[string]bool) []daTok
 			continue
 		}
 
-		scanned := daScan(content[nextAt:])
+		// scan lazily: upstream scans the whole rest of the docblock at every
+		// "@", but only the tokens up to the loop's break are used
+		scanner := daScanner{input: content[nextAt:]}
 		var used []daToken
 		nbScannedTokensToUse := 0
 		nbScopes := 0
-		for index := range scanned {
-			tk := scanned[index]
+		for index := 0; ; index++ {
+			tk, ok := scanner.next()
+			if !ok {
+				break
+			}
 			if index == 0 && tk.typ != daTAt {
 				break
 			}
