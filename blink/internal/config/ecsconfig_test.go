@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"blink/internal/lexer"
+	"blink/internal/tokens"
 )
 
 // esc doubles backslashes so an FQCN can be embedded in a JSON string literal.
@@ -250,5 +253,25 @@ func TestLoadECSCountsDistinctClasses(t *testing.T) {
 	}
 	if len(c.Rules) != 2 {
 		t.Fatalf("expected 2 distinct rules, got %d", len(c.Rules))
+	}
+}
+
+// A fixer whose options depend on key order gets the config as dumped.
+func TestLoadECSKeepsConfigKeyOrder(t *testing.T) {
+	for _, c := range []struct{ replacements, want string }{
+		{`{"foo-bar": "qux", "foo": "baz"}`, "@qux"},
+		{`{"foo": "baz", "foo-bar": "qux"}`, "@baz-bar"},
+	} {
+		cfg, _, err := LoadECS(writeECS(t, `{
+			"rules": [{"class": "`+esc(`PhpCsFixer\Fixer\Phpdoc\GeneralPhpdocTagRenameFixer`)+`", "config": {"replacements": `+c.replacements+`}}]
+		}`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := tokens.New(lexer.Lex("<?php\n/** @foo-bar */\nfunction f() {}"))
+		cfg.Rules[0].Fix(s)
+		if want := "<?php\n/** " + c.want + " */\nfunction f() {}"; s.Render() != want {
+			t.Fatalf("replacements %s: got %q, want %q", c.replacements, s.Render(), want)
+		}
 	}
 }
