@@ -146,6 +146,13 @@ func CommonFixers() []fixer.Fixer {
 		EregToPreg{},
 		ModernizeStrpos{},
 		BacktickToShellExec{},
+		MbStrFunctions{},
+		RandomApiMigration{},
+		StrictComparison{},
+		StrictParam{},
+		OctalNotation{},
+		NumericLiteralSeparator{},
+		AttributeEmptyParentheses{},
 	}
 }
 
@@ -277,6 +284,7 @@ func StructuralFixers() []fixer.Fixer {
 		SelfStaticAccessor{},
 		ClassAttributesSeparation{},
 		BlankLinesBeforeNamespace{},
+		NoBlankLinesBeforeNamespace{},
 		SingleBlankLineBeforeNamespace{},
 		BlankLineAfterNamespace{},
 		NoUnusedImports{},
