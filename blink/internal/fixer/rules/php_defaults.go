@@ -26,6 +26,9 @@ const phpDefaultsJSON = `{
 	"PhpCsFixer\\Fixer\\ControlStructure\\YodaStyleFixer": {
 		"equal": true, "identical": true, "less_and_greater": null
 	},
+	"PhpCsFixer\\Fixer\\FunctionNotation\\FopenFlagsFixer": {
+		"b_mode": true
+	},
 	"PhpCsFixer\\Fixer\\FunctionNotation\\FunctionDeclarationFixer": {
 		"trailing_comma_single_line": false
 	},
