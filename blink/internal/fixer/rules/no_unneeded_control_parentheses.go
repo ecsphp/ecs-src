@@ -128,7 +128,8 @@ func (f NoUnneededControlParentheses) Fix(s *tokens.Stream) bool {
 
 // unwrapClone removes the pairs wrapping the operand of the clone at index i, like
 // PHP-CS-Fixer's isWrappedCloneArgument: only where the clone stands alone in its
-// statement or sequence element, and only around a plain operand. The parentheses
+// statement or sequence element, or around a plain variable after "?", and only around a
+// plain operand. The parentheses
 // around anything else are needed: "clone ($a ?: $b)" clones the result of the
 // ternary while "clone $a ?: $b" does not, and "clone ($a, [...])" and "clone(...)"
 // are a call.
@@ -145,23 +146,24 @@ func unwrapClone(s *tokens.Stream, i int) bool {
 		}
 		before := prevMeaningfulIndex(s, i)
 		after := nextMeaningfulIndex(s, closing)
-		if before < 0 || after < 0 || !cloneStandsAlone(s, before, after) || cloneOperandHasOperation(s, open, closing) {
+		if before < 0 || after < 0 || !cloneStandsAlone(s, open, closing, before, after) || cloneOperandHasOperation(s, open, closing) {
 			return changed
 		}
-		removeParenthesis(s, closing, csbIsPunct(s.At(after), ":"))
+		removeParenthesis(s, closing, needsSpaceAfterClone(s.At(after)))
 		removeParenthesis(s, open, true)
 		changed = true
 	}
 }
 
-func cloneStandsAlone(s *tokens.Stream, before, after int) bool {
+func cloneStandsAlone(s *tokens.Stream, open, closing, before, after int) bool {
 	b, a := s.At(before), s.At(after)
 	switch {
 	case csbIsPunct(b, "?"):
-		// Only before ":". Anything else can then apply to another expression, where
-		// PHP-CS-Fixer unwraps anyway: "clone ($o->b)()" would call a method, and
-		// "clone (new Foo)->bar" and "clone (enum) and $b" become parse errors.
-		return csbIsPunct(a, ":")
+		// Only before ":" or around a plain variable. Anything else can then apply to
+		// another expression, where PHP-CS-Fixer unwraps anyway: "clone ($o->b)()" would
+		// call a method, and "clone (new Foo)->bar" and "clone (enum) and $b" become
+		// parse errors.
+		return csbIsPunct(a, ":") || cloneOperandIsVariable(s, open, closing)
 	case csbIsPunct(b, "=") && endsStatement(a):
 		return true
 	case isCloneStatementStart(s, before) && endsStatement(a):
@@ -174,6 +176,30 @@ func cloneStandsAlone(s *tokens.Stream, before, after int) bool {
 		return true
 	}
 	return isSequenceElement(b, a)
+}
+
+// cloneOperandIsVariable reports "($a)" or "(($a))" for the pair at open..closing.
+func cloneOperandIsVariable(s *tokens.Stream, open, closing int) bool {
+	i := nextMeaningfulIndex(s, open)
+	for csbIsPunct(s.At(i), "(") {
+		i = nextMeaningfulIndex(s, i)
+	}
+	if s.At(i).Kind != token.Variable {
+		return false
+	}
+	for i = nextMeaningfulIndex(s, i); i != closing; i = nextMeaningfulIndex(s, i) {
+		if !csbIsPunct(s.At(i), ")") {
+			return false
+		}
+	}
+	return true
+}
+
+func needsSpaceAfterClone(after token.Token) bool {
+	if endsStatement(after) {
+		return false
+	}
+	return after.Kind != token.Punct || !slices.Contains([]string{",", ")", "]", "}", "->", "?->", "["}, after.Value)
 }
 
 func endsStatement(t token.Token) bool {
