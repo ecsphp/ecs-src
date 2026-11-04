@@ -1,10 +1,11 @@
-# Easy Coding Standard – Development Repository
+# Easy Coding Standard - Development Repository
 
-Development repository of [Symplify EasyCodingStandard (ECS)](https://github.com/easy-coding-standard/ecs). Code here is scoped, downgraded and deployed to the [easy-coding-standard/ecs](https://github.com/easy-coding-standard/ecs) repository that `composer require symplify/easy-coding-standard` installs.
+Source for [Symplify EasyCodingStandard (ECS)](https://github.com/easy-coding-standard/ecs). Code here is scoped, downgraded and deployed to [easy-coding-standard/ecs](https://github.com/easy-coding-standard/ecs), the package `composer require symplify/easy-coding-standard` installs.
 
-User documentation lives in [`build/target-repository/README.md`](build/target-repository/README.md).
+- **Using ECS?** See the [user documentation](build/target-repository/README.md).
+- **Contributing?** Read on.
 
-PHP `>=8.4` required.
+Requires PHP `>=8.4`.
 
 ```bash
 composer install
