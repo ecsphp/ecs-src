@@ -15,6 +15,29 @@ type importStmt struct {
 	pathKey     string // lowercased imported path + "as" alias, for alphabetical ordering
 }
 
+// importNamespaceText is PHP-CS-Fixer's prepareNamespace(): the use statement
+// after an optional "function"/"const", with "/* ... */" removed (greedily, as
+// its regex does) and trimmed.
+func importNamespaceText(s *tokens.Stream, useIdx, semi int) string {
+	j := skipWhitespace(s, useIdx+1)
+	if j < s.Len() && s.At(j).Kind == token.Keyword {
+		if lw := strings.ToLower(s.At(j).Value); lw == "function" || lw == "const" {
+			j = skipWhitespace(s, j+1)
+		}
+	}
+	var b strings.Builder
+	for k := j; k < semi; k++ {
+		b.WriteString(s.At(k).Value)
+	}
+	text := b.String()
+	if open := strings.Index(text, "/*"); open >= 0 {
+		if end := strings.LastIndex(text, "*/"); end >= open+2 {
+			text = text[:open] + text[end+2:]
+		}
+	}
+	return strings.Trim(text, " \t\n\r\x00\v")
+}
+
 // importSortKey returns the alphabetical sort key of a use statement (after an
 // optional "function"/"const"): the imported path plus any "as <alias>" suffix,
 // matching PHP-CS-Fixer's namespace key. PHP maps both "\" and whitespace to a
@@ -23,27 +46,17 @@ type importStmt struct {
 // "Rector\Php71\Y", and "Foo\Bar as Baz" before "Foo\Bar\Qux"). lower controls
 // case folding (off for sort_algorithm with case_sensitive: true).
 func importSortKey(s *tokens.Stream, useIdx, semi int, lower bool) string {
-	j := skipWhitespace(s, useIdx+1)
-	if j < s.Len() && s.At(j).Kind == token.Keyword {
-		if lw := strings.ToLower(s.At(j).Value); lw == "function" || lw == "const" {
-			j = skipWhitespace(s, j+1)
-		}
+	text := importNamespaceText(s, useIdx, semi)
+	if lower {
+		text = strings.ToLower(text)
 	}
-	const sep = "\x00"
-	var b strings.Builder
-	for k := j; k < semi; k++ {
-		t := s.At(k)
-		if t.Kind == token.Whitespace {
-			b.WriteString(sep)
-			continue
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '\\', ' ', '\t', '\n', '\r', '\v', '\f':
+			return 0
 		}
-		v := t.Value
-		if lower {
-			v = strings.ToLower(v)
-		}
-		b.WriteString(strings.ReplaceAll(v, `\`, sep))
-	}
-	return strings.TrimRight(b.String(), sep)
+		return r
+	}, text)
 }
 
 // importKindRank orders use statements by kind for ECS's default imports_order
@@ -287,36 +300,13 @@ func (f OrderedImports) orderedImportsAlphaKey(s *tokens.Stream, st importStmt) 
 }
 
 // orderedImportsLen returns the length used by the (deprecated) length algorithm:
-// the imported path plus a "function "/"const " prefix for non-class imports.
+// the import with its alias, plus a "function "/"const " prefix for non-class imports.
 func (f OrderedImports) orderedImportsLen(s *tokens.Stream, st importStmt) int {
-	n := len(orderedImportsPath(s, st.start, st.semi))
+	n := len(importNamespaceText(s, st.start, st.semi))
 	if st.kind != "class" {
 		n += len(st.kind) + 1
 	}
 	return n
-}
-
-// orderedImportsPath returns the imported path (case preserved) after an optional
-// "function"/"const", up to ";" or " as ".
-func orderedImportsPath(s *tokens.Stream, useIdx, semi int) string {
-	j := skipWhitespace(s, useIdx+1)
-	if j < s.Len() && s.At(j).Kind == token.Keyword {
-		if lw := strings.ToLower(s.At(j).Value); lw == "function" || lw == "const" {
-			j = skipWhitespace(s, j+1)
-		}
-	}
-	var b strings.Builder
-	for k := j; k < semi; k++ {
-		t := s.At(k)
-		if t.Kind == token.Keyword && strings.ToLower(t.Value) == "as" {
-			break
-		}
-		if t.Kind == token.Whitespace {
-			continue
-		}
-		b.WriteString(t.Value)
-	}
-	return b.String()
 }
 
 func tokensEqual(a, b []token.Token) bool {
