@@ -24,6 +24,12 @@ func TestUnaryOperatorSpacesMatchesPHPCSFixer(t *testing.T) {
 			"<?php\n$m = & $n;\n$k = $o ++;\n$p = -- $q;\n$s = $t\n    ++;\n",
 			"<?php\n$m = & $n;\n$k = $o++;\n$p = --$q;\n$s = $t++;\n",
 		},
+		{
+			"after strings and heredocs",
+			UnaryOperatorSpaces{Full: true},
+			"<?php\n$a = \"x $y\" - 1;\n$b = `ls $y` & $c;\n$c = <<<EOT\nx $y\nEOT\n- 1;\n$d = <<<EOT\nx\nEOT\n- 1;\n$e = 'x' - 1;\n$f = b\"x {$y}\" + 1;\n$g = f(- 1, ! $x, ... $z);\n",
+			"<?php\n$a = \"x $y\" - 1;\n$b = `ls $y` & $c;\n$c = <<<EOT\nx $y\nEOT\n-1;\n$d = <<<EOT\nx\nEOT\n-1;\n$e = 'x' - 1;\n$f = b\"x {$y}\" + 1;\n$g = f(-1, !$x, ...$z);\n",
+		},
 	}
 	for _, c := range cases {
 		if got, _ := apply(t, c.rule, c.in); got != c.want {

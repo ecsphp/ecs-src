@@ -196,8 +196,7 @@ func (f NullableTypeDeclarationForDefaultNullValue) WithConfig(config map[string
 }
 
 // ntdDNFGroupOpen returns the "(" of the disjunctive-normal-form group "(A&B)"
-// closed by the ")" at closeIdx, or -1 when that ")" closes anything else (an
-// asymmetric visibility "private(set)" holds no intersection).
+// closed by the ")" at closeIdx, or -1 when that ")" closes anything else.
 func ntdDNFGroupOpen(s *tokens.Stream, closeIdx int) int {
 	open := s.MatchBackward(closeIdx)
 	if open < 0 {
