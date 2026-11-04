@@ -138,9 +138,9 @@ func (f YodaStyle) candidate(t token.Token) (bool, bool) {
 }
 
 func (f YodaStyle) Fix(s *tokens.Stream) bool {
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	f.fixTokens(s)
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 // fixTokens is YodaStyleFixer::fixTokens: comparisons right to left; after a

@@ -75,7 +75,7 @@ func (f NoBreakComment) Fix(s *tokens.Stream) bool {
 	}
 
 	m := newNoBreakCommentMatcher(f.CommentText)
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	for i := s.Len() - 1; i >= 0; i-- {
 		t := s.At(i)
 		if kwIs(t, "default") {
@@ -92,7 +92,7 @@ func (f NoBreakComment) Fix(s *tokens.Stream) bool {
 		}
 		fixNoBreakCase(s, colon, m)
 	}
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 func fixNoBreakCase(s *tokens.Stream, casePosition int, m noBreakCommentMatcher) {

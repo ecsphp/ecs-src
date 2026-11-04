@@ -34,7 +34,7 @@ func (NoPhp4Constructor) Fix(s *tokens.Stream) bool {
 	if len(classes) == 0 {
 		return false
 	}
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	numClasses := len(classes)
 	for i := 0; i < numClasses; i++ {
 		index := classes[i]
@@ -79,7 +79,7 @@ func (NoPhp4Constructor) Fix(s *tokens.Stream) bool {
 		np4FixParent(s, classStart, classEnd)
 	}
 	s.ClearEmptyTokens()
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 // np4PrevNamespace mirrors getPrevTokenOfKind($index, [[T_NAMESPACE,

@@ -29,7 +29,7 @@ var superGlobalNames = map[string]bool{
 }
 
 func (LambdaNotUsedImport) Fix(s *tokens.Stream) bool {
-	before := s.Render()
+	version, before := s.Version(), s.Render()
 	for i := s.Len() - 4; i > 0; i-- {
 		useIdx := lambdaUseIndex(s, i)
 		if useIdx >= 0 {
@@ -37,7 +37,7 @@ func (LambdaNotUsedImport) Fix(s *tokens.Stream) bool {
 		}
 	}
 	s.ClearEmptyTokens()
-	return s.Render() != before
+	return s.Version() != version && s.Render() != before
 }
 
 // lambdaUseIndex returns the "use" keyword index of the closure declared at

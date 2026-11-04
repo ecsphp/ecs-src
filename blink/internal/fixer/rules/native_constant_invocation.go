@@ -108,7 +108,7 @@ func (f NativeConstantInvocation) Fix(s *tokens.Stream) bool {
 	if !hasString {
 		return false
 	}
-	sc := newSymScan(s)
+	sc := sharedSymScan(s)
 	sensitive, insensitive := f.sensitive, f.insensitive
 	if sensitive == nil {
 		if f.Include == nil && f.Exclude == nil && !f.NoBuiltIn {

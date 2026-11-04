@@ -51,6 +51,15 @@ type useDecl struct {
 	end       int // the ";" (or close tag) ending the statement
 }
 
+// symScanKey is sharedSymScan's key for Stream.Memo.
+type symScanKey struct{}
+
+// sharedSymScan returns the symScan of s, shared by the rules that run while
+// the tokens stay the same.
+func sharedSymScan(s *tokens.Stream) *symScan {
+	return s.Memo(symScanKey{}, func() any { return newSymScan(s) }).(*symScan)
+}
+
 func newSymScan(s *tokens.Stream) *symScan {
 	n := s.Len()
 	sc := &symScan{s: s, n: n, match: make([]int, n), tstr: make([]bool, n), inClassBody: make([]bool, n), importKW: make([]bool, n), namedArgKW: make([]bool, n)}
