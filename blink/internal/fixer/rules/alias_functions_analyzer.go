@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/lexer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -45,6 +46,14 @@ func aliasPrevMeaningful(s *tokens.Stream, i int) int {
 	return -1
 }
 
+// aliasMeaningfulSibling is Tokens::getMeaningfulTokenSibling.
+func aliasMeaningfulSibling(s *tokens.Stream, i, dir int) int {
+	if dir < 0 {
+		return aliasPrevMeaningful(s, i)
+	}
+	return aliasNextMeaningful(s, i)
+}
+
 func aliasIsKeyword(s *tokens.Stream, i int, name string) bool {
 	return i >= 0 && i < s.Len() && kwIs(s.At(i), name)
 }
@@ -59,6 +68,12 @@ func aliasIsNamespaceOperator(s *tokens.Stream, i int) bool {
 // "<?"), not the T_OPEN_TAG_WITH_ECHO "<?=".
 func aliasIsOpenTag(s *tokens.Stream, i int) bool {
 	return i >= 0 && i < s.Len() && s.At(i).Kind == token.OpenTag && s.At(i).Value != "<?="
+}
+
+// aliasIsVariable reports a T_VARIABLE ("$name"), not the lone "$" of a
+// variable variable.
+func aliasIsVariable(s *tokens.Stream, i int) bool {
+	return i >= 0 && i < s.Len() && s.At(i).Kind == token.Variable && s.At(i).Value != "$"
 }
 
 // aliasPhpMagicConstants are the magic constants PHP lexes as their own token
@@ -113,6 +128,38 @@ func aliasHasInterpolation(body string) bool {
 
 func isPHPLabelStart(c byte) bool {
 	return c == '_' || c >= 0x80 || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+// aliasCastTypes are the words PHP's lexer turns "(word)" into a cast token for.
+var aliasCastTypes = map[string]bool{
+	"int": true, "integer": true, "bool": true, "boolean": true, "float": true,
+	"double": true, "real": true, "string": true, "binary": true, "array": true,
+	"object": true, "unset": true, "void": true,
+}
+
+// aliasCastAt reports whether the "(" at open starts a cast the way PHP's lexer
+// sees one ("(" [ \t]* type [ \t]* ")"), returning the closing ")" index and
+// the lowercased type word.
+func aliasCastAt(s *tokens.Stream, open int) (closeIdx int, typ string, ok bool) {
+	if !isPunctVal(s, open, "(") {
+		return 0, "", false
+	}
+	j := open + 1
+	if j < s.Len() && s.At(j).Kind == token.Whitespace && strings.Trim(s.At(j).Value, " \t") == "" {
+		j++
+	}
+	if j >= s.Len() || (s.At(j).Kind != token.Ident && s.At(j).Kind != token.Keyword) || !aliasCastTypes[strings.ToLower(s.At(j).Value)] {
+		return 0, "", false
+	}
+	typ = strings.ToLower(s.At(j).Value)
+	j++
+	if j < s.Len() && s.At(j).Kind == token.Whitespace && strings.Trim(s.At(j).Value, " \t") == "" {
+		j++
+	}
+	if !isPunctVal(s, j, ")") {
+		return 0, "", false
+	}
+	return j, typ, true
 }
 
 // aliasIsEllipsis reports whether the "..." at i is a spread/variadic
@@ -575,3 +622,14 @@ func aliasFunctionImports(s *tokens.Stream) []aliasFunctionImport {
 	}
 	return out
 }
+
+// aliasRelex re-tokenizes the stream from its rendered source, so the fixers
+// below can edit PHP-CS-Fixer style (cleared placeholders, inserted tokens) and
+// still hand later fixers a canonical stream.
+func aliasRelex(s *tokens.Stream) {
+	s.ReplaceRange(0, s.Len()-1, lexer.Lex(s.Render()))
+}
+
+func aliasPunct(v string) token.Token { return token.Token{Kind: token.Punct, Value: v} }
+
+func aliasSpace() token.Token { return token.Token{Kind: token.Whitespace, Value: " "} }

@@ -49,4 +49,5 @@ ControlStructureBraces, NoAlternativeSyntax, NoUnneededBraces
 CombineNestedDirname, ImplodeCall, NoUselessSprintf, ModernizeTypesCasting,
 FopenFlagOrder, SimpleToComplexStringVariable, StringLineEnding,
 NonPrintableCharacter, NoHomoglyphNames, StringLengthToEmpty,
-ModernSerializationMethods.
+ModernSerializationMethods, ArrayPush, SetTypeToCast, PowToExponentiation,
+EregToPreg, ModernizeStrpos, BacktickToShellExec.
