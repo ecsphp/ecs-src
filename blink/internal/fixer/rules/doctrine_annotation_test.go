@@ -43,8 +43,8 @@ func TestDoctrineAnnotationSpacesNoOp(t *testing.T) {
 		"<?php\n/**\n * @param string $x\n * @return int\n */\nfunction f($x) {}",
 		// lowercase tag with parens is left alone
 		`<?php /** @see method() */ class C {}`,
-		// a multi-line annotation is skipped (safe under-fire)
-		"<?php\n/**\n * @Multi(\n *     a = 1\n * )\n */\nclass C {}",
+		// a gap holding a newline just inside the parentheses is kept
+		"<?php\n/**\n * @Multi(\n *     a=1\n * )\n */\nclass C {}",
 	}
 	for _, src := range noop {
 		if got, changed := apply(t, DoctrineAnnotationSpaces{}, src); changed || got != src {

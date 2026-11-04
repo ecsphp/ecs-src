@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -10,10 +11,12 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Whitespace/BlankLineBeforeStatementFixer.php
 //
 // BlankLineBeforeStatement puts an empty line before each configured statement.
-// It mirrors the default set: break, continue, declare, return, throw, try. A
-// statement that opens its block (preceded by "{" or ":") keeps no blank line;
+// A statement that opens its block (preceded by "{" or ":") keeps no blank line;
 // an attached comment above the statement is hoisted with it.
-type BlankLineBeforeStatement struct{}
+type BlankLineBeforeStatement struct {
+	// Statements is the configured statements option; nil keeps the default.
+	Statements []string
+}
 
 func (BlankLineBeforeStatement) Name() string {
 	return `PhpCsFixer\Fixer\Whitespace\BlankLineBeforeStatementFixer`
@@ -23,16 +26,73 @@ func (BlankLineBeforeStatement) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Whitespace/BlankLineBeforeStatementFixer.php"
 }
 
-var blankLineBeforeStatementKeywords = map[string]bool{
-	"break": true, "continue": true, "declare": true,
-	"return": true, "throw": true, "try": true,
+// blankLineBeforeStatementDefaults is the upstream default of the statements option.
+var blankLineBeforeStatementDefaults = []string{"break", "continue", "declare", "return", "throw", "try"}
+
+func (f BlankLineBeforeStatement) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["statements"]; ok {
+		if list, ok := arrayNotationStringList(v); ok {
+			f.Statements = append([]string{}, list...)
+		}
+	}
+	return f
 }
 
-func (BlankLineBeforeStatement) Fix(s *tokens.Stream) bool {
+// blbsStatement names the statements option entry the token at i belongs to
+// (TOKEN_MAP of the upstream fixer), or "" when it is none of them.
+func blbsStatement(s *tokens.Stream, i int) string {
+	t := s.At(i)
+	switch t.Kind {
+	case token.DocComment:
+		return "phpdoc"
+	case token.Ident:
+		// exit and die are both T_EXIT; blink lexes them as identifiers
+		if lower := strings.ToLower(t.Value); lower == "exit" || lower == "die" {
+			if !isMemberAccessPrev(s, i) {
+				return "exit"
+			}
+		}
+		return ""
+	case token.Keyword:
+	default:
+		return ""
+	}
+	lower := strings.ToLower(t.Value)
+	switch lower {
+	case "break", "case", "continue", "declare", "default", "do", "for", "foreach",
+		"goto", "if", "include", "include_once", "require", "require_once", "return",
+		"switch", "throw", "try", "while":
+		return lower
+	case "yield":
+		return "yield"
+	}
+	// the lexer emits "yield from" (whitespace and comments included) as one
+	// token, like PHP's T_YIELD_FROM
+	if strings.HasPrefix(lower, "yield") && strings.HasSuffix(lower, "from") {
+		return "yield_from"
+	}
+	return ""
+}
+
+func (f BlankLineBeforeStatement) Fix(s *tokens.Stream) bool {
+	statements := f.Statements
+	if statements == nil {
+		statements = blankLineBeforeStatementDefaults
+	}
+	enabled := buildStringSet(statements)
+	if len(enabled) == 0 {
+		return false
+	}
 	changed := false
 	for i := s.Len() - 1; i > 0; i-- {
-		t := s.At(i)
-		if t.Kind != token.Keyword || !blankLineBeforeStatementKeywords[strings.ToLower(t.Value)] {
+		stmt := blbsStatement(s, i)
+		if stmt == "" || !enabled[stmt] {
+			continue
+		}
+		if stmt == "while" && isWhilePartOfDoWhile(s, i) {
+			continue
+		}
+		if stmt == "case" && isEnumCase(s, i, true) {
 			continue
 		}
 		insertIdx := blbsInsertIndex(s, i)
@@ -48,6 +108,21 @@ func (BlankLineBeforeStatement) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+// isWhilePartOfDoWhile mirrors TokensAnalyzer::isWhilePartOfDoWhile: the
+// "while" at i follows a "}" that closes a "do" block.
+func isWhilePartOfDoWhile(s *tokens.Stream, i int) bool {
+	end := sigPrev(s, i)
+	if end < 0 || s.At(end).Kind != token.Punct || s.At(end).Value != "}" {
+		return false
+	}
+	start := s.MatchBackward(end)
+	if start < 0 {
+		return false
+	}
+	before := sigPrev(s, start)
+	return before >= 0 && s.At(before).Kind == token.Keyword && strings.EqualFold(s.At(before).Value, "do")
 }
 
 // prevNonWhitespaceIdx returns the previous token that is not whitespace

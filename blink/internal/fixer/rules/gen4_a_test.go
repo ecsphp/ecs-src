@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"blink/internal/fixer"
+	"blink/internal/token"
+	"blink/internal/tokens"
 )
 
 func TestGen4ASingleLineCommentStyle(t *testing.T) {
@@ -40,9 +42,21 @@ func TestGen4ASingleLineCommentStyle(t *testing.T) {
 		t.Fatalf("attribute must not be touched: got=%q", got)
 	}
 
-	// DANGEROUS: a multi-line /* */ block is left alone
-	if got, changed := apply(t, f, "<?php\n/*\n * foo\n */\n$a = 1;"); changed {
-		t.Fatalf("multi-line block comment must not change: got=%q", got)
+	// a block whose text sits on one line is converted even when it spans
+	// several lines; one with text on two lines is left alone ("\r" alone counts
+	// as a line break)
+	assertFix(t, f,
+		"<?php\n/* multi\n */\n$a = 1;\n    /*\n     * x\n     */\n    $b = 1;\n/* a\n b */\n/*\n * a\n * b\n */\n/**\n*/\n/* a\r b */\n/*\n\n*/\n/*  ** x *\n\n */\n$c = 1;\n",
+		"<?php\n// multi\n$a = 1;\n    // x\n    $b = 1;\n/* a\n b */\n/*\n * a\n * b\n */\n/**\n*/\n/* a\r b */\n//\n// x\n$c = 1;\n", true)
+
+	// "/***/" is a plain comment (T_COMMENT) holding only stars: it becomes "//"
+	starsOnly := tokens.New([]token.Token{
+		{Kind: token.OpenTag, Value: "<?php\n"},
+		{Kind: token.Comment, Value: "/***/"},
+		{Kind: token.Whitespace, Value: "\n"},
+	})
+	if !f.Fix(starsOnly) || starsOnly.Render() != "<?php\n//\n" {
+		t.Fatalf("stars-only comment: got=%q", starsOnly.Render())
 	}
 
 	// a single-line doc comment (/** */) is not a plain comment, left alone

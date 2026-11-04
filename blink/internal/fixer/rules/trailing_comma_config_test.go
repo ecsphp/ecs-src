@@ -17,6 +17,7 @@ func TestTrailingCommaConfigCases(t *testing.T) {
 		{"multiline parameters", TrailingCommaInMultiline{}.WithConfig(map[string]any{"elements": []any{"parameters"}}).(fixerRule), "<?php function f(\n    $a,\n    $b\n) {}", "<?php function f(\n    $a,\n    $b,\n) {}"},
 		{"multiline long array", TrailingCommaInMultiline{}.WithConfig(map[string]any{"elements": []any{"arrays"}}).(fixerRule), "<?php $a = array(\n    1\n);", "<?php $a = array(\n    1,\n);"},
 		{"multiline heredoc skipped", TrailingCommaInMultiline{}.WithConfig(map[string]any{"after_heredoc": false}).(fixerRule), "<?php $a = [\n    <<<EOT\nx\nEOT\n];", "<?php $a = [\n    <<<EOT\nx\nEOT\n];"},
+		{"multiline heredoc skipped by default", TrailingCommaInMultiline{}.WithConfig(map[string]any{"elements": []any{"arguments"}}).(fixerRule), "<?php foo(\n    $a,\n    <<<EOT\nx\nEOT\n);", "<?php foo(\n    $a,\n    <<<EOT\nx\nEOT\n);"},
 		{"multiline heredoc fixed", TrailingCommaInMultiline{}.WithConfig(map[string]any{"after_heredoc": true}).(fixerRule), "<?php $a = [\n    <<<EOT\nx\nEOT\n];", "<?php $a = [\n    <<<EOT\nx\nEOT,\n];"},
 		{"single default", NoTrailingCommaInSingleline{}, "<?php foo($a, ); $b = [1,];", "<?php foo($a ); $b = [1];"},
 		{"single arguments only", NoTrailingCommaInSingleline{}.WithConfig(map[string]any{"elements": []any{"arguments"}}).(fixerRule), "<?php foo($a, ); $b = [1,];", "<?php foo($a); $b = [1,];"},

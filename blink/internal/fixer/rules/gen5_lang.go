@@ -3,6 +3,7 @@ package rules
 import (
 	"strings"
 
+	"blink/internal/fixer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -100,11 +101,12 @@ var loopBodyKeywords = map[string]bool{
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/EmptyLoopBodyFixer.php
 //
-// EmptyLoopBody rewrites an empty braced loop body to a semicolon, matching the
-// upstream default style "semicolon" ("while ($x) {}" -> "while ($x);"). A
-// do-while is naturally excluded (its "while (...)" is followed by ";", not
-// "{"), and a body holding a comment is kept.
-type EmptyLoopBody struct{}
+// EmptyLoopBody rewrites an empty loop body in the style option: "semicolon"
+// (the default) turns "while ($x) {}" into "while ($x);", "braces" does the
+// reverse. A body holding a comment and the "while" of a do-while are kept.
+type EmptyLoopBody struct {
+	Style string
+}
 
 func (EmptyLoopBody) Name() string {
 	return `PhpCsFixer\Fixer\ControlStructure\EmptyLoopBodyFixer`
@@ -114,7 +116,15 @@ func (EmptyLoopBody) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/EmptyLoopBodyFixer.php"
 }
 
-func (EmptyLoopBody) Fix(s *tokens.Stream) bool {
+func (f EmptyLoopBody) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["style"].(string); ok {
+		f.Style = v
+	}
+	return f
+}
+
+func (f EmptyLoopBody) Fix(s *tokens.Stream) bool {
+	braces := f.Style == "braces"
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
@@ -132,6 +142,19 @@ func (EmptyLoopBody) Fix(s *tokens.Stream) bool {
 		if closeParen < 0 {
 			continue
 		}
+		if braces {
+			if strings.EqualFold(t.Value, "while") && isWhilePartOfDoWhile(s, i) {
+				continue
+			}
+			semicolon := sigNext(s, closeParen)
+			if semicolon < 0 || s.At(semicolon).Kind != token.Punct || s.At(semicolon).Value != ";" {
+				continue
+			}
+			s.SetValue(semicolon, "{")
+			s.InsertAt(semicolon+1, token.Token{Kind: token.Punct, Value: "}"})
+			changed = true
+			continue
+		}
 		braceOpen := sigNext(s, closeParen)
 		if braceOpen < 0 || s.At(braceOpen).Kind != token.Punct || s.At(braceOpen).Value != "{" {
 			continue
@@ -142,10 +165,15 @@ func (EmptyLoopBody) Fix(s *tokens.Stream) bool {
 		if braceClose < 0 || s.At(braceClose).Kind != token.Punct || s.At(braceClose).Value != "}" {
 			continue
 		}
-		// Replace "{" with ";" and drop the "}" plus the whitespace-only interior,
-		// so "{ }" collapses cleanly to ";".
+		// Replace "{" with ";" and clear the "}" merging the whitespace around it
+		// (clearTokenAndMergeSurroundingWhitespace): "{\n}\n" becomes ";\n\n".
 		s.SetValue(braceOpen, ";")
-		s.ReplaceRange(braceOpen+1, braceClose, nil)
+		if next := braceClose + 1; braceClose > braceOpen+1 && next < s.Len() && s.At(next).Kind == token.Whitespace {
+			s.SetValue(braceClose-1, s.At(braceClose-1).Value+s.At(next).Value)
+			s.ReplaceRange(braceClose, next, nil)
+		} else {
+			s.RemoveAt(braceClose)
+		}
 		changed = true
 	}
 	return changed

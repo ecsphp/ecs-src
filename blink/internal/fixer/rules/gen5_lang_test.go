@@ -53,8 +53,10 @@ func TestGen5LangEmptyLoopBody(t *testing.T) {
 		{`<?php while ($x){}`, `<?php while ($x);`, true},
 		{`<?php for ($i=0;$i<3;$i++){}`, `<?php for ($i=0;$i<3;$i++);`, true},
 		{`<?php foreach ($a as $b){}`, `<?php foreach ($a as $b);`, true},
-		// whitespace-only body still counts as empty
-		{`<?php while ($x){ }`, `<?php while ($x);`, true},
+		// whitespace-only body still counts as empty; its whitespace stays when
+		// nothing follows the "}" to merge it with (clearTokenAndMergeSurroundingWhitespace)
+		{`<?php while ($x){ }`, `<?php while ($x); `, true},
+		{"<?php while ($x){\n}\n$y = 1;", "<?php while ($x);\n\n$y = 1;", true},
 
 		// non-empty body: untouched
 		{`<?php while ($x){ f(); }`, `<?php while ($x){ f(); }`, false},

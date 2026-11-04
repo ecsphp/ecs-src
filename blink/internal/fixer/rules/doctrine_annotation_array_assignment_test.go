@@ -27,3 +27,23 @@ func TestDoctrineAnnotationArrayAssignment(t *testing.T) {
 		t.Fatal("non-class docblock must be skipped")
 	}
 }
+
+func TestDoctrineAnnotationArrayAssignmentConfig(t *testing.T) {
+	t.Parallel()
+	const in = "<?php\n/**\n * @Foo({bar = \"baz\", qux : 1}, x = 2)\n */\nclass Bar {}\n"
+	cases := []struct {
+		name   string
+		config map[string]any
+		want   string
+	}{
+		{"default (empty config)", map[string]any{}, "<?php\n/**\n * @Foo({bar = \"baz\", qux = 1}, x = 2)\n */\nclass Bar {}\n"},
+		{"colon", map[string]any{"operator": ":"}, "<?php\n/**\n * @Foo({bar : \"baz\", qux : 1}, x = 2)\n */\nclass Bar {}\n"},
+		{"ignored tag", map[string]any{"operator": ":", "ignored_tags": []any{"Foo"}}, in},
+	}
+	for _, c := range cases {
+		f := DoctrineAnnotationArrayAssignment{}.WithConfig(c.config).(fixerRule)
+		if got, _ := apply(t, f, in); got != c.want {
+			t.Errorf("%s: got=%q want=%q", c.name, got, c.want)
+		}
+	}
+}

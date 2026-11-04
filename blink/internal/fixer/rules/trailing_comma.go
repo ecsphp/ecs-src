@@ -72,10 +72,11 @@ func trailingCommaCategory(s *tokens.Stream, open int) string {
 // TrailingCommaInMultiline adds a trailing comma to the last element of a
 // multi-line array literal (the fixer default: elements = ['arrays']). When
 // Elements is set (elements option), the listed constructs are fixed instead.
-// SkipAfterHeredoc (after_heredoc=false) leaves a heredoc end without a comma.
+// AfterHeredoc (after_heredoc, off by default) also puts a comma after a
+// heredoc end.
 type TrailingCommaInMultiline struct {
-	Elements         []string
-	SkipAfterHeredoc bool
+	Elements     []string
+	AfterHeredoc bool
 }
 
 func (TrailingCommaInMultiline) Name() string {
@@ -88,7 +89,7 @@ func (TrailingCommaInMultiline) SourceURL() string {
 
 func (f TrailingCommaInMultiline) WithConfig(config map[string]any) fixer.Fixer {
 	if v, ok := config["after_heredoc"].(bool); ok {
-		f.SkipAfterHeredoc = !v
+		f.AfterHeredoc = v
 	}
 	if v, ok := config["elements"]; ok {
 		if list, ok := arrayNotationStringList(v); ok {
@@ -146,7 +147,7 @@ func (f TrailingCommaInMultiline) Fix(s *tokens.Stream) bool {
 		if s.At(p).Value == "," || s.At(p).Value == "..." {
 			continue // already trailing, or a spread (no trailing comma after it)
 		}
-		if f.SkipAfterHeredoc && arrayNotationIsHeredoc(s.At(p)) {
+		if !f.AfterHeredoc && arrayNotationIsHeredoc(s.At(p)) {
 			continue
 		}
 		// multi-line only: a newline sits between the last element and the close

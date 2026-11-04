@@ -474,16 +474,8 @@ func daEnclosingClassBrace(s *tokens.Stream, idx int) int {
 }
 
 // applyToDoctrineAnnotations runs fn over each eligible docblock's parsed
-// annotation tokens, replacing the docblock when fn mutates them.
-func applyToDoctrineAnnotations(s *tokens.Stream, fn func(toks []daToken) bool) bool {
-	return applyToDoctrineAnnotationsWith(s, doctrineIgnoredTags, func(toks []daToken) ([]daToken, bool) {
-		return toks, fn(toks)
-	})
-}
-
-// applyToDoctrineAnnotationsWith is applyToDoctrineAnnotations with the
-// ignored_tags option; fn returns the tokens to render, so it may insert some.
-func applyToDoctrineAnnotationsWith(s *tokens.Stream, ignoredTags map[string]bool, fn func(toks []daToken) ([]daToken, bool)) bool {
+// annotation tokens, then writes the docblock back from the tokens fn returns.
+func applyToDoctrineAnnotations(s *tokens.Stream, ignoredTags map[string]bool, fn func(toks []daToken) []daToken) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.DocComment {
@@ -492,10 +484,10 @@ func applyToDoctrineAnnotationsWith(s *tokens.Stream, ignoredTags map[string]boo
 		if !docAnnotationEligible(s, i) {
 			continue
 		}
-		toks, mutated := fn(daCreateFromDocComment(s.At(i).Value, ignoredTags))
-		if !mutated {
-			continue
-		}
+		// like AbstractDoctrineAnnotationFixer::applyFix, write the docblock back
+		// whether or not fn changed a token: getCode() is lossy for strings the
+		// Doctrine lexer reads differently from PHP
+		toks := fn(daCreateFromDocComment(s.At(i).Value, ignoredTags))
 		if rebuilt := daGetCode(toks); rebuilt != s.At(i).Value {
 			s.SetValue(i, rebuilt)
 			changed = true
