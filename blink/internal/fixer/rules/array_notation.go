@@ -85,7 +85,7 @@ func arrayNotationEnclosing(s *tokens.Stream, i int) int {
 }
 
 func arrayNotationIsAs(t token.Token) bool {
-	return (t.Kind == token.Keyword || t.Kind == token.Ident) && strings.EqualFold(t.Value, "as")
+	return (t.Kind == token.Keyword || t.Kind == token.Ident) && len(t.Value) == 2 && strings.EqualFold(t.Value, "as")
 }
 
 // arrayNotationInForeachHead reports whether the token at i sits inside the
@@ -119,9 +119,204 @@ func arrayNotationInForeachHead(s *tokens.Stream, i int) bool {
 	return false
 }
 
+// arrayNotationForeachHeadAt is the end of arrayNotationInForeachHead's scan:
+// enc is the innermost unclosed opener before the token, and seenAs whether an
+// "as" sits between them at that depth.
+func arrayNotationForeachHeadAt(s *tokens.Stream, enc int, seenAs bool) bool {
+	if enc < 0 || s.At(enc).Value != "(" || !seenAs {
+		return false
+	}
+	p := sigPrev(s, enc)
+	return p >= 0 && strings.EqualFold(s.At(p).Value, "foreach")
+}
+
+// arrayNotationTracker follows the bracket nesting of a forward walk over a
+// stream, so the walk learns what arrayNotationEnclosing and
+// arrayNotationInForeachHead would find by scanning backwards, without the
+// scan. Those scans cost the distance to the enclosing bracket, so asking them
+// for every "[" of a long array or method body is quadratic.
+//
+// Step every token in order. A query describes the position after the last
+// stepped token, and matches the backward scan as long as the walk has not
+// changed a stepped token's kind or bracket/"as" value, nor moved it.
+type arrayNotationTracker struct {
+	frames []arrayNotationFrame
+}
+
+type arrayNotationFrame struct {
+	open   int  // index of the unclosed opener
+	seenAs bool // an "as" was stepped directly inside it (not in a nested bracket)
+}
+
+// step accounts for t, the token at index i. Like the backward scans, it pairs
+// any closer with the innermost opener, whatever their kinds.
+func (tr *arrayNotationTracker) step(t token.Token, i int) {
+	if t.Kind != token.Punct {
+		if len(tr.frames) > 0 && arrayNotationIsAs(t) {
+			tr.frames[len(tr.frames)-1].seenAs = true
+		}
+		return
+	}
+	switch t.Value {
+	case "(", "[", "{":
+		tr.frames = append(tr.frames, arrayNotationFrame{open: i})
+	case ")", "]", "}":
+		if len(tr.frames) > 0 {
+			tr.frames = tr.frames[:len(tr.frames)-1]
+		}
+	}
+}
+
+// top returns the innermost unclosed opener and whether an "as" sits directly
+// in it so far, or -1.
+func (tr *arrayNotationTracker) top() (int, bool) {
+	if len(tr.frames) == 0 {
+		return -1, false
+	}
+	f := tr.frames[len(tr.frames)-1]
+	return f.open, f.seenAs
+}
+
+// inForeachHead is arrayNotationInForeachHead for the next token to step.
+func (tr *arrayNotationTracker) inForeachHead(s *tokens.Stream) bool {
+	enc, seenAs := tr.top()
+	return arrayNotationForeachHeadAt(s, enc, seenAs)
+}
+
+// arrayNotationScan answers arrayNotationEnclosing, arrayNotationInForeachHead
+// and arrayNotationIsDestructuring for any index of a stream. Near answers come
+// from a bounded backward scan; once one would look further back than near
+// tokens, a forward pass (an arrayNotationTracker run over the whole stream)
+// records the answer at every index, and destructuring answers are remembered.
+//
+// It describes the stream as it was when that pass ran. A rule that edits the
+// stream can keep asking it only about indices below every edit made since,
+// and only when those edits cannot change an answer: TrailingCommaInMultiline
+// and arrayNotationToLong walk backwards, edit at or after the current token,
+// and what they write does not change how earlier brackets classify.
+type arrayNotationScan struct {
+	s    *tokens.Stream
+	near int      // longest backward scan before the forward pass
+	info []uint32 // per index, once built: enclosing+1 | seenAs | memo bits
+}
+
+const (
+	arrayNotationEnc    = 1<<29 - 1 // innermost unclosed opener before i, plus one (0: none)
+	arrayNotationSeenAs = 1 << 29   // an "as" sits between that opener and i, at its depth
+	arrayNotationKnown  = 1 << 30   // isDestructuring(i) is remembered...
+	arrayNotationDestr  = 1 << 31   // ...and is true
+)
+
+// newArrayNotationScan returns a scan of s, or nil for a stream too long to
+// index, which the callers take as "scan backwards".
+func newArrayNotationScan(s *tokens.Stream) *arrayNotationScan {
+	if s.Len() > arrayNotationEnc {
+		return nil
+	}
+	// most brackets sit close to their enclosing one, and a short scan back is
+	// cheaper than a pass over the whole file
+	return &arrayNotationScan{s: s, near: 256}
+}
+
+// arrayNotationEnclosingNear scans back from i, over at most limit tokens, for
+// what arrayNotationEnclosing and arrayNotationInForeachHead look for: the
+// innermost unclosed opener (-1 for none) and whether an "as" sits between it
+// and i at that depth. ok is false when it gave up.
+func arrayNotationEnclosingNear(s *tokens.Stream, i, limit int) (enc int, seenAs, ok bool) {
+	depth := 0
+	for j := i - 1; j >= 0; j-- {
+		if i-j > limit {
+			return 0, false, false
+		}
+		t := s.At(j)
+		if t.Kind != token.Punct {
+			if depth == 0 && arrayNotationIsAs(t) {
+				seenAs = true
+			}
+			continue
+		}
+		switch t.Value {
+		case ")", "]", "}":
+			depth++
+		case "(", "[", "{":
+			if depth == 0 {
+				return j, seenAs, true
+			}
+			depth--
+		}
+	}
+	return -1, seenAs, true
+}
+
+func (sc *arrayNotationScan) build() {
+	n := sc.s.Len()
+	sc.info = make([]uint32, n)
+	var tr arrayNotationTracker
+	for i := range n {
+		enc, seenAs := tr.top()
+		v := uint32(enc + 1)
+		if seenAs {
+			v |= arrayNotationSeenAs
+		}
+		sc.info[i] = v
+		// step ignores every other kind
+		switch sc.s.Kind(i) {
+		case token.Punct, token.Keyword, token.Ident:
+			tr.step(sc.s.At(i), i)
+		}
+	}
+}
+
+// lookup returns the innermost unclosed opener before i (or -1) and whether an
+// "as" sits between them at that depth.
+func (sc *arrayNotationScan) lookup(i int) (int, bool) {
+	if sc.info == nil {
+		if enc, seenAs, ok := arrayNotationEnclosingNear(sc.s, i, sc.near); ok {
+			return enc, seenAs
+		}
+		sc.build()
+	}
+	v := sc.info[i]
+	return int(v&arrayNotationEnc) - 1, v&arrayNotationSeenAs != 0
+}
+
+// enclosing is arrayNotationEnclosing.
+func (sc *arrayNotationScan) enclosing(i int) int {
+	enc, _ := sc.lookup(i)
+	return enc
+}
+
+// inForeachHead is arrayNotationInForeachHead.
+func (sc *arrayNotationScan) inForeachHead(i int) bool {
+	enc, seenAs := sc.lookup(i)
+	return arrayNotationForeachHeadAt(sc.s, enc, seenAs)
+}
+
+// isDestructuring is arrayNotationIsDestructuring. Answers are remembered once
+// the forward pass has run, which is when asking again gets expensive.
+func (sc *arrayNotationScan) isDestructuring(open int) bool {
+	if sc.info != nil && sc.info[open]&arrayNotationKnown != 0 {
+		return sc.info[open]&arrayNotationDestr != 0
+	}
+	d := arrayNotationDestructuring(sc.s, open, sc)
+	if sc.info != nil {
+		sc.info[open] |= arrayNotationKnown
+		if d {
+			sc.info[open] |= arrayNotationDestr
+		}
+	}
+	return d
+}
+
 // arrayNotationIsDestructuring reports whether the short "[" at open is an
 // array destructuring target rather than an array literal.
 func arrayNotationIsDestructuring(s *tokens.Stream, open int) bool {
+	return arrayNotationDestructuring(s, open, nil)
+}
+
+// arrayNotationDestructuring is arrayNotationIsDestructuring, asking sc (when
+// not nil) instead of scanning backwards.
+func arrayNotationDestructuring(s *tokens.Stream, open int, sc *arrayNotationScan) bool {
 	if closeIdx := s.MatchForward(open); closeIdx >= 0 {
 		if n := sigNext(s, closeIdx); n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "=" {
 			return true
@@ -131,17 +326,34 @@ func arrayNotationIsDestructuring(s *tokens.Stream, open int) bool {
 		if arrayNotationIsAs(s.At(p)) {
 			return true
 		}
-		if s.At(p).Kind == token.Punct && s.At(p).Value == "=>" && arrayNotationInForeachHead(s, open) {
-			return true
+		if s.At(p).Kind == token.Punct && s.At(p).Value == "=>" {
+			if sc != nil {
+				if sc.inForeachHead(open) {
+					return true
+				}
+			} else if arrayNotationInForeachHead(s, open) {
+				return true
+			}
 		}
 	}
-	enc := arrayNotationEnclosing(s, open)
+	var enc int
+	if sc != nil {
+		enc = sc.enclosing(open)
+	} else {
+		enc = arrayNotationEnclosing(s, open)
+	}
 	if enc < 0 {
 		return false
 	}
 	switch s.At(enc).Value {
 	case "[":
-		return !isOffsetOpen(s, enc) && arrayNotationIsDestructuring(s, enc)
+		if isOffsetOpen(s, enc) {
+			return false
+		}
+		if sc != nil {
+			return sc.isDestructuring(enc)
+		}
+		return arrayNotationIsDestructuring(s, enc)
 	case "(":
 		q := sigPrev(s, enc)
 		return q >= 0 && strings.EqualFold(s.At(q).Value, "list")
@@ -152,13 +364,21 @@ func arrayNotationIsDestructuring(s *tokens.Stream, open int) bool {
 // arrayNotationToLong rewrites short "[...]" to "array(...)" (literals) or
 // "list(...)" (destructuring targets), depending on destructuring.
 func arrayNotationToLong(s *tokens.Stream, destructuring bool) bool {
+	// Each rewrite is at or after i and turns a matched "[...]" into "name(...)",
+	// so the scan stays right for the brackets before i (see arrayNotationScan).
+	return arrayNotationToLongWith(s, destructuring, newArrayNotationScan(s))
+}
+
+// arrayNotationToLongWith is arrayNotationToLong; a nil sc scans backwards
+// instead, as a reference for tests.
+func arrayNotationToLongWith(s *tokens.Stream, destructuring bool, sc *arrayNotationScan) bool {
 	changed := false
 	for i := s.Len() - 1; i >= 0; i-- {
 		t := s.At(i)
 		if t.Kind != token.Punct || t.Value != "[" || isOffsetOpen(s, i) {
 			continue
 		}
-		if arrayNotationIsDestructuring(s, i) != destructuring {
+		if arrayNotationDestructuring(s, i, sc) != destructuring {
 			continue
 		}
 		closeIdx := s.MatchForward(i)
@@ -246,6 +466,12 @@ func topBracketIsArray(stack []string) bool {
 // destructuring target - its matching "]" is directly followed by a single "=",
 // or it sits after "as" in a foreach head ("foreach ($x as ['k' => $v])").
 func isDestructuringAssignOpen(s *tokens.Stream, open int) bool {
+	return isDestructuringAssignOpenIn(s, open, nil)
+}
+
+// isDestructuringAssignOpenIn is isDestructuringAssignOpen, asking tr (when not
+// nil, and stepped up to open) whether open sits in a foreach head.
+func isDestructuringAssignOpenIn(s *tokens.Stream, open int, tr *arrayNotationTracker) bool {
 	c := s.MatchForward(open)
 	if c < 0 {
 		return false
@@ -253,6 +479,9 @@ func isDestructuringAssignOpen(s *tokens.Stream, open int) bool {
 	n := nextSignificantIndex(s, c)
 	if n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "=" {
 		return true
+	}
+	if tr != nil {
+		return tr.inForeachHead(s)
 	}
 	return arrayNotationInForeachHead(s, open)
 }
@@ -346,8 +575,14 @@ func arrayNotationIsHorizontal(t token.Token) bool {
 func (f WhitespaceAfterCommaInArray) Fix(s *tokens.Stream) bool {
 	changed := false
 	var stack []string
+	// the edits below only write whitespace after the current comma (the space
+	// they insert is skipped, not stepped), and the tracker ignores whitespace
+	var tr arrayNotationTracker
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
+		destructuring := t.Kind == token.Punct && t.Value == "[" &&
+			((len(stack) > 0 && stack[len(stack)-1] == "d[") || isDestructuringAssignOpenIn(s, i, &tr))
+		tr.step(t, i)
 		if t.Kind != token.Punct {
 			continue
 		}
@@ -355,7 +590,7 @@ func (f WhitespaceAfterCommaInArray) Fix(s *tokens.Stream) bool {
 		case "[":
 			// a destructuring target ("[$a,$b] = ...", or nested in one) is not an
 			// array literal, so php-cs-fixer does not space its commas
-			if (len(stack) > 0 && stack[len(stack)-1] == "d[") || isDestructuringAssignOpen(s, i) {
+			if destructuring {
 				stack = append(stack, "d[")
 			} else {
 				stack = append(stack, "[")

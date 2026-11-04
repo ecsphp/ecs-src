@@ -10,14 +10,15 @@ import (
 
 // trailingCommaCategory classifies the block opened at open as one of
 // "arrays", "array_destructuring", "arguments", "parameters", "match",
-// "group_import", or "" when it is not a comma-list block.
-func trailingCommaCategory(s *tokens.Stream, open int) string {
+// "group_import", or "" when it is not a comma-list block. sc, when not nil,
+// answers for arrayNotationIsDestructuring.
+func trailingCommaCategory(s *tokens.Stream, sc *arrayNotationScan, open int) string {
 	switch s.At(open).Value {
 	case "[":
 		if isOffsetOpen(s, open) {
 			return ""
 		}
-		if arrayNotationIsDestructuring(s, open) {
+		if arrayNotationDestructuring(s, open, sc) {
 			return "array_destructuring"
 		}
 		return "arrays"
@@ -99,12 +100,12 @@ func (f TrailingCommaInMultiline) WithConfig(config map[string]any) fixer.Fixer 
 	return f
 }
 
-func (f TrailingCommaInMultiline) included(s *tokens.Stream, open, closeIdx int) bool {
+func (f TrailingCommaInMultiline) included(s *tokens.Stream, sc *arrayNotationScan, open, closeIdx int) bool {
 	closer := s.At(closeIdx).Value
 	if f.Elements == nil {
 		return closer == "]" && !isOffsetOpen(s, open)
 	}
-	switch trailingCommaCategory(s, open) {
+	switch trailingCommaCategory(s, sc, open) {
 	case "arrays":
 		return arrayNotationContains(f.Elements, "arrays")
 	case "array_destructuring":
@@ -121,6 +122,15 @@ func (f TrailingCommaInMultiline) included(s *tokens.Stream, open, closeIdx int)
 }
 
 func (f TrailingCommaInMultiline) Fix(s *tokens.Stream) bool {
+	// The only edit is a "," right after the last element of the block closed at
+	// i, so it lands after every bracket still to be classified, and a ","
+	// changes neither the nesting nor what follows a closer (only a "=" would):
+	// the scan stays right (see arrayNotationScan).
+	return f.fix(s, newArrayNotationScan(s))
+}
+
+// fix is Fix; a nil sc scans backwards instead, as a reference for tests.
+func (f TrailingCommaInMultiline) fix(s *tokens.Stream, sc *arrayNotationScan) bool {
 	changed := false
 	for i := s.Len() - 1; i >= 0; i-- {
 		t := s.At(i)
@@ -131,7 +141,7 @@ func (f TrailingCommaInMultiline) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		open := s.MatchBackward(i)
-		if open < 0 || !f.included(s, open, i) {
+		if open < 0 || !f.included(s, sc, open, i) {
 			continue
 		}
 
@@ -223,7 +233,7 @@ func (f NoTrailingCommaInSingleline) Fix(s *tokens.Stream) bool {
 }
 
 func (f NoTrailingCommaInSingleline) shouldClear(s *tokens.Stream, open int) bool {
-	switch trailingCommaCategory(s, open) {
+	switch trailingCommaCategory(s, nil, open) {
 	case "arrays":
 		return arrayNotationContains(f.Elements, "array")
 	case "array_destructuring":
