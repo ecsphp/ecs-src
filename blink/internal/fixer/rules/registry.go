@@ -126,6 +126,12 @@ func CommonFixers() []fixer.Fixer {
 		NoUselessSprintf{},
 		ModernizeTypesCasting{},
 		FopenFlagOrder{},
+		SimpleToComplexStringVariable{},
+		StringLengthToEmpty{},
+		StringLineEnding{},
+		NonPrintableCharacter{},
+		NoHomoglyphNames{},
+		ModernSerializationMethods{},
 	}
 }
 
