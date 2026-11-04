@@ -90,3 +90,19 @@ func TestNativeFunctionInvocationSourceURL(t *testing.T) {
 		t.Errorf("SourceURL %q != SourceURLFor %q", got, want)
 	}
 }
+
+// An attribute class named like a native function (Symfony's Count constraint)
+// is not a call: NativeFunctionInvocation leaves it alone, so the
+// GlobalNamespaceImport that follows does not import it as a function. Checked
+// against the PHP engine with tipee's options for both rules.
+func TestNativeFunctionInvocationThenGlobalNamespaceImportKeepsAttributes(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nnamespace App;\n\nuse Symfony\\Component\\Validator\\Constraints\\Count;\n\nfinal class Cmd\n{\n    #[NotNull, Count(min: 1), All([new Type('int')]), Valid]\n    public array $content;\n\n    public function f(array $a): int\n    {\n        return count($a);\n    }\n}\n"
+	want := "<?php\n\nnamespace App;\n\nuse Symfony\\Component\\Validator\\Constraints\\Count;\nuse function count;\n\nfinal class Cmd\n{\n    #[NotNull, Count(min: 1), All([new Type('int')]), Valid]\n    public array $content;\n\n    public function f(array $a): int\n    {\n        return count($a);\n    }\n}\n"
+	nfi := nfiConfig(map[string]any{"scope": "namespaced"})
+	gni := GlobalNamespaceImport{}.WithConfig(map[string]any{"import_constants": true, "import_functions": true}).(fixerRule)
+	got, _ := apply(t, nfi, src)
+	if got, _ = apply(t, gni, got); got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
