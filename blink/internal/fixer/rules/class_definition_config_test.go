@@ -6,9 +6,9 @@ func TestClassDefinitionSingleLine(t *testing.T) {
 	t.Parallel()
 	src := "<?php\nclass Foo\nextends Bar\n{\n}\n"
 
-	// default: a multiline header is left untouched
-	if got, changed := apply(t, ClassDefinition{}, src); changed || got != src {
-		t.Fatalf("default: changed=%v got=%q want unchanged", changed, got)
+	// default: "extends" goes on the class name's line all the same (PSR-2 4.1)
+	if got, _ := apply(t, ClassDefinition{}, src); got != "<?php\nclass Foo extends Bar\n{\n}\n" {
+		t.Fatalf("default: got=%q", got)
 	}
 
 	// single_line=true: the header collapses onto one line, brace kept below

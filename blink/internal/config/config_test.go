@@ -1,13 +1,19 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
+	"slices"
+	"strings"
 	"testing"
 
 	"blink/internal/fixer/rules"
+	"blink/internal/lexer"
 	"blink/internal/set"
+	"blink/internal/tokens"
 )
 
 func write(t *testing.T, body string) string {
@@ -126,5 +132,84 @@ func TestLoadSetKeepsRuleConfiguration(t *testing.T) {
 		if fx.Name() == name && reflect.DeepEqual(fx, def) {
 			t.Errorf("%s lost its per-cs configuration", name)
 		}
+	}
+}
+
+// Expected values are ECS's SkippedCriteriaResolver output under PHP on the
+// same tree.
+func TestLoadSkipResolvesLikeECS(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []string{"src/Legacy/A.php", "src/LegacyOld/B.php", "src/C.php", "lib/D.php"} {
+		full := filepath.Join(root, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte("<?php\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Chdir(root)
+
+	skip := []string{
+		"Foo.php", "C.php", "src/C.php", "./src/C.php", "src//Legacy/", "*/Fixture/*", "./*.php",
+		"src/Nope/../C.php", "src/Legacy/../C.php", root + "//src/./Legacy/", `src\Legacy`, "./", `a\*\b`, "",
+		"src/LegacyOld/../../lib",
+	}
+	body, err := json.Marshal(map[string][]string{"skip": skip})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := Load(write(t, string(body)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Windows reads ".." before checking the directory in front of it and "\" as
+	// a separator, so "src/Nope/../C.php" and `src\Legacy` exist there, for PHP's
+	// file_exists() as for os.Stat, and are kept.
+	windows := runtime.GOOS == "windows"
+	var want []string
+	want = append(want, "src/C.php", "src/C.php", "src/Legacy", "*/Fixture/*", "*.php")
+	if windows {
+		want = append(want, "src/C.php")
+	}
+	want = append(want, "src/C.php", filepath.ToSlash(root)+"/src/Legacy")
+	if windows {
+		want = append(want, "src/Legacy")
+	}
+	want = append(want, "", "a/*/b", "lib")
+	if !slices.Equal(c.Skip, want) {
+		t.Fatalf("skip = %q, want %q", c.Skip, want)
+	}
+}
+
+// TestLoadSetKeepsSetRuleConfiguration checks that a set selected in blink.json
+// runs its members as the set configures them, while a rule named on its own
+// gets PHP-CS-Fixer's defaults.
+func TestLoadSetKeepsSetRuleConfiguration(t *testing.T) {
+	yoda := `PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer`
+	run := func(body string) string {
+		t.Helper()
+		c, err := Load(write(t, body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, f := range c.Rules {
+			if f.Name() == yoda {
+				s := tokens.New(lexer.Lex("<?php\nif ($x === null) {}"))
+				f.Fix(s)
+				return s.Render()
+			}
+		}
+		t.Fatalf("%s not enabled", yoda)
+		return ""
+	}
+	if got, want := run(`{"sets":["common"]}`), "<?php\nif ($x === null) {}"; got != want {
+		t.Errorf("common set: got %q want %q", got, want)
+	}
+	if got, want := run(`{"rules":["`+strings.ReplaceAll(yoda, `\`, `\\`)+`"]}`), "<?php\nif (null === $x) {}"; got != want {
+		t.Errorf("bare rule: got %q want %q", got, want)
 	}
 }

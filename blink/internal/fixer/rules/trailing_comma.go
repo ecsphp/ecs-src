@@ -235,6 +235,9 @@ func (f NoTrailingCommaInSingleline) shouldClear(s *tokens.Stream, open int) boo
 			return false
 		}
 		p := sigPrev(s, open)
+		if p >= 0 && s.At(p).Kind == token.Ident && isAttributeName(s, p) {
+			return false // an attribute's arguments are not fixed
+		}
 		if p >= 0 && s.At(p).Kind == token.Keyword {
 			if l := strings.ToLower(s.At(p).Value); l == "function" || l == "fn" {
 				return false // closure parameter lists are not fixed
@@ -246,6 +249,41 @@ func (f NoTrailingCommaInSingleline) shouldClear(s *tokens.Stream, open int) boo
 	if s.At(open).Value == "(" {
 		if p := sigPrev(s, open); p >= 0 && s.At(p).Kind == token.Punct && s.At(p).Value == ")" {
 			return arrayNotationContains(f.Elements, "arguments")
+		}
+	}
+	return false
+}
+
+// isAttributeName reports whether the identifier at end ends an attribute's class
+// name: one right after "#[" or a top-level "," (AttributeAnalyzer::isAttribute).
+func isAttributeName(s *tokens.Stream, end int) bool {
+	q := sigPrev(s, qualifiedNameStart(s, end))
+	if q < 0 {
+		return false
+	}
+	if s.At(q).Kind == token.AttributeStart {
+		return true
+	}
+	if s.At(q).Kind != token.Punct || s.At(q).Value != "," {
+		return false
+	}
+	depth := 0
+	for j := q - 1; j >= 0; j-- {
+		t := s.At(j)
+		switch {
+		case t.Kind == token.AttributeStart:
+			return depth == 0
+		case t.Kind == token.AttributeEnd:
+			return false
+		case t.Kind == token.Punct && (t.Value == ")" || t.Value == "]" || t.Value == "}"):
+			depth++
+		case t.Kind == token.Punct && (t.Value == "(" || t.Value == "[" || t.Value == "{"):
+			if depth == 0 {
+				return false
+			}
+			depth--
+		case t.Kind == token.Punct && t.Value == ";":
+			return false
 		}
 	}
 	return false

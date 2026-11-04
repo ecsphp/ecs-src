@@ -1,17 +1,16 @@
 package rules
 
 import (
-	"slices"
 	"strings"
 
 	"blink/internal/fixer"
+	"blink/internal/lexer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
 
-// yodaMode is how a comparison group is normalized. The zero value (yodaNonYoda)
-// reproduces ECS's common-set configuration (equal/identical/less_and_greater
-// all false), which is blink's default.
+// yodaMode is how a comparison group is normalized. The zero value is
+// yodaNonYoda (option false).
 type yodaMode int
 
 const (
@@ -22,15 +21,21 @@ const (
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/YodaStyleFixer.php
 //
-// YodaStyle rewrites comparisons to the configured style per operator group.
-// The zero value follows ECS's common set (equal=false, identical=false,
-// less_and_greater=false): a constant on the left of a comparison and a variable
-// on the right are swapped so the variable comes first ("null === $x" -> "$x ===
-// null"). false is non-yoda, null leaves the group alone, true is yoda.
+// YodaStyle is a port of YodaStyleFixer. It rewrites comparisons to the
+// configured style per operator group:
+// false is non-yoda (a constant on the left and a variable on the right are
+// swapped so the variable comes first, "null === $x" -> "$x === null"), null
+// leaves the group alone, true is yoda. The struct zero value is non-yoda for
+// all three groups (ECS's common set); the registry hands out the rule with
+// PHP-CS-Fixer's defaults instead (equal=true, identical=true,
+// less_and_greater=null), see phpDefaultsJSON.
 type YodaStyle struct {
 	equal       yodaMode
 	identical   yodaMode
 	lessGreater yodaMode
+	// alwaysMoveVariable is always_move_variable: the strict variable check,
+	// and a parenthesized side counts as a variable
+	alwaysMoveVariable bool
 }
 
 func (YodaStyle) Name() string {
@@ -45,8 +50,9 @@ func (f YodaStyle) WithConfig(config map[string]any) fixer.Fixer {
 	f.equal = yodaModeFromConfig(config, "equal", f.equal)
 	f.identical = yodaModeFromConfig(config, "identical", f.identical)
 	f.lessGreater = yodaModeFromConfig(config, "less_and_greater", f.lessGreater)
-	// always_move_variable is accepted but not honoured: blink's variable
-	// detection does not model it.
+	if v, ok := config["always_move_variable"].(bool); ok {
+		f.alwaysMoveVariable = v
+	}
 	return f
 }
 
@@ -69,28 +75,9 @@ func yodaModeFromConfig(config map[string]any, key string, def yodaMode) yodaMod
 	return def
 }
 
-// modeFor returns the configured mode for a comparison operator.
-func (f YodaStyle) modeFor(op string) yodaMode {
-	switch op {
-	case "===", "!==":
-		return f.identical
-	case "<", ">", "<=", ">=":
-		return f.lessGreater
-	default: // "==", "!="
-		return f.equal
-	}
-}
-
-func yodaOp(v string) bool {
-	switch v {
-	case "==", "===", "!=", "!==", "<", ">", "<=", ">=":
-		return true
-	}
-	return false
-}
-
 // yodaMirror flips a relational operator when its operands are swapped, so
-// "5 > $z" becomes "$z < 5". Equality operators are symmetric and unchanged.
+// "5 > $z" becomes "$z < 5" (YodaStyleFixer's candidatesMap). Equality
+// operators are symmetric and unchanged.
 func yodaMirror(v string) string {
 	switch v {
 	case "<":
@@ -127,199 +114,540 @@ func isInterpolatedString(t token.Token) bool {
 	return false
 }
 
-func isYodaLiteral(t token.Token) bool {
+// candidate returns the mode of the comparison at i, and whether it is one of
+// the configured candidate operators.
+func (f YodaStyle) candidate(t token.Token) (bool, bool) {
+	if t.Kind != token.Punct {
+		return false, false
+	}
+	var m yodaMode
+	switch t.Value {
+	case "==", "!=", "<>":
+		m = f.equal
+	case "===", "!==":
+		m = f.identical
+	case "<", ">", "<=", ">=":
+		m = f.lessGreater
+	default:
+		return false, false
+	}
+	if m == yodaLeave {
+		return false, false
+	}
+	return m == yodaYoda, true
+}
+
+func (f YodaStyle) Fix(s *tokens.Stream) bool {
+	before := s.Render()
+	f.fixTokens(s)
+	return s.Render() != before
+}
+
+// fixTokens is YodaStyleFixer::fixTokens: comparisons right to left; after a
+// swap the scan resumes left of the comparison's left side.
+func (f YodaStyle) fixTokens(s *tokens.Stream) {
+	for i := s.Len() - 1; i > 1; i-- {
+		yoda, ok := f.candidate(s.At(i))
+		if !ok {
+			continue
+		}
+		ls, le, rs, re, ok := f.compareFixableInfo(s, i, yoda)
+		if !ok {
+			continue
+		}
+		i = f.fixTokensCompare(s, ls, le, i, rs, re)
+	}
+}
+
+// fixTokensCompare swaps the two sides of the comparison at op (each side
+// first fixed on its own, as fixTokensComparePart does) and returns the start
+// of the left side.
+func (f YodaStyle) fixTokensCompare(s *tokens.Stream, ls, le, op, rs, re int) int {
+	right := f.fixComparePart(s, rs, re)
+	left := f.fixComparePart(s, ls, le)
+	mid := append([]token.Token(nil), s.Tokens()[le+1:rs]...)
+	mid[op-le-1].Value = yodaMirror(mid[op-le-1].Value)
+	repl := make([]token.Token, 0, len(right)+len(mid)+len(left))
+	repl = append(append(append(repl, right...), mid...), left...)
+	s.ReplaceRange(ls, re, repl)
+	return ls
+}
+
+// fixComparePart re-tokenizes one side as "<?php SIDE;", fixes it on its own
+// and returns its tokens.
+func (f YodaStyle) fixComparePart(s *tokens.Stream, start, end int) []token.Token {
+	var b strings.Builder
+	b.WriteString("<?php ")
+	for k := start; k <= end; k++ {
+		b.WriteString(s.At(k).Value)
+	}
+	b.WriteString(";")
+	part := tokens.New(lexer.Lex(b.String()))
+	f.fixTokens(part)
+	toks := part.Tokens()
+	first := 1 // the open tag; its trailing space is a token of its own here
+	if first < len(toks) && toks[first].Kind == token.Whitespace && toks[first].Value == " " {
+		first++
+	}
+	return append([]token.Token(nil), toks[first:len(toks)-1]...)
+}
+
+// compareFixableInfo is getCompareFixableInfo.
+func (f YodaStyle) compareFixableInfo(s *tokens.Stream, op int, yoda bool) (ls, le, rs, re int, ok bool) {
+	rs, re = nextMeaningfulIndex(s, op), yodaComparisonEnd(s, op)
+	if rs < 0 || re < rs {
+		return 0, 0, 0, 0, false
+	}
+	if !yoda {
+		if n := nextMeaningfulIndex(s, re); n >= 0 && yodaIsLowerPrecedenceAssignment(s.At(n)) {
+			return 0, 0, 0, 0, false
+		}
+	}
+	ls, le = yodaComparisonStart(s, op), prevMeaningfulIndex(s, op)
+	if ls < 0 || le < ls {
+		return 0, 0, 0, 0, false
+	}
+	if yodaIsListStatement(s, ls, le) || yodaIsListStatement(s, rs, re) {
+		return 0, 0, 0, 0, false
+	}
+	strict := f.alwaysMoveVariable
+	leftVar := yodaIsVariable(s, ls, le, strict)
+	rightVar := yodaIsVariable(s, rs, re, strict)
+	if leftVar == rightVar {
+		return 0, 0, 0, 0, false
+	}
+	if !strict {
+		leftVar = leftVar && !yodaIsGroupParen(s, ls)
+		rightVar = rightVar && !yodaIsGroupParen(s, rs)
+	}
+	if (yoda && !leftVar) || (!yoda && !rightVar) {
+		return 0, 0, 0, 0, false
+	}
+	return ls, le, rs, re, true
+}
+
+// yodaIsGroupParen reports whether the token at i is a "(" token in PHP's
+// sense: a cast "(int)" is a single token there, and the parenthesis around
+// "(new Foo())" is CT::T_CLASS_INSTANTIATION_PARENTHESIS_OPEN.
+func yodaIsGroupParen(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	return t.Kind == token.Punct && t.Value == "(" && !isCastParen(s, i) && !yodaIsClassInstantiationParen(s, i)
+}
+
+// yodaIsClassInstantiationParen is BraceClassInstantiationTransformer's test
+// for the "(" at i.
+func yodaIsClassInstantiationParen(s *tokens.Stream, i int) bool {
+	if n := nextMeaningfulIndex(s, i); n < 0 || !kwIs(s.At(n), "new") {
+		return false
+	}
+	p := prevMeaningfulIndex(s, i)
+	if p < 0 {
+		return true
+	}
+	t := s.At(p)
 	switch t.Kind {
-	case token.Number:
-		return true
-	case token.String:
-		// a double-quoted string with interpolation ("...{$x}...", "${x}") or a
-		// backtick shell-exec is not a constant (T_CONSTANT_ENCAPSED_STRING)
-		return t.IsLiteral() && !isInterpolatedString(t) && !t.IsShellExec()
-	case token.Ident:
-		return true
+	case token.Variable, token.Ident:
+		return false
+	case token.Punct:
+		return t.Value != ")" && t.Value != "]" && t.Value != "}"
 	case token.Keyword:
 		switch strings.ToLower(t.Value) {
-		case "true", "false", "null":
+		case "array", "class", "elseif", "for", "foreach", "if", "static", "switch", "while":
+			return false
+		}
+	}
+	return true
+}
+
+// yodaBlock reports whether the token at i opens or closes a block
+// (Tokens::detectBlockType): parentheses, brackets, braces and attributes. A
+// cast is a single token in PHP, not a block.
+func yodaBlock(s *tokens.Stream, i int) (isBlock, isStart bool) {
+	t := s.At(i)
+	switch t.Kind {
+	case token.AttributeStart:
+		return true, true
+	case token.AttributeEnd:
+		return true, false
+	case token.Punct:
+		switch t.Value {
+		case "(":
+			return !isCastParen(s, i), true
+		case "[", "{":
+			return true, true
+		case ")":
+			if o := s.MatchBackward(i); o >= 0 && isCastParen(s, o) {
+				return false, false
+			}
+			return true, false
+		case "]", "}":
+			return true, false
+		}
+	}
+	return false, false
+}
+
+func yodaIsLowerPrecedenceAssignment(t token.Token) bool {
+	if t.Kind != token.Punct {
+		return false
+	}
+	switch t.Value {
+	case "=", "&=", ".=", "/=", "-=", "%=", "*=", "|=", "+=", "**=", "<<=", ">>=", "^=", "??=":
+		return true
+	}
+	return false
+}
+
+// yodaIsLowerPrecedence is isOfLowerPrecedence for the token at i.
+func yodaIsLowerPrecedence(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	if yodaIsLowerPrecedenceAssignment(t) {
+		return true
+	}
+	switch t.Kind {
+	case token.OpenTag:
+		return true
+	case token.Punct:
+		switch t.Value {
+		case "&&", "||", "=>", "??", "&", "|", "^", "?", ":", ",", ";":
+			return true
+		}
+	case token.Keyword:
+		if isYieldFrom(t) {
+			return true
+		}
+		switch strings.ToLower(t.Value) {
+		case "case", "echo", "goto", "and", "or", "xor", "print", "return", "throw", "yield",
+			"require", "require_once", "include", "include_once":
 			return true
 		}
 	}
 	return false
 }
 
-func (f YodaStyle) Fix(s *tokens.Stream) bool {
-	type swap struct{ ls, le, rs, re int }
-	var swaps []swap
-	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Punct || !yodaOp(t.Value) {
+// yodaComparisonEnd is findComparisonEnd: the last token of the right side of
+// the comparison at op.
+func yodaComparisonEnd(s *tokens.Stream, op int) int {
+	index := op + 1
+	for index < s.Len() {
+		t := s.At(index)
+		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
+			index++
 			continue
 		}
-		switch f.modeFor(t.Value) {
-		case yodaLeave:
+		if yodaIsLowerPrecedence(s, index) {
+			break
+		}
+		isBlock, isStart := yodaBlock(s, index)
+		if !isBlock {
+			index++
 			continue
-		case yodaNonYoda:
-			// left must be a bounded constant
-			ls, le, ok := leftLiteralOperand(s, i)
-			if !ok || !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
-				continue
-			}
-			// right must be a variable expression (not itself a constant), bounded;
-			// skip a comment between the operator and the operand ("=== /* c */ $x")
-			rs := nextMeaningfulIndex(s, i)
-			if rs < 0 {
-				continue
-			}
-			re := rightComparisonOperandEnd(s, rs)
-			if re < 0 {
-				continue
-			}
-			// with always_move_variable=false a right side that is purely a
-			// parenthesized group "(...)" is not treated as a variable and stays put
-			// (a leading cast like "(int) $x" is not a grouping paren). A group that
-			// is only the base of a larger primary, e.g. "(new X())->y()", is a
-			// variable expression and is still swapped.
-			if s.At(rs).Kind == token.Punct && s.At(rs).Value == "(" && !isCastParen(s, rs) {
-				if c := s.MatchForward(rs); c < 0 || c == re {
-					continue
-				}
-			}
-			if spanIsConstant(s, rs, re) {
-				continue // both sides constant
-			}
-			if yodaOperandHasDynamicCall(s, rs, re) {
-				continue // "$a->{$b}(...)" is not treated as a simple variable
-			}
-			if !isRightBoundary(s, nextMeaningfulIndex(s, re)) {
-				continue
-			}
-			swaps = append(swaps, swap{ls, le, rs, re})
-		case yodaYoda:
-			// right must be a bounded constant
-			rs, re, ok := yodaRightLiteralOperand(s, i)
-			if !ok || !isRightBoundary(s, nextMeaningfulIndex(s, re)) {
-				continue
-			}
-			// left must be a variable expression (not itself a constant), bounded
-			le := prevMeaningfulIndex(s, i)
-			if le < 0 {
-				continue
-			}
-			ls := yodaLeftPrimaryStart(s, le)
-			if ls < 0 {
-				continue
-			}
-			if ls == le && isYodaLiteral(s.At(ls)) {
-				continue // both sides constant
-			}
-			// a unary prefix ("!!$a", "@$a") is part of the operand; blink's primary
-			// start does not span it, so leave the comparison rather than swap only
-			// the variable and strand the prefix
-			if p := prevMeaningfulIndex(s, ls); p >= 0 && s.At(p).Kind == token.Punct &&
-				(s.At(p).Value == "!" || s.At(p).Value == "@") {
-				continue
-			}
-			if !isLeftBoundary(s, prevMeaningfulIndex(s, ls)) {
-				continue
-			}
-			swaps = append(swaps, swap{ls, le, rs, re})
 		}
-	}
-	if len(swaps) == 0 {
-		return false
-	}
-	// drop a swap that partially overlaps (interleaves) a kept one; a swap fully
-	// nested inside another's operand span is fine (e.g. "[] !== array_filter(fn
-	// => ... || 1 === preg_match(...))") and is kept, to be applied innermost-first
-	kept := swaps[:0:0]
-	for _, sw := range swaps {
-		bad := false
-		for _, k := range kept {
-			if sw.ls > k.re || k.ls > sw.re {
-				continue // disjoint
-			}
-			// contained in the other's right operand is fine (that block is moved as a
-			// unit, so applying the inner swap first then the outer one is correct); any
-			// other overlap would interleave tokens
-			outer, inner := k, sw
-			if sw.re-sw.ls > k.re-k.ls {
-				outer, inner = sw, k
-			}
-			if outer.rs > inner.ls || inner.re > outer.re {
-				bad = true
-				break
-			}
+		if !isStart {
+			break
 		}
-		if !bad {
-			kept = append(kept, sw)
+		end := s.MatchForward(index)
+		if t.Kind == token.AttributeStart {
+			end = s.AttributeEnd(index)
 		}
-	}
-	swaps = kept
-	// apply innermost-first: a contained swap must be reordered before its
-	// container moves it as a block. A swap preserves its operand token count, so
-	// applying the smaller (inner) range first leaves the larger range's indices
-	// valid. Disjoint swaps are order-independent for the same reason.
-	slices.SortFunc(swaps, func(a, b swap) int { return (a.re - a.ls) - (b.re - b.ls) })
-	for _, sw := range swaps {
-		left := append([]token.Token(nil), s.Tokens()[sw.ls:sw.le+1]...)
-		mid := append([]token.Token(nil), s.Tokens()[sw.le+1:sw.rs]...)
-		right := append([]token.Token(nil), s.Tokens()[sw.rs:sw.re+1]...)
-		for k := range mid {
-			if mid[k].Kind == token.Punct {
-				mid[k].Value = yodaMirror(mid[k].Value)
-			}
+		if end < 0 {
+			return -1
 		}
-		repl := append(append(append([]token.Token(nil), right...), mid...), left...)
-		s.ReplaceRange(sw.ls, sw.re, repl)
+		index = end + 1
 	}
-	return true
+	prev := prevMeaningfulIndex(s, index)
+	// PHP's T_CLOSE_TAG holds the newline that follows "?>"
+	if prev > 0 && s.At(prev).Kind == token.InlineHTML && s.At(prev-1).Kind == token.CloseTag &&
+		(s.At(prev).Value == "\n" || s.At(prev).Value == "\r\n") {
+		prev--
+	}
+	if prev >= 0 && s.At(prev).Kind == token.CloseTag {
+		return prevMeaningfulIndex(s, prev)
+	}
+	return prev
 }
 
-// leftLiteralOperand returns the span of a constant left operand ending just
-// before the comparison at op: a plain literal, signed number, empty array,
-// bare constant, or "Name::class".
-func leftLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
-	le := prevMeaningfulIndex(s, op)
-	if le < 0 {
-		return 0, 0, false
-	}
-	t := s.At(le)
-	// "]" of an empty array "[]"
-	if t.Kind == token.Punct && t.Value == "]" {
-		o := s.MatchBackward(le)
-		if o >= 0 && nextSignificantIndex(s, o) == le {
-			return o, le, true
+// yodaIsPlainBraceClose reports whether the "}" at i closes a code-block brace
+// (BLOCK_TYPE_BRACE), not a dynamic property, variable or index brace.
+func yodaIsPlainBraceClose(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	return t.Kind == token.Punct && t.Value == "}" && !unaryOperatorSpacesIsDynamicBraceClose(s, i)
+}
+
+// yodaComparisonStart is findComparisonStart: the first token of the left side
+// of the comparison at op.
+func yodaComparisonStart(s *tokens.Stream, op int) int {
+	index := op - 1
+	nonBlockFound := false
+	for index >= 0 {
+		t := s.At(index)
+		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
+			index--
+			continue
 		}
-		return 0, 0, false
+		if yodaIsLowerPrecedence(s, index) {
+			break
+		}
+		isBlock, isStart := yodaBlock(s, index)
+		if !isBlock {
+			index--
+			nonBlockFound = true
+			continue
+		}
+		if isStart || (nonBlockFound && yodaIsPlainBraceClose(s, index)) {
+			break
+		}
+		start := s.MatchBackward(index)
+		if t.Kind == token.AttributeEnd {
+			start = s.AttributeStartOf(index)
+		}
+		if start < 0 {
+			return -1
+		}
+		index = start - 1
 	}
-	// class constant "Name::CONST" or "Name::class", possibly namespaced
-	if t.Kind == token.Ident {
-		if p := prevSignificantIndex(s, le); p >= 0 && s.At(p).Kind == token.Punct && s.At(p).Value == "::" {
-			n := prevSignificantIndex(s, p)
-			if n >= 0 && s.At(n).Kind == token.Ident {
-				return qualifiedNameStart(s, n), le, true
+	return nextMeaningfulIndex(s, index)
+}
+
+// yodaIsDestructuringBracket reports whether the "[" or "]" at i belongs to a
+// destructuring "[...]" (CT::T_DESTRUCTURING_BRACKET_OPEN/CLOSE).
+func yodaIsDestructuringBracket(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	if t.Kind != token.Punct {
+		return false
+	}
+	open := i
+	switch t.Value {
+	case "[":
+	case "]":
+		if open = s.MatchBackward(i); open < 0 {
+			return false
+		}
+	default:
+		return false
+	}
+	return !isOffsetOpen(s, open) && arrayNotationIsDestructuring(s, open)
+}
+
+// yodaIsListStatement is isListStatement.
+func yodaIsListStatement(s *tokens.Stream, from, to int) bool {
+	for i := from; i <= to; i++ {
+		if kwIs(s.At(i), "list") || yodaIsDestructuringBracket(s, i) {
+			return true
+		}
+	}
+	return false
+}
+
+func yodaIsObjectOperator(t token.Token) bool {
+	return t.Kind == token.Punct && (t.Value == "->" || t.Value == "?->")
+}
+
+// yodaIsIndexOpen reports whether the token at i is "[" or an index "{"
+// (the bracket list isVariable accepts after a variable or a property name).
+func yodaIsIndexOpen(t token.Token) bool {
+	return t.Kind == token.Punct && (t.Value == "[" || t.Value == "{")
+}
+
+// yodaIsBinaryOperator approximates TokensAnalyzer::isBinaryOperator for the
+// strict (always_move_variable) variable check.
+func yodaIsBinaryOperator(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	switch t.Kind {
+	case token.Keyword:
+		switch strings.ToLower(t.Value) {
+		case "and", "or", "xor":
+			return true
+		}
+		return false
+	case token.Punct:
+	default:
+		return false
+	}
+	switch t.Value {
+	case "+", "-", "&":
+		return !unaryOperatorSpacesIsPredecessor(s, i)
+	case "=", "*", "/", "%", "<", ">", "|", "^", ".", "**", "<<", ">>", "==", "!=", "<>", "===", "!==",
+		"<=", ">=", "<=>", "&&", "||", "??", "+=", "-=", "*=", "/=", ".=", "%=", "**=", "&=", "|=", "^=",
+		"<<=", ">>=", "??=":
+		return true
+	}
+	return false
+}
+
+// yodaIsVariable is isVariable: whether [start, end] describes a variable.
+func yodaIsVariable(s *tokens.Stream, start, end int, strict bool) bool {
+	if t := s.At(start); start == end && !t.IsShellExec() && !t.StartsHeredoc() {
+		return t.Kind == token.Variable
+	}
+	if yodaIsGroupParen(s, start) {
+		return true
+	}
+	if strict {
+		for index := start; index <= end; index++ {
+			t := s.At(index)
+			if (t.Kind == token.Punct && t.Value == "(" && isCastParen(s, index)) || kwIs(t, "instanceof") ||
+				(t.Kind == token.Punct && t.Value == "!") || yodaIsBinaryOperator(s, index) {
+				return false
 			}
-			return 0, 0, false
 		}
 	}
-	if isYodaLiteral(t) {
-		// signed number "-1"
-		if t.Kind == token.Number {
-			p := prevSignificantIndex(s, le)
-			if p >= 0 && s.At(p).Kind == token.Punct && (s.At(p).Value == "-" || s.At(p).Value == "+") {
-				// only treat as sign when what precedes the sign is a boundary
-				if isLeftBoundary(s, prevMeaningfulIndex(s, p)) {
-					return p, le, true
-				}
+	index := start
+	// multiple braces around the statement: ((($a === 1)))
+	for yodaIsGroupParen(s, index) && s.MatchForward(index) == end {
+		index = nextMeaningfulIndex(s, index)
+		end = prevMeaningfulIndex(s, end)
+	}
+	expectString := false
+	for index <= end {
+		current := s.At(index)
+		if current.Kind == token.Whitespace || current.Kind == token.Comment || current.Kind == token.DocComment {
+			index++
+			continue
+		}
+		// a shell-exec, heredoc or nowdoc is several tokens to PHP, so it is
+		// never the single variable token
+		if index == end && !current.IsShellExec() && !current.StartsHeredoc() {
+			if expectString {
+				return current.Kind == token.Ident
 			}
+			return current.Kind == token.Variable
 		}
-		// a bare constant may be qualified ("\INF", "\Foo\BAR"); include the
-		// leading "\" and namespace segments so the boundary check sees them
-		if t.Kind == token.Ident {
-			return qualifiedNameStart(s, le), le, true
+		if kwIs(current, "list") || yodaIsDestructuringBracket(s, index) {
+			return false
 		}
-		return le, le, true
+		nextIndex := nextMeaningfulIndex(s, index)
+		if nextIndex < 0 {
+			break
+		}
+		next := s.At(nextIndex)
+		// self:: or ClassName::
+		if current.Kind == token.Ident && next.Kind == token.Punct && next.Value == "::" {
+			index = nextMeaningfulIndex(s, nextIndex)
+			if index < 0 {
+				break
+			}
+			continue
+		}
+		// \ClassName
+		if current.Kind == token.Punct && current.Value == `\` && next.Kind == token.Ident {
+			index = nextIndex
+			continue
+		}
+		// ClassName\
+		if current.Kind == token.Ident && next.Kind == token.Punct && next.Value == `\` {
+			index = nextIndex
+			continue
+		}
+		// $a-> or a-> (as in $b->a->c)
+		if (current.Kind == token.Ident || current.Kind == token.Variable) && yodaIsObjectOperator(next) {
+			index = nextMeaningfulIndex(s, nextIndex)
+			if index < 0 {
+				break
+			}
+			expectString = true
+			continue
+		}
+		// $a[...], a[...] (as in $c->a[$b]), $a{...} or a{...}
+		wantKind := token.Variable
+		if expectString {
+			wantKind = token.Ident
+		}
+		if current.Kind == wantKind && yodaIsIndexOpen(next) {
+			index = s.MatchForward(nextIndex)
+			if index < 0 {
+				return false
+			}
+			if index == end {
+				return true
+			}
+			index = nextMeaningfulIndex(s, index)
+			if index < 0 || (!yodaIsIndexOpen(s.At(index)) && !yodaIsObjectOperator(s.At(index))) {
+				return false
+			}
+			index = nextMeaningfulIndex(s, index)
+			if index < 0 {
+				return false
+			}
+			expectString = true
+			continue
+		}
+		// $a(...) or $a->b(...)
+		if strict && (current.Kind == token.Ident || current.Kind == token.Variable) && next.Kind == token.Punct && next.Value == "(" {
+			return false
+		}
+		// {...} (as in $a->{$b})
+		if expectString && current.Kind == token.Punct && current.Value == "{" {
+			index = s.MatchForward(index)
+			if index < 0 {
+				return false
+			}
+			if index == end {
+				return true
+			}
+			index = nextMeaningfulIndex(s, index)
+			if index < 0 || !yodaIsObjectOperator(s.At(index)) {
+				return false
+			}
+			index = nextMeaningfulIndex(s, index)
+			if index < 0 {
+				return false
+			}
+			expectString = true
+			continue
+		}
+		break
 	}
-	return 0, 0, false
+	return !yodaIsConstant(s, start, end)
+}
+
+// yodaIsPlainString reports whether t is a T_CONSTANT_ENCAPSED_STRING: a quoted
+// string without interpolation, "b" prefix allowed (heredocs, nowdocs and
+// shell-execs are not; an interpolated string is split into several tokens).
+func yodaIsPlainString(t token.Token) bool {
+	if !t.IsLiteral() {
+		return false
+	}
+	_, v := token.SplitBinaryPrefix(t.Value)
+	return v != "" && (v[0] == '\'' || v[0] == '"')
+}
+
+// yodaIsConstant is isConstant.
+func yodaIsConstant(s *tokens.Stream, index, end int) bool {
+	expectArrayOnly, expectNumberOnly, expectNothing := false, false, false
+	for ; index <= end; index++ {
+		t := s.At(index)
+		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
+			continue
+		}
+		if expectNothing {
+			return false
+		}
+		if expectArrayOnly {
+			if t.Kind == token.Punct && (t.Value == "(" || t.Value == ")" || t.Value == "]") {
+				continue
+			}
+			return false
+		}
+		if kwIs(t, "array") || (t.Kind == token.Punct && t.Value == "[" && !isOffsetOpen(s, index)) {
+			expectArrayOnly = true
+			continue
+		}
+		if expectNumberOnly && t.Kind != token.Number {
+			return false
+		}
+		if t.Kind == token.Punct && t.Value == "-" {
+			expectNumberOnly = true
+			continue
+		}
+		if t.Kind == token.Number || yodaIsPlainString(t) ||
+			(t.Kind == token.Ident && (t.Value == "true" || t.Value == "false" || t.Value == "null")) {
+			expectNothing = true
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // qualifiedNameStart walks left from the last identifier of a qualified name over
@@ -341,93 +669,6 @@ func qualifiedNameStart(s *tokens.Stream, end int) int {
 	}
 }
 
-// rightComparisonOperandEnd walks right from rs over a full comparison operand -
-// a primary plus any higher-precedence operators (arithmetic, casts, unary,
-// concatenation) and matched bracket groups - stopping before a lower-precedence
-// boundary (logical/ternary/assignment operator, another comparison, ",", ";" or
-// an unmatched closing bracket). Returns the operand's last significant index.
-func rightComparisonOperandEnd(s *tokens.Stream, rs int) int {
-	end := -1
-	for i := rs; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind == token.Whitespace || t.Kind == token.Comment || t.Kind == token.DocComment {
-			continue
-		}
-		if t.Kind == token.CloseTag {
-			return end // "?>" ends the operand; never pull the close tag in
-		}
-		if t.Kind == token.Punct {
-			switch t.Value {
-			case "(", "[", "{":
-				c := s.MatchForward(i)
-				if c < 0 {
-					return -1
-				}
-				end = c
-				i = c
-				continue
-			case ")", "]", "}", ";", ",", "=>", "&&", "||", "?", "??", ":", "=",
-				"==", "===", "!=", "!==", "<", ">", "<=", ">=", "<=>":
-				return end
-			}
-			end = i
-			continue
-		}
-		if t.Kind == token.Keyword {
-			switch strings.ToLower(t.Value) {
-			case "and", "or", "xor":
-				return end
-			}
-		}
-		end = i
-	}
-	return end
-}
-
-// yodaOperandHasDynamicCall reports whether the operand in [from, to] contains a
-// dynamic property/method brace followed by a call ("$a->{$b}(...)"), which
-// php-cs-fixer does not treat as a simple variable.
-func yodaOperandHasDynamicCall(s *tokens.Stream, from, to int) bool {
-	for i := from; i <= to && i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Punct || t.Value != "{" {
-			continue
-		}
-		p := prevSignificantIndex(s, i)
-		if p < 0 || s.At(p).Kind != token.Punct || (s.At(p).Value != "->" && s.At(p).Value != "?->") {
-			continue
-		}
-		// a dynamic property "$a->{$b}" is a variable; only a following call makes it not one
-		if c := s.MatchForward(i); c >= 0 {
-			if n := nextSignificantIndex(s, c); n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "(" {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// spanIsConstant reports whether the operand in [from, to] is a pure constant
-// expression - no variable and no function/method call. Such an operand is not a
-// "variable" side and must not be swapped.
-func spanIsConstant(s *tokens.Stream, from, to int) bool {
-	for i := from; i <= to && i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind == token.Variable {
-			return false
-		}
-		if t.Kind == token.Punct && t.Value == "(" {
-			if p := prevSignificantIndex(s, i); p >= 0 {
-				pt := s.At(p)
-				if pt.Kind == token.Ident || (pt.Kind == token.Punct && (pt.Value == ")" || pt.Value == "]")) {
-					return false // function/method call
-				}
-			}
-		}
-	}
-	return true
-}
-
 // isCastParen reports whether the "(" at i opens a cast like "(int)", "(string)"
 // rather than a grouping parenthesis.
 func isCastParen(s *tokens.Stream, i int) bool {
@@ -447,156 +688,4 @@ func isCastParen(s *tokens.Stream, i int) bool {
 	}
 	c := nextSignificantIndex(s, n)
 	return c >= 0 && s.At(c).Kind == token.Punct && s.At(c).Value == ")"
-}
-
-func isPrimaryKeyword(v string) bool {
-	switch strings.ToLower(v) {
-	case "static", "self", "parent":
-		return true
-	}
-	return false
-}
-
-func isLeftBoundary(s *tokens.Stream, p int) bool {
-	if p < 0 {
-		return true
-	}
-	t := s.At(p)
-	if t.Kind == token.Punct {
-		switch t.Value {
-		// "." (concat) binds tighter than comparison, so an operand next to it is
-		// part of a larger concat expression, not a standalone comparison operand.
-		// "}" closes a preceding block (e.g. "if {...}"), so a literal right after it
-		// starts a new statement and is a standalone comparison operand
-		case "(", "[", "{", "}", ",", ";", "&&", "||", "?", "??", ":", "=", "!", "=>",
-			// compound assignments bind looser than a comparison, so the operand
-			// after one is a standalone comparison operand ("$x += C === $y")
-			"+=", "-=", "*=", "/=", ".=", "%=", "**=", "??=", "&=", "|=", "^=", "<<=", ">>=":
-			return true
-		}
-		return false
-	}
-	if t.Kind == token.Keyword {
-		switch strings.ToLower(t.Value) {
-		case "return", "and", "or", "xor", "echo", "print", "case", "if", "elseif", "while":
-			return true
-		}
-	}
-	return false
-}
-
-func isRightBoundary(s *tokens.Stream, j int) bool {
-	if j < 0 {
-		return true
-	}
-	t := s.At(j)
-	if t.Kind == token.CloseTag {
-		return true
-	}
-	if t.Kind == token.Punct {
-		switch t.Value {
-		case ")", "]", "}", ";", ",", ":", "&&", "||", "?", "??", "=>":
-			return true
-		}
-		return false
-	}
-	if t.Kind == token.Keyword {
-		switch strings.ToLower(t.Value) {
-		case "and", "or", "xor":
-			return true
-		}
-	}
-	return false
-}
-
-// yodaRightLiteralOperand returns the span of a constant right operand starting
-// just after the comparison at op: a plain literal, signed number, empty array,
-// bare constant, or "Name::class". It mirrors leftLiteralOperand.
-func yodaRightLiteralOperand(s *tokens.Stream, op int) (int, int, bool) {
-	rs := nextMeaningfulIndex(s, op)
-	if rs < 0 {
-		return 0, 0, false
-	}
-	t := s.At(rs)
-	// signed number "-1"
-	if t.Kind == token.Punct && (t.Value == "-" || t.Value == "+") {
-		n := nextSignificantIndex(s, rs)
-		if n >= 0 && s.At(n).Kind == token.Number {
-			return rs, n, true
-		}
-		return 0, 0, false
-	}
-	// "[" of an empty array "[]"
-	if t.Kind == token.Punct && t.Value == "[" {
-		c := s.MatchForward(rs)
-		if c >= 0 && nextSignificantIndex(s, rs) == c {
-			return rs, c, true
-		}
-		return 0, 0, false
-	}
-	if isYodaLiteral(t) {
-		// "Name::class"
-		if t.Kind == token.Ident {
-			n := nextSignificantIndex(s, rs)
-			if n >= 0 && s.At(n).Value == "::" {
-				c := nextSignificantIndex(s, n)
-				if c >= 0 && s.At(c).Kind == token.Ident && strings.EqualFold(s.At(c).Value, "class") {
-					return rs, c, true
-				}
-			}
-		}
-		return rs, rs, true
-	}
-	return 0, 0, false
-}
-
-// yodaLeftPrimaryStart walks left from a primary's last token (end) over member,
-// static and namespace access and matched call/index groups, returning the first
-// token index of that primary, or -1 when end does not end a primary.
-func yodaLeftPrimaryStart(s *tokens.Stream, end int) int {
-	if !yodaIsPrimaryEndToken(s.At(end)) {
-		return -1
-	}
-	cur := end
-	for {
-		t := s.At(cur)
-		if t.Kind == token.Punct && (t.Value == ")" || t.Value == "]") {
-			o := s.MatchBackward(cur)
-			if o < 0 {
-				return -1
-			}
-			p := prevSignificantIndex(s, o)
-			if p < 0 {
-				return -1 // a bare "(...)" group, not a variable primary
-			}
-			cur = p
-			continue
-		}
-		p := prevSignificantIndex(s, cur)
-		if p >= 0 && s.At(p).Kind == token.Punct {
-			switch s.At(p).Value {
-			case "->", "?->", "::", `\`:
-				pp := prevSignificantIndex(s, p)
-				if pp < 0 {
-					return cur
-				}
-				cur = pp
-				continue
-			}
-		}
-		return cur
-	}
-}
-
-// yodaIsPrimaryEndToken reports whether t can end a primary (variable) expression.
-func yodaIsPrimaryEndToken(t token.Token) bool {
-	switch t.Kind {
-	case token.Variable, token.Ident:
-		return true
-	case token.Keyword:
-		return isPrimaryKeyword(t.Value)
-	case token.Punct:
-		return t.Value == ")" || t.Value == "]"
-	}
-	return false
 }

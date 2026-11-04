@@ -171,7 +171,8 @@ func isStaticRef(v string) bool {
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Basic/SingleLineEmptyBodyFixer.php
 //
 // SingleLineEmptyBody collapses an empty class, function or closure body to "{}"
-// on the declaration line ("function f()\n{\n}" -> "function f() {}").
+// on the declaration line ("function f()\n{\n}" -> "function f() {}", "class
+// A\n{}" -> "class A {}").
 type SingleLineEmptyBody struct{}
 
 func (SingleLineEmptyBody) Name() string {
@@ -182,40 +183,41 @@ func (SingleLineEmptyBody) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Basic/SingleLineEmptyBodyFixer.php"
 }
 
+// Fix follows applyFix: classy and function tokens right to left; an empty
+// body (whitespace only, or already "{}") becomes "{}" one space after the
+// declaration, unless a comment stands before its "{".
 func (SingleLineEmptyBody) Fix(s *tokens.Stream) bool {
-	changed := false
-	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
+	before := s.Render()
+	for index := s.Len() - 1; index > 0; index-- {
+		if !cdIsClassy(s, index) && (!kwIs(s.At(index), "function") || slebIsFunctionImport(s, index)) {
 			continue
 		}
-		switch kind, _ := classifyBrace(s, i); kind {
-		case braceClassLike, braceFunctionDecl, braceClosure:
-		default:
+		open := nextPunctOfKind(s, index, "{", ";")
+		if open < 0 || s.At(open).Value != "{" {
 			continue
 		}
-		closeIdx := s.MatchForward(i)
-		if closeIdx < 0 {
+		closeIdx := nextSignificantIndex(s, open)
+		if closeIdx < 0 || !isPunctVal(s, closeIdx, "}") {
 			continue
 		}
-		empty := true
-		for k := i + 1; k < closeIdx; k++ {
-			if s.At(k).Kind != token.Whitespace {
-				empty = false
-				break
-			}
+		if closeIdx == open+2 {
+			s.RemoveAt(open + 1)
 		}
-		if !empty || closeIdx == i+1 {
+		if p := prevSignificantIndex(s, open); p >= 0 && isComment(s.At(p)) {
 			continue
 		}
-		// remove the whitespace between { and }
-		for k := closeIdx - 1; k > i; k-- {
-			s.RemoveAt(k)
+		if s.At(open-1).Kind == token.Whitespace {
+			s.SetValue(open-1, " ")
+		} else {
+			s.InsertAt(open, token.Token{Kind: token.Whitespace, Value: " "})
 		}
-		// pull the brace onto the declaration line
-		if i > 0 && s.At(i-1).Kind == token.Whitespace && hasNewline(s.At(i-1).Value) {
-			s.SetValue(i-1, " ")
-		}
-		changed = true
 	}
-	return changed
+	return s.Render() != before
+}
+
+// slebIsFunctionImport reports whether the "function" at i is the one of
+// "use function" (CT::T_FUNCTION_IMPORT).
+func slebIsFunctionImport(s *tokens.Stream, i int) bool {
+	p := sigPrev(s, i)
+	return p >= 0 && kwIs(s.At(p), "use")
 }

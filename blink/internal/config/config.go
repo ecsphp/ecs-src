@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 
+	"blink/internal/finder"
 	"blink/internal/fixer"
 	"blink/internal/fixer/rules"
 	"blink/internal/set"
@@ -17,12 +18,14 @@ import (
 // the worker count, assembled from an ECS or blink config file.
 type Config struct {
 	Paths []string
-	Skip  []string // filepath.Match globs tested against each path
+	Skip  []string // ECS skip paths (globs, directories, files); see finder.PathMatcher
 	Rules []fixer.Fixer
 	Jobs  int // parallel workers
 	// PerPathRuleSkips disables a single rule on a subset of paths, keyed by the
 	// rule's name (its PHP-CS-Fixer FQCN); mirrors ECS's per-path skip config.
-	PerPathRuleSkips map[string][]string
+	// It holds one path list per configured class behind the rule (an alias and
+	// its successor are two checkers in ECS); the rule is off where all match.
+	PerPathRuleSkips map[string][][]string
 }
 
 // Configure returns a config seeded with the default psr12 + common sets,
@@ -79,7 +82,7 @@ func Load(path string) (*Config, error) {
 // A set's rules keep the configuration the set gives them, and a later set wins;
 // a level or an explicit name only enables a rule.
 func resolve(f file) (*Config, error) {
-	c := &Config{Paths: f.Paths, Skip: f.Skip, Jobs: runtime.NumCPU()}
+	c := &Config{Paths: f.Paths, Skip: finder.ResolveSkipPaths(f.Skip), Jobs: runtime.NumCPU()}
 	if len(c.Paths) == 0 {
 		c.Paths = []string{"."}
 	}

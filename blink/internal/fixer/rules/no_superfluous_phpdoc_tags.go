@@ -546,6 +546,18 @@ func hasContinuation(inner []docLine, idx int) bool {
 
 // superfluousTag reports whether a @param/@return line is redundant given sig.
 func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig, ctx typeContext) (bool, bool) {
+	if sig.hasVar {
+		// a property docblock (promoted constructor parameters included): only its
+		// @var is checked, like PHP-CS-Fixer's fixPropertyDocBlock
+		if m := nspVarRe.FindStringSubmatch(content); m != nil {
+			phpType, desc := m[1], strings.TrimSpace(m[2])
+			if desc != "" {
+				return false, true
+			}
+			return f.typeIsSuperfluous(phpType, sig.varType, ctx), true
+		}
+		return false, false
+	}
 	if m := nspParamRe.FindStringSubmatch(content); m != nil {
 		phpType, name, desc := m[1], m[2], strings.TrimSpace(m[3])
 		if desc != "" {
@@ -571,15 +583,6 @@ func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig, ctx
 			return false, true
 		}
 		return f.typeIsSuperfluous(phpType, sig.ret, ctx), true
-	}
-	if sig.hasVar {
-		if m := nspVarRe.FindStringSubmatch(content); m != nil {
-			phpType, desc := m[1], strings.TrimSpace(m[2])
-			if desc != "" {
-				return false, true
-			}
-			return f.typeIsSuperfluous(phpType, sig.varType, ctx), true
-		}
 	}
 	return false, false
 }

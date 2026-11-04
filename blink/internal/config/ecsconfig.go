@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 	"sort"
 
 	"blink/internal/fixer"
@@ -69,8 +70,8 @@ type ECSResolution struct {
 	// ConfigIgnored are mapped rules that carried configuration; blink applies
 	// its built-in behaviour for the fixer rather than the ECS options.
 	ConfigIgnored []string
-	// PerPathSkips are class-on-path skips applied project-wide, since blink
-	// cannot yet skip a single rule on a subset of files.
+	// PerPathSkips are the rules skipped only on some paths (class-on-path
+	// skips); blink disables each one on its paths, as ECS does.
 	PerPathSkips []string
 }
 
@@ -149,20 +150,22 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 	resolution := &ECSResolution{Total: len(distinctClasses)}
 
 	skippedClasses := map[string]bool{}
+	// skip paths per configured class: ECS's SkipSkipper matches a skip
+	// against the checker it built from that class, not against its successor
+	classSkips := map[string][]string{}
 	for _, skip := range f.Skips {
 		switch {
-		case skip.Class != "" && skip.Path == "" && len(skip.Paths) == 0:
+		// no path list skips the class everywhere; an empty list skips nothing
+		case skip.Class != "" && skip.Path == "" && skip.Paths == nil:
 			skippedClasses[skip.Class] = true
 		case skip.Class != "":
 			// A rule disabled only on some paths: skip that rule on those paths,
 			// mirroring ECS, instead of dropping it project-wide.
-			if config.PerPathRuleSkips == nil {
-				config.PerPathRuleSkips = map[string][]string{}
-			}
+			paths := classSkips[skip.Class]
 			if skip.Path != "" {
-				config.PerPathRuleSkips[skip.Class] = append(config.PerPathRuleSkips[skip.Class], skip.Path)
+				paths = append(paths, skip.Path)
 			}
-			config.PerPathRuleSkips[skip.Class] = append(config.PerPathRuleSkips[skip.Class], skip.Paths...)
+			classSkips[skip.Class] = append(paths, skip.Paths...)
 			resolution.PerPathSkips = append(resolution.PerPathSkips, skip.Class)
 		default:
 			if skip.Path != "" {
@@ -177,6 +180,8 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 	}
 
 	seen := map[string]bool{}
+	// configured classes per resolved fixer, in config order
+	classesByFixer := map[string][]string{}
 	for _, rule := range f.Rules {
 		if skippedClasses[rule.Class] {
 			continue
@@ -186,6 +191,9 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 		if !ok {
 			resolution.Unsupported = append(resolution.Unsupported, rule.Class)
 			continue
+		}
+		if !slices.Contains(classesByFixer[resolved.Name()], rule.Class) {
+			classesByFixer[resolved.Name()] = append(classesByFixer[resolved.Name()], rule.Class)
 		}
 
 		if len(rule.Config) > 0 {
@@ -205,6 +213,27 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 			resolution.Mapped++
 			config.Rules = append(config.Rules, resolved)
 		}
+	}
+
+	// a fixer is skipped on a path only when every class configured for it is
+	// skipped there; one class without a per-path skip keeps it on everywhere
+	for name, classes := range classesByFixer {
+		groups := make([][]string, 0, len(classes))
+		for _, class := range classes {
+			paths, ok := classSkips[class]
+			if !ok {
+				groups = nil
+				break
+			}
+			groups = append(groups, paths)
+		}
+		if groups == nil {
+			continue
+		}
+		if config.PerPathRuleSkips == nil {
+			config.PerPathRuleSkips = map[string][][]string{}
+		}
+		config.PerPathRuleSkips[name] = groups
 	}
 
 	// apply fixers in the same canonical (priority) order as the standalone path,

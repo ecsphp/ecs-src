@@ -3,7 +3,7 @@ package finder
 
 import (
 	"io/fs"
-	"path/filepath"
+	"os"
 	"strings"
 )
 
@@ -14,67 +14,87 @@ var alwaysSkipDirs = map[string]bool{
 	".git":         true,
 }
 
-// Find walks paths and returns every .php file not matching a skip glob, plus the
-// count of distinct .php files discovered before skip globs are applied. ECS counts
+// Find walks paths and returns every .php file not matching a skip path, plus the
+// count of distinct .php files discovered before skips are applied. ECS counts
 // every discovered file in its run summary (skipped ones included), so the caller
 // reports this total while only processing the returned files.
+//
+// Skips match paths as strings, so paths are built like Symfony Finder does:
+// the source as typed, trailing "/" trimmed, then "/" and the path below it.
 func Find(paths []string, skip []string) ([]string, int, error) {
 	var out []string
 	seen := map[string]bool{}
 	discovered := 0
+	skipped := NewPathMatcher(skip)
+
+	visit := func(path string) {
+		if !strings.HasSuffix(path, ".php") || seen[path] {
+			return
+		}
+		seen[path] = true
+		discovered++
+		if !skipped.Match(path) {
+			out = append(out, path)
+		}
+	}
 
 	for _, p := range paths {
-		err := filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() {
-				if alwaysSkipDirs[d.Name()] {
-					return fs.SkipDir
-				}
-				return nil
-			}
-			if !strings.HasSuffix(path, ".php") {
-				return nil
-			}
-			if seen[path] {
-				return nil
-			}
-			seen[path] = true
-			discovered++
-			if skipped(path, skip) {
-				return nil
-			}
-			out = append(out, path)
-			return nil
-		})
+		info, err := os.Stat(p)
 		if err != nil {
+			return nil, 0, err
+		}
+		if !info.IsDir() {
+			visit(p)
+			continue
+		}
+		if err := walk(finderBase(p), visit); err != nil {
 			return nil, 0, err
 		}
 	}
 	return out, discovered, nil
 }
 
-// Skipped reports whether path matches any of the skip globs, using the same
-// matching as the file walk (full-path glob, basename glob, or a "*fragment*"
-// substring). Reused for per-path rule skips.
-func Skipped(path string, skip []string) bool {
-	return skipped(path, skip)
+// finderBase is the prefix Symfony Finder puts before the paths below dir: dir
+// with trailing "/" trimmed (except the root "/" itself), then "/".
+func finderBase(dir string) string {
+	if dir == "/" {
+		return dir
+	}
+	return strings.TrimRight(dir, "/") + "/"
 }
 
-func skipped(path string, skip []string) bool {
-	for _, pat := range skip {
-		if ok, _ := filepath.Match(pat, path); ok {
-			return true
-		}
-		if ok, _ := filepath.Match(pat, filepath.Base(path)); ok {
-			return true
-		}
-		// "*/Fixture/*" matches the path segment "/Fixture/", not the substring
-		// "Fixture" (which would wrongly skip e.g. "DataFixtures")
-		if inner := strings.Trim(pat, "*"); inner != "" && strings.Contains(pat, "*") && strings.Contains(path, inner) {
-			return true
-		}
+// walk visits every file below base (which ends in "/") in lexical order,
+// building each path by appending to base. Like Finder without followLinks, it
+// does not descend into symlinked directories, and it never enters a
+// dependency directory below the source.
+func walk(base string, visit func(path string)) error {
+	entries, err := os.ReadDir(base)
+	if err != nil {
+		return err
 	}
-	return false
+	for _, entry := range entries {
+		path := base + entry.Name()
+		if entry.IsDir() {
+			if alwaysSkipDirs[entry.Name()] {
+				continue
+			}
+			if err := walk(path+"/", visit); err != nil {
+				return err
+			}
+			continue
+		}
+		if entry.Type()&fs.ModeSymlink != 0 {
+			// Finder's files() keeps a link only when it resolves to a file
+			if info, err := os.Stat(path); err != nil || !info.Mode().IsRegular() {
+				continue
+			}
+		}
+		visit(path)
+	}
+	return nil
+}
+
+// Skipped reports whether path matches any of the skip paths (see PathMatcher).
+func Skipped(path string, skip []string) bool {
+	return NewPathMatcher(skip).Match(path)
 }

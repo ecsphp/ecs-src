@@ -193,17 +193,27 @@ func newFormatter(w io.Writer) formatter {
 	return formatter{w: w, width: width, color: color}
 }
 
-// relativePath resolves an absolute file path against cwd, matching ECS's
-// StaticRelativeFilePathHelper output. An empty cwd yields the path unchanged.
+// relativePath resolves a file path against cwd, matching ECS's
+// StaticRelativeFilePathHelper output, which Symfony's makePathRelative writes
+// with "/" on Windows too. An empty cwd yields the path unchanged.
 func relativePath(cwd, path string) string {
 	if cwd == "" {
 		return path
 	}
+	if !filepath.IsAbs(path) {
+		if vol := filepath.VolumeName(cwd); vol != "" && path != "" && os.IsPathSeparator(path[0]) {
+			// a rooted path without a drive is on cwd's drive, as realpath() reads it
+			path = vol + path
+		} else {
+			path = filepath.Join(cwd, path)
+		}
+	}
 	rel, err := filepath.Rel(cwd, path)
 	if err != nil {
-		return path
+		// on another drive: makePathRelative keeps the absolute path
+		return filepath.ToSlash(path)
 	}
-	return rel
+	return filepath.ToSlash(rel)
 }
 
 func (f formatter) reportFileDiffs(results []runner.FileResult) {

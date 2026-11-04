@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"blink/internal/fixer"
@@ -160,43 +161,6 @@ func hasNullDefault(s *tokens.Stream, v int) bool {
 	return at.Kind == token.Punct && (at.Value == "," || at.Value == ")")
 }
 
-// typeRunStart walks left from the type's last token at end across the type parts
-// ("\", names, and the operators "?", "|", "&") and returns the index of the
-// type's first token together with whether the run contains a union/intersection
-// ("|" or "&") or a nullable marker ("?").
-func typeRunStart(s *tokens.Stream, end int) (start int, hasUnion, hasNullable bool) {
-	start = end
-	for {
-		pp := prevSignificantIndex(s, start)
-		if pp < 0 {
-			break
-		}
-		pt := s.At(pp)
-		if pt.Kind == token.Punct {
-			switch pt.Value {
-			case "|", "&":
-				hasUnion = true
-				start = pp
-				continue
-			case "?":
-				hasNullable = true
-				start = pp
-				continue
-			case `\`:
-				start = pp
-				continue
-			}
-			break
-		}
-		if isTypeNameToken(pt) {
-			start = pp
-			continue
-		}
-		break
-	}
-	return start, hasUnion, hasNullable
-}
-
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/NullableTypeDeclarationForDefaultNullValueFixer.php
 //
 // NullableTypeDeclarationForDefaultNullValue prepends "?" to a non-nullable
@@ -206,7 +170,8 @@ func typeRunStart(s *tokens.Stream, end int) (start int, hasUnion, hasNullable b
 // "null", or a union/intersection (which would need "|null", not a "?" prefix).
 //
 // Options: UnionNull (use_nullable_type_declaration: true) also appends "|null" to
-// plain unions. NoNullable (use_nullable_type_declaration: false) instead removes
+// unions and DNF types, and wraps a lone intersection first ("A&B" ->
+// "(A&B)|null"). NoNullable (use_nullable_type_declaration: false) instead removes
 // "?" and "|null" from parameters defaulting to null, skipping promoted
 // constructor properties.
 type NullableTypeDeclarationForDefaultNullValue struct {
@@ -230,50 +195,146 @@ func (f NullableTypeDeclarationForDefaultNullValue) WithConfig(config map[string
 	return f
 }
 
-// nullableTypeRunHas returns the index of the first token in the type run [start, end]
-// whose value equals the given one, or -1.
-func nullableTypeRunHas(s *tokens.Stream, start, end int, value string) int {
-	for j := start; j <= end; j++ {
-		if strings.EqualFold(s.At(j).Value, value) && s.At(j).Kind != token.Whitespace {
-			return j
-		}
+// ntdDNFGroupOpen returns the "(" of the disjunctive-normal-form group "(A&B)"
+// closed by the ")" at closeIdx, or -1 when that ")" closes anything else.
+func ntdDNFGroupOpen(s *tokens.Stream, closeIdx int) int {
+	open := s.MatchBackward(closeIdx)
+	if open < 0 {
+		return -1
 	}
-	return -1
+	intersection := false
+	for k := open + 1; k < closeIdx; k++ {
+		t := s.At(k)
+		if t.Kind == token.Punct && t.Value == "&" {
+			intersection = true
+			continue
+		}
+		if t.Kind == token.Whitespace || isTypeNameToken(t) || (t.Kind == token.Punct && t.Value == `\`) {
+			continue
+		}
+		return -1
+	}
+	if !intersection {
+		return -1
+	}
+	return open
 }
 
-// nullableTypeRemove drops the nullable marker or "null" member from the type run
-// [start, end] and reports whether it changed.
-func nullableTypeRemove(s *tokens.Stream, start, end int, hasNullable bool) bool {
-	if hasNullable {
-		s.RemoveAt(start)
-		if start < s.Len() && s.At(start).Kind == token.Whitespace {
-			s.RemoveAt(start)
+// ntdTypeStart walks left from the last token of a parameter type (a name or
+// the ")" of a DNF group) and returns the index of the type's first token, or
+// -1 when end does not end a type.
+func ntdTypeStart(s *tokens.Stream, end int) int {
+	cur := end
+	if t := s.At(end); t.Kind == token.Punct && t.Value == ")" {
+		if cur = ntdDNFGroupOpen(s, end); cur < 0 {
+			return -1
 		}
+	} else if !isTypeNameToken(t) {
+		return -1
+	}
+	for {
+		pp := prevSignificantIndex(s, cur)
+		if pp < 0 {
+			return cur
+		}
+		pt := s.At(pp)
+		switch {
+		case pt.Kind == token.Punct && (pt.Value == "|" || pt.Value == "&" || pt.Value == "?" || pt.Value == `\`):
+			cur = pp
+		case pt.Kind == token.Punct && pt.Value == ")":
+			open := ntdDNFGroupOpen(s, pp)
+			if open < 0 {
+				return cur
+			}
+			cur = open
+		case isTypeNameToken(pt):
+			cur = pp
+		default:
+			return cur
+		}
+	}
+}
+
+// ntdTypeName is the type's text without whitespace, as TypeAnalysis names it.
+func ntdTypeName(s *tokens.Stream, start, end int) string {
+	var b strings.Builder
+	for k := start; k <= end; k++ {
+		if t := s.At(k); t.Kind != token.Whitespace && t.Kind != token.Comment && t.Kind != token.DocComment {
+			b.WriteString(t.Value)
+		}
+	}
+	return b.String()
+}
+
+// ntdIsNullable is TypeAnalysis::isNullable: "?T", or "null" among the members
+// of a union.
+func ntdIsNullable(name string) bool {
+	if strings.HasPrefix(name, "?") {
 		return true
 	}
-	if nullableTypeRunHas(s, start, end, "&") >= 0 {
-		return false
+	return slices.Contains(strings.Split(strings.ToLower(name), "|"), "null")
+}
+
+// ntdRemoveNull is the use_nullable_type_declaration=false half of
+// fixUnionTypeParameter: drop "null" and its "|" from the union [start, end],
+// then the parentheses of a DNF group left alone with its intersection.
+func ntdRemoveNull(s *tokens.Stream, start, end int, name string) {
+	k := -1
+	for j := start; j <= end; j++ {
+		if t := s.At(j); t.Kind == token.Ident && strings.EqualFold(t.Value, "null") {
+			k = j
+			break
+		}
 	}
-	k := nullableTypeRunHas(s, start, end, "null")
 	if k < 0 {
-		return false
+		return
 	}
 	lo, hi := k, k
-	if n := nextSignificantIndex(s, k); n >= 0 && n <= end && s.At(n).Value == "|" {
-		hi = n
+	if k == start {
 		if hi+1 < s.Len() && s.At(hi+1).Kind == token.Whitespace {
 			hi++
 		}
-	} else if p := prevSignificantIndex(s, k); p >= start && s.At(p).Value == "|" {
-		lo = p
+		if n := nextSignificantIndex(s, k); n >= 0 && n <= end && s.At(n).Value == "|" {
+			hi = n
+			if hi+1 < s.Len() && s.At(hi+1).Kind == token.Whitespace {
+				hi++
+			}
+		}
+	} else {
 		if lo-1 >= start && s.At(lo-1).Kind == token.Whitespace {
 			lo--
 		}
-	} else {
-		return false
+		if p := prevSignificantIndex(s, k); p >= start && s.At(p).Value == "|" {
+			lo = p
+			if lo-1 >= start && s.At(lo-1).Kind == token.Whitespace {
+				lo--
+			}
+		}
 	}
 	s.ReplaceRange(lo, hi, nil)
-	return true
+	end -= hi - lo + 1
+	if !strings.Contains(name, "&") || strings.Count(name, "|") != 1 {
+		return
+	}
+	// the closing parenthesis first, so the opening one's index stays valid
+	for j := end; j >= start; j-- {
+		if t := s.At(j); t.Kind == token.Punct && t.Value == ")" {
+			s.RemoveAt(j)
+			if j-1 >= start && s.At(j-1).Kind == token.Whitespace {
+				s.RemoveAt(j - 1)
+			}
+			break
+		}
+	}
+	for j := start; j <= end && j < s.Len(); j++ {
+		if t := s.At(j); t.Kind == token.Punct && t.Value == "(" {
+			s.RemoveAt(j)
+			if j < s.Len() && s.At(j).Kind == token.Whitespace {
+				s.RemoveAt(j)
+			}
+			break
+		}
+	}
 }
 
 func (f NullableTypeDeclarationForDefaultNullValue) Fix(s *tokens.Stream) bool {
@@ -301,41 +362,52 @@ func (f NullableTypeDeclarationForDefaultNullValue) Fix(s *tokens.Stream) bool {
 				continue
 			}
 		}
-		if !isTypeNameToken(s.At(p)) {
+		start := ntdTypeStart(s, p)
+		if start < 0 {
 			continue
 		}
-		start, hasUnion, hasNullable := typeRunStart(s, p)
-		// atomic single type: skip "mixed" and standalone "null"
-		if start == p {
-			switch strings.ToLower(s.At(p).Value) {
-			case "mixed", "null":
-				continue
-			}
+		name := ntdTypeName(s, start, p)
+		if n := strings.ToLower(strings.TrimPrefix(name, "?")); n == "mixed" || n == "null" {
+			continue
 		}
+		nullable := ntdIsNullable(name)
+		union := strings.ContainsAny(name, "|&")
 		if f.NoNullable {
 			if b := prevSignificantIndex(s, start); b >= 0 && s.At(b).Kind == token.Keyword && isVisibilityModifier(s.At(b).Value) {
 				continue
 			}
-			if (hasNullable || hasUnion) && nullableTypeRemove(s, start, p, hasNullable) {
-				changed = true
-				i = start
-			}
-			continue
-		}
-		if hasUnion && !hasNullable && f.UnionNull {
-			if nullableTypeRunHas(s, start, p, "&") >= 0 || nullableTypeRunHas(s, start, p, "null") >= 0 {
+			if !nullable {
 				continue
 			}
-			s.InsertAt(p+1, token.Token{Kind: token.Punct, Value: "|"})
-			s.InsertAt(p+2, token.Token{Kind: token.Ident, Value: "null"})
+			if union {
+				ntdRemoveNull(s, start, p, name)
+			} else {
+				s.RemoveAt(start)
+				if start < s.Len() && s.At(start).Kind == token.Whitespace {
+					s.RemoveAt(start)
+				}
+			}
 			changed = true
 			i = start
 			continue
 		}
-		if hasNullable || hasUnion {
+		if nullable || (union && !f.UnionNull) {
 			continue
 		}
-		s.InsertAt(start, token.Token{Kind: token.Punct, Value: "?"})
+		if union {
+			// an intersection alone becomes a DNF group: "A&B" -> "(A&B)|null"
+			if !strings.Contains(name, "|") {
+				s.InsertAt(p+1, token.Token{Kind: token.Punct, Value: ")"})
+				p++
+			}
+			s.InsertAt(p+1, token.Token{Kind: token.Punct, Value: "|"})
+			s.InsertAt(p+2, token.Token{Kind: token.Ident, Value: "null"})
+			if !strings.Contains(name, "|") {
+				s.InsertAt(start, token.Token{Kind: token.Punct, Value: "("})
+			}
+		} else {
+			s.InsertAt(start, token.Token{Kind: token.Punct, Value: "?"})
+		}
 		changed = true
 		i = start
 	}

@@ -124,6 +124,7 @@ func (f PhpdocInlineTagNormalizer) WithConfig(config map[string]any) fixer.Fixer
 		if len(list) == 0 {
 			f.disabled = true
 		} else {
+			f.disabled = false
 			f.re = phpdocInlineTagRe(list)
 		}
 	}

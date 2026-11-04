@@ -55,3 +55,20 @@ func TestNoSuperfluousPhpdocTagsInheritDocWithDescription(t *testing.T) {
 		t.Fatalf("{@inheritDoc} with description must be kept: changed=%v got=%q", changed, got)
 	}
 }
+
+// TestNoSuperfluousPhpdocTagsPropertyDocKeepsParam checks that a @param in a
+// property's docblock (here a promoted constructor parameter) is not taken for
+// an unused function parameter: PHP-CS-Fixer only checks a property's @var.
+func TestNoSuperfluousPhpdocTagsPropertyDocKeepsParam(t *testing.T) {
+	t.Parallel()
+	f := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"allow_unused_params": false})
+	src := "<?php\nclass A {\n    public function __construct(\n        /**\n         * Which fields.\n         *\n         * @param list<string>|string $names\n         */\n        public array|string $names = [],\n    ) {}\n}\n"
+	if got, _ := apply(t, f, src); got != src {
+		t.Errorf("got %q", got)
+	}
+	// a promotion led by readonly is a property, so its @var is still checked
+	in := "<?php\nclass A {\n    public function __construct(\n        /**\n         * @var string\n         */\n        readonly string $name,\n    ) {}\n}\n"
+	if got, changed := apply(t, f, in); !changed || got == in {
+		t.Errorf("@var string on a string property should go, got %q", got)
+	}
+}

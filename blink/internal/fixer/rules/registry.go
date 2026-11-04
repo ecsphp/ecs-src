@@ -114,6 +114,8 @@ func CommonFixers() []fixer.Fixer {
 		NoUselessReturn{},
 		SimplifiedNullReturn{},
 		FunctionToConstant{},
+		NativeConstantInvocation{},
+		GlobalNamespaceImport{},
 		SelfAccessor{},
 		RemoveUselessDefaultComment{},
 		ProtectedToPrivate{},
@@ -236,6 +238,12 @@ func ConstructFixers() []fixer.Fixer {
 		NoUselessElse{},
 		NoUnneededFinalMethod{},
 		NoPhp4Constructor{},
+		ErrorSuppression{},
+		GetClassToClassKeyword{},
+		LogicalOperators{},
+		TernaryToElvisOperator{},
+		EchoTagSyntax{},
+		SemicolonAfterInstruction{},
 	}
 }
 
@@ -309,6 +317,10 @@ func buildRegistry() {
 		LanguageConstructSpacing{},
 		NativeFunctionInvocation{})
 	all = append(all, NoClosingTag{})
+	// a rule run without options must behave like PHP-CS-Fixer's default config
+	for i, f := range all {
+		all[i] = withPHPDefaults(f)
+	}
 	// run in PHP-CS-Fixer execution order: priority descending, then by rule name
 	// ascending - exactly how PHP-CS-Fixer's Utils::sortFixers breaks ties
 	slices.SortStableFunc(all, func(a, b fixer.Fixer) int {
@@ -327,7 +339,8 @@ func buildRegistry() {
 	}
 }
 
-// All returns every fixer in PHP-CS-Fixer execution order. The registry is built
+// All returns every fixer in PHP-CS-Fixer execution order, each configured with
+// PHP-CS-Fixer's defaults (see phpDefaultsJSON). The registry is built
 // once; the returned slice is a fresh copy the caller may append to or reorder.
 func All() []fixer.Fixer {
 	registryOnce.Do(buildRegistry)
@@ -381,7 +394,8 @@ var deprecatedAliases = map[string]string{
 	`PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`: `PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer`,
 }
 
-// ByName returns the fixer whose Name matches, if any.
+// ByName returns the fixer whose Name matches, if any, configured with
+// PHP-CS-Fixer's defaults like every fixer All returns.
 func ByName(name string) (fixer.Fixer, bool) {
 	registryOnce.Do(buildRegistry)
 	if canonical, ok := deprecatedAliases[name]; ok {

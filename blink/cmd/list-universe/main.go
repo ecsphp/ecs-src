@@ -46,7 +46,7 @@ func main() {
 		}
 	}
 
-	for _, dir := range strings.Split(*setsFlag, ",") {
+	for dir := range strings.SplitSeq(*setsFlag, ",") {
 		for fqcn := range sniffsIn(strings.TrimSpace(dir)) {
 			universe[fqcn] = true
 		}

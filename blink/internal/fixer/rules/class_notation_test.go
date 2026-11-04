@@ -4,8 +4,9 @@ import "testing"
 
 func TestClassDefinitionNormalizesSpaces(t *testing.T) {
 	t.Parallel()
+	// the opening brace of a named class goes on the next line (PHP-CS-Fixer)
 	got, changed := apply(t, ClassDefinition{}, "<?php class  A  extends  B  implements  C {}")
-	want := "<?php class A extends B implements C {}"
+	want := "<?php class A extends B implements C\n{}"
 	if !changed || got != want {
 		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
 	}
@@ -13,7 +14,7 @@ func TestClassDefinitionNormalizesSpaces(t *testing.T) {
 
 func TestClassDefinitionLeavesCorrectHeader(t *testing.T) {
 	t.Parallel()
-	src := "<?php class A extends B implements C {}"
+	src := "<?php class A extends B implements C\n{}"
 	got, changed := apply(t, ClassDefinition{}, src)
 	if changed || got != src {
 		t.Fatalf("correct header must be untouched: changed=%v got=%q", changed, got)
@@ -100,35 +101,13 @@ func TestOrderedClassElementsAlreadyOrdered(t *testing.T) {
 	}
 }
 
-func TestOrderedClassElementsSkipsCommentsAndAttributes(t *testing.T) {
+// The comments, docblocks and attributes before an element move with it, and
+// enum cases sort before methods (PHP-CS-Fixer).
+func TestOrderedClassElementsMovesLeadingTrivia(t *testing.T) {
 	t.Parallel()
-	// a doc comment between members is trivia we do not move; skip the class
-	docSrc := "<?php class A {\n" +
-		"    public function run() {}\n" +
-		"    /** the answer */\n" +
-		"    const X = 1;\n" +
-		"}"
-	if got, changed := apply(t, OrderedClassElements{}, docSrc); changed || got != docSrc {
-		t.Fatalf("class with a doc comment must be untouched: changed=%v got=%q", changed, got)
-	}
-	// #[Attr] lexes as a line comment here, so it too forces a skip
-	attrSrc := "<?php class A {\n" +
-		"    public function run() {}\n" +
-		"    #[Column]\n" +
-		"    public $prop;\n" +
-		"}"
-	if got, changed := apply(t, OrderedClassElements{}, attrSrc); changed || got != attrSrc {
-		t.Fatalf("class with an attribute must be untouched: changed=%v got=%q", changed, got)
-	}
-}
-
-func TestOrderedClassElementsSkipsEnumCases(t *testing.T) {
-	t.Parallel()
-	src := "<?php enum Suit {\n" +
-		"    public function label() {}\n" +
-		"    case Hearts;\n" +
-		"}"
-	if got, changed := apply(t, OrderedClassElements{}, src); changed || got != src {
-		t.Fatalf("enum with cases must be untouched: changed=%v got=%q", changed, got)
+	src := "<?php class A {\n    public function run() {}\n    /** the answer */\n    const X = 1;\n}\nclass B {\n    public function run() {}\n    #[Column]\n    public $prop;\n}\nenum Suit {\n    public function label() {}\n    case Hearts;\n}\n"
+	want := "<?php class A {\n    /** the answer */\n    const X = 1;\n    public function run() {}\n}\nclass B {\n    #[Column]\n    public $prop;\n    public function run() {}\n}\nenum Suit {\n    case Hearts;\n    public function label() {}\n}\n"
+	if got, _ := apply(t, OrderedClassElements{}, src); got != want {
+		t.Fatalf("got %q\nwant %q", got, want)
 	}
 }

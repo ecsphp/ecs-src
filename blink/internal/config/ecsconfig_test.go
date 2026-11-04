@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -273,5 +274,85 @@ func TestLoadECSKeepsConfigKeyOrder(t *testing.T) {
 		if want := "<?php\n/** " + c.want + " */\nfunction f() {}"; s.Render() != want {
 			t.Fatalf("replacements %s: got %q, want %q", c.replacements, s.Render(), want)
 		}
+	}
+}
+
+// No path list skips the rule everywhere, a list on those paths, an empty list nowhere.
+func TestLoadECSClassSkipPathLists(t *testing.T) {
+	cases := []struct {
+		name      string
+		skip      string
+		wantRules int
+		wantPaths []string
+	}{
+		{"no paths", `{"class": "` + esc(knownRuleA) + `"}`, 0, nil},
+		{"null paths", `{"class": "` + esc(knownRuleA) + `", "paths": null}`, 0, nil},
+		{"some paths", `{"class": "` + esc(knownRuleA) + `", "paths": ["/p/old/*.php", "/p/src/Web"]}`, 1, []string{"/p/old/*.php", "/p/src/Web"}},
+		{"empty paths", `{"class": "` + esc(knownRuleA) + `", "paths": []}`, 1, []string{}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg, _, err := LoadECS(writeECS(t, `{
+				"rules": [{"class": "`+esc(knownRuleA)+`", "config": {}}],
+				"skips": [`+c.skip+`]
+			}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(cfg.Rules) != c.wantRules {
+				t.Fatalf("rules = %d, want %d", len(cfg.Rules), c.wantRules)
+			}
+			groups, ok := cfg.PerPathRuleSkips[knownRuleA]
+			if ok != (c.wantPaths != nil) {
+				t.Fatalf("per-path skips = %v (present %v), want %v", groups, ok, c.wantPaths)
+			}
+			if !ok {
+				return
+			}
+			if len(groups) != 1 || !slices.Equal(groups[0], c.wantPaths) {
+				t.Fatalf("per-path skips = %v, want [%v]", groups, c.wantPaths)
+			}
+		})
+	}
+}
+
+// ECS runs a deprecated alias and its successor as two checkers, so the shared
+// fixer is skipped only where both are (checked with the PHP engine).
+func TestLoadECSPerPathSkipOnDeprecatedAlias(t *testing.T) {
+	deprecated := `PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`
+	successor := `PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer`
+	rule := func(class string) string { return `{"class": "` + esc(class) + `", "config": {}}` }
+	skip := func(class string, paths string) string {
+		return `{"class": "` + esc(class) + `", "paths": ` + paths + `}`
+	}
+
+	cases := []struct {
+		name  string
+		rules []string
+		skips []string
+		want  [][]string // nil: the fixer has no per-path skip
+	}{
+		{"alias skipped", []string{rule(deprecated)}, []string{skip(deprecated, `["/p/a"]`)}, [][]string{{"/p/a"}}},
+		{"successor configured too", []string{rule(deprecated), rule(successor)}, []string{skip(deprecated, `["/p/a"]`)}, nil},
+		{"both skipped", []string{rule(deprecated), rule(successor)}, []string{skip(deprecated, `["/p/a"]`), skip(successor, `["/p/*/A.php"]`)}, [][]string{{"/p/a"}, {"/p/*/A.php"}}},
+		{"skip on unconfigured successor", []string{rule(deprecated)}, []string{skip(successor, `["/p/a"]`)}, nil},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg, _, err := LoadECS(writeECS(t, `{"rules": [`+strings.Join(c.rules, ",")+`], "skips": [`+strings.Join(c.skips, ",")+`]}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(cfg.Rules) != 1 || cfg.Rules[0].Name() != successor {
+				t.Fatalf("rules = %v, want only %s", cfg.Rules, successor)
+			}
+			got, ok := cfg.PerPathRuleSkips[successor]
+			if ok != (c.want != nil) || !slices.EqualFunc(got, c.want, slices.Equal[[]string]) {
+				t.Fatalf("per-path skips = %q (present %v), want %q", got, ok, c.want)
+			}
+			if len(cfg.PerPathRuleSkips) > 1 || (c.want == nil && len(cfg.PerPathRuleSkips) > 0) {
+				t.Fatalf("per-path skips keyed off the fixer: %q", cfg.PerPathRuleSkips)
+			}
+		})
 	}
 }

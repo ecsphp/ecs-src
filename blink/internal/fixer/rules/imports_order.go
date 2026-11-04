@@ -163,6 +163,7 @@ func (f OrderedImports) WithConfig(config map[string]any) fixer.Fixer {
 		if raw == nil {
 			f.noGrouping = true
 		} else if list := orderedImportsConfigStrings(raw); list != nil {
+			f.noGrouping = false
 			f.orderKinds = list
 		}
 	}
