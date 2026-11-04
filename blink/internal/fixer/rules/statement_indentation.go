@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 
@@ -76,12 +77,20 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 	previousLineNewIndent := ""
 	noBracesBlockStarts := map[int]bool{}
 	caseBlockStarts := map[int]int{}
+	inTemplate := false
 
 	changed := false
 
 	for index := range n {
 		t := s.At(index)
 		cur := len(scopes) - 1
+
+		// From the first HTML on, the file is a template: its PHP is laid out along the
+		// markup around it, which the scopes cannot see, so its indent is left as is.
+		// The scopes are still tracked. A shebang line is not HTML.
+		if t.Kind == token.InlineHTML && (index > 0 || !strings.HasPrefix(t.Value, "#!")) {
+			inTemplate = true
+		}
 
 		if noBracesBlockStarts[index] {
 			scopes = append(scopes, stmtScope{
@@ -295,6 +304,11 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 				content = stmtReplaceStatementIndent(content, scopes[cur].initialIndent, scopes[cur].newIndent)
 			}
 
+			if inTemplate {
+				content = t.Value
+				previousLineNewIndent = previousLineInitialIndent
+			}
+
 			lastIndent = stmtExtractIndent(content)
 
 			if content != t.Value {
@@ -302,7 +316,7 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 				changed = true
 			}
 
-			if nextTok < n && stmtIsComment(s, nextTok) {
+			if nextTok < n && stmtIsComment(s, nextTok) && !inTemplate {
 				newComment := stmtReplaceCommentIndent(s.At(nextTok).Value, previousLineInitialIndent, previousLineNewIndent)
 				if newComment != s.At(nextTok).Value {
 					s.SetValue(nextTok, newComment)
@@ -692,7 +706,7 @@ func (f StatementIndentation) findCaseBlockEnd(s *tokens.Stream, index int) (int
 			continue
 		}
 		if t.Kind == token.Keyword && stmtKwIn(t.Value, "case", "default") {
-			return index, true
+			return stmtLeadingCommentsStart(s, index), true
 		}
 		if t.Kind == token.Punct && t.Value == "}" {
 			return prevSignificantIndex(s, index), false
@@ -700,6 +714,41 @@ func (f StatementIndentation) findCaseBlockEnd(s *tokens.Stream, index int) (int
 	}
 	return n - 1, false
 }
+
+// stmtLeadingCommentsStart returns where the comments above the case/default at
+// index start when they describe that case: after a blank line, or right below
+// another case label. The previous case body then ends before them, so they take
+// the case's indent. Otherwise, and for a "no break" marker, they stay in the body
+// and index is returned.
+func stmtLeadingCommentsStart(s *tokens.Stream, index int) int {
+	start := index
+	for j := index - 1; j > 0; j-- {
+		if s.At(j).Kind == token.Whitespace {
+			continue
+		}
+		if !stmtIsComment(s, j) {
+			if s.At(j).Kind == token.Punct && s.At(j).Value == ":" {
+				return start
+			}
+			return index
+		}
+		if stmtNoBreakComment.MatchString(s.At(j).Value) {
+			return index
+		}
+		ws := s.At(j - 1)
+		if ws.Kind != token.Whitespace || !hasNewline(ws.Value) {
+			return index // trails a statement on its line
+		}
+		start = j
+		if strings.Count(ws.Value, "\n") >= 2 {
+			return start
+		}
+	}
+	return index
+}
+
+// stmtNoBreakComment matches the fall-through markers NoBreakCommentFixer writes.
+var stmtNoBreakComment = regexp.MustCompile(`(?i)^(?://|#|/\*\*?)\s*(?:no\s*break|fall[\s-]*through)\s*(?:\*/)?$`)
 
 // stmtIsPropertyStart ports isPropertyStart: the last modifier before a typed or
 // named property declaration.
