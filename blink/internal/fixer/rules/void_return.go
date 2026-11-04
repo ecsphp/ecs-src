@@ -133,7 +133,7 @@ func vrHasVoidReturn(s *tokens.Stream, startIndex, endIndex int) bool {
 			}
 			continue
 		}
-		if kwIs(s.At(i), "yield") {
+		if kwIs(s.At(i), "yield") || isYieldFrom(s.At(i)) {
 			return false // generators cannot return void
 		}
 		if !kwIs(s.At(i), "return") {
