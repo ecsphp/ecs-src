@@ -26,49 +26,139 @@ func Common() []fixer.Fixer { return selectMembers(commonMembers) }
 // ECS's default prepared sets enable. It is the union of PSR12 and Common.
 func Default() []fixer.Fixer { return selectMembers(defaultMembers) }
 
-// PERCS mirrors PHP-CS-Fixer's @PER-CS (as exposed by ECS SetList::PER_CS): the
-// full rule set plus single_line_empty_body, which is PER-CS-specific and not
-// part of the default/common output.
-func PERCS() []fixer.Fixer {
-	all := rules.All()
-	out := make([]fixer.Fixer, 0, len(all)+1)
-	for _, f := range all {
-		if percsExcluded[shortName(f.Name())] {
+// PERCS is ECS's SetList::PER_CS (config/set/per-cs.php), limited to the fixers
+// blink implements.
+func PERCS() []fixer.Fixer { return build(perCSRules) }
+
+// setRule is a rule of a prepared set and its configuration (nil for defaults).
+type setRule struct {
+	class  string
+	config map[string]any
+}
+
+// build returns the set's implemented fixers, configured, in canonical order.
+func build(set []setRule) []fixer.Fixer {
+	out := make([]fixer.Fixer, 0, len(set))
+	for _, r := range set {
+		f, ok := rules.ByName(r.class)
+		if !ok {
 			continue
+		}
+		if r.config != nil {
+			f = f.(fixer.ConfigurableFixer).WithConfig(r.config)
 		}
 		out = append(out, f)
 	}
-	return append(out, rules.SingleLineEmptyBody{})
+	rules.CanonicalOrder(out)
+	return out
 }
 
-// percsExcluded are implemented fixers that @PER-CS does not enable, so the
-// per-cs set (which otherwise runs every fixer) leaves them out. PsrAutoloading
-// renames classes from the file path and is opt-in only; the others are not
-// @PER-CS rules (most change code semantics) and run only when a config asks.
-var percsExcluded = map[string]bool{
-	"PsrAutoloadingFixer": true,
-	// a PHP_CodeSniffer sniff, not part of PHP-CS-Fixer's @PER-CS
-	"LanguageConstructSpacingSniff":   true,
-	"PhpUnitConstructFixer":           true,
-	"PhpUnitFqcnAnnotationFixer":      true,
-	"PhpUnitMockShortWillReturnFixer": true,
-	"PhpUnitTestAnnotationFixer":      true,
-	"DoctrineAnnotationBracesFixer":   true,
-	"GlobalKeywordSniff":              true,
-	// risky, not part of PHP-CS-Fixer's @PER-CS
-	"NativeFunctionInvocationFixer":      true,
-	"SimpleToComplexStringVariableFixer": true,
-	"StringLengthToEmptyFixer":           true,
-	"StringLineEndingFixer":              true,
-	"NonPrintableCharacterFixer":         true,
-	"NoHomoglyphNamesFixer":              true,
-	"ModernSerializationMethodsFixer":    true,
-	"DeclareStrictTypesFixer":            true,
-	"VoidReturnFixer":                    true,
-	"StaticLambdaFixer":                  true,
-	"NoUselessElseFixer":                 true,
-	"NoUnneededFinalMethodFixer":         true,
-	"NoPhp4ConstructorFixer":             true,
+// perCSRules copies config/set/per-cs.php, with options in their JSON shapes as
+// dump-config sends them. TestPERCSMatchesECS fails when the two drift apart.
+var perCSRules = []setRule{
+	{`PhpCsFixer\Fixer\Operator\BinaryOperatorSpacesFixer`, map[string]any{
+		"default": "at_least_single_space",
+	}},
+	{`PhpCsFixer\Fixer\Basic\BracesPositionFixer`, map[string]any{
+		"allow_single_line_anonymous_functions":     false,
+		"allow_single_line_empty_anonymous_classes": true,
+	}},
+	{`PhpCsFixer\Fixer\ClassNotation\ClassDefinitionFixer`, map[string]any{
+		"inline_constructor_arguments": false,
+		"space_before_parenthesis":     true,
+	}},
+	{`PhpCsFixer\Fixer\Operator\ConcatSpaceFixer`, map[string]any{
+		"spacing": "one",
+	}},
+	{`PhpCsFixer\Fixer\FunctionNotation\FunctionDeclarationFixer`, map[string]any{
+		"closure_fn_spacing": "none",
+	}},
+	{`PhpCsFixer\Fixer\FunctionNotation\MethodArgumentSpaceFixer`, map[string]any{
+		"after_heredoc": false,
+	}},
+	{`PhpCsFixer\Fixer\Operator\NewWithParenthesesFixer`, map[string]any{
+		"anonymous_class": false,
+	}},
+	{`PhpCsFixer\Fixer\Whitespace\NoExtraBlankLinesFixer`, map[string]any{
+		"tokens": []any{"use"},
+	}},
+	{`PhpCsFixer\Fixer\ClassNotation\OrderedClassElementsFixer`, map[string]any{
+		"order": []any{"use_trait"},
+	}},
+	{`PhpCsFixer\Fixer\Import\OrderedImportsFixer`, map[string]any{
+		"imports_order":  []any{"class", "function", "const"},
+		"sort_algorithm": "none",
+	}},
+	{`PhpCsFixer\Fixer\ClassNotation\OrderedTypesFixer`, map[string]any{
+		"null_adjustment": "always_last",
+		"sort_algorithm":  "none",
+	}},
+	{`PhpCsFixer\Fixer\Import\SingleImportPerStatementFixer`, map[string]any{
+		"group_to_single_imports": false,
+	}},
+	{`PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAroundConstructFixer`, map[string]any{
+		"constructs_followed_by_a_single_space": []any{
+			"abstract", "as", "case", "catch", "class", "const", "const_import", "do", "else", "elseif",
+			"enum", "final", "finally", "for", "foreach", "function", "function_import", "if", "insteadof",
+			"interface", "match", "named_argument", "namespace", "new", "private", "protected", "public",
+			"readonly", "static", "switch", "trait", "try", "type_colon", "use", "use_lambda", "while",
+		},
+		"constructs_preceded_by_a_single_space": []any{"as", "else", "elseif", "use_lambda"},
+	}},
+	{`PhpCsFixer\Fixer\ControlStructure\TrailingCommaInMultilineFixer`, map[string]any{
+		"after_heredoc": true,
+		"elements":      []any{"arguments", "array_destructuring", "arrays", "match", "parameters"},
+	}},
+	{`PhpCsFixer\Fixer\Operator\UnaryOperatorSpacesFixer`, map[string]any{
+		"only_dec_inc": true,
+	}},
+	{`PhpCsFixer\Fixer\Whitespace\ArrayIndentationFixer`, nil},
+	{`PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer`, nil},
+	{`PhpCsFixer\Fixer\AttributeNotation\AttributeBlockNoSpacesFixer`, nil},
+	{`PhpCsFixer\Fixer\NamespaceNotation\BlankLineAfterNamespaceFixer`, nil},
+	{`PhpCsFixer\Fixer\PhpTag\BlankLineAfterOpeningTagFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\BlankLineBetweenImportGroupsFixer`, nil},
+	{`PhpCsFixer\Fixer\NamespaceNotation\BlankLinesBeforeNamespaceFixer`, nil},
+	{`PhpCsFixer\Fixer\CastNotation\CastSpacesFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\CompactNullableTypeDeclarationFixer`, nil},
+	{`PhpCsFixer\Fixer\Casing\ConstantCaseFixer`, nil},
+	{`PhpCsFixer\Fixer\ControlStructure\ControlStructureBracesFixer`, nil},
+	{`PhpCsFixer\Fixer\ControlStructure\ControlStructureContinuationPositionFixer`, nil},
+	{`PhpCsFixer\Fixer\LanguageConstruct\DeclareEqualNormalizeFixer`, nil},
+	{`PhpCsFixer\Fixer\ControlStructure\ElseifFixer`, nil},
+	{`PhpCsFixer\Fixer\Basic\EncodingFixer`, nil},
+	{`PhpCsFixer\Fixer\PhpTag\FullOpeningTagFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\IndentationTypeFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\LineEndingFixer`, nil},
+	{`PhpCsFixer\Fixer\CastNotation\LowercaseCastFixer`, nil},
+	{`PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer`, nil},
+	{`PhpCsFixer\Fixer\Casing\LowercaseStaticReferenceFixer`, nil},
+	{`PhpCsFixer\Fixer\ClassNotation\ModifierKeywordsFixer`, nil},
+	{`PhpCsFixer\Fixer\ClassNotation\NoBlankLinesAfterClassOpeningFixer`, nil},
+	{`PhpCsFixer\Fixer\ControlStructure\NoBreakCommentFixer`, nil},
+	{`PhpCsFixer\Fixer\PhpTag\NoClosingTagFixer`, nil},
+	{`PhpCsFixer\Fixer\Import\NoLeadingImportSlashFixer`, nil},
+	{`PhpCsFixer\Fixer\Basic\NoMultipleStatementsPerLineFixer`, nil},
+	{`PhpCsFixer\Fixer\Operator\NoSpaceAroundDoubleColonFixer`, nil},
+	{`PhpCsFixer\Fixer\FunctionNotation\NoSpacesAfterFunctionNameFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\NoTrailingWhitespaceFixer`, nil},
+	{`PhpCsFixer\Fixer\Comment\NoTrailingWhitespaceInCommentFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\NoWhitespaceInBlankLineFixer`, nil},
+	{`PhpCsFixer\Fixer\LanguageConstruct\NullableTypeDeclarationFixer`, nil},
+	{`PhpCsFixer\Fixer\Operator\OperatorLinebreakFixer`, nil},
+	{`PhpCsFixer\Fixer\FunctionNotation\ReturnTypeDeclarationFixer`, nil},
+	{`PhpCsFixer\Fixer\CastNotation\ShortScalarCastFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\SingleBlankLineAtEofFixer`, nil},
+	{`PhpCsFixer\Fixer\ClassNotation\SingleClassElementPerStatementFixer`, nil},
+	{`PhpCsFixer\Fixer\Import\SingleLineAfterImportsFixer`, nil},
+	{`PhpCsFixer\Fixer\Basic\SingleLineEmptyBodyFixer`, nil},
+	{`PhpCsFixer\Fixer\ClassNotation\SingleTraitInsertPerStatementFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\SpacesInsideParenthesesFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\StatementIndentationFixer`, nil},
+	{`PhpCsFixer\Fixer\ControlStructure\SwitchCaseSemicolonToColonFixer`, nil},
+	{`PhpCsFixer\Fixer\ControlStructure\SwitchCaseSpaceFixer`, nil},
+	{`PhpCsFixer\Fixer\Operator\TernaryOperatorSpacesFixer`, nil},
+	{`PhpCsFixer\Fixer\Whitespace\TypesSpacesFixer`, nil},
 }
 
 var byName = map[string]func() []fixer.Fixer{

@@ -23,7 +23,7 @@ PHP-CS-Fixer name and only differ by alias:
   FunctionTypehintSpaceFixer        -> TypeDeclarationSpacesFixer (done, deprecated alias)
 
 PsrAutoloadingFixer reads the file path, which the runner records on the stream
-(Stream.Path); it is opt-in only (not in any default set, excluded from per-cs).
+(Stream.Path); it is opt-in only (not in any prepared set).
 
 
 NOT YET IMPLEMENTED (behavior)

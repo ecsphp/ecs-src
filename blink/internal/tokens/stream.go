@@ -15,10 +15,13 @@ import (
 type Stream struct {
 	toks []token.Token
 	path string
+	// mayHaveEmpty lets ClearEmptyTokens skip the scan when no empty value was
+	// written since its last call.
+	mayHaveEmpty bool
 }
 
 func New(toks []token.Token) *Stream {
-	return &Stream{toks: toks}
+	return &Stream{toks: toks, mayHaveEmpty: true}
 }
 
 // SetPath records the source file path, for the few fixers (PsrAutoloading) that
@@ -37,10 +40,28 @@ func (s *Stream) At(i int) token.Token { return s.toks[i] }
 // the hot index-scanning helpers.
 func (s *Stream) Kind(i int) token.Kind { return s.toks[i].Kind }
 
-func (s *Stream) Set(i int, t token.Token) { s.toks[i] = t }
+func (s *Stream) Set(i int, t token.Token) {
+	s.toks[i] = t
+	s.noteEmpty(t.Value)
+}
 
 // SetValue replaces only the Value of the token at i, keeping its kind.
-func (s *Stream) SetValue(i int, v string) { s.toks[i].Value = v }
+func (s *Stream) SetValue(i int, v string) {
+	s.toks[i].Value = v
+	s.noteEmpty(v)
+}
+
+func (s *Stream) noteEmpty(v string) {
+	if v == "" {
+		s.mayHaveEmpty = true
+	}
+}
+
+func (s *Stream) noteEmptyIn(ts []token.Token) {
+	for i := range ts {
+		s.noteEmpty(ts[i].Value)
+	}
+}
 
 func (s *Stream) RemoveAt(i int) {
 	s.toks = slices.Delete(s.toks, i, i+1)
@@ -48,12 +69,14 @@ func (s *Stream) RemoveAt(i int) {
 
 func (s *Stream) InsertAt(i int, t token.Token) {
 	s.toks = slices.Insert(s.toks, i, t)
+	s.noteEmpty(t.Value)
 }
 
 // InsertSliceAt inserts ts at index i in one splice, so the tail shifts once
 // instead of once per element.
 func (s *Stream) InsertSliceAt(i int, ts []token.Token) {
 	s.toks = slices.Insert(s.toks, i, ts...)
+	s.noteEmptyIn(ts)
 }
 
 // MatchForward returns the index of the delimiter matching the opener at i
@@ -163,6 +186,16 @@ func (s *Stream) AttributeStartOf(i int) int {
 // otherwise only the tail shifts, so no fresh tail copy is allocated.
 func (s *Stream) ReplaceRange(start, end int, repl []token.Token) {
 	s.toks = slices.Replace(s.toks, start, end+1, repl...)
+	s.noteEmptyIn(repl)
+}
+
+// ClearEmptyTokens drops the empty tokens left by clearing, like PHP-CS-Fixer's
+// Tokens::clearEmptyTokens.
+func (s *Stream) ClearEmptyTokens() {
+	if s.mayHaveEmpty {
+		s.toks = slices.DeleteFunc(s.toks, func(t token.Token) bool { return t.Value == "" })
+		s.mayHaveEmpty = false
+	}
 }
 
 // Render concatenates every token value back into source.

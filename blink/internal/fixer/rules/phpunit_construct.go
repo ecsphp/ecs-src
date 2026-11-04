@@ -72,7 +72,7 @@ func (f PhpUnitConstruct) Fix(s *tokens.Stream) bool {
 		}
 	}
 	if changed {
-		compactEmptyTokens(s)
+		s.ClearEmptyTokens()
 	}
 	return changed
 }

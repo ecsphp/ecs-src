@@ -119,7 +119,7 @@ func (SwitchCaseSpace) Fix(s *tokens.Stream) bool {
 		}
 	}
 	if changed {
-		compactEmptyTokens(s)
+		s.ClearEmptyTokens()
 	}
 	return changed
 }

@@ -57,7 +57,7 @@ func (f DeclareStrictTypes) Fix(s *tokens.Stream) bool {
 	if f.strategy() == "remove" {
 		if seq != nil {
 			dstRemove(s, declareIndex, open, closeIdx, seq)
-			compactEmptyTokens(s)
+			s.ClearEmptyTokens()
 		}
 	} else if seq == nil {
 		dstInsert(s, openTagIndex)

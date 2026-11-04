@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"blink/internal/fixer/rules"
@@ -101,4 +102,29 @@ func jsonEscape(s string) string {
 		out = append(out, r)
 	}
 	return string(out)
+}
+
+// per-cs configures NoExtraBlankLines; naming the rule too must not reset that.
+func TestLoadSetKeepsRuleConfiguration(t *testing.T) {
+	c, err := Load(write(t, `{"sets":["per-cs"],"rules":["PhpCsFixer\\Fixer\\Whitespace\\NoExtraBlankLinesFixer"]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	percs := set.PERCS()
+	if len(c.Rules) != len(percs) {
+		t.Fatalf("got %d rules, want the %d of per-cs", len(c.Rules), len(percs))
+	}
+	for i, fx := range percs {
+		if !reflect.DeepEqual(c.Rules[i], fx) {
+			t.Errorf("rule %d: got %#v, want per-cs's %#v", i, c.Rules[i], fx)
+		}
+	}
+
+	const name = `PhpCsFixer\Fixer\Whitespace\NoExtraBlankLinesFixer`
+	def, _ := rules.ByName(name)
+	for _, fx := range c.Rules {
+		if fx.Name() == name && reflect.DeepEqual(fx, def) {
+			t.Errorf("%s lost its per-cs configuration", name)
+		}
+	}
 }

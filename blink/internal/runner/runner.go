@@ -139,6 +139,9 @@ func fixFile(cfg *config.Config, path string, write bool) (FileResult, error) {
 		if rule.Fix(stream) {
 			res.AppliedRules = append(res.AppliedRules, rule.Name())
 		}
+		// ECS does this after every fixer that changed the file. Blink rules may
+		// clear tokens without reporting a change, so do it after every rule.
+		stream.ClearEmptyTokens()
 	}
 
 	res.After = stream.Render()
