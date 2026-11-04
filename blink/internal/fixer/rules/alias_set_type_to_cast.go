@@ -39,7 +39,7 @@ var setTypeCasts = map[string]string{
 func (SetTypeToCast) Fix(s *tokens.Stream) bool {
 	// indices below assume no cleared placeholders, as after PHP-CS-Fixer's
 	// clearEmptyTokens between fixers
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 	type call struct{ fn, open, close int }
 	var candidates []call
 	for i := 1; i < s.Len(); i++ {
@@ -123,7 +123,7 @@ func setTypeRemoveCall(s *tokens.Stream, fn, open, firstArgumentStart, comma, se
 	clearTokenAndMergeWS(s, open)
 	clearTokenAt(s, fn)
 	// we'll be inserting here so no need to merge the space tokens
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 }
 
 // aliasRemoveTrailingWhitespace ports Tokens::removeTrailingWhitespace: drop the

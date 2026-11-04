@@ -45,7 +45,7 @@ var modernizeStrposReplacements = []struct {
 }
 
 func (f ModernizeStrpos) Fix(s *tokens.Stream) bool {
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 	changed := false
 	for index := s.Len() - 1; index > 0; index-- {
 		t := s.At(index)

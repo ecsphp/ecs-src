@@ -29,7 +29,7 @@ func (PowToExponentiation) Fix(s *tokens.Stream) bool {
 	if s.Len() <= 7 {
 		return false
 	}
-	compactEmptyTokens(s)
+	s.ClearEmptyTokens()
 
 	type call struct{ fn, open, close int }
 	var candidates []call
