@@ -45,6 +45,7 @@ func TestDirConstantRegressions(t *testing.T) {
 	runNativeCallCases(t, DirConstant{}, []nativeCallCase{
 		{"lowercase magic constant", "<?php $a = __DIR__;", "<?php $a = dirname(__file__);"},
 		{"levels argument", "<?php $a = dirname(__FILE__, 2);", ""},
+		{"call in an interpolation", `<?php $a = "{$f(__DIR__)}";`, `<?php $a = "{$f(dirname(__FILE__))}";`},
 		{"function imported from a namespace", "<?php\nnamespace A;\nuse function B\\dirname;\n$a = dirname(__FILE__);\n", ""},
 		{"in a namespace", "<?php\nnamespace A;\n$a = __DIR__;\n", "<?php\nnamespace A;\n$a = \\dirname(__FILE__);\n"},
 	})

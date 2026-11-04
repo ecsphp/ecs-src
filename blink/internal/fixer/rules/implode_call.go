@@ -62,12 +62,11 @@ func (ImplodeCall) Fix(s *tokens.Stream) bool {
 			changed = true
 		case 2:
 			first, second := args[0], args[1]
-			if _, ok := constantStringAt(s, first[0]); ok {
+			if aliasIsConstantString(s.At(first[0])) {
 				continue
 			}
 			// the swap needs a string literal to start the second argument
-			secondEnd, ok := constantStringAt(s, second[0])
-			if !ok {
+			if !aliasIsConstantString(s.At(second[0])) {
 				continue
 			}
 			if slices.ContainsFunc(cleared, func(c int) bool { return c >= first[0] && c <= first[1] }) {
@@ -78,13 +77,11 @@ func (ImplodeCall) Fix(s *tokens.Stream) bool {
 			for i := first[0]; i <= first[1]; i++ {
 				clearAt(i)
 			}
-			// only the string token(s) move to the front, as upstream does
-			str := slices.Clone(s.Tokens()[second[0] : secondEnd+1])
-			insert(first[0], str)
-			at := second[0] + len(str)
-			for i := range str {
-				clearAt(at + i)
-			}
+			// only the string token moves to the front, as upstream does
+			str := s.At(second[0])
+			insert(first[0], []token.Token{str})
+			at := second[0] + 1
+			clearAt(at)
 			insert(at, moved)
 			changed = true
 		}

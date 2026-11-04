@@ -60,5 +60,9 @@ func TestModernizeTypesCastingRegressions(t *testing.T) {
 		{"nested", "<?php $a = (int) ((string) $b);", "<?php $a = intval(strval($b));"},
 		{"function imported from a namespace", "<?php\nnamespace A;\nuse function B\\intval;\n$a = intval($b);\n", ""},
 		{"first-class callable", "<?php $f = intval(...);", ""},
+		// calls in interpolations and heredocs are code; a backtick string is not
+		{"call in an interpolation", `<?php $a = "x {$f((int) $b)} y";`, `<?php $a = "x {$f(intval($b))} y";`},
+		{"call in a heredoc interpolation", "<?php $a = <<<EOT\n{$f((int) $b)}\nEOT;\n", "<?php $a = <<<EOT\n{$f(intval($b))}\nEOT;\n"},
+		{"call in a backtick string", "<?php $a = `echo intval($b)`;", ""},
 	})
 }

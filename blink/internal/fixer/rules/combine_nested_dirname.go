@@ -1,11 +1,11 @@
 package rules
 
 import (
-	"errors"
 	"math"
 	"strconv"
 	"strings"
 
+	"blink/internal/lexer"
 	"blink/internal/token"
 	"blink/internal/tokens"
 )
@@ -116,7 +116,7 @@ func getDirnameInfo(s *tokens.Stream, index, firstArgumentEnd int) (dirnameInfo,
 		info.end = next
 		return info, true
 	}
-	if next < 0 || !isIntegerLiteral(s.At(next)) {
+	if next < 0 || s.At(next).Kind != token.Number || !lexer.IsIntegerLiteral(s.At(next).Value) {
 		return dirnameInfo{}, false
 	}
 	info.secondArgument = next
@@ -159,30 +159,6 @@ func combineDirnames(s *tokens.Stream, chain []dirnameInfo) {
 	}
 	items = append(items, levelsToken)
 	s.InsertSliceAt(outer.end, items)
-}
-
-// isIntegerLiteral reports whether t is a T_LNUMBER. PHP reads a number with
-// "." or an exponent, or one too large for a 64-bit int, as a T_DNUMBER.
-func isIntegerLiteral(t token.Token) bool {
-	if t.Kind != token.Number || t.Value == "" {
-		return false
-	}
-	v := strings.ReplaceAll(t.Value, "_", "")
-	base := 10
-	switch {
-	case len(v) > 2 && v[0] == '0' && (v[1] == 'x' || v[1] == 'X'):
-		base, v = 16, v[2:]
-	case len(v) > 2 && v[0] == '0' && (v[1] == 'b' || v[1] == 'B'):
-		base, v = 2, v[2:]
-	case len(v) > 2 && v[0] == '0' && (v[1] == 'o' || v[1] == 'O'):
-		base, v = 8, v[2:]
-	case strings.ContainsAny(v, ".eE"):
-		return false
-	case len(v) > 1 && v[0] == '0':
-		base = 8 // a legacy octal "017"
-	}
-	_, err := strconv.ParseInt(v, base, 64)
-	return !errors.Is(err, strconv.ErrRange)
 }
 
 // phpIntCast mirrors PHP's (int) cast of the literal's text: it reads the

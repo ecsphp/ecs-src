@@ -79,7 +79,10 @@ func aliasIsTString(s *tokens.Stream, i int) bool {
 // without interpolation (heredocs, backticks and interpolated strings are not).
 func aliasIsConstantString(t token.Token) bool {
 	v := t.Value
-	if t.Kind != token.String || len(v) < 2 || (v[0] != '\'' && v[0] != '"') || v[len(v)-1] != v[0] {
+	if len(v) > 0 && (v[0] == 'b' || v[0] == 'B') {
+		v = v[1:] // a binary string
+	}
+	if !t.IsLiteral() || len(v) < 2 || (v[0] != '\'' && v[0] != '"') || v[len(v)-1] != v[0] {
 		return false
 	}
 	if v[0] == '\'' {
@@ -272,10 +275,6 @@ func aliasIsPossibleKind(s *tokens.Stream, i int) bool {
 	t := s.At(i)
 	switch t.Kind {
 	case token.Ident:
-		// PHP lexes "yield from" as one T_YIELD_FROM token, so its "from" is no name
-		if strings.EqualFold(t.Value, "from") && aliasIsKeyword(s, aliasPrevMeaningful(s, i), "yield") {
-			return false
-		}
 		return aliasIsTString(s, i)
 	case token.AttributeStart:
 		return true

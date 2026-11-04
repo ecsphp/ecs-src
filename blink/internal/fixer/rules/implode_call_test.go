@@ -55,5 +55,7 @@ func TestImplodeCallRegressions(t *testing.T) {
 		{"global function imported", "<?php\nnamespace A;\nuse function implode;\nimplode('', $a);\n", "<?php\nnamespace A;\nuse function implode;\nimplode($a);\n"},
 		{"first-class callable", "<?php $f = implode(...);", ""},
 		{"three arguments", "<?php implode($a, ',', $b);", ""},
+		{"call in an interpolation", `<?php $a = "{$f(implode(',', $a))}";`, `<?php $a = "{$f(implode($a, ','))}";`},
+		{"interpolated first argument", `<?php implode("{$s}", $a);`, ""},
 	})
 }

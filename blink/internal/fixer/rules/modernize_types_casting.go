@@ -99,8 +99,8 @@ func (ModernizeTypesCasting) Fix(s *tokens.Stream) bool {
 
 // phpTokenCount returns how many tokens PHP's tokenizer would produce for the
 // non-whitespace tokens in [from, to], as far as telling 0, 1 and "more"
-// apart: a binary-prefixed string is one token, an interpolated string, a
-// heredoc and a backtick string are several.
+// apart: a constant string (binary-prefixed or not) is one token; an
+// interpolated string, a heredoc and a backtick string are several.
 func phpTokenCount(s *tokens.Stream, from, to int) int {
 	n := 0
 	for i := from; i <= to; i++ {
@@ -108,10 +108,6 @@ func phpTokenCount(s *tokens.Stream, from, to int) int {
 		switch t.Kind {
 		case token.Whitespace:
 			continue
-		case token.Ident:
-			if end, ok := constantStringAt(s, i); ok && end == i+1 {
-				continue // the "b" prefix; the string counts below
-			}
 		case token.String:
 			if !aliasIsConstantString(t) {
 				n += 2

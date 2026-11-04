@@ -55,24 +55,27 @@ func fixFopenFlag(s *tokens.Stream, start, end int) bool {
 		if flagIdx >= 0 {
 			return false // several meaningful tokens: not a candidate
 		}
-		last, ok := constantStringAt(s, i)
-		if !ok {
+		if !aliasIsConstantString(s.At(i)) {
 			return false
 		}
-		flagIdx, i = last, last // the string token, past any "b" prefix
+		flagIdx = i
 	}
 	if flagIdx < 0 {
 		return false
 	}
 	content := s.At(flagIdx).Value
-	quote := content[:1]
-	mode := content[1 : len(content)-1]
+	prefix := ""
+	if content[0] == 'b' || content[0] == 'B' {
+		prefix = content[:1] // a binary string
+	}
+	quote := content[len(prefix) : len(prefix)+1]
+	mode := content[len(prefix)+1 : len(content)-1]
 	if len(mode) < 2 || !isValidFopenMode(mode) {
 		return false
 	}
 	flags := splitFopenFlags(mode)
 	slices.SortStableFunc(flags, compareFopenFlags)
-	if fixed := quote + strings.Join(flags, "") + quote; fixed != content {
+	if fixed := prefix + quote + strings.Join(flags, "") + quote; fixed != content {
 		s.SetValue(flagIdx, fixed)
 		return true
 	}

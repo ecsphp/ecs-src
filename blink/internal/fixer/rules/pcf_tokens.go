@@ -42,20 +42,3 @@ func leadingLineBreak(v string) string {
 	}
 	return ""
 }
-
-// constantStringAt reports whether a T_CONSTANT_ENCAPSED_STRING starts at i and
-// returns its last index. blink lexes the binary "b" prefix as its own token.
-func constantStringAt(s *tokens.Stream, i int) (int, bool) {
-	if i < 0 || i >= s.Len() {
-		return 0, false
-	}
-	t := s.At(i)
-	if t.Kind == token.Ident && (t.Value == "b" || t.Value == "B") && i+1 < s.Len() &&
-		aliasIsConstantString(s.At(i+1)) {
-		return i + 1, true
-	}
-	if aliasIsConstantString(t) {
-		return i, true
-	}
-	return 0, false
-}

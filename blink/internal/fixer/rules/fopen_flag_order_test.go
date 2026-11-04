@@ -31,6 +31,9 @@ func TestFopenFlagOrderRegressions(t *testing.T) {
 		{"interpolated mode", `<?php fopen($f, "b$m");`, ""},
 		{"concatenated mode", "<?php fopen($f, 'b' . 'r');", ""},
 		{"commented mode", "<?php fopen($f, /* m */ 'rb');", "<?php fopen($f, /* m */ 'br');"},
+		{"binary double-quoted mode", `<?php fopen($f, B"r+tb");`, `<?php fopen($f, B"tbr+");`},
+		{"heredoc mode", "<?php fopen($f, <<<'X'\nbr\nX);\n", ""},
+		{"call in a heredoc interpolation", "<?php $a = <<<EOT\n{$f(fopen($g, \"rb\"))}\nEOT;\n", "<?php $a = <<<EOT\n{$f(fopen($g, \"br\"))}\nEOT;\n"},
 		{"function imported from a namespace", "<?php\nnamespace A;\nuse function B\\fopen;\nfopen($f, 'br');\n", ""},
 	})
 }

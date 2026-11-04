@@ -45,5 +45,6 @@ func TestCombineNestedDirnameRegressions(t *testing.T) {
 		{"argument with nested calls", "<?php dirname(f($a, [1, 2]), 2);", "<?php dirname(dirname(f($a, [1, 2])));"},
 		{"function imported from a namespace", "<?php\nnamespace A;\nuse function B\\dirname;\ndirname(dirname($a));\n", ""},
 		{"inner call namespaced", "<?php dirname(B\\dirname($a));", ""},
+		{"call in a heredoc interpolation", "<?php $a = <<<EOT\n{$f(dirname($x, 2))}\nEOT;\n", "<?php $a = <<<EOT\n{$f(dirname(dirname($x)))}\nEOT;\n"},
 	})
 }

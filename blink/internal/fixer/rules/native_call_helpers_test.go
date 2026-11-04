@@ -148,7 +148,7 @@ func TestNativeCallArguments(t *testing.T) {
 	}
 }
 
-func TestNativeCallConstantStringAt(t *testing.T) {
+func TestNativeCallIsConstantString(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		src  string
@@ -169,7 +169,7 @@ func TestNativeCallConstantStringAt(t *testing.T) {
 	for _, c := range cases {
 		s := tokens.New(lexer.Lex(c.src))
 		first := nextMeaningfulIndex(s, 0)
-		if _, got := constantStringAt(s, first); got != c.want {
+		if got := aliasIsConstantString(s.At(first)); got != c.want {
 			t.Fatalf("%s: got %v, want %v", c.src, got, c.want)
 		}
 	}

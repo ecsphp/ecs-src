@@ -29,5 +29,7 @@ func TestNoUselessSprintfRegressions(t *testing.T) {
 		{"function imported from a namespace", "<?php\nnamespace A;\nuse function B\\sprintf;\necho sprintf('a');\n", ""},
 		{"in a namespace", "<?php\nnamespace A;\necho 'a';\n", "<?php\nnamespace A;\necho sprintf('a');\n"},
 		{"interpolated format", `<?php echo "$a";`, `<?php echo sprintf("$a");`},
+		{"heredoc format", "<?php echo <<<X\nx $y\nX;\n", "<?php echo sprintf(<<<X\nx $y\nX);\n"},
+		{"call in an interpolation", `<?php echo "{$f("y")}";`, `<?php echo "{$f(sprintf("y"))}";`},
 	})
 }
