@@ -212,6 +212,9 @@ func TestConstantCase(t *testing.T) {
 	if _, changed := apply(t, ConstantCase{}, "<?php $x->TRUE;"); changed {
 		t.Fatal("member named TRUE should not be touched")
 	}
+	if _, changed := apply(t, ConstantCase{}, "<?php echo A::NULL"); changed {
+		t.Fatal("member named NULL at the end of the file should not be touched")
+	}
 }
 
 func TestLowercaseStaticReference(t *testing.T) {

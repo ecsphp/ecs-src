@@ -1,0 +1,96 @@
+package rules
+
+import "testing"
+
+// The expected output of every case comes from the PHP engine.
+func TestConstantCaseNames(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ src, a, b string }{
+		{"$a = TRUE; $b = NULL; $c = False;", "$a = true; $b = null; $c = false;", "$a = TRUE; $b = NULL; $c = FALSE;"},
+		{"const NULL = 1;", "const NULL = 1;", "const NULL = 1;"},
+		{"const TRUE = 1, FALSE = 2;", "const TRUE = 1, FALSE = 2;", "const TRUE = 1, FALSE = 2;"},
+		{"class A { const NULL = 1; }", "class A { const NULL = 1; }", "class A { const NULL = 1; }"},
+		{"class A { const string NULL = 'n'; }", "class A { const string NULL = 'n'; }", "class A { const string NULL = 'n'; }"},
+		{"class A { public const int|string TRUE = 1; }", "class A { public const int|string TRUE = 1; }", "class A { public const int|string TRUE = 1; }"},
+		{"class A { const NULL /* c */ = 1; }", "class A { const NULL /* c */ = 1; }", "class A { const NULL /* c */ = 1; }"},
+		{"echo A::NULL;", "echo A::NULL;", "echo A::NULL;"},
+		{"echo A:: /* c */ NULL;", "echo A:: /* c */ NULL;", "echo A:: /* c */ NULL;"},
+		{"echo $a->TRUE;", "echo $a->TRUE;", "echo $a->TRUE;"},
+		{"echo $a?->TRUE;", "echo $a?->TRUE;", "echo $a?->TRUE;"},
+		{"echo $a -> /* c */ TRUE;", "echo $a -> /* c */ TRUE;", "echo $a -> /* c */ TRUE;"},
+		{"new NULL;", "new NULL;", "new NULL;"},
+		{"new Null();", "new Null();", "new Null();"},
+		{"new /* c */ Null();", "new /* c */ Null();", "new /* c */ Null();"},
+		{"class A extends False {}", "class A extends False {}", "class A extends False {}"},
+		{"class A implements True {}", "class A implements True {}", "class A implements True {}"},
+		{"class A implements B, True {}", "class A implements B, true {}", "class A implements B, TRUE {}"},
+		{"interface I extends True {}", "interface I extends True {}", "interface I extends True {}"},
+		{"$a instanceof NULL;", "$a instanceof NULL;", "$a instanceof NULL;"},
+		{"namespace Null;", "namespace Null;", "namespace Null;"},
+		{"\\NULL;", "\\NULL;", "\\NULL;"},
+		{"\\Null\\foo();", "\\Null\\foo();", "\\Null\\foo();"},
+		{"Null\\foo();", "Null\\foo();", "Null\\foo();"},
+		{"Foo\\TRUE;", "Foo\\TRUE;", "Foo\\TRUE;"},
+		{"namespace\\TRUE;", "namespace\\TRUE;", "namespace\\TRUE;"},
+		{"NULL::foo();", "NULL::foo();", "NULL::foo();"},
+		{"True::BAR;", "True::BAR;", "True::BAR;"},
+		{"Null /* c */ ::foo();", "Null /* c */ ::foo();", "Null /* c */ ::foo();"},
+		{"enum E { case NULL; case True; }", "enum E { case NULL; case True; }", "enum E { case NULL; case True; }"},
+		{"enum E: int { case NULL = 1; }", "enum E: int { case NULL = 1; }", "enum E: int { case NULL = 1; }"},
+		{"switch ($a) { case NULL: break; }", "switch ($a) { case null: break; }", "switch ($a) { case NULL: break; }"},
+		{"switch ($a) { case TRUE: case FALSE; }", "switch ($a) { case true: case FALSE; }", "switch ($a) { case TRUE: case FALSE; }"},
+		{"switch ($a) { case NULL /* c */ ; }", "switch ($a) { case NULL /* c */ ; }", "switch ($a) { case NULL /* c */ ; }"},
+		{"function f(): NULL {}", "function f(): null {}", "function f(): NULL {}"},
+		{"function f(NULL $a) {}", "function f(null $a) {}", "function f(NULL $a) {}"},
+		{"function f(?True $a, False|NULL $b = NULL) {}", "function f(?true $a, false|null $b = null) {}", "function f(?TRUE $a, FALSE|NULL $b = NULL) {}"},
+		{"$f = fn (): NULL => NULL;", "$f = fn (): null => null;", "$f = fn (): NULL => NULL;"},
+		{"foo(NULL, TRUE);", "foo(null, true);", "foo(NULL, TRUE);"},
+		{"foo(NULL: 1);", "foo(NULL: 1);", "foo(NULL: 1);"},
+		{"$a = [NULL => TRUE];", "$a = [null => true];", "$a = [NULL => TRUE];"},
+		{"interface I { function TRUE(); }", "interface I { function true(); }", "interface I { function TRUE(); }"},
+		{"function NULL() {}", "function null() {}", "function NULL() {}"},
+		{"NULL();", "null();", "NULL();"},
+		{"use Foo\\NULL;", "use Foo\\NULL;", "use Foo\\NULL;"},
+		{"use NULL as B;", "use null as B;", "use NULL as B;"},
+		{"use Foo as NULL;", "use Foo as null;", "use Foo as NULL;"},
+		{"class NULL {}", "class null {}", "class NULL {}"},
+		{"#[NULL] class A {}", "#[null] class A {}", "#[NULL] class A {}"},
+		{"goto NULL;", "goto null;", "goto NULL;"},
+		{"NULL: echo 1;", "null: echo 1;", "NULL: echo 1;"},
+		{"\"{$a[NULL]}\";", "\"{$a[null]}\";", "\"{$a[NULL]}\";"},
+		{"$a = NULL ?? TRUE;", "$a = null ?? true;", "$a = NULL ?? TRUE;"},
+		{"$a == NULL;", "$a == null;", "$a == NULL;"},
+		{"NULL === $a;", "null === $a;", "NULL === $a;"},
+		{"class A { public NULL $x; public ?True $y = FALSE; }", "class A { public null $x; public ?true $y = false; }", "class A { public NULL $x; public ?TRUE $y = FALSE; }"},
+		{"class A { public function __construct(private NULL $a = NULL) {} }", "class A { public function __construct(private null $a = null) {} }", "class A { public function __construct(private NULL $a = NULL) {} }"},
+		{"const ABC = NULL;", "const ABC = null;", "const ABC = NULL;"},
+		{"foo(1, TRUE: 2);", "foo(1, TRUE: 2);", "foo(1, TRUE: 2);"},
+		{"foo(a: 1, NULL: 2);", "foo(a: 1, NULL: 2);", "foo(a: 1, NULL: 2);"},
+		{"$a = $f ? NULL : TRUE;", "$a = $f ? null : true;", "$a = $f ? NULL : TRUE;"},
+		{"$a = foo($f ? NULL : TRUE);", "$a = foo($f ? null : true);", "$a = foo($f ? NULL : TRUE);"},
+		{"$a = [$f ? 1 : NULL];", "$a = [$f ? 1 : null];", "$a = [$f ? 1 : NULL];"},
+		{"match ($a) { NULL => 1, default => TRUE };", "match ($a) { null => 1, default => true };", "match ($a) { NULL => 1, default => TRUE };"},
+		{"$a = NULL;", "$a = null;", "$a = NULL;"},
+		{"if ($a = NULL) {}", "if ($a = null) {}", "if ($a = NULL) {}"},
+		{"NULL == TRUE;", "null == true;", "NULL == TRUE;"},
+		{"new class extends Foo { const TRUE = 1; };", "new class extends Foo { const TRUE = 1; };", "new class extends Foo { const TRUE = 1; };"},
+		{"<<<EOT\n{$a[NULL]}\nEOT;", "<<<EOT\n{$a[null]}\nEOT;", "<<<EOT\n{$a[NULL]}\nEOT;"},
+		{"// NULL", "// NULL", "// NULL"},
+		{"/** @var NULL */", "/** @var NULL */", "/** @var NULL */"},
+		{"'NULL';", "'NULL';", "'NULL';"},
+		{"NEW NULL;", "NEW NULL;", "NEW NULL;"},
+		{"class A EXTENDS False {}", "class A EXTENDS False {}", "class A EXTENDS False {}"},
+		{"class A IMPLEMENTS True {}", "class A IMPLEMENTS True {}", "class A IMPLEMENTS True {}"},
+		{"$a INSTANCEOF NULL;", "$a INSTANCEOF NULL;", "$a INSTANCEOF NULL;"},
+		{"NAMESPACE Null;", "NAMESPACE Null;", "NAMESPACE Null;"},
+		{"switch ($a) { CASE NULL; }", "switch ($a) { CASE NULL; }", "switch ($a) { CASE NULL; }"},
+	}
+	for _, c := range cases {
+		if got, changed := apply(t, ConstantCase{}, "<?php\n"+c.src+"\n"); got != "<?php\n"+c.a+"\n" || changed != (c.src != c.a) {
+			t.Errorf("ConstantCase{}: %s\n got=%q changed=%v\nwant=%q", c.src, got, changed, c.a)
+		}
+		if got, changed := apply(t, ConstantCase{Upper: true}, "<?php\n"+c.src+"\n"); got != "<?php\n"+c.b+"\n" || changed != (c.src != c.b) {
+			t.Errorf("ConstantCase{Upper: true}: %s\n got=%q changed=%v\nwant=%q", c.src, got, changed, c.b)
+		}
+	}
+}

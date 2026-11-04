@@ -82,8 +82,8 @@ func (f ConstantCase) Fix(s *tokens.Stream) bool {
 		if lower != "true" && lower != "false" && lower != "null" {
 			continue
 		}
-		if memberPrev(s, i) {
-			continue // $obj->true, Foo::null - a member name, not the constant
+		if !isConstantCaseFixable(s, i) {
+			continue
 		}
 		want := lower
 		if f.Upper {
@@ -95,6 +95,30 @@ func (f ConstantCase) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+// isConstantCaseFixable follows PHP-CS-Fixer's list of the places where it keeps a
+// true, false or null as written. It is no test for the constant itself: like the PHP
+// fixer, it also changes "class NULL {}" and "function NULL() {}".
+func isConstantCaseFixable(s *tokens.Stream, i int) bool {
+	prev, next := prevMeaningfulIndex(s, i), nextMeaningfulIndex(s, i)
+	for _, word := range []string{"extends", "implements", "instanceof", "namespace", "new"} {
+		if taKw(s, prev, word) {
+			return false
+		}
+	}
+	for _, operator := range []string{"::", "->", "?->", `\`} {
+		if isPunctVal(s, prev, operator) {
+			return false
+		}
+	}
+	if taKw(s, prev, "case") && isPunctVal(s, next, ";") {
+		return false
+	}
+	if taIsNamedArgument(s, i) {
+		return false
+	}
+	return !isPunctVal(s, next, "::") && !isPunctVal(s, next, `\`) && !isPunctVal(s, next, "=")
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/LowercaseStaticReferenceFixer.php
