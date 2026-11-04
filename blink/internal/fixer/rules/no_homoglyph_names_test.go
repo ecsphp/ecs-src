@@ -49,5 +49,7 @@ func TestNoHomoglyphNames(t *testing.T) {
 			expected: "<?php foo(n" + cyrA + "me: $value, b: 1);",
 			input:    "<?php foo(n" + cyrA + "me: $v" + cyrA + "lue, b: 1);"},
 		{name: "invalid utf-8", expected: "<?php $n\xd0me = 1;"},
+		// checked with PHP-CS-Fixer: the command text of a backtick literal is not a name
+		{name: "backticks", expected: "<?php $w = `echo hеllo $var`;", input: "<?php $w = `echo hеllo $vаr`;"},
 	})
 }

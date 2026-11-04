@@ -26,43 +26,44 @@ func (StringLineEnding) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
-		if !stringLineEndingCandidate(t.Value) {
+		if t.Kind != token.InlineHTML || !stringLineEndingCandidate(t.Value) {
 			continue
 		}
-		switch t.Kind {
-		case token.InlineHTML:
-			// PHP's T_CLOSE_TAG takes the line break right after "?>"
-			lead := 0
-			if i > 0 && s.At(i-1).Kind == token.CloseTag {
-				switch {
-				case strings.HasPrefix(t.Value, "\r\n"):
-					lead = 2
-				case strings.HasPrefix(t.Value, "\n") || strings.HasPrefix(t.Value, "\r"):
-					lead = 1
-				}
-			}
-			if v := t.Value[:lead] + stringLineEndingReplace(t.Value[lead:]); v != t.Value {
-				s.SetValue(i, v)
-				changed = true
-			}
-		case token.String:
-			parts := encapsedParts(t.Value)
-			repl := map[int]string{}
-			for k, p := range parts {
-				if p.kind != encConstString && p.kind != encText {
-					continue
-				}
-				content := t.Value[p.start:p.end]
-				if v := stringLineEndingReplace(content); v != content {
-					repl[k] = v
-				}
-			}
-			if len(repl) > 0 {
-				s.SetValue(i, encRebuild(t.Value, parts, repl))
-				changed = true
+		// PHP's T_CLOSE_TAG takes the line break right after "?>"
+		lead := 0
+		if i > 0 && s.At(i-1).Kind == token.CloseTag {
+			switch {
+			case strings.HasPrefix(t.Value, "\r\n"):
+				lead = 2
+			case strings.HasPrefix(t.Value, "\n") || strings.HasPrefix(t.Value, "\r"):
+				lead = 1
 			}
 		}
+		if v := t.Value[:lead] + stringLineEndingReplace(t.Value[lead:]); v != t.Value {
+			s.SetValue(i, v)
+			changed = true
+		}
 	}
+	eachStringChunk(s, func(i int, parts []encPart) {
+		v := s.At(i).Value
+		if !stringLineEndingCandidate(v) {
+			return
+		}
+		repl := map[int]string{}
+		for k, p := range parts {
+			if p.kind != encConstString && p.kind != encText {
+				continue
+			}
+			content := v[p.start:p.end]
+			if r := stringLineEndingReplace(content); r != content {
+				repl[k] = r
+			}
+		}
+		if len(repl) > 0 {
+			s.SetValue(i, encRebuild(v, parts, repl))
+			changed = true
+		}
+	})
 	return changed
 }
 

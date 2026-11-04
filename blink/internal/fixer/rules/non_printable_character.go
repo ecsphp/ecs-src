@@ -84,23 +84,27 @@ func (f NonPrintableCharacter) Fix(s *tokens.Stream) bool {
 			v = nonPrintableReplacer.Replace(v)
 		case token.Variable:
 			v = nonPrintableInVariable(v)
-		case token.String:
-			v = f.fixString(v)
 		}
 		if v != t.Value {
 			s.SetValue(i, v)
 			changed = true
 		}
 	}
+	eachStringChunk(s, func(i int, parts []encPart) {
+		v := s.At(i).Value
+		if !nonPrintableFound(v) {
+			return
+		}
+		if r := f.fixString(v, parts); r != v {
+			s.SetValue(i, r)
+			changed = true
+		}
+	})
 	return changed
 }
 
 // fixString applies the fixer to the PHP tokens inside one String token.
-func (f NonPrintableCharacter) fixString(v string) string {
-	parts := encapsedParts(v)
-	if parts == nil {
-		return v
-	}
+func (f NonPrintableCharacter) fixString(v string, parts []encPart) string {
 	contents := make([]string, len(parts))
 	for k, p := range parts {
 		contents[k] = v[p.start:p.end]
@@ -137,10 +141,8 @@ func (f NonPrintableCharacter) fixString(v string) string {
 		switch p.kind {
 		case encConstString, encText:
 			contents[k] = nonPrintableReplacer.Replace(content)
-		case encVariable, encVarname:
+		case encVarname:
 			contents[k] = nonPrintableInVariable(content)
-		case encComment, encDocComment:
-			contents[k] = nonPrintableInComment(content)
 		}
 	}
 	return strings.Join(contents, "")

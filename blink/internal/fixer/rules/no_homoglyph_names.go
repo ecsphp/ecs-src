@@ -38,20 +38,6 @@ func (NoHomoglyphNames) Fix(s *tokens.Stream) bool {
 			if !homoglyphNamedArgument(s, i) {
 				v = homoglyphReplace(v)
 			}
-		case token.String:
-			parts := encapsedParts(v)
-			repl := map[int]string{}
-			for k, p := range parts {
-				if p.kind != encVariable && p.kind != encName {
-					continue
-				}
-				if r := homoglyphReplace(v[p.start:p.end]); r != v[p.start:p.end] {
-					repl[k] = r
-				}
-			}
-			if len(repl) > 0 {
-				v = encRebuild(v, parts, repl)
-			}
 		}
 		if v != t.Value {
 			s.SetValue(i, v)

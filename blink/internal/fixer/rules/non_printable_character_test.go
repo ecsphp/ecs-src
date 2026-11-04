@@ -94,5 +94,12 @@ func TestNonPrintableCharacter(t *testing.T) {
 		{name: "keep in strings", config: map[string]any{"use_escape_sequences_in_strings": false},
 			expected: "<?php echo <<<'TXT'\nab\nTXT;\n",
 			input:    "<?php echo <<<'TXT'\na" + npZWSP + "b\nTXT;\n"},
+		// checked with PHP-CS-Fixer: a b'' string is not requoted (its token does
+		// not start with "'"), backticks and "${name}" literals are escaped
+		{name: "binary single-quoted", expected: `<?php $y = b'x\u{a0}y'; $z = B'x\u{a0}y';`,
+			input: `<?php $y = b'x` + npNBSP + `y'; $z = B'x` + npNBSP + `y';`},
+		{name: "backticks", expected: "<?php $x = `ls\\u{a0}$a`;", input: "<?php $x = `ls" + npNBSP + "$a`;"},
+		{name: "after interpolation", expected: `<?php $w = "${a}\u{a0}"; $v = "{$a}\u{a0}{$b}";`,
+			input: `<?php $w = "${a}` + npNBSP + `"; $v = "{$a}` + npNBSP + `{$b}";`},
 	})
 }

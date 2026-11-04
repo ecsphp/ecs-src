@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"blink/internal/lexer"
-	"blink/internal/token"
 	"blink/internal/tokens"
 )
 
@@ -26,12 +25,11 @@ func (SimpleToComplexStringVariable) SourceURL() string {
 
 func (SimpleToComplexStringVariable) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := range s.Len() {
-		t := s.At(i)
-		if t.Kind != token.String || !strings.Contains(t.Value, "${") {
-			continue
+	eachStringChunk(s, func(i int, parts []encPart) {
+		v := s.At(i).Value
+		if !strings.Contains(v, "${") {
+			return
 		}
-		parts := encapsedParts(t.Value)
 		repl := map[int]string{}
 		for k, p := range parts {
 			if p.kind != encDollarOpen || k+1 >= len(parts) || parts[k+1].kind != encVarname {
@@ -40,21 +38,20 @@ func (SimpleToComplexStringVariable) Fix(s *tokens.Stream) bool {
 			// the literal before: a trailing "$" (not "\$") would join the new "{$"
 			if k > 0 {
 				prev := parts[k-1]
-				content := t.Value[prev.start:prev.end]
+				content := v[prev.start:prev.end]
 				if strings.HasSuffix(content, "$") && !strings.HasSuffix(content, `\$`) {
 					repl[k-1] = content[:len(content)-1] + `\$`
 				}
 			}
 			repl[k] = "{"
 			next := parts[k+1]
-			repl[k+1] = "$" + t.Value[next.start:next.end]
+			repl[k+1] = "$" + v[next.start:next.end]
 		}
-		if len(repl) == 0 {
-			continue
+		if len(repl) > 0 {
+			s.SetValue(i, encRebuild(v, parts, repl))
+			changed = true
 		}
-		s.SetValue(i, encRebuild(t.Value, parts, repl))
-		changed = true
-	}
+	})
 	if changed {
 		// the new "{$...}" interpolations are split into chunks by the lexer
 		s.ReplaceRange(0, s.Len()-1, lexer.Lex(s.Render()))

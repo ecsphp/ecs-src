@@ -78,5 +78,10 @@ func TestSimpleToComplexStringVariable(t *testing.T) {
 		{name: "inside interpolated heredoc code",
 			expected: "<?php echo <<<TEST\n{$a[\"{$b}\"]} {$c}\nTEST;\n",
 			input:    "<?php echo <<<TEST\n{$a[\"${b}\"]} ${c}\nTEST;\n"},
+		// checked with PHP-CS-Fixer
+		{name: "backticks", expected: "<?php $x = `ls {$b}`;", input: "<?php $x = `ls ${b}`;"},
+		{name: "chunks", expected: `<?php $y = "{$a[0]}x{$b} \${$c}"; $q = "{$a[${b}]} {$c}";`,
+			input: `<?php $y = "${a[0]}x${b} $${c}"; $q = "{$a[${b}]} ${c}";`},
+		{name: "heredoc offset", expected: "<?php $z = <<<EOT\n{$a[0]} {$b}\nEOT;\n", input: "<?php $z = <<<EOT\n${a[0]} ${b}\nEOT;\n"},
 	})
 }

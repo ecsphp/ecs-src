@@ -57,5 +57,8 @@ func TestStringLineEnding(t *testing.T) {
 		{name: "interpolation", expected: "<?php $a = \"x\n{$b['c\nd']}\n\"; // \r\n", input: "<?php $a = \"x\r\n{$b['c\r\nd']}\r\n\"; // \r\n"},
 		{name: "heredoc interpolation", expected: "<?php $a = <<<EOT\nx\n{$b['c\nd']} $e\nEOT;\n", input: "<?php $a = <<<EOT\nx\r\n{$b['c\r\nd']} $e\r\nEOT;\n"},
 		{name: "close tag newline", expected: "<?php ?>\r\n<?php ?>\rx\n", input: "<?php ?>\r\n<?php ?>\rx\r"},
+		// checked with PHP-CS-Fixer: T_START_HEREDOC keeps its line break
+		{name: "backticks", expected: "<?php $x = `ls\n$a\n`;\n", input: "<?php $x = `ls\r\n$a\r\n`;\n"},
+		{name: "after interpolation", expected: "<?php $z = \"{$a}\nq\";\n", input: "<?php $z = \"{$a}\r\nq\";\n"},
 	})
 }
