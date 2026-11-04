@@ -25,6 +25,17 @@ jobs:
 
             - run: go test -race ./...
 
+            # verifies every fixer's SourceURL() points at a reachable PHP-CS-Fixer rule
+            - name: check-sources
+              if: ${{ !cancelled() }}
+              run: go run ./cmd/check-sources
+
+            # counts ECS/blink rules, writes them to the job summary, and fails
+            # if README or ecs-all-fixers.txt is stale (same fixer-source logic)
+            - name: Rule counts
+              if: ${{ !cancelled() }}
+              run: bin/rule-counts.sh --check
+
     windows:
         runs-on: windows-latest
         defaults:
@@ -49,7 +60,7 @@ jobs:
                   ./blink.exe --fix sample || true
                   grep -q '\$values = \[1, 2\];' sample/Sample.php
 
-    format:
+    quality:
         runs-on: ubuntu-latest
         defaults:
             run:
@@ -80,19 +91,8 @@ jobs:
                       exit 1
                   fi
 
-    analysis:
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: blink
-        steps:
-            - uses: actions/checkout@v4
-
-            - uses: actions/setup-go@v5
-              with:
-                  go-version: "1.26.10"
-
             - name: gopls modernize
+              if: ${{ !cancelled() }}
               # pinned: gopls v0.24.0 dropped this cmd path and needs Go >= 1.27
               run: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@v0.23.0 ./...
 
@@ -102,38 +102,14 @@ jobs:
                   version: v2.12.2
                   working-directory: blink
 
-    security:
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: blink
-        steps:
-            - uses: actions/checkout@v4
-
-            - uses: actions/setup-go@v5
-              with:
-                  go-version: "1.26.10"
-
             - uses: actions/cache@v4
+              if: ${{ !cancelled() }}
               with:
                   path: ~/go/bin/govulncheck
                   key: govulncheck-v1.6.0
             - name: install govulncheck
+              if: ${{ !cancelled() }}
               run: test -x ~/go/bin/govulncheck || go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
             - name: govulncheck
+              if: ${{ !cancelled() }}
               run: govulncheck ./...
-
-    fixer_sources:
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: blink
-        steps:
-            - uses: actions/checkout@v4
-
-            - uses: actions/setup-go@v5
-              with:
-                  go-version: "1.26.10"
-
-            # verifies every fixer's SourceURL() points at a reachable PHP-CS-Fixer rule
-            - run: go run ./cmd/check-sources
