@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -125,24 +126,8 @@ func TestNullableTypeDeclarationElements(t *testing.T) {
 	}
 }
 
-// lexWithSetModifiers lexes src and merges each "private(set)",
-// "protected(set)" and "public(set)" into the single keyword token PHP 8.4
-// lexes it as, so the classifiers are tested with both token shapes.
-func lexWithSetModifiers(src string) *tokens.Stream {
-	in := lexer.Lex(src)
-	var out []token.Token
-	for i := 0; i < len(in); i++ {
-		if i+3 < len(in) && in[i].Kind == token.Keyword && in[i+1].Value == "(" &&
-			strings.EqualFold(in[i+2].Value, "set") && in[i+3].Value == ")" {
-			out = append(out, token.Token{Kind: token.Keyword, Value: in[i].Value + "(" + in[i+2].Value + ")"})
-			i += 3
-			continue
-		}
-		out = append(out, in[i])
-	}
-	return tokens.New(out)
-}
-
+// TestAsymmetricVisibilitySingleToken checks the classifiers on the single
+// keyword token the lexer emits for "private(set)" (PHP 8.4's T_PRIVATE_SET).
 func TestAsymmetricVisibilitySingleToken(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
@@ -177,10 +162,11 @@ func TestAsymmetricVisibilitySingleToken(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		s := lexWithSetModifiers(c.in)
-		if s.Len() == len(lexer.Lex(c.in)) {
+		toks := lexer.Lex(c.in)
+		if !slices.ContainsFunc(toks, func(t token.Token) bool { return t.Kind == token.Keyword && strings.HasSuffix(t.Value, "(set)") }) {
 			t.Fatalf("%s: no merged (set) token", c.name)
 		}
+		s := tokens.New(toks)
 		c.f.Fix(s)
 		if got := s.Render(); got != c.want {
 			t.Errorf("%s\n  in: %q\n got: %q\nwant: %q", c.name, c.in, got, c.want)

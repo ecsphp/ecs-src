@@ -236,8 +236,7 @@ func ntdArgumentType(s *tokens.Stream, start, end int) []int {
 		case s.Kind(j) == token.Variable:
 			return idxs
 		}
-		if e := ntdModifierEnd(s, j); e >= 0 {
-			j = e
+		if ntdIsArgumentModifier(s, j) {
 			continue
 		}
 		idxs = append(idxs, j)
@@ -256,28 +255,15 @@ func ntdIsReferenceAmp(s *tokens.Stream, j int) bool {
 	return n >= 0 && (s.Kind(n) == token.Variable || isPunctVal(s, n, "..."))
 }
 
-// ntdModifierEnd returns the last index of the promoted-property modifier
-// starting at j (ARGUMENT_INFO_SKIP_TYPES: final, public, protected, private,
-// readonly and the asymmetric "*(set)" ones, lexed as one token or four), or -1.
-func ntdModifierEnd(s *tokens.Stream, j int) int {
-	switch strings.ToLower(s.At(j).Value) {
-	case "private(set)", "protected(set)", "public(set)":
-		return j
-	}
+// ntdIsArgumentModifier reports whether j is a promoted-property modifier
+// (ARGUMENT_INFO_SKIP_TYPES: final, public, protected, private, readonly and
+// the asymmetric "*(set)" ones, which the lexer emits as one token).
+func ntdIsArgumentModifier(s *tokens.Stream, j int) bool {
 	switch olKwLower(s.At(j)) {
-	case "final", "readonly":
-		return j
-	case "public", "protected", "private":
-		if p := sigNext(s, j); isPunctVal(s, p, "(") {
-			if set := sigNext(s, p); set >= 0 && strings.EqualFold(s.At(set).Value, "set") {
-				if c := sigNext(s, set); isPunctVal(s, c, ")") {
-					return c
-				}
-			}
-		}
-		return j
+	case "final", "readonly", "public", "protected", "private", "private(set)", "protected(set)", "public(set)":
+		return true
 	}
-	return -1
+	return false
 }
 
 // ntdPropertyType mirrors normalizePropertyType's type collection: the tokens
@@ -307,10 +293,11 @@ func ntdPropertyType(s *tokens.Stream, varIdx int) []int {
 // ntdIsPropertyModifier reports whether j is one of PROPERTY_MODIFIERS.
 func ntdIsPropertyModifier(s *tokens.Stream, j int) bool {
 	switch olKwLower(s.At(j)) {
-	case "private", "protected", "public", "static", "abstract", "final", "var", "readonly":
+	case "private", "protected", "public", "static", "abstract", "final", "var", "readonly",
+		"private(set)", "protected(set)", "public(set)":
 		return true
 	}
-	return isAsymmetricVisibilityEnd(s, j)
+	return false
 }
 
 // ntdNormalize ports isTypeNormalizable and normalizeNullableType for the type

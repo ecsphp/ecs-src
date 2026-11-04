@@ -95,7 +95,7 @@ func isNullableType(s *tokens.Stream, index int) bool {
 		return false
 	}
 	ok := isPunctVal(s, prevIndex, "(") || isPunctVal(s, prevIndex, ",") || isTypeColon(s, prevIndex) ||
-		s.Kind(prevIndex) == token.AttributeEnd || isAsymmetricVisibilityEnd(s, prevIndex)
+		s.Kind(prevIndex) == token.AttributeEnd
 	if !ok {
 		switch olKwLower(s.At(prevIndex)) {
 		case "public", "protected", "private", "var", "static", "const", "abstract", "final", "readonly",
@@ -112,32 +112,6 @@ func isNullableType(s *tokens.Stream, index int) bool {
 		}
 	}
 	return true
-}
-
-// isAsymmetricVisibilityEnd reports whether index ends an asymmetric
-// visibility modifier ("private(set)", "protected(set)", "public(set)"), which
-// PHP lexes as a single T_*_SET token.
-func isAsymmetricVisibilityEnd(s *tokens.Stream, index int) bool {
-	switch strings.ToLower(s.At(index).Value) {
-	case "private(set)", "protected(set)", "public(set)":
-		return true
-	}
-	if !isPunctVal(s, index, ")") {
-		return false
-	}
-	set := sigPrev(s, index)
-	if set < 0 || !strings.EqualFold(s.At(set).Value, "set") {
-		return false
-	}
-	open := sigPrev(s, set)
-	if !isPunctVal(s, open, "(") {
-		return false
-	}
-	switch olKwLower(s.At(max(sigPrev(s, open), 0))) {
-	case "private", "protected", "public":
-		return true
-	}
-	return false
 }
 
 // isReturnRef mirrors ReturnRefTransformer: "&" right after function/fn.
