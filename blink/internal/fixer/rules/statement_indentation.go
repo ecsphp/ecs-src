@@ -80,8 +80,14 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 	inTemplate := false
 
 	changed := false
+	// tracks the brackets before index, for isDestructuringAssignOpen; the walk
+	// only rewrites whitespace and comments at or after index, which it ignores
+	var tr arrayNotationTracker
 
 	for index := range n {
+		if index > 0 {
+			tr.step(s.At(index-1), index-1)
+		}
 		t := s.At(index)
 		cur := len(scopes) - 1
 
@@ -103,7 +109,7 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 			cur++
 		}
 
-		if _, isCase := caseBlockStarts[index]; stmtIsBlockFirst(s, index) || isCase {
+		if _, isCase := caseBlockStarts[index]; stmtIsBlockFirst(s, &tr, index) || isCase {
 			ei := -1
 			eiInclusive := true
 
@@ -149,7 +155,7 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 			continue
 		}
 
-		if stmtIsArrayOpen(s, index) {
+		if stmtIsArrayOpen(s, &tr, index) {
 			scopes = append(scopes, stmtScope{
 				kind:          "statement",
 				skip:          true,
@@ -417,8 +423,9 @@ func stmtIsDynamicMemberBrace(s *tokens.Stream, index int) bool {
 }
 
 // stmtIsBlockFirst reports whether the token at index opens a block scope: "{",
-// a destructuring "[", or a "(" that is not an array(...) opener.
-func stmtIsBlockFirst(s *tokens.Stream, index int) bool {
+// a destructuring "[", or a "(" that is not an array(...) opener. tr has
+// stepped every token before index.
+func stmtIsBlockFirst(s *tokens.Stream, tr *arrayNotationTracker, index int) bool {
 	t := s.At(index)
 	if t.Kind != token.Punct {
 		return false
@@ -428,7 +435,7 @@ func stmtIsBlockFirst(s *tokens.Stream, index int) bool {
 		// a dynamic member access ("$a->{$k}", "Foo::{$k}") is not a block scope
 		return !stmtIsDynamicMemberBrace(s, index)
 	case "[":
-		return isDestructuringAssignOpen(s, index)
+		return isDestructuringAssignOpenIn(s, index, tr)
 	case "(":
 		p := prevMeaningfulIndex(s, index)
 		if p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "array") {
@@ -440,8 +447,9 @@ func stmtIsBlockFirst(s *tokens.Stream, index int) bool {
 }
 
 // stmtIsArrayOpen reports whether the token at index opens an array literal that
-// forms a statement scope: "array(" or an array-literal "[".
-func stmtIsArrayOpen(s *tokens.Stream, index int) bool {
+// forms a statement scope: "array(" or an array-literal "[". tr has stepped
+// every token before index.
+func stmtIsArrayOpen(s *tokens.Stream, tr *arrayNotationTracker, index int) bool {
 	t := s.At(index)
 	if t.Kind != token.Punct {
 		return false
@@ -451,7 +459,7 @@ func stmtIsArrayOpen(s *tokens.Stream, index int) bool {
 		return p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "array")
 	}
 	if t.Value == "[" {
-		return isArrayLiteralOpen(s, index) && !isDestructuringAssignOpen(s, index)
+		return isArrayLiteralOpen(s, index) && !isDestructuringAssignOpenIn(s, index, tr)
 	}
 	return false
 }
