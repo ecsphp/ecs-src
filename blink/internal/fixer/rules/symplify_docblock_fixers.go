@@ -49,6 +49,9 @@ func applyDocBlockFixer(s *tokens.Stream, process func(string) string) bool {
 
 // dbfCandidateW4 mirrors AbstractDocBlockFixer::isCandidate.
 func dbfCandidateW4(s *tokens.Stream) bool {
+	if !streamHasComment(s) {
+		return false
+	}
 	hasComment, hasFuncOrVar := false, false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
@@ -264,7 +267,7 @@ func (RemovePropertyVariableNameDescription) SourceURL() string {
 }
 
 func (RemovePropertyVariableNameDescription) Fix(s *tokens.Stream) bool {
-	if !streamHasVariable(s) || !streamHasComment(s) {
+	if !streamHasComment(s) || !streamHasVariable(s) {
 		return false
 	}
 	changed := false
@@ -315,7 +318,7 @@ func (RemoveMethodNameDuplicateDescription) SourceURL() string {
 }
 
 func (RemoveMethodNameDuplicateDescription) Fix(s *tokens.Stream) bool {
-	if !streamHasFunction(s) || !streamHasComment(s) {
+	if !streamHasComment(s) || !streamHasFunction(s) {
 		return false
 	}
 	changed := false
@@ -382,7 +385,7 @@ func (RemoveEventSubscriberDescription) SourceURL() string {
 }
 
 func (RemoveEventSubscriberDescription) Fix(s *tokens.Stream) bool {
-	if !streamHasFunction(s) || !streamHasComment(s) {
+	if !streamHasComment(s) || !streamHasFunction(s) {
 		return false
 	}
 	changed := false
@@ -499,6 +502,9 @@ func equalStrings(a, b []string) bool {
 }
 
 func streamHasFunction(s *tokens.Stream) bool {
+	if !s.Index().HasWord("function") {
+		return false
+	}
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind == token.Keyword && strings.EqualFold(s.At(i).Value, "function") {
 			return true
@@ -508,21 +514,12 @@ func streamHasFunction(s *tokens.Stream) bool {
 }
 
 func streamHasVariable(s *tokens.Stream) bool {
-	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind == token.Variable {
-			return true
-		}
-	}
-	return false
+	return s.Index().HasKind(token.Variable)
 }
 
 func streamHasComment(s *tokens.Stream) bool {
-	for i := 0; i < s.Len(); i++ {
-		if k := s.At(i).Kind; k == token.DocComment || k == token.Comment {
-			return true
-		}
-	}
-	return false
+	x := s.Index()
+	return x.HasKind(token.DocComment) || x.HasKind(token.Comment)
 }
 
 // removeDocLinesMatching removes each doc line whose content matches re,

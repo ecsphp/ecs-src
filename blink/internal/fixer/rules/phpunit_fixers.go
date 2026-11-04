@@ -15,6 +15,10 @@ import (
 // phpUnitTestClasses returns [openBrace, closeBrace] index pairs for every
 // PHPUnit test class body in the stream.
 func phpUnitTestClasses(s *tokens.Stream) [][2]int {
+	// a test class is a "class" that "extends" something
+	if x := s.Index(); !x.HasWord("class") || !x.HasWord("extends") {
+		return nil
+	}
 	var out [][2]int
 	for i := 0; i < s.Len(); i++ {
 		if !kwIs(s.At(i), "class") {

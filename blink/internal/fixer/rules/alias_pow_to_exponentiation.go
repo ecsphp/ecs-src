@@ -24,6 +24,11 @@ func (PowToExponentiation) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Alias/PowToExponentiationFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only a "pow" call is replaced.
+func (PowToExponentiation) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("pow")
+}
+
 func (PowToExponentiation) Fix(s *tokens.Stream) bool {
 	// minimal candidate to fix is seven tokens: pow(x,y);
 	if s.Len() <= 7 {

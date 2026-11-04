@@ -22,6 +22,11 @@ func (NoAliasLanguageConstructCall) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Alias/NoAliasLanguageConstructCallFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only "die" is renamed.
+func (NoAliasLanguageConstructCall) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("die")
+}
+
 func (NoAliasLanguageConstructCall) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {

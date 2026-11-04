@@ -22,6 +22,11 @@ func (NoUselessSprintf) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/NoUselessSprintfFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only a "sprintf" call is unwrapped.
+func (NoUselessSprintf) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("sprintf")
+}
+
 func (NoUselessSprintf) Fix(s *tokens.Stream) bool {
 	changed := false
 	for index := s.Len() - 1; index > 0; index-- {

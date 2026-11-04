@@ -69,6 +69,12 @@ func nonPrintableFound(v string) bool {
 	return false
 }
 
+// IsCandidate rules out a file without the trigger: every non-printable
+// character it replaces is outside ASCII.
+func (NonPrintableCharacter) IsCandidate(s *tokens.Stream) bool {
+	return s.HasNonASCII()
+}
+
 func (f NonPrintableCharacter) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {

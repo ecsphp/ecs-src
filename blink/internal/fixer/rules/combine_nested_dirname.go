@@ -34,6 +34,11 @@ type dirnameInfo struct {
 	secondArgument int // the levels literal, or -1
 }
 
+// IsCandidate rules out a file without the trigger: only nested "dirname" calls are combined.
+func (CombineNestedDirname) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("dirname")
+}
+
 func (CombineNestedDirname) Fix(s *tokens.Stream) bool {
 	changed := false
 	for index := s.Len() - 1; index >= 0; index-- {

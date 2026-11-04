@@ -32,6 +32,20 @@ var modernizeCasts = []struct{ function, cast string }{
 	{"boolval", "bool"},
 }
 
+// modernizeCastNames are the functions ModernizeTypesCasting replaces.
+var modernizeCastNames = func() []string {
+	names := make([]string, len(modernizeCasts))
+	for i, mc := range modernizeCasts {
+		names[i] = mc.function
+	}
+	return names
+}()
+
+// IsCandidate rules out a file without the trigger: only a call to one of the cast functions is replaced.
+func (ModernizeTypesCasting) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord(modernizeCastNames...)
+}
+
 func (ModernizeTypesCasting) Fix(s *tokens.Stream) bool {
 	changed := false
 	for _, mc := range modernizeCasts {

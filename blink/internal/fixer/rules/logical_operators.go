@@ -21,6 +21,11 @@ func (LogicalOperators) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/LogicalOperatorsFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only "and" and "or" are replaced.
+func (LogicalOperators) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord("and", "or")
+}
+
 func (LogicalOperators) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {

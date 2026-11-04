@@ -21,9 +21,13 @@ import (
 type (
 	Fixer             = fixer.Fixer
 	ConfigurableFixer = fixer.ConfigurableFixer
-	Stream            = tokens.Stream
-	Token             = token.Token
-	Kind              = token.Kind
+	// Candidate is optional: the runner skips a fixer's Fix on the files its
+	// IsCandidate rules out, which Stream.Index answers cheaply.
+	Candidate = fixer.Candidate
+	Index     = tokens.Index
+	Stream    = tokens.Stream
+	Token     = token.Token
+	Kind      = token.Kind
 )
 
 // The token kinds.

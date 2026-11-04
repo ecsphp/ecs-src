@@ -125,6 +125,11 @@ func phpdocTypesOrderNormalize(t string) string {
 	return strings.TrimPrefix(t, "\\")
 }
 
+// IsCandidate rules out a file without the trigger: only docblocks are fixed.
+func (PhpdocTypesOrder) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasKind(token.DocComment)
+}
+
 func (f PhpdocTypesOrder) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {

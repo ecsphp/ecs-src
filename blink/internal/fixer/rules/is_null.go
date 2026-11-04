@@ -24,6 +24,11 @@ func (IsNull) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/LanguageConstruct/IsNullFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only an "is_null" call is replaced.
+func (IsNull) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("is_null")
+}
+
 func (IsNull) Fix(s *tokens.Stream) bool {
 	type site struct {
 		start, argOpen, argClose int

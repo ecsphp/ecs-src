@@ -58,6 +58,11 @@ func (NoBreakComment) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoBreakCommentFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only the cases of a "switch" are fixed.
+func (NoBreakComment) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("switch")
+}
+
 func (f NoBreakComment) Fix(s *tokens.Stream) bool {
 	hasSwitch, hasEnum := false, false
 	for i := 0; i < s.Len(); i++ {

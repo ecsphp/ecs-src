@@ -23,6 +23,11 @@ func (ModernSerializationMethods) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/ModernSerializationMethodsFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only a "__sleep" or "__wakeup" method is renamed.
+func (ModernSerializationMethods) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord("__sleep", "__wakeup")
+}
+
 func (ModernSerializationMethods) Fix(s *tokens.Stream) bool {
 	// method name -> name index, per class-like
 	methodsByClass := map[int]map[string]int{}

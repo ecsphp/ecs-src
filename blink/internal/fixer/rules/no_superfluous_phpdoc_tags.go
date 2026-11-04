@@ -59,6 +59,11 @@ func (f NoSuperfluousPhpdocTags) WithConfig(config map[string]any) fixer.Fixer {
 	return f
 }
 
+// IsCandidate rules out a file without the trigger: only docblocks are fixed.
+func (NoSuperfluousPhpdocTags) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasKind(token.DocComment)
+}
+
 func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 	changed := false
 	ctx := typeContext{imports: map[string]string{}}

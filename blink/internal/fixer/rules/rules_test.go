@@ -29,6 +29,13 @@ func configuredFromJSON(t *testing.T, f fixer.ConfigurableFixer, raw string) fix
 
 func apply(t *testing.T, r fixerRule, src string) (string, bool) {
 	t.Helper()
+	fixedSources.Store(src, struct{}{})
+	// the runner skips a file IsCandidate rules out: Fix must leave it as is
+	if c, ok := r.(fixer.Candidate); ok {
+		if msg := candidateViolation(c, r, src); msg != "" {
+			t.Error(msg)
+		}
+	}
 	s := tokens.New(lexer.Lex(src))
 	changed := r.Fix(s)
 	return s.Render(), changed

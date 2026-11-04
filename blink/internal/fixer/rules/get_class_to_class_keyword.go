@@ -20,6 +20,11 @@ func (GetClassToClassKeyword) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/LanguageConstruct/GetClassToClassKeywordFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only a "get_class" call is replaced.
+func (GetClassToClassKeyword) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("get_class")
+}
+
 func (GetClassToClassKeyword) Fix(s *tokens.Stream) bool {
 	// indices below assume no cleared placeholders, as after PHP-CS-Fixer's
 	// clearEmptyTokens between fixers

@@ -133,7 +133,7 @@ func fixFile(cfg *config.Config, ruleSkips map[string][]*finder.PathMatcher, pat
 		if !ok {
 			continue
 		}
-		if skippedFor(ruleSkips[rule.Name()], path) {
+		if skippedFor(ruleSkips[rule.Name()], path) || !isCandidate(rule, stream) {
 			continue
 		}
 		res.Errors = append(res.Errors, reporter.Errors(stream)...)
@@ -144,7 +144,7 @@ func fixFile(cfg *config.Config, ruleSkips map[string][]*finder.PathMatcher, pat
 		if skippedFor(ruleSkips[rule.Name()], path) {
 			continue
 		}
-		if rule.Fix(stream) {
+		if isCandidate(rule, stream) && rule.Fix(stream) {
 			res.AppliedRules = append(res.AppliedRules, rule.Name())
 		}
 		// ECS does this after every fixer that changed the file. Blink rules may
@@ -189,4 +189,11 @@ func skippedFor(matchers []*finder.PathMatcher, path string) bool {
 		}
 	}
 	return true
+}
+
+// isCandidate reports whether rule may concern the file: false only for a
+// fixer.Candidate that rules the file out, as PHP-CS-Fixer's isCandidate.
+func isCandidate(rule fixer.Fixer, s *tokens.Stream) bool {
+	c, ok := rule.(fixer.Candidate)
+	return !ok || c.IsCandidate(s)
 }

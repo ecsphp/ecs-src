@@ -23,6 +23,11 @@ func (ArrayPush) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Alias/ArrayPushFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only an "array_push" call is replaced.
+func (ArrayPush) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("array_push")
+}
+
 func (ArrayPush) Fix(s *tokens.Stream) bool {
 	changed := false
 	for index := s.Len() - 7; index > 0; index-- {
