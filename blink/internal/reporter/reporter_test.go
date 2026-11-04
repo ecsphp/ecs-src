@@ -2,6 +2,7 @@ package reporter
 
 import (
 	"bytes"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -68,6 +69,11 @@ func TestReportFixed(t *testing.T) {
 }
 
 func TestRelativePathReadsRelativePathsFromCwd(t *testing.T) {
+	cwd := "/p"
+	if runtime.GOOS == "windows" {
+		// "/p" is not absolute there; the rooted paths below land on its drive
+		cwd = `C:\p`
+	}
 	cases := map[string]string{
 		"/p/src/A.php":   "src/A.php",
 		"./src/A.php":    "src/A.php",
@@ -77,8 +83,8 @@ func TestRelativePathReadsRelativePathsFromCwd(t *testing.T) {
 		"./sub/../D.php": "D.php",
 	}
 	for path, want := range cases {
-		if got := relativePath("/p", path); got != want {
-			t.Errorf("relativePath(/p, %q) = %q, want %q", path, got, want)
+		if got := relativePath(cwd, path); got != want {
+			t.Errorf("relativePath(%s, %q) = %q, want %q", cwd, path, got, want)
 		}
 	}
 }

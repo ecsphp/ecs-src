@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"testing"
 
@@ -162,10 +163,20 @@ func TestLoadSkipResolvesLikeECS(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{
-		"src/C.php", "src/C.php", "src/Legacy", "*/Fixture/*", "*.php",
-		"src/C.php", root + "/src/Legacy", "", "a/*/b", "lib",
+	// Windows reads ".." before checking the directory in front of it and "\" as
+	// a separator, so "src/Nope/../C.php" and `src\Legacy` exist there, for PHP's
+	// file_exists() as for os.Stat, and are kept.
+	windows := runtime.GOOS == "windows"
+	var want []string
+	want = append(want, "src/C.php", "src/C.php", "src/Legacy", "*/Fixture/*", "*.php")
+	if windows {
+		want = append(want, "src/C.php")
 	}
+	want = append(want, "src/C.php", filepath.ToSlash(root)+"/src/Legacy")
+	if windows {
+		want = append(want, "src/Legacy")
+	}
+	want = append(want, "", "a/*/b", "lib")
 	if !slices.Equal(c.Skip, want) {
 		t.Fatalf("skip = %q, want %q", c.Skip, want)
 	}
