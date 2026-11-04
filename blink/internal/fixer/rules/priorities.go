@@ -279,4 +279,5 @@ var fixerPriority = map[string]int{
 	"PhpdocSummaryFixer":                              0,
 	"PhpdocTagTypeFixer":                              0,
 	"PhpdocOrderFixer":                                -2,
+	"StandaloneLineRequiredParamFixer":                40,
 }

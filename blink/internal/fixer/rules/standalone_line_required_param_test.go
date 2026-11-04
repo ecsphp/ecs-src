@@ -1,6 +1,10 @@
 package rules
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+)
 
 func TestStandaloneLineRequiredParam(t *testing.T) {
 	t.Parallel()
@@ -32,5 +36,20 @@ func TestStandaloneLineRequiredParam(t *testing.T) {
 	// public method without #[Required]/@required is left inline
 	if _, changed := apply(t, f, "<?php\nclass A\n{\n    public function autowire(FormModel $a, SubModel $b): void\n    {\n    }\n}\n"); changed {
 		t.Fatal("method needs #[Required] or @required")
+	}
+}
+
+// The expected output comes from the PHP engine: LineLength joins what this rule broke.
+func TestStandaloneLineRequiredParamRunsBeforeLineLength(t *testing.T) {
+	t.Parallel()
+	src := "<?php\nclass A\n{\n    #[Required]\n    public function autowire(FormModel $a, SubModel $b): void\n    {\n    }\n}\n"
+	fixers := []fixer.Fixer{LineLength{}, StandaloneLineRequiredParam{}}
+	CanonicalOrder(fixers)
+	got := src
+	for _, f := range fixers {
+		got, _ = apply(t, f.(fixerRule), got)
+	}
+	if got != src {
+		t.Fatalf("got=%q", got)
 	}
 }

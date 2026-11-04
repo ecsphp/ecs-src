@@ -1,7 +1,8 @@
 package rules
 
 import (
-	"strings"
+	"regexp"
+	"slices"
 
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -84,14 +85,8 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		switch kind {
 		case braceClassLike:
 			category = "classes"
-			// an anonymous class ("new class ... {", also "new #[Attr] class ... {")
-			// is configured separately; step back over any leading attribute
-			if kw >= 0 {
-				if p := prevMeaningfulSkippingAttributes(s, kw); p >= 0 {
-					if prev := s.At(p); prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "new") {
-						category = "anon_classes"
-					}
-				}
+			if taIsAnonymousClass(s, kw) {
+				category = "anon_classes"
 			}
 		case braceFunctionDecl:
 			category = "functions"
@@ -117,17 +112,23 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		}
 
 		if nextLine, handle := f.wantNextLine(category, s, i); handle {
+			if target := bpBraceTarget(s, i, nextLine); target >= 0 {
+				i = bpMoveBrace(s, i, target)
+				changed = true
+			}
 			want := " "
 			if nextLine {
 				// php-cs-fixer aligns the brace with the line holding the keyword
 				want = "\n" + lineIndent(s, kw)
 			}
-			if i > 0 && s.At(i-1).Kind == token.Whitespace {
+			switch {
+			case !nextLine && bpFollowsLineComment(s, i):
+			case i > 0 && s.At(i-1).Kind == token.Whitespace:
 				if s.At(i-1).Value != want {
 					s.SetValue(i-1, want)
 					changed = true
 				}
-			} else {
+			default:
 				s.InsertAt(i, token.Token{Kind: token.Whitespace, Value: want})
 				i++
 				changed = true
@@ -139,6 +140,117 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+// bpBraceTarget is PHP-CS-Fixer's $moveBraceToIndex: where the brace goes so that a
+// comment next to it stays out of the way, or -1. On the same line the brace goes
+// before the comments, as written after "// c" it would be part of the comment. On the
+// next line it goes after a "//" or "#" comment that follows it.
+func bpBraceTarget(s *tokens.Stream, open int, nextLine bool) int {
+	if nextLine {
+		return bpTargetAfterComment(s, open)
+	}
+	target := -1
+	previous := prevMeaningfulIndex(s, open)
+	for i := open - 1; i > previous; i-- {
+		if !isComment(s.At(i)) {
+			continue
+		}
+		i--
+		if s.At(i).Kind == token.Whitespace {
+			target = i
+		} else if i == previous {
+			target = previous + 1
+		}
+	}
+	// PHP-CS-Fixer moves it here too and writes a parse error
+	if target < 0 || isLineComment(s.At(target-1)) || s.MatchForward(open) < 0 {
+		return -1
+	}
+	return target
+}
+
+func bpTargetAfterComment(s *tokens.Stream, open int) int {
+	if before := s.At(open - 1); before.Kind == token.Whitespace && hasNewline(before.Value) {
+		return -1
+	}
+	closing := s.MatchForward(open)
+	if closing < 0 {
+		return -1
+	}
+	target := -1
+	for i := open + 1; i < closing; i++ {
+		t := s.At(i)
+		// PHP-CS-Fixer has already put a one-line body on its own line at this point;
+		// blink has not, so stop at code or the brace would jump over it
+		if t.Kind == token.Whitespace && hasNewline(t.Value) || t.Kind != token.Whitespace && !isComment(t) {
+			break
+		}
+		// blink's "// c ?>" comment keeps the space, so the close tag can follow directly
+		if isLineComment(t) && s.At(i+1).Kind == token.Whitespace {
+			target = i + 1
+		}
+	}
+	return target
+}
+
+// bpFollowsLineComment reports a brace whose line starts after a "//" or "#" comment:
+// on the same line as that comment it would be part of it.
+func bpFollowsLineComment(s *tokens.Stream, open int) bool {
+	before := open - 1
+	if s.At(before).Kind == token.Whitespace {
+		before--
+	}
+	return isLineComment(s.At(before))
+}
+
+var bpLeadingBreakRe = regexp.MustCompile(`^(?:[ \t]*?(?:\r\n|\n|\r))?[ \t]*`)
+
+// bpMoveBrace moves the brace at open to target like PHP-CS-Fixer: the tokens between
+// shift by one, and the whitespace left on either side is cleared or merged. It returns
+// the new index of the brace.
+func bpMoveBrace(s *tokens.Stream, open, target int) int {
+	first, last := min(open-1, target), max(open+1, target)
+	work := slices.Clone(s.Tokens()[first : last+1])
+	at := func(i int) *token.Token { return &work[i-first] }
+	clearAt := func(i int) { *at(i) = token.Token{Kind: token.Whitespace} }
+	isSpace := func(i int) bool { return at(i).Kind == token.Whitespace }
+
+	brace := *at(open)
+	delta := 1
+	if open > target {
+		delta = -1
+	}
+	if isSpace(open + delta) {
+		if delta == -1 && hasNewline(at(open-1).Value) {
+			if isSpace(open + 1) {
+				at(open + 1).Value = bpLeadingBreakRe.ReplaceAllString(at(open+1).Value, "")
+			}
+		} else if isSpace(open - 1) {
+			clearAt(open - 1)
+		}
+	}
+	for i := open; i != target; i += delta {
+		*at(i) = *at(i + delta)
+	}
+	*at(target) = brace
+	if isSpace(open) && isSpace(open+1) {
+		at(open).Value += at(open + 1).Value
+		clearAt(open + 1)
+	}
+
+	moved := make([]token.Token, 0, len(work))
+	index := -1
+	for i, t := range work {
+		if i+first == target {
+			index = first + len(moved)
+		}
+		if t.Value != "" {
+			moved = append(moved, t)
+		}
+	}
+	s.ReplaceRange(first, last, moved)
+	return index
 }
 
 // closureBodyNeedsNewlines reports whether the body of the anonymous function

@@ -100,10 +100,29 @@ func (f TrailingCommaInMultiline) WithConfig(config map[string]any) fixer.Fixer 
 	return f
 }
 
+// trailingCommaIsPlainDestructuring reports "[...] =", "as [...]" and "as $k => [...]".
+// A nested target is not checked, so it gets a comma: only these forms are certain.
+func trailingCommaIsPlainDestructuring(s *tokens.Stream, open, closeIdx int) bool {
+	prev := sigPrev(s, open)
+	if prev >= 0 && arrayNotationIsAs(s.At(prev)) {
+		return true
+	}
+	if prev >= 0 && isPunctVal(s, prev, "=>") {
+		key := sigPrev(s, prev)
+		if key < 0 || s.At(key).Kind != token.Variable {
+			return false
+		}
+		before := sigPrev(s, key)
+		return before >= 0 && arrayNotationIsAs(s.At(before))
+	}
+	next := sigNext(s, closeIdx)
+	return next >= 0 && isPunctVal(s, next, "=")
+}
+
 func (f TrailingCommaInMultiline) included(s *tokens.Stream, sc *arrayNotationScan, open, closeIdx int) bool {
 	closer := s.At(closeIdx).Value
 	if f.Elements == nil {
-		return closer == "]" && !isOffsetOpen(s, open)
+		return closer == "]" && !isOffsetOpen(s, open) && !trailingCommaIsPlainDestructuring(s, open, closeIdx)
 	}
 	switch trailingCommaCategory(s, sc, open) {
 	case "arrays":

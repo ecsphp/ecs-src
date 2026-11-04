@@ -665,7 +665,7 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks b
 		// only method_argument_space normalizes the comma-to-comment gap to one
 		// space; the Symplify array/standalone-line reflows (collapseBlanks=false)
 		// keep the author's alignment, matching their PHP fixers
-		if collapseBlanks {
+		if collapseBlanks && !masCommentLastLine(s, n) {
 			if ws >= 0 {
 				if s.At(ws).Value != " " {
 					s.SetValue(ws, " ")

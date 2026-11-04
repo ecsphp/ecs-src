@@ -15,10 +15,7 @@ import (
 // dependency is added or removed from an autowired setter.
 type StandaloneLineRequiredParam struct{}
 
-var (
-	requiredAnnotationRe = regexp.MustCompile(`(?i)@required\b`)
-	requiredAttributeRe  = regexp.MustCompile(`(?i)^#\[.*\bRequired\b`)
-)
+var requiredAnnotationRe = regexp.MustCompile(`(?i)@required\b`)
 
 func (StandaloneLineRequiredParam) Name() string {
 	return `Symplify\CodingStandard\Fixer\Spacing\StandaloneLineRequiredParamFixer`
@@ -66,7 +63,7 @@ func isPublicRequiredMethod(s *tokens.Stream, fnPos int) bool {
 		t := s.At(j)
 		if attributeEndsAt(s, j) {
 			start := s.AttributeStartOf(j)
-			if requiredAttributeRe.MatchString(attributeText(s, start, j)) {
+			if attributeMarksRequired(s, start, j) {
 				isRequired = true
 			}
 			j = start
@@ -94,4 +91,19 @@ func isPublicRequiredMethod(s *tokens.Stream, fnPos int) bool {
 		}
 	}
 	return isPublic && isRequired
+}
+
+// attributeMarksRequired looks for the exact name, in any position. "required: true"
+// and 'Required' do not count, or every attribute with such an option would match.
+func attributeMarksRequired(s *tokens.Stream, start, end int) bool {
+	for i := start; i <= end; i++ {
+		t := s.At(i)
+		if t.Kind == token.DocComment && requiredAnnotationRe.MatchString(t.Value) {
+			return true
+		}
+		if t.Kind == token.Ident && t.Value == "Required" && !taIsNamedArgument(s, i) {
+			return true
+		}
+	}
+	return false
 }
