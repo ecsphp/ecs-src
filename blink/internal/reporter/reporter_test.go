@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/runner"
+	"github.com/ecsphp/ecs-src/blink/internal/runner"
 )
 
 func TestReportClean(t *testing.T) {

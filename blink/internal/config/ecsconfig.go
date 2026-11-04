@@ -8,8 +8,8 @@ import (
 	"slices"
 	"sort"
 
-	"blink/internal/fixer"
-	"blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 // Blink mode: ECS dumps its resolved ecs.php configuration to JSON (paths, rules,

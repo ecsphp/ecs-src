@@ -1,8 +1,8 @@
 package rules
 
 import (
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // Symplify: https://github.com/ecsphp/ecs-src/blob/main/packages/coding-standard/src/Fixer/ConstantNotation/RemoveSlashFromNativeConstantFixer.php

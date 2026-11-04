@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/fixer/rules"
-	"blink/internal/lexer"
-	"blink/internal/set"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/set"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 func write(t *testing.T, body string) string {

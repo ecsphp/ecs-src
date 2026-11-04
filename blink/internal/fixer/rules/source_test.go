@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 var sourceURLPattern = regexp.MustCompile(

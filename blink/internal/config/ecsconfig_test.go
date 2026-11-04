@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/lexer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // esc doubles backslashes so an FQCN can be embedded in a JSON string literal.

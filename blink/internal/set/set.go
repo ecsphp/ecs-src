@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"blink/internal/fixer"
-	"blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 // Spaces is the ordered spaces set (safest first), matching ECS SpacesLevel.

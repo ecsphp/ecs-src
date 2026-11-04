@@ -3,7 +3,7 @@ package rules
 import (
 	"encoding/json"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 // phpDefaultsJSON holds PHP-CS-Fixer's default for each option whose blink zero

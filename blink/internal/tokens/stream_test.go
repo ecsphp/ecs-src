@@ -3,7 +3,7 @@ package tokens
 import (
 	"testing"
 
-	"blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
 )
 
 func mk(vals ...string) *Stream {

@@ -3,8 +3,8 @@ package rules
 import (
 	"testing"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 func TestBlankLineBeforeStatementConfig(t *testing.T) {

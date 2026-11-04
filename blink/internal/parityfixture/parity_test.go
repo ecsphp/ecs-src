@@ -16,8 +16,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"blink/internal/config"
-	"blink/internal/runner"
+	"github.com/ecsphp/ecs-src/blink/internal/config"
+	"github.com/ecsphp/ecs-src/blink/internal/runner"
 )
 
 func TestParityFixtures(t *testing.T) {

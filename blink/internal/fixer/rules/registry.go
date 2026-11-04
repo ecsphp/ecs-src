@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 // SpacingFixers are the whitespace/operator spacing rules, safest first. This is

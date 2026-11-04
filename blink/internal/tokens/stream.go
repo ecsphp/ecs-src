@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
 )
 
 // Stream is a flat, mutable, index-addressable token sequence. Fixers read

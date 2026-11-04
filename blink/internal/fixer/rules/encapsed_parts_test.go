@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/lexer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // The parts of every String token are the tokens token_get_all gives for the

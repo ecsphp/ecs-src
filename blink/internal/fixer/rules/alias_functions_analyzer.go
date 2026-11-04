@@ -3,9 +3,9 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/lexer"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // This file ports the PHP-CS-Fixer tokenizer analysis the Alias fixers

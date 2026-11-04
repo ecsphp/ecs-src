@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"blink/internal/fixer"
-	"blink/internal/runner"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/runner"
 )
 
 type formatter struct {

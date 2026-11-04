@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/fixer"
-	"blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 const perCSFile = "../../../config/set/per-cs.php"

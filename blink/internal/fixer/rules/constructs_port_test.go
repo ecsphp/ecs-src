@@ -3,7 +3,7 @@ package rules
 import (
 	"testing"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 // TestSingleSpaceAroundConstructMatchesPHPCSFixer runs the registry's rule

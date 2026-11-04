@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"blink/internal/lexer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // Cases ported from PHP-CS-Fixer's FunctionsAnalyzerTest::testIsGlobalFunctionCall: the

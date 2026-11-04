@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
 )
 
 // Lex converts source into a flat token slice. Concatenating the Value of each

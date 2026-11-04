@@ -3,9 +3,9 @@ package set
 import (
 	"testing"
 
-	"blink/internal/fixer"
-	"blink/internal/lexer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // member returns the fixer of fixers whose short class name is short.

@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"blink/internal/fixer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // phpdocReturnSelfRefMap is the fixer's default "replacements" map, verbatim from

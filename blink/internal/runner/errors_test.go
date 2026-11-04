@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"blink/internal/config"
-	"blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/config"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 // TestRunReportsSniffErrors keeps a file whose only finding is a non-fixable

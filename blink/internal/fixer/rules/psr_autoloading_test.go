@@ -3,8 +3,8 @@ package rules
 import (
 	"testing"
 
-	"blink/internal/lexer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 func applyAt(t *testing.T, r fixerRule, path, src string) (string, bool) {

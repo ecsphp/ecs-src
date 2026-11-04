@@ -13,10 +13,10 @@ import (
 	"syscall"
 	"time"
 
-	"blink/internal/config"
-	"blink/internal/fixer/rules"
-	"blink/internal/reporter"
-	"blink/internal/runner"
+	"github.com/ecsphp/ecs-src/blink/internal/config"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/reporter"
+	"github.com/ecsphp/ecs-src/blink/internal/runner"
 )
 
 func main() {

@@ -3,8 +3,8 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // Port of PHP-CS-Fixer's FunctionsAnalyzer::isGlobalFunctionCall and the

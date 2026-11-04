@@ -10,12 +10,12 @@ import (
 	"slices"
 	"sync"
 
-	"blink/internal/config"
-	"blink/internal/diff"
-	"blink/internal/finder"
-	"blink/internal/fixer"
-	"blink/internal/lexer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/config"
+	"github.com/ecsphp/ecs-src/blink/internal/diff"
+	"github.com/ecsphp/ecs-src/blink/internal/finder"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // FileResult records the change made to one file.

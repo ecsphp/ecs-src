@@ -4,8 +4,8 @@ import (
 	"slices"
 	"strings"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // clearableTokens is a copy of the stream shaped like PHP-CS-Fixer's Tokens, so

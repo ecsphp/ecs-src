@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"blink/internal/fixer"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 	"slices"
 )
 

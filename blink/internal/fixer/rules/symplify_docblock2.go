@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // --- AddMissingVarName: "/** @var Type */" with no name -> add the next variable's name ---
