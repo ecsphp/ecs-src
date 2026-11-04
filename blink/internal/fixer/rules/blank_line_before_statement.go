@@ -64,31 +64,14 @@ func blbsStatement(s *tokens.Stream, i int) string {
 		"switch", "throw", "try", "while":
 		return lower
 	case "yield":
-		if isYieldFromStart(s, i) {
-			return "yield_from"
-		}
 		return "yield"
 	}
-	// a lexer that emits "yield from" as one token, like PHP's T_YIELD_FROM
-	if strings.HasPrefix(lower, "yield") && strings.HasSuffix(lower, "from") && len(lower) > len("yieldfrom") {
+	// the lexer emits "yield from" (whitespace and comments included) as one
+	// token, like PHP's T_YIELD_FROM
+	if strings.HasPrefix(lower, "yield") && strings.HasSuffix(lower, "from") {
 		return "yield_from"
 	}
 	return ""
-}
-
-// isYieldFromStart reports whether the "yield" token at i starts a "yield from":
-// PHP (>= 8.3 for comments) lexes "yield", any whitespace and comments, then
-// "from" as one T_YIELD_FROM token, distinct from T_YIELD.
-func isYieldFromStart(s *tokens.Stream, i int) bool {
-	n := i + 1
-	for n < s.Len() && (s.At(n).Kind == token.Whitespace || s.At(n).Kind == token.Comment || s.At(n).Kind == token.DocComment) {
-		n++
-	}
-	if n >= s.Len() {
-		return false
-	}
-	k := s.At(n).Kind
-	return (k == token.Ident || k == token.Keyword) && strings.EqualFold(s.At(n).Value, "from")
 }
 
 func (f BlankLineBeforeStatement) Fix(s *tokens.Stream) bool {
