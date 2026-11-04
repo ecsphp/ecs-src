@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // fpntTypoReCache memoizes the per-typo-name @param patterns, which are

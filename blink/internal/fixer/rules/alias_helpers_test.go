@@ -3,7 +3,7 @@ package rules
 import (
 	"testing"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 // aliasUpstreamCase is one PHP-CS-Fixer fixer test case: the input and what

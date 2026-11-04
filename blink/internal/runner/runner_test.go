@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"blink/internal/config"
+	"github.com/ecsphp/ecs-src/blink/internal/config"
 )
 
 func TestRunFixesFile(t *testing.T) {

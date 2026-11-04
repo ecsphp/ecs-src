@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
 )
 
 // interpolationDump renders the tokens of src from its first String token on,

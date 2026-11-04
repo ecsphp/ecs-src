@@ -3,8 +3,8 @@ package rules
 import (
 	"slices"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // Symplify: https://github.com/symplify/coding-standard/blob/main/src/Fixer/ArrayNotation/ArrayListItemNewlineFixer.php

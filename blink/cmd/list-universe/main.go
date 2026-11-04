@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 func main() {

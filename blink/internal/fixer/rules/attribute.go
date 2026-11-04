@@ -3,9 +3,9 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/lexer"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // Attributes lex natively ("#[" is an AttributeStart token, its contents and the

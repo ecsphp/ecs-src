@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // nextCodeIndex returns the first non-whitespace, non-comment token after i, or

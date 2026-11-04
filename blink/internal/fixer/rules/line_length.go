@@ -3,9 +3,9 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/fixer"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // ecs-src: https://github.com/ecsphp/ecs-src/blob/main/packages/coding-standard/src/Fixer/LineLength/LineLengthFixer.php

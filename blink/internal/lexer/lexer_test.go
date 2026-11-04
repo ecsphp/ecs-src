@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
 )
 
 // lossless is the core invariant: rendering all token values equals the source.

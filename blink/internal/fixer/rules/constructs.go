@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"strings"
 
-	"blink/internal/fixer"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // constructKeywords are the keywords PSR-12 requires to be followed by a single

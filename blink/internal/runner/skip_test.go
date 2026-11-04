@@ -7,9 +7,9 @@ import (
 	"sort"
 	"testing"
 
-	"blink/internal/config"
-	"blink/internal/fixer"
-	"blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/config"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 // TestRunPerRuleSkipPaths checks that a rule skipped on some paths stays off

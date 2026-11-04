@@ -3,9 +3,9 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/fixer"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // isTypeUnionPart reports whether t can appear inside a type union/intersection

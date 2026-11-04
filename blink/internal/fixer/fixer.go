@@ -5,7 +5,7 @@ package fixer
 import (
 	"strings"
 
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // SourceBase is the GitHub location of the original PHP-CS-Fixer fixers.

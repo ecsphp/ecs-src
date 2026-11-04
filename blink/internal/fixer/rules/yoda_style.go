@@ -3,10 +3,10 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/fixer"
-	"blink/internal/lexer"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // yodaMode is how a comparison group is normalized. The zero value is

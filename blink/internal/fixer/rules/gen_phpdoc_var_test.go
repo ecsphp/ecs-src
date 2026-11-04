@@ -3,7 +3,7 @@ package rules
 import (
 	"testing"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 // assertFix runs r once and checks the output and changed flag.

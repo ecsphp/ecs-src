@@ -1,6 +1,6 @@
 package fixer
 
-import "blink/internal/tokens"
+import "github.com/ecsphp/ecs-src/blink/internal/tokens"
 
 // CodingStandardError is an error a rule reports but cannot fix, as ECS's
 // CodingStandardError.

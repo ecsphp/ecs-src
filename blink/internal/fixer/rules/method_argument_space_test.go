@@ -3,7 +3,7 @@ package rules
 import (
 	"testing"
 
-	fixerpkg "blink/internal/fixer"
+	fixerpkg "github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 func TestMethodArgumentSpace(t *testing.T) {

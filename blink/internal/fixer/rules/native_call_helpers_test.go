@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"blink/internal/lexer"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // nativeCallCase is one upstream fixer test case: want is the expected output

@@ -1,6 +1,6 @@
 package rules
 
-import "blink/internal/tokens"
+import "github.com/ecsphp/ecs-src/blink/internal/tokens"
 
 // Symplify: https://github.com/symplify/coding-standard/blob/main/src/Fixer/Commenting/ParamReturnAndVarTagMalformsFixer.php
 //

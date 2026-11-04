@@ -3,7 +3,7 @@ package rules
 import (
 	"testing"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 // TestRegistryResolvesPHPCSFixerDefaults checks that a fixer looked up by name,

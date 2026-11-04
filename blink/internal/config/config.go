@@ -8,10 +8,10 @@ import (
 	"os"
 	"runtime"
 
-	"blink/internal/finder"
-	"blink/internal/fixer"
-	"blink/internal/fixer/rules"
-	"blink/internal/set"
+	"github.com/ecsphp/ecs-src/blink/internal/finder"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/set"
 )
 
 // Config is a resolved blink run: the paths to check, the rules to apply, and

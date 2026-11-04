@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"blink/internal/config"
-	"blink/internal/fixer/rules"
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/config"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // clearDropComments clears `/* drop */` comments in place, like Tokens::clearAt.

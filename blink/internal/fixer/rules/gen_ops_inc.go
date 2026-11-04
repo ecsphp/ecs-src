@@ -3,8 +3,8 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // This file implements three PHP-CS-Fixer Operator rules on the flat token

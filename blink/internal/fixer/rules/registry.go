@@ -2,11 +2,12 @@ package rules
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 // SpacingFixers are the whitespace/operator spacing rules, safest first. This is
@@ -286,16 +287,9 @@ func StructuralFixers() []fixer.Fixer {
 	}
 }
 
-// All returns every built-in fixer in execution order. FullOpeningTag runs first
-// (normalize the tag) and NoClosingTag last (trailing tag/EOF cleanup).
-var (
-	registryOnce sync.Once
-	sortedFixers []fixer.Fixer          // canonical execution order
-	fixerByName  map[string]fixer.Fixer // Name -> fixer
-	canonicalPos map[string]int         // Name -> index in sortedFixers
-)
-
-func buildRegistry() {
+// FullOpeningTag runs first (normalize the tag) and NoClosingTag last
+// (trailing tag/EOF cleanup).
+func builtinFixers() []fixer.Fixer {
 	all := []fixer.Fixer{FullOpeningTag{}}
 	all = append(all, CommonFixers()...)
 	all = append(all, PhpdocFixers()...)
@@ -321,22 +315,89 @@ func buildRegistry() {
 	for i, f := range all {
 		all[i] = withPHPDefaults(f)
 	}
+	return all
+}
+
+type registration struct {
+	fixer    fixer.Fixer
+	priority int
+}
+
+type registry struct {
+	sorted  []fixer.Fixer          // canonical execution order
+	builtin []fixer.Fixer          // sorted, without the registered fixers
+	byName  map[string]fixer.Fixer // Name -> fixer
+	pos     map[string]int         // Name -> index in sorted
+}
+
+var (
+	registryOnce  sync.Once
+	registryBuilt bool
+	registrations []registration
+	reg           registry
+)
+
+// Register adds a fixer that is not built in. It panics when called after the
+// registry was built, or when the name is taken.
+func Register(f fixer.Fixer, priority int) {
+	if registryBuilt {
+		panic(fmt.Sprintf("blink: Register(%s) called after the fixer registry was built", f.Name()))
+	}
+	if nameTaken(f.Name(), builtinFixers(), registrations) {
+		panic(fmt.Sprintf("blink: cannot register %s, a fixer of that name already exists", f.Name()))
+	}
+	registrations = append(registrations, registration{fixer: f, priority: priority})
+}
+
+// A deprecated alias counts as taken: ByName resolves it to its successor.
+func nameTaken(name string, builtins []fixer.Fixer, registered []registration) bool {
+	if _, alias := deprecatedAliases[name]; alias {
+		return true
+	}
+	return slices.ContainsFunc(builtins, func(f fixer.Fixer) bool { return f.Name() == name }) ||
+		slices.ContainsFunc(registered, func(r registration) bool { return r.fixer.Name() == name })
+}
+
+func buildRegistry() {
+	registryBuilt = true
+	reg = newRegistry(builtinFixers(), registrations)
+}
+
+func newRegistry(builtins []fixer.Fixer, registered []registration) registry {
+	all := slices.Clone(builtins)
+	priority := make(map[string]int, len(registered))
+	for _, r := range registered {
+		priority[r.fixer.Name()] = r.priority
+		all = append(all, r.fixer)
+	}
+	priorityOf := func(f fixer.Fixer) int {
+		if p, ok := priority[f.Name()]; ok {
+			return p
+		}
+		return fixerPriorityOf(f)
+	}
 	// run in PHP-CS-Fixer execution order: priority descending, then by rule name
 	// ascending - exactly how PHP-CS-Fixer's Utils::sortFixers breaks ties
 	slices.SortStableFunc(all, func(a, b fixer.Fixer) int {
-		if pa, pb := fixerPriorityOf(a), fixerPriorityOf(b); pa != pb {
+		if pa, pb := priorityOf(a), priorityOf(b); pa != pb {
 			return cmp.Compare(pb, pa) // priority descending
 		}
 		return cmp.Compare(fixerSortName(a), fixerSortName(b))
 	})
 
-	sortedFixers = all
-	fixerByName = make(map[string]fixer.Fixer, len(all))
-	canonicalPos = make(map[string]int, len(all))
-	for i, f := range all {
-		fixerByName[f.Name()] = f
-		canonicalPos[f.Name()] = i
+	r := registry{
+		sorted: all,
+		byName: make(map[string]fixer.Fixer, len(all)),
+		pos:    make(map[string]int, len(all)),
 	}
+	for i, f := range all {
+		r.byName[f.Name()] = f
+		r.pos[f.Name()] = i
+		if _, registered := priority[f.Name()]; !registered {
+			r.builtin = append(r.builtin, f)
+		}
+	}
+	return r
 }
 
 // All returns every fixer in PHP-CS-Fixer execution order, each configured with
@@ -344,7 +405,13 @@ func buildRegistry() {
 // once; the returned slice is a fresh copy the caller may append to or reorder.
 func All() []fixer.Fixer {
 	registryOnce.Do(buildRegistry)
-	return slices.Clone(sortedFixers)
+	return slices.Clone(reg.sorted)
+}
+
+// Builtin is All without the fixers added with Register.
+func Builtin() []fixer.Fixer {
+	registryOnce.Do(buildRegistry)
+	return slices.Clone(reg.builtin)
 }
 
 // fixerSortName returns the name PHP-CS-Fixer sorts a fixer by: a core fixer's
@@ -368,7 +435,7 @@ func CanonicalOrder(fixers []fixer.Fixer) {
 	registryOnce.Do(buildRegistry)
 	const last = 1 << 30
 	pos := func(f fixer.Fixer) int {
-		if i, ok := canonicalPos[f.Name()]; ok {
+		if i, ok := reg.pos[f.Name()]; ok {
 			return i
 		}
 		return last
@@ -401,6 +468,6 @@ func ByName(name string) (fixer.Fixer, bool) {
 	if canonical, ok := deprecatedAliases[name]; ok {
 		name = canonical
 	}
-	f, ok := fixerByName[name]
+	f, ok := reg.byName[name]
 	return f, ok
 }

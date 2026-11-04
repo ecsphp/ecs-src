@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"blink/internal/fixer"
-	"blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 // Spaces is the ordered spaces set (safest first), matching ECS SpacesLevel.
@@ -184,11 +184,11 @@ var byName = map[string]func() []fixer.Fixer{
 }
 
 // selectMembers keeps the built-in fixers whose short class name is in members,
-// preserving All()'s priority-sorted execution order, with the options config
+// preserving Builtin()'s priority-sorted execution order, with the options config
 // gives them.
 func selectMembers(members map[string]bool, config setConfig) []fixer.Fixer {
 	var out []fixer.Fixer
-	for _, f := range rules.All() {
+	for _, f := range rules.Builtin() {
 		if name := shortName(f.Name()); members[name] {
 			out = append(out, configure(f, config[name]))
 		}

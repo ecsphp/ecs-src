@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"blink/internal/token"
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/token"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // A port of PHP-CS-Fixer's Doctrine\Annotation DocLexer + Tokens, enough for the

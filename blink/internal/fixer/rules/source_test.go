@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 )
 
 var sourceURLPattern = regexp.MustCompile(
@@ -18,7 +18,7 @@ var sourceURLPattern = regexp.MustCompile(
 // must expose a well-formed PHP-CS-Fixer source link consistent with its name.
 func TestEveryFixerHasSourceURL(t *testing.T) {
 	t.Parallel()
-	for _, f := range All() {
+	for _, f := range Builtin() {
 		url := f.SourceURL()
 		if url == "" {
 			t.Errorf("%s: empty SourceURL", f.Name())

@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"blink/internal/fixer"
-	"blink/internal/fixer/rules"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 //go:embed sources_cache.json

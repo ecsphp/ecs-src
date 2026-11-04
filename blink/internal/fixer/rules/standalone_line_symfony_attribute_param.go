@@ -3,7 +3,7 @@ package rules
 import (
 	"strings"
 
-	"blink/internal/tokens"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // Symplify: https://github.com/ecsphp/ecs-src/blob/main/packages/coding-standard/src/Fixer/Spacing/StandaloneLineSymfonyAttributeParamFixer.php
