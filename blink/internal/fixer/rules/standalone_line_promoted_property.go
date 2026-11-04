@@ -82,6 +82,32 @@ func constructorParamOpen(s *tokens.Stream, i int) int {
 	return open
 }
 
+// isPromotedVisibility reports whether the token at i is a public, protected or
+// private keyword inside the parameter list of "function __construct(". PHP-CS-
+// Fixer's ConstructorPromotionTransformer turns those into custom tokens, so
+// fixers looking for a property modifier do not see them. Asymmetric
+// visibility ("private(set)") and "readonly" are not transformed.
+func isPromotedVisibility(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	if t.Kind != token.Keyword {
+		return false
+	}
+	switch strings.ToLower(t.Value) {
+	case "public", "protected", "private":
+	default:
+		return false
+	}
+	if n := sigNext(s, i); n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "(" {
+		return false
+	}
+	open := enclosingFuncParamOpen(s, i)
+	if open < 0 {
+		return false
+	}
+	name := sigPrev(s, open)
+	return name >= 0 && constructorParamOpen(s, name) == open
+}
+
 // hasPromotedParam reports whether the parameter list has a promoted property -
 // a parameter carrying a public/protected/private/readonly modifier.
 func hasPromotedParam(s *tokens.Stream, open, closeIdx int) bool {

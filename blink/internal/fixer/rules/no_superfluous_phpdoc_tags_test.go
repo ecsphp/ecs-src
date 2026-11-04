@@ -128,3 +128,43 @@ func TestNoSuperfluousPhpdocTagsAttributedParam(t *testing.T) {
 		t.Fatalf("attributed-param @param must be removed; changed=%v got=%q", changed, got)
 	}
 }
+
+// PHP-CS-Fixer's findDocumentedElement stops at a promoted constructor
+// parameter's visibility (a custom token), so such a docblock is never checked;
+// one before a "readonly"-led promotion or a plain parameter documents a property.
+func TestNoSuperfluousPhpdocTagsPromotedProperty(t *testing.T) {
+	t.Parallel()
+	f := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"allow_mixed": true}).(fixerRule)
+	kept := "<?php\nclass A\n{\n    public function __construct(\n        /**\n         * @var string\n         */\n" +
+		"        public string $a,\n        /**\n         * @var int\n         */\n        private readonly int $b,\n    ) {}\n}\n"
+	assertFix(t, f, kept, kept, false)
+	assertFix(t, f,
+		"<?php\nclass A\n{\n    public function __construct(\n        /**\n         * @var string\n         */\n"+
+			"        readonly string $a,\n    ) {}\n}\n",
+		"<?php\nclass A\n{\n    public function __construct(\n        /**\n         */\n"+
+			"        readonly string $a,\n    ) {}\n}\n", true)
+}
+
+// "var" is not in PHP-CS-Fixer's MODIFIER_KINDS, so a docblock before a "var"
+// property documents nothing the fixer checks; a one-line docblock emptied by
+// the fixer becomes "/**  */".
+func TestNoSuperfluousPhpdocTagsVarAndEmptiedSingleLine(t *testing.T) {
+	t.Parallel()
+	f := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"allow_mixed": true}).(fixerRule)
+	kept := "<?php\nclass A\n{\n    /** @var string */\n    var string $a;\n}\n"
+	assertFix(t, f, kept, kept, false)
+	assertFix(t, f,
+		"<?php\nclass A\n{\n    /** @var string */\n    public string $a;\n    /** @return int */\n    public function f(): int {}\n}\n",
+		"<?php\nclass A\n{\n    /**  */\n    public string $a;\n    /**  */\n    public function f(): int {}\n}\n", true)
+}
+
+// PHP 8.4 set-visibility ("private(set)") is one of the fixer's modifiers, so
+// the docblock before it documents a property, also on a promoted parameter
+// that it leads (ConstructorPromotionTransformer leaves those alone).
+func TestNoSuperfluousPhpdocTagsSetVisibility(t *testing.T) {
+	t.Parallel()
+	f := NoSuperfluousPhpdocTags{}.WithConfig(map[string]any{"allow_mixed": true}).(fixerRule)
+	assertFix(t, f,
+		"<?php\nfinal class A\n{\n    /** @var int */ public private(set) int $a;\n    /** @var int */ private(set) int $b;\n    /** @var int */ protected(set) readonly int $c;\n    /**\n     * @var string\n     */\n    public(set) string $s;\n\n    public function __construct(\n        /** @var int */ private(set) int $d,\n        /** @var int */ public private(set) int $e,\n    ) {\n    }\n}\n",
+		"<?php\nfinal class A\n{\n    /**  */ public private(set) int $a;\n    /**  */ private(set) int $b;\n    /**  */ protected(set) readonly int $c;\n    /**\n     */\n    public(set) string $s;\n\n    public function __construct(\n        /**  */ private(set) int $d,\n        /** @var int */ public private(set) int $e,\n    ) {\n    }\n}\n", true)
+}

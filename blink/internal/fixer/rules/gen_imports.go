@@ -10,7 +10,9 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Import/NoUnneededImportAliasFixer.php
 //
 // NoUnneededImportAlias drops an alias that equals the imported name's last
-// segment: "use App\Foo as Foo;" -> "use App\Foo;" (comparison is case-sensitive).
+// segment: "use App\Foo as Foo;" -> "use App\Foo  ;" (case-sensitive). Like
+// PHP-CS-Fixer it merges the whitespace around "as" and the alias, and leaves a
+// trait adaptation ("use T { foo as foo; }") alone.
 type NoUnneededImportAlias struct{}
 
 func (NoUnneededImportAlias) Name() string {
@@ -23,56 +25,35 @@ func (NoUnneededImportAlias) SourceURL() string {
 
 func (NoUnneededImportAlias) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Keyword || strings.ToLower(t.Value) != "use" {
+	for i := s.Len() - 1; i >= 0; i-- {
+		if !kwIs(s.At(i), "as") {
 			continue
 		}
-		j := skipWhitespace(s, i+1)
-		if j < s.Len() && s.At(j).Kind == token.Punct && s.At(j).Value == "(" {
-			continue // closure use
-		}
-		semi := -1
-		for k := i + 1; k < s.Len(); k++ {
-			if s.At(k).Kind == token.Punct && s.At(k).Value == ";" {
-				semi = k
-				break
-			}
-		}
-		if semi < 0 {
+		alias := sigNext(s, i)
+		if alias < 0 || s.At(alias).Kind != token.Ident {
 			continue
 		}
-		if removeUnneededAliases(s, i, semi) {
-			changed = true
+		imp := sigPrev(s, i)
+		if imp < 0 || s.At(imp).Kind != token.Ident || s.At(imp).Value != s.At(alias).Value {
+			continue
 		}
+		j := sigPrev(s, imp)
+		for j >= 0 && (s.At(j).Kind == token.Ident || kwIs(s.At(j), "as") || isPunctVal(s, j, `\`) || isPunctVal(s, j, ",")) {
+			j = sigPrev(s, j)
+		}
+		if j >= 0 && (kwIs(s.At(j), "function") || kwIs(s.At(j), "const")) {
+			j = sigPrev(s, j)
+		}
+		// "use", or the "{" of a group import "use App\{Foo, Bar}"
+		if j < 0 || !kwIs(s.At(j), "use") && (!isPunctVal(s, j, "{") || !isPunctVal(s, sigPrev(s, j), `\`)) {
+			continue
+		}
+		clearTokenAndMergeWS(s, alias)
+		clearTokenAndMergeWS(s, i)
+		changed = true
 	}
-	return changed
-}
-
-// removeUnneededAliases strips "as X" occurrences in the use statement spanning
-// (from, semi) where X equals the preceding path segment. Returns true on change.
-func removeUnneededAliases(s *tokens.Stream, from, semi int) bool {
-	changed := false
-	k := from + 1
-	end := semi
-	for k < end {
-		if s.At(k).Kind == token.Keyword && strings.ToLower(s.At(k).Value) == "as" {
-			seg := k - 1
-			for seg > from && s.At(seg).Kind == token.Whitespace {
-				seg--
-			}
-			alias := skipWhitespace(s, k+1)
-			if seg > from && alias < end &&
-				s.At(seg).Kind == token.Ident && s.At(alias).Kind == token.Ident &&
-				s.At(seg).Value == s.At(alias).Value {
-				s.ReplaceRange(seg+1, alias, nil)
-				end -= alias - seg
-				k = seg + 1
-				changed = true
-				continue
-			}
-		}
-		k++
+	if changed {
+		compactEmptyTokens(s)
 	}
 	return changed
 }

@@ -10,12 +10,12 @@ import (
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Semicolon/SpaceAfterSemicolonFixer.php
 //
-// SpaceAfterSemicolon inserts a single space after a semicolon when it is
-// directly followed by code on the same line: "$a=1;$b=2;" becomes
-// "$a=1; $b=2;". A ";" before ")" (empty for loop) or a newline is left alone.
-// With RemoveInEmptyFor set, the whitespace inside an empty for expression
-// ("for ($i = 0; ; ++$i)") is removed instead ("for ($i = 0;; ++$i)"), as is
-// the space before the closing parenthesis ("for (;; )").
+// SpaceAfterSemicolon puts a single space after a semicolon followed by code:
+// "$a=1;$b=2;" becomes "$a=1; $b=2;", and a run of spaces or tabs becomes one
+// space unless a comment or ")" follows. A ";" before ")", a newline or inline
+// HTML is left alone. With RemoveInEmptyFor set, a ";" directly followed by
+// ";" gains no space, and the single-line whitespace inside an empty for
+// expression ("for ($i = 0; ; ++$i)", "for (;; )") is removed.
 type SpaceAfterSemicolon struct {
 	RemoveInEmptyFor bool
 }
@@ -37,62 +37,50 @@ func (f SpaceAfterSemicolon) WithConfig(config map[string]any) fixer.Fixer {
 
 func (f SpaceAfterSemicolon) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Punct || t.Value != ";" {
-			continue
+	// The PHP fixer clears tokens in place and remembers the for header's ")"
+	// by index without adjusting it after an insertion; clearing to empty
+	// placeholders (compacted at the end) keeps the same index arithmetic.
+	insideForUntil := -1
+	for i := 0; i < s.Len()-1; i++ {
+		if f.RemoveInEmptyFor {
+			if kwIs(s.At(i), "for") {
+				if i = sigNext(s, i); i < 0 {
+					break
+				}
+				insideForUntil = s.MatchForward(i)
+				continue
+			}
+			if i == insideForUntil {
+				insideForUntil = -1
+				continue
+			}
 		}
-		if i+1 >= s.Len() {
+		if !isPunctVal(s, i, ";") {
 			continue
 		}
 		next := s.At(i + 1)
-		if f.RemoveInEmptyFor && next.Kind == token.Whitespace && !hasNewline(next.Value) &&
-			i+2 < s.Len() && s.At(i+2).Kind == token.Punct && (s.At(i+2).Value == ";" || s.At(i+2).Value == ")") &&
-			spaceAfterSemicolonInForHeader(s, i) {
-			s.RemoveAt(i + 1)
+		if next.Kind != token.Whitespace {
+			if !isPunctVal(s, i+1, ")") && next.Kind != token.InlineHTML &&
+				(!f.RemoveInEmptyFor || !isPunctVal(s, i+1, ";")) {
+				s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
+				changed = true
+			}
+			continue
+		}
+		if insideForUntil >= 0 && (isPunctVal(s, i+2, ";") || i+2 == insideForUntil) && !hasNewline(next.Value) {
+			clearTokenAt(s, i+1)
 			changed = true
 			continue
 		}
-		// inline data (after "__halt_compiler();") is not code to space
-		if next.Kind == token.Whitespace || next.Kind == token.CloseTag || next.Kind == token.InlineHTML {
-			continue
+		if i+2 < s.Len() && next.Value != " " && strings.Trim(next.Value, " \t") == "" {
+			if k := s.At(i + 2).Kind; k != token.Comment && k != token.DocComment && !isPunctVal(s, i+2, ")") {
+				s.SetValue(i+1, " ")
+				changed = true
+			}
 		}
-		// a space is still inserted before a following ";" (empty for condition:
-		// "for (;; )" -> "for (; ; )"); only ")" suppresses it
-		if next.Kind == token.Punct && next.Value == ")" {
-			continue
-		}
-		s.InsertAt(i+1, token.Token{Kind: token.Whitespace, Value: " "})
-		changed = true
-		i++ // skip inserted whitespace
+	}
+	if changed {
+		compactEmptyTokens(s)
 	}
 	return changed
-}
-
-// spaceAfterSemicolonInForHeader reports whether the ";" at i sits directly in
-// the parentheses of a for( ... ) header.
-func spaceAfterSemicolonInForHeader(s *tokens.Stream, i int) bool {
-	depth := 0
-	for j := i - 1; j >= 0; j-- {
-		t := s.At(j)
-		if t.Kind != token.Punct {
-			continue
-		}
-		switch t.Value {
-		case ")":
-			depth++
-		case "(":
-			if depth > 0 {
-				depth--
-				continue
-			}
-			prev, ok := prevSignificant(s, j)
-			return ok && prev.Kind == token.Keyword && strings.EqualFold(prev.Value, "for")
-		case ";", "{", "}":
-			if depth == 0 && t.Value != ";" {
-				return false
-			}
-		}
-	}
-	return false
 }

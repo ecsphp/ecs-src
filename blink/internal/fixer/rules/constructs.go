@@ -324,7 +324,8 @@ func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "(" {
 			continue
 		}
-		last := sigPrev(s, i)
+		// getPrevNonWhitespace: a comment before "(" is not a call target
+		last := getPrevNonWhitespace(s, i)
 		if last < 0 {
 			continue
 		}
@@ -348,19 +349,96 @@ func (NoSpacesAfterFunctionName) Fix(s *tokens.Stream) bool {
 			if p >= 0 && s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "function") {
 				continue
 			}
-		case prev.Kind == token.Punct && (prev.Value == ")" || prev.Value == "]"):
-			// chained call "$f() ()" or "$a[0] ()"
+			// "from" in "yield from (expr)" is part of the construct, not a call
+			if strings.EqualFold(prev.Value, "from") && p >= 0 &&
+				s.At(p).Kind == token.Keyword && strings.EqualFold(s.At(p).Value, "yield") {
+				continue
+			}
+		case prev.Kind == token.Punct && prev.Value == ")":
+			// "$f() ()", but not after a cast or "(new Foo)": PHP and
+			// PHP-CS-Fixer give those ")" other token kinds
+			if isCastCloseParen(s, last) || isClassInstantiationCloseParen(s, last) {
+				continue
+			}
+		case prev.Kind == token.Punct && prev.Value == "]":
+			// "$a[0] ()", but not an array literal "[$o, 'm'] ()", whose "]"
+			// is CT::T_ARRAY_BRACKET_CLOSE
+			if o := s.MatchBackward(last); o < 0 || isArrayLiteralOpen(s, o) {
+				continue
+			}
+		case prev.Kind == token.Punct && prev.Value == "}":
+			// only a dynamic variable "${'name'} ()"
+			if o := s.MatchBackward(last); o < 1 || s.At(o-1).Kind != token.Variable || s.At(o-1).Value != "$" {
+				continue
+			}
 		default:
 			continue
 		}
 
-		if i >= 1 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
+		// PHP-CS-Fixer clears the whole whitespace token, newlines included
+		if i >= 1 && s.At(i-1).Kind == token.Whitespace {
 			s.RemoveAt(i - 1)
 			i--
 			changed = true
 		}
 	}
 	return changed
+}
+
+// isCastCloseParen reports whether the ")" at closeIdx ends a cast such as
+// "( int )", which PHP lexes as one token (only spaces or tabs inside).
+func isCastCloseParen(s *tokens.Stream, closeIdx int) bool {
+	j := closeIdx - 1
+	if j >= 0 && isCastPadding(s.At(j)) {
+		j--
+	}
+	if j < 0 || !isCastType(s.At(j)) {
+		return false
+	}
+	j--
+	if j >= 0 && isCastPadding(s.At(j)) {
+		j--
+	}
+	return j >= 0 && s.At(j).Kind == token.Punct && s.At(j).Value == "("
+}
+
+// isClassInstantiationCloseParen reports whether the ")" at closeIdx closes
+// "(new Foo)" as PHP-CS-Fixer's BraceClassInstantiationTransformer sees it.
+func isClassInstantiationCloseParen(s *tokens.Stream, closeIdx int) bool {
+	open := s.MatchBackward(closeIdx)
+	if open < 0 {
+		return false
+	}
+	if n := sigNext(s, open); n < 0 || s.At(n).Kind != token.Keyword || !strings.EqualFold(s.At(n).Value, "new") {
+		return false
+	}
+	p := sigPrev(s, open)
+	if p < 0 {
+		return true
+	}
+	t := s.At(p)
+	switch t.Kind {
+	case token.Ident, token.Variable:
+		return false
+	case token.Punct:
+		switch t.Value {
+		case "]":
+			return false
+		case ")":
+			// a cast is one token in PHP; any other ")" blocks the transformation
+			return isCastCloseParen(s, p)
+		}
+	case token.Keyword:
+		switch strings.ToLower(t.Value) {
+		case "array", "class", "elseif", "for", "foreach", "if", "static", "switch", "while":
+			return false
+		}
+	}
+	return true
+}
+
+func isCastPadding(t token.Token) bool {
+	return t.Kind == token.Whitespace && strings.Trim(t.Value, " \t") == ""
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Whitespace/SpacesInsideParenthesesFixer.php

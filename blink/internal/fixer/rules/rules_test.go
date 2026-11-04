@@ -75,8 +75,41 @@ func TestBlankLineAfterOpeningTag(t *testing.T) {
 	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php\n\n$a = 1;\n"); changed {
 		t.Fatal("existing blank line must not change")
 	}
-	if _, changed := apply(t, BlankLineAfterOpeningTag{}, "<?php $a = 1;\n"); changed {
-		t.Fatal("code on tag line must not change")
+	// the cases below mirror PHP-CS-Fixer's output for each input
+	cases := map[string]string{
+		// code on the tag line moves below a blank line
+		"<?php $a = 1;\n$b = 2;\n":             "<?php\n\n$a = 1;\n$b = 2;\n",
+		"<?php /* c */\n$a = 1;\n":             "<?php\n\n/* c */\n$a = 1;\n",
+		"<?php\t$a = 1;\n":                     "<?php\n\n$a = 1;\n",
+		"<?php  $a = 1;\n":                     "<?php\n\n $a = 1;\n",
+		"<?php echo 1; // x\n":                 "<?php\n\necho 1; // x\n",
+		"<?php\n    $a = 1;\n":                 "<?php\n\n    $a = 1;\n",
+		"<?php\r\n$a = 1;\r\n":                 "<?php\r\n\n$a = 1;\r\n",
+		"#!/usr/bin/env php\n<?php\n$a = 1;\n": "#!/usr/bin/env php\n<?php\n\n$a = 1;\n",
+		// a close tag's newline is part of the tag: still monolithic
+		"<?php\n$a = 1;\n?>\n": "<?php\n\n$a = 1;\n?>\n",
+		// only whitespace after the tag
+		"<?php \n":  "<?php\n\n",
+		"<?php\n  ": "<?php\n\n  ",
+	}
+	for src, want := range cases {
+		if got, changed := apply(t, BlankLineAfterOpeningTag{}, src); !changed || got != want {
+			t.Fatalf("%q: changed=%v got=%q want=%q", src, changed, got, want)
+		}
+	}
+	for _, src := range []string{
+		"<?php $a = 1;",                      // no newline at all
+		"<?php\n \n$a = 1;\n",                // the token after the tag holds a newline
+		"<?php\n$a = 1;\n?>\n<p>x</p>\n",     // inline HTML
+		"<?php\n$a = 1; ?>\n<?php $b = 2;\n", // two open tags
+		"<?php\n$a = 1;\n?>\n<?= $a ?>\n",    // short echo tag
+		"<?php\n",                            // nothing after the tag
+		"<?php\r\n",
+		"#!/usr/bin/env php\n<?php\n",
+	} {
+		if got, changed := apply(t, BlankLineAfterOpeningTag{}, src); changed {
+			t.Fatalf("%q must not change: got=%q", src, got)
+		}
 	}
 	// only a monolithic PHP file: the data after __halt_compiler is inline HTML,
 	// the newline right after "?>" is not
@@ -249,6 +282,32 @@ func TestNoSpacesAfterFunctionName(t *testing.T) {
 	// echo/print/include/require whose parens are expression grouping keep the space
 	if _, changed := apply(t, NoSpacesAfterFunctionName{}, "<?php echo ('x') ? 'a' : 'b';"); changed {
 		t.Fatal("echo grouping parens must keep their space")
+	}
+	// a cast is one token in PHP, not a call target: "(int) ($x)" keeps its space,
+	// also after a chain of casts and with padding inside the cast
+	casts := "<?php $a = (int) ($b + 1); $c = (string) (int) ($d); $e = ( bool ) ($f); $g = (array) ($h ?? []);"
+	if got, changed := apply(t, NoSpacesAfterFunctionName{}, casts); changed {
+		t.Fatalf("casts: got=%q", got)
+	}
+	// a parenthesised callee and a dynamic variable are call targets; the whole
+	// whitespace goes, newlines included, as in php-cs-fixer
+	got, changed = apply(t, NoSpacesAfterFunctionName{}, "<?php ($f) (1); ($g)\n(2); foo\n(3); ${'h'} (4); $o->{'m'} (5);")
+	if want := "<?php ($f)(1); ($g)(2); foo(3); ${'h'}(4); $o->{'m'} (5);"; !changed || got != want {
+		t.Fatalf("callees: changed=%v got=%q want=%q", changed, got, want)
+	}
+	// a comment between the callee and "(" stops the fixer, which looks at the
+	// previous non-whitespace token: the call is never folded into the comment
+	comments := "<?php\nfoo // c\n(1);\nfoo # c\n(2);\nfoo /* c */ (3);\nbar /* c */\n(4);\nfoo /** d */ (5);\n"
+	if got, changed := apply(t, NoSpacesAfterFunctionName{}, comments); changed {
+		t.Fatalf("comments: got=%q", got)
+	}
+	// PHP-CS-Fixer gives the "]" of an array literal and the ")" of "(new Foo)"
+	// their own token kinds, which are not call targets; an index "]" and a
+	// parenthesis before "(new Foo)" are
+	closers := "<?php\n$a = [$o, 'm'] (1);\n$b = (new Foo) (2);\n$c = $arr[0] (3);\n$d = foo() [0] (4);\n$e = f(1) (new Foo) (5);\n$f = (new A) (new B) (6);\nif (1) {} (new Foo) (7);\n"
+	wantClosers := "<?php\n$a = [$o, 'm'] (1);\n$b = (new Foo) (2);\n$c = $arr[0](3);\n$d = foo() [0](4);\n$e = f(1)(new Foo)(5);\n$f = (new A) (new B)(6);\nif (1) {} (new Foo) (7);\n"
+	if got, _ := apply(t, NoSpacesAfterFunctionName{}, closers); got != wantClosers {
+		t.Fatalf("closers: got=%q want=%q", got, wantClosers)
 	}
 }
 

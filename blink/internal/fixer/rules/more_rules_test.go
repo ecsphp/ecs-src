@@ -87,3 +87,32 @@ func TestBlankLineBetweenImportGroups(t *testing.T) {
 		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
 	}
 }
+
+// PHP-CS-Fixer's SwitchCaseSpace works switch by switch and gives up on a
+// switch whose "default" is not followed by whitespace and ":" (so a tidy
+// "default:" leaves "case 1 :" alone). Each expected output is the PHP
+// engine's.
+func TestSwitchCaseSpaceMatchesPhpCsFixer(t *testing.T) {
+	t.Parallel()
+	cases := map[string]string{
+		// a tidy default: the cases are not visited
+		"<?php\nswitch ($a) {\n    case 1 :\n        break;\n    default:\n        break;\n}\n": "",
+		// a commented default: same, but a later switch is still fixed
+		"<?php\nswitch ($a) {\n    case 1 :\n        break;\n    default /* c */ :\n        break;\n}\nswitch ($a) {\n    case 1 :\n        break;\n}\n": "<?php\nswitch ($a) {\n    case 1 :\n        break;\n    default /* c */ :\n        break;\n}\nswitch ($a) {\n    case 1:\n        break;\n}\n",
+		// newlines go, a comment keeps its space, named-argument and ternary
+		// colons are not the label's, nested switch and match have their own
+		// default
+		"<?php\nswitch ($a) {\n    case 1\n    :\n        break;\n    case 2 /* c */ :\n        break;\n    case foo(x: 1) :\n        break;\n    case $b ? 1 : 2 :\n        break;\n    case 3 ;\n        break;\n    default\n    :\n        switch ($b) {\n            case 1 :\n                break;\n            default:\n                $c = match ($d) { default => 1 };\n        }\n}\n": "<?php\nswitch ($a) {\n    case 1:\n        break;\n    case 2 /* c */ :\n        break;\n    case foo(x: 1):\n        break;\n    case $b ? 1 : 2:\n        break;\n    case 3;\n        break;\n    default:\n        switch ($b) {\n            case 1 :\n                break;\n            default:\n                $c = match ($d) { default => 1 };\n        }\n}\n",
+		// alternative syntax
+		"<?php\nswitch ($a):\n    case 1 :\n        break;\n    default :\n        break;\nendswitch;\n": "<?php\nswitch ($a):\n    case 1:\n        break;\n    default:\n        break;\nendswitch;\n",
+	}
+	for src, want := range cases {
+		got, changed := apply(t, SwitchCaseSpace{}, src)
+		if want == "" {
+			want = src
+		}
+		if changed != (want != src) || got != want {
+			t.Fatalf("%q: changed=%v\n got=%q\nwant=%q", src, changed, got, want)
+		}
+	}
+}

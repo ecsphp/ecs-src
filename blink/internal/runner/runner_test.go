@@ -38,9 +38,10 @@ func TestRunFixesFile(t *testing.T) {
 	}
 	b, _ := os.ReadFile(path)
 	// default set is psr12 + common: the space before ";", the trailing
-	// whitespace and the extra blank lines are fixed; inline code is left on the
-	// "<?php" line (linebreak_after_opening_tag is not part of psr12 + common)
-	want := "<?php $x = 1;\n"
+	// whitespace and the extra blank lines are fixed, and psr12's
+	// blank_line_after_opening_tag moves the inline code below "<?php", as the
+	// PHP engine does
+	want := "<?php\n\n$x = 1;\n"
 	if string(b) != want {
 		t.Fatalf("fix: got %q want %q", string(b), want)
 	}
