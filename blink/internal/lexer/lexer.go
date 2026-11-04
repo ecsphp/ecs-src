@@ -429,7 +429,7 @@ func (l *lexer) skipTrivia(p int) int {
 			}
 			p += 2 + end + 2
 		case strings.HasPrefix(src[p:], "//") || (src[p] == '#' && !strings.HasPrefix(src[p:], "#[")):
-			for p < len(src) && src[p] != '\n' && !strings.HasPrefix(src[p:], "?>") {
+			for p < len(src) && src[p] != '\n' && src[p] != '\r' && !strings.HasPrefix(src[p:], "?>") {
 				p++
 			}
 		default:
@@ -486,7 +486,7 @@ func (l *lexer) matchOperator() int {
 }
 
 func (l *lexer) lexLineComment(start int) {
-	for l.pos < len(l.src) && l.src[l.pos] != '\n' {
+	for l.pos < len(l.src) && l.src[l.pos] != '\n' && l.src[l.pos] != '\r' {
 		// a ?> ends a line comment in PHP; stop before it
 		if l.hasPrefix("?>") {
 			break
