@@ -43,6 +43,11 @@ type ntdElement struct {
 	property bool
 }
 
+// IsCandidate rules out a file without the trigger: the question_mark syntax only rewrites a union with "null", the union one any "?".
+func (f NullableTypeDeclaration) IsCandidate(s *tokens.Stream) bool {
+	return f.syntax == "union" || s.Index().HasWord("null")
+}
+
 func (f NullableTypeDeclaration) Fix(s *tokens.Stream) bool {
 	union := f.syntax == "union"
 	elements := ntdElements(s)

@@ -60,6 +60,14 @@ type Fixer interface {
 	Fix(s *tokens.Stream) bool
 }
 
+// Candidate is a Fixer that can tell, mostly from the stream's Index, that a
+// file cannot concern it, as PHP-CS-Fixer's isCandidate. The runner calls Fix
+// (and Errors) only when IsCandidate holds, so IsCandidate must never be false
+// for a file the rule would change or report an error on.
+type Candidate interface {
+	IsCandidate(s *tokens.Stream) bool
+}
+
 // ConfigurableFixer is a Fixer that honors ECS rule options (from the dumped
 // config). WithConfig returns a fixer configured for the given options.
 type ConfigurableFixer interface {

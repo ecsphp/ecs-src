@@ -37,6 +37,11 @@ var doctrineGeneratedRegex = regexp.MustCompile(`(?i)^(/\*{2}\s+?)?(\*|//)\s+Thi
 // matches a heredoc/nowdoc opener at end of line, capturing the closing label
 var heredocOpenerRegex = regexp.MustCompile(`<<<[ \t]*['"]?([A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*)['"]?[ \t]*\r?$`)
 
+// IsCandidate rules out a file without the trigger: only comments are fixed.
+func (RemoveUselessDefaultComment) IsCandidate(s *tokens.Stream) bool {
+	return streamHasComment(s)
+}
+
 func (RemoveUselessDefaultComment) Fix(s *tokens.Stream) bool {
 	className := firstClassLikeName(s)
 	changed := false

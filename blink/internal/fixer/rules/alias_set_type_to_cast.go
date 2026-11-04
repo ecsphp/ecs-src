@@ -36,6 +36,11 @@ var setTypeCasts = map[string]string{
 	"string":  "(string)",
 }
 
+// IsCandidate rules out a file without the trigger: only a "settype" call is replaced.
+func (SetTypeToCast) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("settype")
+}
+
 func (SetTypeToCast) Fix(s *tokens.Stream) bool {
 	// indices below assume no cleared placeholders, as after PHP-CS-Fixer's
 	// clearEmptyTokens between fixers

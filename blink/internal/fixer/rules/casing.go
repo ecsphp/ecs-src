@@ -110,6 +110,11 @@ func (LowercaseStaticReference) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/LowercaseStaticReferenceFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only "self", "static" and "parent" are lowercased.
+func (LowercaseStaticReference) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord("self", "static", "parent")
+}
+
 func (LowercaseStaticReference) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {

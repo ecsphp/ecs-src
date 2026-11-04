@@ -26,6 +26,11 @@ func (StringLengthToEmpty) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/StringNotation/StringLengthToEmptyFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only a "strlen" call is replaced.
+func (StringLengthToEmpty) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("strlen")
+}
+
 func (StringLengthToEmpty) Fix(s *tokens.Stream) bool {
 	calls := strlenEmptyFindCalls(s)
 	changed := false

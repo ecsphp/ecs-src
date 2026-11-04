@@ -337,6 +337,11 @@ func ntdRemoveNull(s *tokens.Stream, start, end int, name string) {
 	}
 }
 
+// IsCandidate rules out a file without the trigger: only a parameter defaulting to "null" is fixed.
+func (NullableTypeDeclarationForDefaultNullValue) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("null")
+}
+
 func (f NullableTypeDeclarationForDefaultNullValue) Fix(s *tokens.Stream) bool {
 	changed := false
 	// Right-to-left so an inserted "?" (always left of the current index) never

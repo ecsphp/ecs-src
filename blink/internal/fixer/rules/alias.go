@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -20,6 +22,11 @@ func (NoMixedEchoPrint) Name() string {
 
 func (NoMixedEchoPrint) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Alias/NoMixedEchoPrintFixer.php"
+}
+
+// IsCandidate rules out a file without the trigger: only "print" is replaced.
+func (NoMixedEchoPrint) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("print")
 }
 
 func (NoMixedEchoPrint) Fix(s *tokens.Stream) bool {
@@ -106,6 +113,14 @@ var functionAliases = map[string]string{
 	"imap_scanmailbox":    "imap_listscan",
 	// @pg
 	"pg_exec": "pg_query",
+}
+
+// functionAliasNames are the aliases NoAliasFunctions renames.
+var functionAliasNames = slices.Collect(maps.Keys(functionAliases))
+
+// IsCandidate rules out a file without the trigger: only a call to one of the aliases is renamed.
+func (NoAliasFunctions) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord(functionAliasNames...)
 }
 
 func (NoAliasFunctions) Fix(s *tokens.Stream) bool {

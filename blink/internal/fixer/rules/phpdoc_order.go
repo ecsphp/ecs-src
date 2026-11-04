@@ -66,6 +66,11 @@ func (f PhpdocOrder) configurationOrder() []string {
 	return out
 }
 
+// IsCandidate rules out a file without the trigger: only docblocks are reordered.
+func (PhpdocOrder) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasKind(token.DocComment)
+}
+
 func (f PhpdocOrder) Fix(s *tokens.Stream) bool {
 	order := f.configurationOrder()
 	changed := false

@@ -22,6 +22,12 @@ func (SwitchContinueToBreak) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/SwitchContinueToBreakFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only a "continue" targeting a "switch" is replaced.
+func (SwitchContinueToBreak) IsCandidate(s *tokens.Stream) bool {
+	x := s.Index()
+	return x.HasWord("continue") && x.HasWord("switch")
+}
+
 func (SwitchContinueToBreak) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {

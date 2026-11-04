@@ -24,6 +24,11 @@ func (FopenFlagOrder) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/FopenFlagOrderFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only the mode of an "fopen" call is reordered.
+func (FopenFlagOrder) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("fopen")
+}
+
 func (FopenFlagOrder) Fix(s *tokens.Stream) bool {
 	changed := false
 	index := 0

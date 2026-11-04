@@ -44,6 +44,11 @@ var modernizeStrposReplacements = []struct {
 	{"===", "false", "str_contains", true},
 }
 
+// IsCandidate rules out a file without the trigger: only a "strpos" or "stripos" call is replaced.
+func (ModernizeStrpos) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord("strpos", "stripos")
+}
+
 func (f ModernizeStrpos) Fix(s *tokens.Stream) bool {
 	s.ClearEmptyTokens()
 	changed := false

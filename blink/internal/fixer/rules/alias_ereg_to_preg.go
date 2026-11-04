@@ -32,7 +32,21 @@ var eregFunctions = [][3]string{
 	{"spliti", "preg_split", "i"},
 }
 
+// eregFunctionNames are the functions EregToPreg rewrites.
+var eregFunctionNames = func() []string {
+	names := make([]string, len(eregFunctions))
+	for i, m := range eregFunctions {
+		names[i] = m[0]
+	}
+	return names
+}()
+
 var eregDelimiters = []string{"/", "#", "!"}
+
+// IsCandidate rules out a file without the trigger: only a call to an ereg function is rewritten.
+func (EregToPreg) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord(eregFunctionNames...)
+}
 
 func (EregToPreg) Fix(s *tokens.Stream) bool {
 	changed := false

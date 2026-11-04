@@ -25,6 +25,11 @@ func isFileConstant(s *tokens.Stream, i int) bool {
 	return i >= 0 && s.At(i).Kind == token.Ident && strings.EqualFold(s.At(i).Value, "__FILE__")
 }
 
+// IsCandidate rules out a file without the trigger: only a "dirname" call is replaced.
+func (DirConstant) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("dirname")
+}
+
 func (DirConstant) Fix(s *tokens.Stream) bool {
 	changed := false
 	curr := 0

@@ -25,6 +25,11 @@ func (ImplodeCall) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/FunctionNotation/ImplodeCallFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only an "implode" call is rewritten.
+func (ImplodeCall) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("implode")
+}
+
 func (ImplodeCall) Fix(s *tokens.Stream) bool {
 	// Upstream throws "Must not add empty token to collection" when it moves an
 	// argument holding a token it already cleared, and ECS keeps the file as is.

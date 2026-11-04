@@ -56,6 +56,11 @@ func phpdocLineSpanValue(v any) string {
 	return ""
 }
 
+// IsCandidate rules out a file without the trigger: only docblocks are fixed.
+func (PhpdocLineSpan) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasKind(token.DocComment)
+}
+
 func (f PhpdocLineSpan) Fix(s *tokens.Stream) bool {
 	if !f.configured {
 		return phpdocLineSpanFixDefault(s)

@@ -57,6 +57,11 @@ var noArgConstants = map[string]string{
 	"php_sapi_name": "PHP_SAPI",
 }
 
+// IsCandidate rules out a file without the trigger: only a call to one of the converted functions is replaced.
+func (FunctionToConstant) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord("pi", "phpversion", "php_sapi_name", "get_called_class", "get_class")
+}
+
 func (f FunctionToConstant) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {

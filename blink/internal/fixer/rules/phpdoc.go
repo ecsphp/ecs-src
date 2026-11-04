@@ -12,6 +12,9 @@ import (
 // applyToDocblocks runs fn over each doc comment, replacing it when fn reports a
 // change.
 func applyToDocblocks(s *tokens.Stream, fn func(*docblock) bool) bool {
+	if !s.Index().HasKind(token.DocComment) {
+		return false
+	}
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)

@@ -450,6 +450,11 @@ func (f ListSyntax) WithConfig(config map[string]any) fixer.Fixer {
 	return f
 }
 
+// IsCandidate rules out a file without the trigger: the short syntax only rewrites "list(", the long one any "[".
+func (f ListSyntax) IsCandidate(s *tokens.Stream) bool {
+	return f.Long || s.Index().HasWord("list")
+}
+
 func (f ListSyntax) Fix(s *tokens.Stream) bool {
 	if f.Long {
 		return arrayNotationToLong(s, true)

@@ -20,14 +20,7 @@ var (
 
 // docBlockFixerCandidate mirrors AbstractDocBlockFixer::isCandidate.
 func docBlockFixerCandidate(s *tokens.Stream) bool {
-	hasComment := false
-	for i := 0; i < s.Len(); i++ {
-		if k := s.At(i).Kind; k == token.Comment || k == token.DocComment {
-			hasComment = true
-			break
-		}
-	}
-	if !hasComment {
+	if !streamHasComment(s) {
 		return false
 	}
 	for i := 0; i < s.Len(); i++ {
@@ -145,6 +138,11 @@ func (TypeToVarTag) Name() string {
 
 func (TypeToVarTag) SourceURL() string {
 	return "https://github.com/ecsphp/ecs-src/blob/main/packages/coding-standard/src/Fixer/Commenting/TypeToVarTagFixer.php"
+}
+
+// IsCandidate rules out a file without the trigger: only comments are fixed.
+func (TypeToVarTag) IsCandidate(s *tokens.Stream) bool {
+	return streamHasComment(s)
 }
 
 func (TypeToVarTag) Fix(s *tokens.Stream) bool {

@@ -52,6 +52,11 @@ func (SwitchCaseSemicolonToColon) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/SwitchCaseSemicolonToColonFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only the label of a "case" or "default" is fixed.
+func (SwitchCaseSemicolonToColon) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord("case", "default")
+}
+
 func (SwitchCaseSemicolonToColon) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
@@ -81,6 +86,11 @@ func (SwitchCaseSpace) Name() string {
 
 func (SwitchCaseSpace) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/SwitchCaseSpaceFixer.php"
+}
+
+// IsCandidate rules out a file without the trigger: only the labels of a "switch" are fixed.
+func (SwitchCaseSpace) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("switch")
 }
 
 func (SwitchCaseSpace) Fix(s *tokens.Stream) bool {

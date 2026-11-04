@@ -56,6 +56,9 @@ func (AddMissingParamName) Fix(s *tokens.Stream) bool {
 // ampIsCandidate mirrors AbstractDocBlockFixer::isCandidate: a file holding a
 // "callable" token whose third next token is ")" is skipped as a whole.
 func ampIsCandidate(s *tokens.Stream) bool {
+	if !streamHasComment(s) {
+		return false
+	}
 	hasComment, hasFuncOrVar := false, false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)

@@ -152,6 +152,12 @@ var propertyModifiers = map[string]bool{
 	"abstract": true, "readonly": true,
 }
 
+// IsCandidate rules out a file without the trigger: only a "null" default of a class or trait property is removed.
+func (NoNullPropertyInitialization) IsCandidate(s *tokens.Stream) bool {
+	x := s.Index()
+	return x.HasWord("null") && x.HasAnyWord("class", "trait")
+}
+
 func (NoNullPropertyInitialization) Fix(s *tokens.Stream) bool {
 	var remove []int
 	for i := 0; i < s.Len(); i++ {

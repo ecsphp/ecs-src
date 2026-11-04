@@ -68,6 +68,11 @@ func (NoUnsetCast) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/CastNotation/NoUnsetCastFixer.php"
 }
 
+// IsCandidate rules out a file without the trigger: only an "(unset)" cast is replaced.
+func (NoUnsetCast) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasWord("unset")
+}
+
 func (NoUnsetCast) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {

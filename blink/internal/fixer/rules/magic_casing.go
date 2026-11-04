@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -19,6 +21,9 @@ var magicConstants = map[string]string{
 	"__compiler_halt_offset__": "__COMPILER_HALT_OFFSET__",
 }
 
+// magicConstantNames are the constants MagicConstantCasing recases.
+var magicConstantNames = slices.Collect(maps.Keys(magicConstants))
+
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/MagicConstantCasingFixer.php
 //
 // MagicConstantCasing uppercases magic constants (__line__ -> __LINE__).
@@ -30,6 +35,11 @@ func (MagicConstantCasing) Name() string {
 
 func (MagicConstantCasing) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/MagicConstantCasingFixer.php"
+}
+
+// IsCandidate rules out a file without the trigger: only a magic constant is recased.
+func (MagicConstantCasing) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord(magicConstantNames...)
 }
 
 func (MagicConstantCasing) Fix(s *tokens.Stream) bool {
@@ -67,6 +77,9 @@ var magicMethods = map[string]string{
 	"__debuginfo":   "__debugInfo",
 }
 
+// magicMethodNames are the methods MagicMethodCasing recases.
+var magicMethodNames = slices.Collect(maps.Keys(magicMethods))
+
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/MagicMethodCasingFixer.php
 //
 // MagicMethodCasing fixes the casing of magic methods (__CONSTRUCT ->
@@ -79,6 +92,11 @@ func (MagicMethodCasing) Name() string {
 
 func (MagicMethodCasing) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/MagicMethodCasingFixer.php"
+}
+
+// IsCandidate rules out a file without the trigger: only a magic method name is recased.
+func (MagicMethodCasing) IsCandidate(s *tokens.Stream) bool {
+	return s.Index().HasAnyWord(magicMethodNames...)
 }
 
 func (MagicMethodCasing) Fix(s *tokens.Stream) bool {
