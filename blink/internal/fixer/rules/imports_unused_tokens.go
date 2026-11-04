@@ -26,6 +26,9 @@ type clearableTokens struct {
 	groupBrace []bool // CT::T_GROUP_IMPORT_BRACE_OPEN / _CLOSE
 
 	hasAttribute, hasEnum bool
+
+	lowered   []string // lowerValue's cache
+	isLowered []bool
 }
 
 func newClearableTokens(s *tokens.Stream) *clearableTokens {

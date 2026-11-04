@@ -48,11 +48,14 @@ func (NoUnusedImports) Fix(s *tokens.Stream) bool {
 	changed := false
 	for _, ns := range c.namespaceDeclarations() {
 		var current []importDecl
-		ignored := map[int]int{}
+		var ignored []useSpan
 		for _, d := range decls {
 			if d.start >= ns.scopeStart && d.end <= ns.scopeEnd {
 				current = append(current, d)
-				ignored[d.start] = d.end
+				// decls are in token order; a multi use repeats its statement
+				if len(ignored) == 0 || ignored[len(ignored)-1].start != d.start {
+					ignored = append(ignored, useSpan{d.start, d.end})
+				}
 			}
 		}
 		for _, d := range current {
@@ -105,7 +108,8 @@ func (c *clearableTokens) parseDeclarations(start, end int) []importDecl {
 	} else if c.keyword(t, "const") {
 		kind = "const"
 	}
-	multiAt := c.nextTokenOf(start, func(j int) bool { return c.punct(j, ",") || c.groupOpen(j) })
+	// stop at the statement's end: only a "," or "{" before it counts
+	multiAt := c.nextTokenOf(start, func(j int) bool { return j >= end || c.punct(j, ",") || c.groupOpen(j) })
 	multi := multiAt >= 0 && multiAt < end
 	var out []importDecl
 	add := func(full, short string, aliased, inMulti bool, chunkStart, chunkEnd int) {
@@ -224,11 +228,17 @@ func (c *clearableTokens) namespaceDeclarations() []namespaceDecl {
 	return out
 }
 
-// isImportUsed is NoUnusedImportsFixer::isImportUsed(). ignored maps the start
-// of each use statement of the namespace to its end.
-func (c *clearableTokens) isImportUsed(ns namespaceDecl, d importDecl, ignored map[int]int) bool {
+// useSpan is a use statement's first and last token.
+type useSpan struct{ start, end int }
+
+// isImportUsed is NoUnusedImportsFixer::isImportUsed(). ignored holds the use
+// statements of the namespace, in token order.
+func (c *clearableTokens) isImportUsed(ns namespaceDecl, d importDecl, ignored []useSpan) bool {
 	inAttribute := false
 	shortLower := strings.ToLower(d.short)
+	// i only moves forward, so a cursor finds the next use statement without a
+	// lookup per token
+	next := 0
 	for i := ns.scopeStart; i <= ns.scopeEnd; i++ {
 		if c.kind(i, token.AttributeStart) {
 			inAttribute = true
@@ -238,8 +248,11 @@ func (c *clearableTokens) isImportUsed(ns namespaceDecl, d importDecl, ignored m
 			inAttribute = false
 			continue
 		}
-		if end, ok := ignored[i]; ok {
-			i = end
+		for next < len(ignored) && ignored[next].start < i {
+			next++
+		}
+		if next < len(ignored) && ignored[next].start == i {
+			i = ignored[next].end
 			continue
 		}
 		// compare the name first: telling a T_STRING apart reads its neighbours
@@ -282,7 +295,7 @@ func (c *clearableTokens) isImportUsed(ns namespaceDecl, d importDecl, ignored m
 		if d.kind == "class" && c.kind(i, token.Keyword) && strings.EqualFold(c.toks[i].Value, d.short) && c.keywordIsClassRef(i) {
 			return true
 		}
-		if c.isComment(i) && commentReferences(c.toks[i].Value, shortLower) {
+		if c.isComment(i) && commentReferences(c.lowerValue(i), shortLower) {
 			return true
 		}
 	}
@@ -443,10 +456,22 @@ func (c *clearableTokens) scanUntilNewLine(i, dir int) (int, bool) {
 	return -1, has
 }
 
-// commentReferences reports whether short appears in v as a whole word, not
-// preceded by an identifier char, "$" or "\".
-func commentReferences(v, short string) bool {
-	lv := strings.ToLower(v)
+// lowerValue returns the lowercased value of the token at i, computed once per
+// token: isImportUsed reads every comment again for each import.
+func (c *clearableTokens) lowerValue(i int) string {
+	if c.lowered == nil {
+		c.lowered = make([]string, len(c.toks))
+		c.isLowered = make([]bool, len(c.toks))
+	}
+	if !c.isLowered[i] {
+		c.lowered[i], c.isLowered[i] = strings.ToLower(c.toks[i].Value), true
+	}
+	return c.lowered[i]
+}
+
+// commentReferences reports whether short appears in lv as a whole word, not
+// preceded by an identifier char, "$" or "\". Both are lowercased.
+func commentReferences(lv, short string) bool {
 	from := 0
 	for {
 		idx := strings.Index(lv[from:], short)
