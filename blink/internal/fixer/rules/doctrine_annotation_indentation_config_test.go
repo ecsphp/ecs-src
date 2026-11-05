@@ -1,0 +1,44 @@
+package rules
+
+import "testing"
+
+// The expected output of every case and configuration comes from the PHP engine
+// (DoctrineAnnotationIndentationFixer alone, v3.95.28).
+func TestDoctrineAnnotationIndentationConfigs(t *testing.T) {
+	t.Parallel()
+	fixers := []fixerRule{
+		DoctrineAnnotationIndentation{},
+		DoctrineAnnotationIndentation{}.WithConfig(map[string]any{"indent_mixed_lines": true}).(fixerRule),
+		DoctrineAnnotationIndentation{}.WithConfig(map[string]any{"indent_mixed_lines": false}).(fixerRule),
+		DoctrineAnnotationIndentation{}.WithConfig(map[string]any{"ignored_tags": []any{"Foo"}}).(fixerRule),
+		DoctrineAnnotationIndentation{}.WithConfig(map[string]any{"ignored_tags": []any{"foo"}, "indent_mixed_lines": true}).(fixerRule),
+		DoctrineAnnotationIndentation{}.WithConfig(map[string]any{"ignored_tags": []any{}}).(fixerRule),
+	}
+	cases := []struct {
+		src  string
+		want [6]string
+	}{
+		{"<?php\n/**\n *  @Foo(\n *   foo=\"foo\"\n *  )\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @Foo(\n *     foo=\"foo\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n *  @Foo(\n *   foo=\"foo\"\n *  )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\"\n * )\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @Foo(\n * foo=\"foo\",\n * bar=\"bar\")\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @Foo(\n *     foo=\"foo\",\n * bar=\"bar\")\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\",\n *     bar=\"bar\")\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\",\n * bar=\"bar\")\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n * foo=\"foo\",\n * bar=\"bar\")\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\",\n *     bar=\"bar\")\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\",\n * bar=\"bar\")\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @Foo({\n * @Bar(\n * a=1,\n * b=2)})\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @Foo({\n *     @Bar(\n *         a=1,\n *     b=2)})\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo({\n *     @Bar(\n *         a=1,\n *         b=2)})\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo({\n *     @Bar(\n *         a=1,\n *     b=2)})\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo({\n * @Bar(\n *     a=1,\n * b=2)})\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo({\n *     @Bar(\n *         a=1,\n *         b=2)})\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo({\n *     @Bar(\n *         a=1,\n *     b=2)})\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @Foo(\n *   a={\n *     \"x\",\n *     \"y\"},\n *   b=@Bar(\n *     c=1))\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @Foo(\n *     a={\n *         \"x\",\n *     \"y\"},\n *     b=@Bar(\n *     c=1))\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a={\n *         \"x\",\n *         \"y\"},\n *     b=@Bar(\n *         c=1))\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a={\n *         \"x\",\n *     \"y\"},\n *     b=@Bar(\n *     c=1))\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *   a={\n *     \"x\",\n *     \"y\"},\n *   b=@Bar(\n *     c=1))\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a={\n *         \"x\",\n *         \"y\"},\n *     b=@Bar(\n *         c=1))\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a={\n *         \"x\",\n *     \"y\"},\n *     b=@Bar(\n *     c=1))\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @Foo(foo=\"foo\",\n * bar=\"bar\"\n * )\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @Foo(foo=\"foo\",\n *     bar=\"bar\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(foo=\"foo\",\n *     bar=\"bar\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(foo=\"foo\",\n *     bar=\"bar\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(foo=\"foo\",\n * bar=\"bar\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(foo=\"foo\",\n *     bar=\"bar\"\n * )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(foo=\"foo\",\n *     bar=\"bar\"\n * )\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @Foo(\n * foo=\"foo\") @Bar(\n * baz=1)\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @Foo(\n * foo=\"foo\") @Bar(\n * baz=1)\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\") @Bar(\n *     baz=1)\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n * foo=\"foo\") @Bar(\n * baz=1)\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n * foo=\"foo\") @Bar(\n * baz=1)\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     foo=\"foo\") @Bar(\n *     baz=1)\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n * foo=\"foo\") @Bar(\n * baz=1)\n */\nclass Bar {}\n"}},
+		{"<?php\nclass A\n{\n    /**\n     * @ORM\\Column(\n     * type=\"string\",\n     * length=255)\n     */\n    private $name;\n\n    /**\n     *   @Route(\n     *  \"/x\",\n     *  name=\"x\"\n     *   )\n     */\n    public function f() {}\n}\n", [6]string{"<?php\nclass A\n{\n    /**\n     * @ORM\\Column(\n     *     type=\"string\",\n     * length=255)\n     */\n    private $name;\n\n    /**\n     * @Route(\n     *     \"/x\",\n     *     name=\"x\"\n     * )\n     */\n    public function f() {}\n}\n", "<?php\nclass A\n{\n    /**\n     * @ORM\\Column(\n     *     type=\"string\",\n     *     length=255)\n     */\n    private $name;\n\n    /**\n     * @Route(\n     *     \"/x\",\n     *     name=\"x\"\n     * )\n     */\n    public function f() {}\n}\n", "<?php\nclass A\n{\n    /**\n     * @ORM\\Column(\n     *     type=\"string\",\n     * length=255)\n     */\n    private $name;\n\n    /**\n     * @Route(\n     *     \"/x\",\n     *     name=\"x\"\n     * )\n     */\n    public function f() {}\n}\n", "<?php\nclass A\n{\n    /**\n     * @ORM\\Column(\n     *     type=\"string\",\n     * length=255)\n     */\n    private $name;\n\n    /**\n     * @Route(\n     *     \"/x\",\n     *     name=\"x\"\n     * )\n     */\n    public function f() {}\n}\n", "<?php\nclass A\n{\n    /**\n     * @ORM\\Column(\n     *     type=\"string\",\n     *     length=255)\n     */\n    private $name;\n\n    /**\n     * @Route(\n     *     \"/x\",\n     *     name=\"x\"\n     * )\n     */\n    public function f() {}\n}\n", "<?php\nclass A\n{\n    /**\n     * @ORM\\Column(\n     *     type=\"string\",\n     * length=255)\n     */\n    private $name;\n\n    /**\n     * @Route(\n     *     \"/x\",\n     *     name=\"x\"\n     * )\n     */\n    public function f() {}\n}\n"}},
+		{"<?php\n/**\n * @param string $x\n * @see foo(\n * bar)\n * @Foo(\n * a)\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @param string $x\n * @see foo(\n * bar)\n * @Foo(\n * a)\n */\nclass Bar {}\n", "<?php\n/**\n * @param string $x\n * @see foo(\n * bar)\n * @Foo(\n *     a)\n */\nclass Bar {}\n", "<?php\n/**\n * @param string $x\n * @see foo(\n * bar)\n * @Foo(\n * a)\n */\nclass Bar {}\n", "<?php\n/**\n * @param string $x\n * @see foo(\n * bar)\n * @Foo(\n * a)\n */\nclass Bar {}\n", "<?php\n/**\n * @param string $x\n * @see foo(\n * bar)\n * @Foo(\n *     a)\n */\nclass Bar {}\n", "<?php\n/**\n * @param string $x\n * @see foo(\n * bar)\n * @Foo(\n * a)\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @todo(\n * a)\n * @Bar(\n * a)\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @todo(\n * a)\n * @Bar(\n * a)\n */\nclass Bar {}\n", "<?php\n/**\n * @todo(\n * a)\n * @Bar(\n *     a)\n */\nclass Bar {}\n", "<?php\n/**\n * @todo(\n * a)\n * @Bar(\n * a)\n */\nclass Bar {}\n", "<?php\n/**\n * @todo(\n * a)\n * @Bar(\n * a)\n */\nclass Bar {}\n", "<?php\n/**\n * @todo(\n *     a)\n * @Bar(\n *     a)\n */\nclass Bar {}\n", "<?php\n/**\n * @todo(\n * a)\n * @Bar(\n * a)\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @Foo(\n * a=1,\n * ) )\n */\nclass Bar {}\n", [6]string{"<?php\n/**\n * @Foo(\n *     a=1,\n * ) )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a=1,\n * ) )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a=1,\n * ) )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n * a=1,\n * ) )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a=1,\n * ) )\n */\nclass Bar {}\n", "<?php\n/**\n * @Foo(\n *     a=1,\n * ) )\n */\nclass Bar {}\n"}},
+		{"<?php\n/**\n * @Foo(\n * a=1)\n */\nfunction f() {}\n", [6]string{"<?php\n/**\n * @Foo(\n * a=1)\n */\nfunction f() {}\n", "<?php\n/**\n * @Foo(\n * a=1)\n */\nfunction f() {}\n", "<?php\n/**\n * @Foo(\n * a=1)\n */\nfunction f() {}\n", "<?php\n/**\n * @Foo(\n * a=1)\n */\nfunction f() {}\n", "<?php\n/**\n * @Foo(\n * a=1)\n */\nfunction f() {}\n", "<?php\n/**\n * @Foo(\n * a=1)\n */\nfunction f() {}\n"}},
+	}
+	for _, c := range cases {
+		for i, f := range fixers {
+			got, _ := apply(t, f, c.src)
+			if got != c.want[i] {
+				t.Errorf("config %d, %q:\n got=%q\nwant=%q", i, c.src, got, c.want[i])
+			}
+			if again, changed := apply(t, f, got); changed || again != got {
+				t.Errorf("config %d, %q: not idempotent: %q", i, c.src, again)
+			}
+		}
+	}
+}
