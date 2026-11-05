@@ -227,6 +227,7 @@ func ConstructFixers() []fixer.Fixer {
 		NoMultipleStatementsPerLine{},
 		MethodArgumentSpace{},
 		StandaloneLinePromotedProperty{},
+		StandaloneLineConstructorParam{},
 		StandaloneLinePlainConstructorParam{},
 		StandaloneLineRequiredParam{},
 		StandaloneLineSymfonyAttributeParam{},

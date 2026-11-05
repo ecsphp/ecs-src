@@ -252,6 +252,7 @@ var fixerPriority = map[string]int{
 	"SingleTraitInsertPerStatementFixer":              36,
 	"SpaceAfterSemicolonFixer":                        -1,
 	"SpacesInsideParenthesesFixer":                    3,
+	"StandaloneLineConstructorParamFixer":             40,
 	"StandaloneLinePromotedPropertyFixer":             40,
 	"StandaloneLineSymfonyAttributeParamFixer":        40,
 	"StandardizeIncrementFixer":                       16,
