@@ -47,7 +47,7 @@ func TestGenOpsIncIncrementStyle(t *testing.T) {
 	}{
 		{"<?php $i++;", "<?php ++$i;", true},
 		{"<?php $i--;", "<?php --$i;", true},
-		{"<?php $i ++;", "<?php ++$i;", true},
+		{"<?php $i ++;", "<?php ++$i ;", true},
 		{"<?php { $i++; }", "<?php { ++$i; }", true},
 		{"<?php $a = 1;\n$i++;", "<?php $a = 1;\n++$i;", true},
 		// already pre-increment: no-op
@@ -56,9 +56,9 @@ func TestGenOpsIncIncrementStyle(t *testing.T) {
 		{"<?php $a = $i++;", "<?php $a = $i++;", false},
 		{"<?php echo $i++;", "<?php echo $i++;", false},
 		{"<?php foo($i++);", "<?php foo($i++);", false},
-		// member/offset operand out of scope
-		{"<?php $o->x++;", "<?php $o->x++;", false},
-		{"<?php $arr[0]++;", "<?php $arr[0]++;", false},
+		// member/offset operands move too
+		{"<?php $o->x++;", "<?php ++$o->x;", true},
+		{"<?php $arr[0]++;", "<?php ++$arr[0];", true},
 	}
 	for _, c := range cases {
 		got, changed := apply(t, IncrementStyle{}, c.src)
