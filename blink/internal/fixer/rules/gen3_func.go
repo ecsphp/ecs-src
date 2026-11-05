@@ -140,6 +140,22 @@ func fnRemoveTrailingCommaSingleLine(s *tokens.Stream, kw, open int) bool {
 	return true
 }
 
+// fnFixParenInnerEdge is fixParenthesisInnerEdge: it clears a single-line whitespace right
+// inside the pair at open.
+func fnFixParenInnerEdge(s *tokens.Stream, open int) bool {
+	changed := false
+	closeParen := s.MatchForward(open)
+	if closeParen > open+1 && s.At(closeParen-1).Kind == token.Whitespace && !hasNewline(s.At(closeParen-1).Value) {
+		s.RemoveAt(closeParen - 1)
+		changed = true
+	}
+	if open+1 < s.Len() && s.At(open+1).Kind == token.Whitespace && !hasNewline(s.At(open+1).Value) {
+		s.RemoveAt(open + 1)
+		changed = true
+	}
+	return changed
+}
+
 func (FunctionDeclaration) Name() string {
 	return `PhpCsFixer\Fixer\FunctionNotation\FunctionDeclarationFixer`
 }
@@ -164,6 +180,9 @@ func (f FunctionDeclaration) Fix(s *tokens.Stream) bool {
 			// arrow function: spacing after "fn" (closure_fn_spacing). The "("
 			// follows directly, or after a by-reference "&" ("fn &() => ...").
 			if fnIsArrowFn(s, i) {
+				if open := fnArrowParamOpen(s, i); open >= 0 && fnFixParenInnerEdge(s, open) {
+					changed = true
+				}
 				if f.removeTrailingCommaSingleLine {
 					if open := fnArrowParamOpen(s, i); open >= 0 && fnRemoveTrailingCommaSingleLine(s, i, open) {
 						changed = true
@@ -198,6 +217,10 @@ func (f FunctionDeclaration) fixFunctionDeclaration(s *tokens.Stream, fi int) bo
 		}
 	}
 
+	if fnFixParenInnerEdge(s, startParen) {
+		changed = true
+	}
+
 	// classify: optional leading "&", optional name directly before "("
 	a := nextSignificantIndex(s, fi)
 	ampIndex := -1
@@ -225,6 +248,9 @@ func (f FunctionDeclaration) fixFunctionDeclaration(s *tokens.Stream, fi int) bo
 						fnRemoveTrailingCommaSingleLine(s, fi, open) {
 						changed = true
 					}
+				}
+				if open := nextSignificantIndex(s, u); open >= 0 && s.At(open).Value == "(" && fnFixParenInnerEdge(s, open) {
+					changed = true
 				}
 				if fnEnsureSingleSpaceAfter(s, u) {
 					changed = true
