@@ -2,19 +2,32 @@ package rules
 
 import (
 	"slices"
-	"sort"
 	"strings"
 
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/OrderedTraitsFixer.php
 //
-// OrderedTraits sorts trait `use` statements alphabetically (case-insensitive by
-// default), and sorts multiple traits within one `use A, B;` statement. Only the
-// name portions move; surrounding whitespace and punctuation stay in place.
-type OrderedTraits struct{}
+// OrderedTraits sorts trait `use` statements alphabetically, and sorts multiple
+// traits within one `use A, B;` statement. Only the name portions move;
+// surrounding whitespace and punctuation stay in place. A statement sorts by
+// all its names joined (`use A, Z;` is "AZ"), as upstream's toTraitName does.
+// Names compare with PHP's strcasecmp (ASCII case folding) by default, or byte
+// by byte with `case_sensitive`.
+type OrderedTraits struct {
+	CaseSensitive bool // case_sensitive
+}
+
+// WithConfig reads `case_sensitive`.
+func (f OrderedTraits) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["case_sensitive"].(bool); ok {
+		f.CaseSensitive = v
+	}
+	return f
+}
 
 func (OrderedTraits) Name() string {
 	return `PhpCsFixer\Fixer\ClassNotation\OrderedTraitsFixer`
@@ -24,7 +37,7 @@ func (OrderedTraits) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/OrderedTraitsFixer.php"
 }
 
-func (OrderedTraits) Fix(s *tokens.Stream) bool {
+func (f OrderedTraits) Fix(s *tokens.Stream) bool {
 	// gather all trait-use statements as (start, end) ranges
 	type stmt struct {
 		start, end int
@@ -58,7 +71,13 @@ func (OrderedTraits) Fix(s *tokens.Stream) bool {
 				break
 			}
 		}
-		cur = append(cur, stmt{start: i, end: end})
+		// the statement takes the comments before it along, as upstream starts
+		// it at the first non-whitespace token after the previous statement
+		start := sigPrev(s, i) + 1
+		for start < i && s.At(start).Kind == token.Whitespace {
+			start++
+		}
+		cur = append(cur, stmt{start: start, end: end})
 		i = end + 1
 	}
 	if len(cur) > 0 {
@@ -76,17 +95,17 @@ func (OrderedTraits) Fix(s *tokens.Stream) bool {
 			for j := st.start; j <= st.end; j++ {
 				toks = append(toks, s.At(j))
 			}
-			toks = sortTraitsInStatement(toks)
+			toks = sortTraitsInStatement(toks, f.CaseSensitive)
 			stmtToks[k] = toks
 			names[k] = traitName(toks)
 		}
-		// sort statement slices by trait name (case-insensitive, stable)
+		// sort statement slices by trait name (stable)
 		order := make([]int, len(g))
 		for k := range order {
 			order[k] = k
 		}
-		sort.SliceStable(order, func(a, b int) bool {
-			return strings.ToLower(names[order[a]]) < strings.ToLower(names[order[b]])
+		slices.SortStableFunc(order, func(a, b int) int {
+			return phpNameCompare(names[a], names[b], f.CaseSensitive)
 		})
 		// assign sorted slices to original positions; detect change
 		reordered := false
@@ -190,12 +209,12 @@ func braceIsClassy(s *tokens.Stream, brace int) bool {
 	return false
 }
 
-// traitName returns the first trait's fully-qualified name with the leading "\"
-// trimmed, matching the fixer's toTraitName sort key.
+// traitName returns the statement's names concatenated (commas dropped) with
+// the leading "\" trimmed, matching the fixer's toTraitName sort key.
 func traitName(toks []token.Token) string {
 	var b strings.Builder
 	for _, t := range toks {
-		if t.Kind == token.Punct && (t.Value == ";" || t.Value == "{" || t.Value == ",") {
+		if t.Kind == token.Punct && (t.Value == ";" || t.Value == "{") {
 			break
 		}
 		if t.Kind == token.Ident || (t.Kind == token.Punct && t.Value == `\`) {
@@ -207,7 +226,7 @@ func traitName(toks []token.Token) string {
 
 // sortTraitsInStatement sorts multiple traits within a single "use A, B;"
 // statement, swapping only the name token runs and keeping everything else.
-func sortTraitsInStatement(toks []token.Token) []token.Token {
+func sortTraitsInStatement(toks []token.Token, caseSensitive bool) []token.Token {
 	// find name runs (T_STRING / "\") separated by "," ; stop at ";" or "{"
 	type run struct{ start, end int }
 	var runs []run
@@ -245,8 +264,8 @@ func sortTraitsInStatement(toks []token.Token) []token.Token {
 	for k := range order {
 		order[k] = k
 	}
-	sort.SliceStable(order, func(a, b int) bool {
-		return strings.ToLower(keys[order[a]]) < strings.ToLower(keys[order[b]])
+	slices.SortStableFunc(order, func(a, b int) int {
+		return phpNameCompare(keys[a], keys[b], caseSensitive)
 	})
 	same := true
 	for k := range order {
