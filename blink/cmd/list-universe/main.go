@@ -1,8 +1,8 @@
 // Command list-universe prints the full set of fixers blink is measured
 // against, one FQCN per line. It is the denominator for the README parity
 // counter: every PHP-CS-Fixer fixer, every Symplify coding-standard fixer, and
-// the PHP_CodeSniffer sniffs ECS references from its sets. blink is a subset of
-// this universe, so coverage never exceeds 100%.
+// the PHP_CodeSniffer sniffs ECS references from its sets or blink implements.
+// blink is a subset of this universe, so coverage never exceeds 100%.
 //
 // The fixer lists come from the committed GitHub source-tree cache
 // (cmd/check-sources/sources_cache.json); the sniff list is scraped from the
@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/fixer/rules"
 )
 
 func main() {
@@ -49,6 +50,12 @@ func main() {
 	for dir := range strings.SplitSeq(*setsFlag, ",") {
 		for fqcn := range sniffsIn(strings.TrimSpace(dir)) {
 			universe[fqcn] = true
+		}
+	}
+	// ECS runs any sniff, so one blink implements counts even if no set uses it
+	for _, f := range rules.All() {
+		if strings.HasPrefix(f.Name(), `PHP_CodeSniffer\`) {
+			universe[f.Name()] = true
 		}
 	}
 
@@ -85,6 +92,10 @@ func fixerFQCN(path, prefix string) string {
 	}
 	class := filepath.Base(path)
 	if strings.HasPrefix(class, "Abstract") {
+		return ""
+	}
+	// PHP-CS-Fixer's releases leave out src/**/Internal/ (dev tools)
+	if strings.HasPrefix(path, "Internal/") {
 		return ""
 	}
 	rel := strings.TrimSuffix(path, ".php")

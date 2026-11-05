@@ -1,4 +1,5 @@
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\LanguageConstructSpacingSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\GlobalKeywordSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\SuperfluousWhitespaceSniff
 PhpCsFixer\Fixer\Alias\ArrayPushFixer
 PhpCsFixer\Fixer\Alias\BacktickToShellExecFixer
@@ -145,7 +146,6 @@ PhpCsFixer\Fixer\Import\NoUnusedImportsFixer
 PhpCsFixer\Fixer\Import\OrderedImportsFixer
 PhpCsFixer\Fixer\Import\SingleImportPerStatementFixer
 PhpCsFixer\Fixer\Import\SingleLineAfterImportsFixer
-PhpCsFixer\Fixer\Internal\ConfigurableFixerTemplateFixer
 PhpCsFixer\Fixer\LanguageConstruct\ClassKeywordFixer
 PhpCsFixer\Fixer\LanguageConstruct\ClassKeywordRemoveFixer
 PhpCsFixer\Fixer\LanguageConstruct\CombineConsecutiveIssetsFixer
