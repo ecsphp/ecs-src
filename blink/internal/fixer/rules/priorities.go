@@ -133,6 +133,7 @@ var fixerPriority = map[string]int{
 	"FopenFlagsFixer":                                 0,
 	"NoUselessPrintfFixer":                            10,
 	"DateTimeCreateFromFormatCallFixer":               0,
+	"DateTimeImmutableFixer":                          0,
 	"SingleLineThrowFixer":                            36,
 	"UseArrowFunctionsFixer":                          32,
 	"LineEndingFixer":                                 0,

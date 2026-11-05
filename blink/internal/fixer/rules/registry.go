@@ -131,6 +131,7 @@ func CommonFixers() []fixer.Fixer {
 		NoUselessSprintf{},
 		NoUselessPrintf{},
 		DateTimeCreateFromFormatCall{},
+		DateTimeImmutable{},
 		ModernizeTypesCasting{},
 		FopenFlagOrder{},
 		FopenFlags{},
