@@ -15,7 +15,6 @@ return RectorConfig::configure()
         codingStyle: true,
         typeDeclarations: true,
         privatization: true,
-        naming: true,
         earlyReturn: true
     )
     ->withPaths([__DIR__ . '/bin', __DIR__ . '/config', __DIR__ . '/packages', __DIR__ . '/src', __DIR__ . '/tests'])
