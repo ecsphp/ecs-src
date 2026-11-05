@@ -12,6 +12,8 @@ func TestFixerFQCN(t *testing.T) {
 		{"Basic/AbstractFixer.php", `PhpCsFixer\Fixer\`, ""},
 		{"IncrementOperatorFixer.php", `PhpCsFixer\Fixer\`, ""},
 		{"Alias/ArrayPushSniff.php", `PhpCsFixer\Fixer\`, ""},
+		{"Internal/ConfigurableFixerTemplateFixer.php", `PhpCsFixer\Fixer\`, ""},
+		{"ClassNotation/FinalInternalClassFixer.php", `PhpCsFixer\Fixer\`, `PhpCsFixer\Fixer\ClassNotation\FinalInternalClassFixer`},
 	}
 	for _, c := range cases {
 		if got := fixerFQCN(c.path, c.prefix); got != c.want {

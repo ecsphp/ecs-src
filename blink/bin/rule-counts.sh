@@ -8,7 +8,7 @@
 #
 # Sources:
 #   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers plus the
-#              PHP_CodeSniffer sniffs ECS references from its sets
+#              PHP_CodeSniffer sniffs ECS references from its sets or blink implements
 #   blink    - `blink list-checkers`
 set -euo pipefail
 
@@ -40,7 +40,7 @@ block=$(cat <<EOF
 $START
 | tool | rules | coverage |
 |---|---:|---:|
-| fixer universe (PHP-CS-Fixer + Symplify + in-set sniffs) | $ecs | 100% |
+| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | $ecs | 100% |
 | blink | $go_count | ${go_pct}% |
 $END
 EOF
