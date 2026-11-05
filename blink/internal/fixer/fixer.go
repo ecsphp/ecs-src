@@ -26,6 +26,7 @@ const PhpCodeSnifferSourceBase = "https://github.com/PHPCSStandards/PHP_CodeSnif
 // ecsSrcOnlyFixers are Symplify fixers sourced from ecsphp/ecs-src rather than
 // the split symplify/coding-standard repository.
 var ecsSrcOnlyFixers = map[string]bool{
+	`Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer`:                    true,
 	`Symplify\CodingStandard\Fixer\Spacing\StandaloneLineRequiredParamFixer`:              true,
 	`Symplify\CodingStandard\Fixer\Spacing\StandaloneLinePlainConstructorParamFixer`:      true,
 	`Symplify\CodingStandard\Fixer\Spacing\StandaloneLineSymfonyAttributeParamFixer`:      true,

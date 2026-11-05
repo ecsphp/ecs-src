@@ -313,6 +313,7 @@ func StructuralFixers() []fixer.Fixer {
 		ArrayOpenerAndCloserNewline{},
 		NoBlankLinesAfterClassOpening{},
 		StatementIndentation{},
+		MethodChainingNewline{},
 		MethodChainingIndentation{},
 		ArrayListItemNewline{},
 		StandaloneLineInMultilineArray{},
