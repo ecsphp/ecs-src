@@ -5,16 +5,22 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Alias/NoMixedEchoPrintFixer.php
 //
-// NoMixedEchoPrint rewrites the "print" language construct to "echo" when it is
-// used as a statement (the default "use: echo"). Uses of print as an expression
-// ("$x = print 'y'") are left alone.
-type NoMixedEchoPrint struct{}
+// NoMixedEchoPrint writes output with one language construct. With the default
+// `use: echo`, "print" becomes "echo" when it is used as a statement (after ;
+// { } ) the open tag or "else"); print as an expression ("$x = print 'y'") is
+// left alone. With `use: print`, "echo" becomes "print" when it has a single
+// argument: no comma up to its ";" or close tag, outside parentheses and array
+// literals. "<?=" is never touched.
+type NoMixedEchoPrint struct {
+	Print bool // use: print (default echo)
+}
 
 func (NoMixedEchoPrint) Name() string {
 	return `PhpCsFixer\Fixer\Alias\NoMixedEchoPrintFixer`
@@ -24,33 +30,75 @@ func (NoMixedEchoPrint) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Alias/NoMixedEchoPrintFixer.php"
 }
 
-// IsCandidate rules out a file without the trigger: only "print" is replaced.
-func (NoMixedEchoPrint) IsCandidate(s *tokens.Stream) bool {
+// WithConfig reads `use` (`echo` or `print`).
+func (f NoMixedEchoPrint) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["use"].(string); ok {
+		f.Print = v == "print"
+	}
+	return f
+}
+
+// IsCandidate rules out a file without the construct to replace.
+func (f NoMixedEchoPrint) IsCandidate(s *tokens.Stream) bool {
+	if f.Print {
+		return s.Index().HasWord("echo")
+	}
 	return s.Index().HasWord("print")
 }
 
-func (NoMixedEchoPrint) Fix(s *tokens.Stream) bool {
+func (f NoMixedEchoPrint) Fix(s *tokens.Stream) bool {
+	from, to := "print", "echo"
+	if f.Print {
+		from, to = "echo", "print"
+	}
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Keyword || strings.ToLower(t.Value) != "print" {
+		if !kwIs(s.At(i), from) {
 			continue
 		}
-		prev, ok := prevSignificant(s, i)
-		if !ok {
+		if f.Print && !singleEchoArgument(s, i) || !f.Print && !printIsStatement(s, i) {
 			continue
 		}
-		// "print" is a statement only after ; { } ) an open tag, or "else"
-		convertible := prev.Kind == token.OpenTag ||
-			(prev.Kind == token.Punct && (prev.Value == ";" || prev.Value == "{" || prev.Value == "}" || prev.Value == ")")) ||
-			(prev.Kind == token.Keyword && strings.ToLower(prev.Value) == "else")
-		if !convertible {
-			continue
-		}
-		s.SetValue(i, "echo")
+		s.SetValue(i, to)
 		changed = true
 	}
 	return changed
+}
+
+// printIsStatement reports whether the "print" at i starts a statement: it
+// follows ; { } ) an open tag, or "else".
+func printIsStatement(s *tokens.Stream, i int) bool {
+	prev, ok := prevSignificant(s, i)
+	if !ok {
+		return false
+	}
+	return prev.Kind == token.OpenTag ||
+		(prev.Kind == token.Punct && (prev.Value == ";" || prev.Value == "{" || prev.Value == "}" || prev.Value == ")")) ||
+		kwIs(prev, "else")
+}
+
+// singleEchoArgument reports whether the "echo" at i has no comma up to the
+// next ";" or close tag, skipping parentheses and array literals as upstream
+// does (other brackets, such as a match body, are not skipped).
+func singleEchoArgument(s *tokens.Stream, i int) bool {
+	end := s.Len()
+	for j := i + 1; j < s.Len(); j++ {
+		if s.At(j).Kind == token.CloseTag || isPunctVal(s, j, ";") {
+			end = j
+			break
+		}
+	}
+	for j := sigNext(s, i); j >= 0 && j < end; j++ {
+		if isPunctVal(s, j, "(") || isPunctVal(s, j, "[") && isArrayLiteralOpen(s, j) {
+			if j = s.MatchForward(j); j < 0 {
+				return true
+			}
+		}
+		if isPunctVal(s, j, ",") {
+			return false
+		}
+	}
+	return true
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Alias/NoAliasFunctionsFixer.php

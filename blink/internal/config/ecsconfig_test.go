@@ -20,6 +20,8 @@ const (
 	knownRuleA  = `PhpCsFixer\Fixer\Alias\NoMixedEchoPrintFixer`
 	knownRuleB  = `PhpCsFixer\Fixer\Alias\NoAliasFunctionsFixer`
 	unknownRule = `PhpCsFixer\Fixer\Nonexistent\FooBarFixer`
+	// unconfigurableRule takes no options in blink
+	unconfigurableRule = `PhpCsFixer\Fixer\Semicolon\NoSinglelineWhitespaceBeforeSemicolonsFixer`
 )
 
 func writeECS(t *testing.T, body string) string {
@@ -130,13 +132,13 @@ func TestLoadECSPerPathSkipIsCaveat(t *testing.T) {
 
 func TestLoadECSConfigIgnoredNote(t *testing.T) {
 	_, resolution, err := LoadECS(writeECS(t, `{
-		"rules": [{"class": "`+esc(knownRuleA)+`", "config": {"some": "option"}}]
+		"rules": [{"class": "`+esc(unconfigurableRule)+`", "config": {"some": "option"}}]
 	}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(resolution.ConfigIgnored) != 1 || resolution.ConfigIgnored[0] != knownRuleA {
-		t.Fatalf("config-ignored = %v, want [%s]", resolution.ConfigIgnored, knownRuleA)
+	if len(resolution.ConfigIgnored) != 1 || resolution.ConfigIgnored[0] != unconfigurableRule {
+		t.Fatalf("config-ignored = %v, want [%s]", resolution.ConfigIgnored, unconfigurableRule)
 	}
 }
 
