@@ -1,7 +1,7 @@
 package rules
 
 import (
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
@@ -11,20 +11,24 @@ import (
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/OrderedTypesFixer.php
 //
-// OrderedTypes sorts the members of a union or intersection type declaration
-// using the fixer defaults: case-insensitive alphabetical order with "null"
-// always first ("B|A" -> "A|B", "string|int|null" -> "null|int|string"). It acts
+// OrderedTypes sorts the members of a union or intersection type declaration,
+// by default in case-insensitive alphabetical order with "null" always first
+// ("B|A" -> "A|B", "string|int|null" -> "null|int|string"). Names compare
+// without their leading "\", with PHP's strcasecmp (ASCII case folding) or,
+// with case_sensitive, byte by byte. It acts
 // only in confirmed type positions (parameter, return, typed property) on a flat
 // single-operator run; nullable "?" prefixes, DNF "()" types, mixed "|"/"&" runs
 // and types spanning multiple lines are left untouched.
 //
 // The zero value follows the PHP-CS-Fixer defaults (sort_algorithm=alpha,
-// null_adjustment=always_first). keepOrder mirrors sort_algorithm=none, which
-// keeps the source order and only moves null per the null adjustment.
+// null_adjustment=always_first, case_sensitive=false). keepOrder mirrors
+// sort_algorithm=none, which keeps the source order and only moves null per the
+// null adjustment.
 type OrderedTypes struct {
-	keepOrder bool // sort_algorithm=none: don't alphabetize, keep source order
-	nullLast  bool // null_adjustment=always_last instead of always_first
-	nullKeep  bool // null_adjustment=none: leave null where it is
+	keepOrder     bool // sort_algorithm=none: don't alphabetize, keep source order
+	nullLast      bool // null_adjustment=always_last instead of always_first
+	nullKeep      bool // null_adjustment=none: leave null where it is
+	caseSensitive bool // case_sensitive: compare names byte by byte
 }
 
 func (OrderedTypes) Name() string {
@@ -49,12 +53,17 @@ func (f OrderedTypes) WithConfig(config map[string]any) fixer.Fixer {
 			f.nullKeep = true
 		}
 	}
+	if v, ok := config["case_sensitive"].(bool); ok {
+		f.caseSensitive = v
+	}
 	return f
 }
 
-// typeMember is one member of a union/intersection, its tokens and its sort key.
+// typeMember is one member of a union/intersection: its tokens, its name as
+// written and that name lowercased.
 type typeMember struct {
 	toks []token.Token
+	name string
 	key  string
 }
 
@@ -103,8 +112,8 @@ func (f OrderedTypes) Fix(s *tokens.Stream) bool {
 		sorted := make([]typeMember, len(members))
 		copy(sorted, members)
 		if !f.keepOrder {
-			sort.SliceStable(sorted, func(a, b int) bool {
-				return sorted[a].key < sorted[b].key
+			slices.SortStableFunc(sorted, func(a, b typeMember) int {
+				return phpNameCompare(strings.TrimPrefix(a.name, `\`), strings.TrimPrefix(b.name, `\`), f.caseSensitive)
 			})
 		}
 		if !f.nullKeep {
@@ -147,7 +156,7 @@ func (f OrderedTypes) Fix(s *tokens.Stream) bool {
 func collectTypeMembers(s *tokens.Stream, from, to int, op string) (members []typeMember, ok bool) {
 	var cur typeMember
 	flush := func() {
-		cur.key = strings.ToLower(cur.key)
+		cur.key = asciiLower(cur.name)
 		members = append(members, cur)
 		cur = typeMember{}
 	}
@@ -171,14 +180,14 @@ func collectTypeMembers(s *tokens.Stream, from, to int, op string) (members []ty
 				continue
 			case `\`:
 				cur.toks = append(cur.toks, tk)
-				cur.key += tk.Value
+				cur.name += tk.Value
 				continue
 			default:
 				return nil, false // "?", "(", ")", "&"/"|" mismatch
 			}
 		default:
 			cur.toks = append(cur.toks, tk)
-			cur.key += tk.Value
+			cur.name += tk.Value
 		}
 	}
 	if len(cur.toks) == 0 {
@@ -191,7 +200,7 @@ func collectTypeMembers(s *tokens.Stream, from, to int, op string) (members []ty
 // sameMemberOrder reports whether a and b list members in the same order.
 func sameMemberOrder(a, b []typeMember) bool {
 	for i := range a {
-		if a[i].key != b[i].key {
+		if a[i].name != b[i].name {
 			return false
 		}
 	}

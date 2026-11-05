@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
@@ -11,19 +12,31 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php
 //
 // FullyQualifiedStrictTypes shortens class references to their imported /
-// namespace-relative short name (default config: import_symbols=false,
-// leading_backslash_in_global_namespace=false, the default phpdoc_tags list).
+// namespace-relative short name, in code and in the types of the phpdoc_tags
+// tags. It reads all three options: phpdoc_tags (an empty list leaves
+// docblocks alone), leading_backslash_in_global_namespace, and import_symbols,
+// which first walks the namespace to discover every class reference, imports
+// the namespaced ones whose short name is free (`use` statements inserted after
+// the last class import, else after the namespace declaration, the open tag or
+// a leading declare) and then shortens with those imports.
 //
-// Residuals (byte-safe: valid PHP, never corrupts, go==rust holds):
-//   - Attribute-internal class names (`#[\Foo\Bar]`) are not shortened - the
-//     flat lexer folds an attribute into one opaque comment token, so ECS's
-//     T_ATTRIBUTE handling has no token equivalent.
-//   - PHPDoc types are shortened by an atom scanner (guarding variables, keys,
-//     `::` members, generic/callable bases and wildcard-generic `<*>` types)
-//     rather than a full recursive TypeExpression parser; it matches ECS on the
-//     verified corpora, but a sufficiently exotic unparseable type construct
-//     could still differ.
-type FullyQualifiedStrictTypes struct{}
+// The walk is a port of applyFix: the same handlers, in the same order, on
+// PHP-CS-Fixer's token model (symScan), so the symbols are discovered in the
+// order PHP discovers them, duplicates included.
+//
+// Left out: when a phpdoc type matched by REGEX_TYPES does not parse with the
+// TypeExpression port (or would make PHP's TypeExpression misbehave: a
+// covariant/contravariant prefix on a nullable type or a class constant), or
+// when the imports would go somewhere the port does not model (after a short
+// `<?` open tag, or at the end of the file), the file is left untouched rather
+// than fixed differently.
+type FullyQualifiedStrictTypes struct {
+	ImportSymbols                     bool
+	LeadingBackslashInGlobalNamespace bool
+	// PhpdocTags replaces the default tag list when PhpdocTagsSet.
+	PhpdocTags    []string
+	PhpdocTagsSet bool
+}
 
 func (FullyQualifiedStrictTypes) Name() string {
 	return `PhpCsFixer\Fixer\Import\FullyQualifiedStrictTypesFixer`
@@ -33,18 +46,55 @@ func (FullyQualifiedStrictTypes) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php"
 }
 
-var fqReservedTypes = map[string]bool{
-	"array": true, "bool": true, "callable": true, "false": true, "float": true,
-	"int": true, "iterable": true, "list": true, "mixed": true, "never": true,
-	"null": true, "object": true, "parent": true, "resource": true, "self": true,
-	"static": true, "string": true, "true": true, "void": true,
+// WithConfig reads import_symbols, leading_backslash_in_global_namespace and
+// phpdoc_tags; an option that is not set keeps its default.
+func (f FullyQualifiedStrictTypes) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["import_symbols"].(bool); ok {
+		f.ImportSymbols = v
+	}
+	if v, ok := config["leading_backslash_in_global_namespace"].(bool); ok {
+		f.LeadingBackslashInGlobalNamespace = v
+	}
+	if tags, ok := phpdocTagsStringList(config["phpdoc_tags"]); ok {
+		f.PhpdocTags, f.PhpdocTagsSet = tags, true
+	}
+	// a PHP list with gaps is dumped as an object
+	if tags, ok := config["phpdoc_tags"].(map[string]any); ok {
+		f.PhpdocTags, f.PhpdocTagsSet = make([]string, 0, len(tags)), true
+		for _, tag := range tags {
+			if name, ok := tag.(string); ok {
+				f.PhpdocTags = append(f.PhpdocTags, name)
+			}
+		}
+	}
+	return f
 }
 
-// fqUses holds the class-import map for one namespace. Like ECS's $uses it is
-// keyed by full name, so importing the same class twice keeps only the last
-// alias; the caches are then derived from that (build).
+// fqDefaultPhpdocTags is the phpdoc_tags default.
+var fqDefaultPhpdocTags = []string{
+	"param", "phpstan-param", "phpstan-property", "phpstan-property-read", "phpstan-property-write",
+	"phpstan-return", "phpstan-var", "property", "property-read", "property-write", "psalm-param",
+	"psalm-property", "psalm-property-read", "psalm-property-write", "psalm-return", "psalm-var",
+	"return", "see", "throws", "var",
+}
+
+func (f FullyQualifiedStrictTypes) phpdocTags() map[string]bool {
+	list := fqDefaultPhpdocTags
+	if f.PhpdocTagsSet {
+		list = f.PhpdocTags
+	}
+	out := make(map[string]bool, len(list))
+	for _, t := range list {
+		out[t] = true
+	}
+	return out
+}
+
+// fqUses is the class part of applyFix's $uses: full name -> short name, in
+// insertion order (a PHP array keeps a key's place when it is overwritten),
+// with the caches refreshUsesCache derives from it.
 type fqUses struct {
-	longs             []string // full names in first-occurrence order
+	longs             []string
 	longToShort       map[string]string
 	nameByShortLower  map[string]string // lower(short) -> long
 	shortByName       map[string]string // long -> short
@@ -52,12 +102,9 @@ type fqUses struct {
 }
 
 func fqNewUses() *fqUses {
-	return &fqUses{
-		longToShort:       map[string]string{},
-		nameByShortLower:  map[string]string{},
-		shortByName:       map[string]string{},
-		shortByNormalized: map[string]string{},
-	}
+	u := &fqUses{longToShort: map[string]string{}}
+	u.build()
+	return u
 }
 
 func (u *fqUses) add(long, short string) {
@@ -67,8 +114,11 @@ func (u *fqUses) add(long, short string) {
 	u.longToShort[long] = short
 }
 
-// build derives the caches from the (full-name-keyed) import map.
+// build derives the caches (refreshUsesCache).
 func (u *fqUses) build() {
+	u.nameByShortLower = map[string]string{}
+	u.shortByName = map[string]string{}
+	u.shortByNormalized = map[string]string{}
 	for _, long := range u.longs {
 		short := u.longToShort[long]
 		u.nameByShortLower[strings.ToLower(short)] = long
@@ -85,214 +135,359 @@ func fqNormalize(input string) string {
 	return input[:bs+1] + strings.ToLower(input[bs+1:])
 }
 
-func fqIsReserved(symbol string, reserved map[string]bool) bool {
-	if strings.Contains(symbol, "\\") {
+func fqFirstSegment(s string) string {
+	first, _, _ := strings.Cut(s, `\`)
+	return first
+}
+
+func fqLastSegment(s string) string {
+	if bs := strings.LastIndexByte(s, '\\'); bs >= 0 {
+		return s[bs+1:]
+	}
+	return s
+}
+
+// fqCtx is the fixer's state while it walks one namespace.
+type fqCtx struct {
+	f    FullyQualifiedStrictTypes
+	sc   *symScan
+	s    *tokens.Stream
+	tags map[string]bool
+	ns   string
+	uses *fqUses
+	// reserved is reservedIdentifiersByLevel: @template/@type names, by the
+	// curly-brace level they are visible from.
+	reserved map[int]map[string]bool
+	// discovering is the symbol-discovery phase of import_symbols; the
+	// discovered symbols are collected in discovered.
+	discovering bool
+	discovered  []string
+	edits       map[int]fqEdit
+	fail        bool // something the port cannot mirror: leave the file alone
+}
+
+// fqEdit replaces the inclusive token range [start, end] (an insertion before
+// start when end < start) with toks.
+type fqEdit struct {
+	start, end int
+	toks       []token.Token
+}
+
+func (c *fqCtx) addEdit(e fqEdit) {
+	if _, seen := c.edits[e.start]; seen {
+		return // a later visit of a name PHP already shortened is a no-op
+	}
+	c.edits[e.start] = e
+}
+
+func (c *fqCtx) isReserved(symbol string) bool {
+	if strings.Contains(symbol, `\`) {
 		return false
 	}
-	if fqReservedTypes[strings.ToLower(symbol)] {
+	if phpReservedTypes[strings.ToLower(symbol)] {
 		return true
 	}
-	return reserved[symbol]
+	for _, ids := range c.reserved {
+		if ids[symbol] {
+			return true
+		}
+	}
+	return false
 }
 
 // resolveSymbol resolves an absolute or relative symbol to a normalized FQCN.
-func fqResolveSymbol(symbol string, u *fqUses, ns string, reserved map[string]bool) string {
-	if strings.HasPrefix(symbol, "\\") {
+func (c *fqCtx) resolveSymbol(symbol string, u *fqUses) string {
+	if strings.HasPrefix(symbol, `\`) {
 		return symbol[1:]
 	}
-	if fqIsReserved(symbol, reserved) {
+	if c.isReserved(symbol) {
 		return symbol
 	}
-	first, rest, hasRest := strings.Cut(symbol, "\\")
+	first, rest, hasRest := strings.Cut(symbol, `\`)
 	if long, ok := u.nameByShortLower[strings.ToLower(first)]; ok {
 		if hasRest {
-			return long + "\\" + rest
+			return long + `\` + rest
 		}
 		return long
 	}
-	if ns != "" {
-		return ns + "\\" + symbol
+	if c.ns != "" {
+		return c.ns + `\` + symbol
 	}
 	return symbol
 }
 
-// shortenSymbol shortens a normalized FQCN as much as the namespace + uses allow.
-func fqShortenSymbol(fqcn string, u *fqUses, ns string, reserved map[string]bool) string {
-	if fqIsReserved(fqcn, reserved) {
+// shortenSymbol shortens a normalized FQCN as much as the namespace and uses allow.
+func (c *fqCtx) shortenSymbol(fqcn string, u *fqUses) string {
+	if c.isReserved(fqcn) {
 		return fqcn
 	}
-	res := ""
-	found := false
+	res, found := "", false
 	iMin := 0
-
-	if ns != "" && strings.HasPrefix(fqcn, ns+"\\") {
-		tmpRes := fqcn[len(ns)+1:]
-		firstSeg, _, _ := strings.Cut(tmpRes, "\\")
-		if _, collide := u.nameByShortLower[strings.ToLower(firstSeg)]; !collide && !fqIsReserved(tmpRes, reserved) {
-			res = tmpRes
-			found = true
-			iMin = strings.Count(ns, "\\") + 1
+	if c.ns != "" && strings.HasPrefix(fqcn, c.ns+`\`) {
+		tmpRes := fqcn[len(c.ns)+1:]
+		if _, collide := u.nameByShortLower[strings.ToLower(fqFirstSegment(tmpRes))]; !collide && !c.isReserved(tmpRes) {
+			res, found = tmpRes, true
+			iMin = strings.Count(c.ns, `\`) + 1
 		}
 	}
-
 	tmp := fqcn
-	for i := strings.Count(fqcn, "\\"); i >= iMin; i-- {
+	for i := strings.Count(fqcn, `\`); i >= iMin; i-- {
 		if short, ok := u.shortByName[tmp]; ok {
-			tmpRes := short + fqcn[len(tmp):]
-			if !fqIsReserved(tmpRes, reserved) {
-				res = tmpRes
-				found = true
+			if tmpRes := short + fqcn[len(tmp):]; !c.isReserved(tmpRes) {
+				res, found = tmpRes, true
 				break
 			}
 		}
 		if i > 0 {
-			if bs := strings.LastIndexByte(tmp, '\\'); bs >= 0 {
-				tmp = tmp[:bs]
-			}
+			tmp = tmp[:strings.LastIndexByte(tmp, '\\')]
 		}
 	}
-
 	if !found {
-		if short, ok := u.shortByNormalized[fqNormalize(fqcn)]; ok && !fqIsReserved(short, reserved) {
-			res = short
-			found = true
+		if short, ok := u.shortByNormalized[fqNormalize(fqcn)]; ok && !c.isReserved(short) {
+			res, found = short, true
 		}
 	}
-
 	if !found {
 		res = fqcn
-		firstSeg, _, _ := strings.Cut(res, "\\")
-		_, collide := u.nameByShortLower[strings.ToLower(firstSeg)]
-		if ns != "" || collide {
-			res = "\\" + res
+		_, collide := u.nameByShortLower[strings.ToLower(fqFirstSegment(res))]
+		if c.ns != "" || c.f.LeadingBackslashInGlobalNamespace || collide {
+			res = `\` + res
 		}
 	}
 	return res
 }
 
-// determineShortType returns the shortened rendering of typeName, or "" + false
-// when it is already shortest (no change).
-func fqDetermineShort(typeName string, u *fqUses, ns string, reserved map[string]bool) (string, bool) {
-	fqcn := fqResolveSymbol(typeName, u, ns, reserved)
-	shortened := fqShortenSymbol(fqcn, u, ns, reserved)
+// determineShortType returns the shortened rendering of typeName and whether
+// it differs. While discovering, it records typeName instead.
+func (c *fqCtx) determineShortType(typeName string) (string, bool) {
+	if c.discovering {
+		if !c.isReserved(typeName) {
+			c.discovered = append(c.discovered, typeName)
+		}
+		return "", false
+	}
+	shortened := c.shortenSymbol(c.resolveSymbol(typeName, c.uses), c.uses)
 	if shortened == typeName {
 		return "", false
 	}
 	return shortened, true
 }
 
-type fqReplace struct {
-	start, end int          // inclusive token range of the name run
-	repl       string       // rendered replacement (name-run splice)
-	raw        *token.Token // when set, replace [start,end] with this single token
+// visit is shortenClassIfPossible for the inclusive token range [start, end].
+func (c *fqCtx) visit(start, end int) {
+	var b strings.Builder
+	for j := start; j <= end; j++ {
+		b.WriteString(c.s.At(j).Value)
+	}
+	if b.Len() == 0 {
+		return
+	}
+	if repl, changed := c.determineShortType(b.String()); changed {
+		c.addEdit(fqEdit{start: start, end: end, toks: fqStringToTokens(repl)})
+	}
 }
 
-func (FullyQualifiedStrictTypes) Fix(s *tokens.Stream) bool {
-	regions := fqNamespaceRegions(s)
-	var repls []fqReplace
-	for _, reg := range regions {
-		repls = append(repls, fqProcessNamespace(s, reg)...)
+// fqOrdered is a PHP array with string keys: insertion order, an overwrite
+// keeps the key's place.
+type fqOrdered struct {
+	keys []string
+	vals map[string]string
+}
+
+func newFqOrdered() *fqOrdered { return &fqOrdered{vals: map[string]string{}} }
+
+func (o *fqOrdered) set(k, v string) {
+	if _, ok := o.vals[k]; !ok {
+		o.keys = append(o.keys, k)
 	}
-	if len(repls) == 0 {
+	o.vals[k] = v
+}
+
+func (o *fqOrdered) unset(k string) {
+	if _, ok := o.vals[k]; !ok {
+		return
+	}
+	delete(o.vals, k)
+	o.keys = slices.DeleteFunc(o.keys, func(x string) bool { return x == k })
+}
+
+// setupUsesFromDiscoveredSymbols adds an import for every discovered symbol
+// whose short name is free, and returns the new imports (short -> full).
+func (c *fqCtx) setupUsesFromDiscoveredSymbols() *fqOrdered {
+	forImport := newFqOrdered()
+	if len(c.discovered) == 0 {
+		return forImport
+	}
+	byShort := newFqOrdered() // discoveredFqcnByShortNameLower
+	if c.ns == "" {
+		for _, symbol := range c.discovered {
+			if !strings.HasPrefix(symbol, `\`) {
+				start := fqFirstSegment(symbol)
+				byShort.set(strings.ToLower(start), c.resolveSymbol(start, c.uses))
+			}
+		}
+	}
+	useByShortLower := map[string]bool{}
+	for _, long := range c.uses.longs {
+		short := c.uses.longToShort[long]
+		byShort.set(strings.ToLower(short), long)
+		useByShortLower[strings.ToLower(short)] = true
+	}
+	symbols := slices.Clone(c.discovered)
+	slices.SortStableFunc(symbols, func(a, b string) int {
+		if ra, rb := strings.HasPrefix(a, `\`), strings.HasPrefix(b, `\`); ra != rb {
+			if ra {
+				return 1
+			}
+			return -1
+		}
+		return strings.Count(a, `\`) - strings.Count(b, `\`)
+	})
+	for _, symbol := range symbols {
+		for {
+			shortEndLower := strings.ToLower(fqLastSegment(symbol))
+			if _, taken := byShort.vals[shortEndLower]; !taken {
+				shortStartLower := strings.ToLower(fqFirstSegment(strings.TrimLeft(symbol, `\`)))
+				if strings.HasPrefix(symbol, `\`) || (c.ns == "" && !useByShortLower[shortStartLower]) || !strings.Contains(symbol, `\`) {
+					byShort.set(shortEndLower, c.resolveSymbol(symbol, c.uses))
+					break
+				}
+			}
+			// else short name collision - keep unimported
+			if strings.HasPrefix(symbol, `\`) || c.ns == "" || !strings.Contains(symbol, `\`) {
+				break
+			}
+			symbol = symbol[:strings.LastIndexByte(symbol, '\\')]
+		}
+	}
+	for _, long := range c.uses.longs {
+		key := strings.ToLower(c.uses.longToShort[long])
+		if v, ok := byShort.vals[key]; ok && strings.EqualFold(v, long) {
+			byShort.unset(key)
+		}
+	}
+	empty := fqNewUses()
+	for _, key := range slices.Clone(byShort.keys) {
+		fqcn := byShort.vals[key]
+		shortened := strings.TrimLeft(c.shortenSymbol(fqcn, empty), `\`)
+		// prevent importing non-namespaced names in global namespace
+		if strings.Contains(shortened, `\`) {
+			shortEnd := fqLastSegment(fqcn)
+			c.uses.add(fqcn, shortEnd)
+			forImport.set(shortEnd, fqcn)
+		}
+	}
+	c.uses.build()
+	return forImport
+}
+
+func (f FullyQualifiedStrictTypes) Fix(s *tokens.Stream) bool {
+	sc := sharedSymScan(s)
+	if !fqIsCandidate(sc) {
 		return false
 	}
-	for _, r := range slices.Backward(repls) {
-		fqApply(s, r)
+	tags := f.phpdocTags()
+	var edits []fqEdit
+	for _, decl := range sc.nsDecls {
+		c := &fqCtx{f: f, sc: sc, s: s, tags: tags, ns: decl.name, edits: map[int]fqEdit{}}
+		var lastUseEnd int
+		c.uses, lastUseEnd = fqCollectUses(sc, decl)
+		var forImport *fqOrdered
+		if f.ImportSymbols {
+			c.discovering = true
+			c.walk(decl)
+			c.discovering = false
+			forImport = c.setupUsesFromDiscoveredSymbols()
+		}
+		c.walk(decl)
+		if c.fail {
+			return false
+		}
+		if forImport != nil && len(forImport.keys) > 0 {
+			ins, ok := fqImportEdit(sc, decl, lastUseEnd, forImport)
+			if !ok {
+				return false
+			}
+			edits = append(edits, ins)
+		}
+		for _, e := range c.edits {
+			edits = append(edits, e)
+		}
 	}
+	if len(edits) == 0 {
+		return false
+	}
+	slices.SortStableFunc(edits, func(a, b fqEdit) int {
+		if a.start != b.start {
+			return a.start - b.start
+		}
+		return (a.end - a.start) - (b.end - b.start) // an insertion goes before a replacement
+	})
+	out := make([]token.Token, 0, s.Len()+16)
+	next := 0
+	for _, e := range edits {
+		if e.start < next {
+			continue // overlapping: keep the first
+		}
+		for j := next; j < e.start; j++ {
+			out = append(out, s.At(j))
+		}
+		out = append(out, e.toks...)
+		next = max(e.end+1, e.start)
+	}
+	for j := next; j < s.Len(); j++ {
+		out = append(out, s.At(j))
+	}
+	s.ReplaceRange(0, s.Len()-1, fqMergeWhitespace(out))
 	return true
 }
 
-func fqApply(s *tokens.Stream, r fqReplace) {
-	if r.raw != nil {
-		s.ReplaceRange(r.start, r.end, []token.Token{*r.raw})
-		return
+// fqIsCandidate mirrors isCandidate.
+func fqIsCandidate(sc *symScan) bool {
+	for i := range sc.n {
+		t := sc.tok(i)
+		switch t.Kind {
+		case token.AttributeStart, token.DocComment, token.Variable:
+			return true
+		case token.Punct:
+			if t.Value == "::" {
+				return true
+			}
+		case token.Keyword:
+			if sc.isKeyword(i, "catch", "extends", "implements", "instanceof", "new") || sc.isFunctionKeyword(i) || sc.isTraitUse(i) {
+				return true
+			}
+		}
 	}
-	s.ReplaceRange(r.start, r.end, fqStringToTokens(r.repl))
+	return false
+}
+
+// fqMergeWhitespace joins adjacent whitespace tokens, as the lexer gives them.
+func fqMergeWhitespace(toks []token.Token) []token.Token {
+	out := toks[:0:0]
+	for _, t := range toks {
+		if n := len(out); n > 0 && t.Kind == token.Whitespace && out[n-1].Kind == token.Whitespace {
+			out[n-1].Value += t.Value
+			continue
+		}
+		out = append(out, t)
+	}
+	return out
 }
 
 // fqStringToTokens mirrors namespacedStringToTokens.
 func fqStringToTokens(input string) []token.Token {
 	var out []token.Token
-	if strings.HasPrefix(input, "\\") {
-		out = append(out, token.Token{Kind: token.Punct, Value: "\\"})
+	if strings.HasPrefix(input, `\`) {
+		out = append(out, nsSeparatorToken())
 		input = input[1:]
 	}
-	parts := strings.Split(input, "\\")
+	parts := strings.Split(input, `\`)
 	for i, p := range parts {
 		out = append(out, token.Token{Kind: token.Ident, Value: p})
 		if i != len(parts)-1 {
-			out = append(out, token.Token{Kind: token.Punct, Value: "\\"})
+			out = append(out, nsSeparatorToken())
 		}
 	}
 	return out
-}
-
-type fqRegion struct {
-	name       string
-	start, end int // token range [start, end) of the namespace scope
-}
-
-// fqNamespaceRegions returns the namespace scopes, mirroring
-// getNamespaceDeclarations: one global region when there is no namespace.
-func fqNamespaceRegions(s *tokens.Stream) []fqRegion {
-	var decls []int
-	for i := 0; i < s.Len(); i++ {
-		if kwIs(s.At(i), "namespace") {
-			// `namespace\foo(...)` relative call is not a declaration
-			n := sigNext(s, i)
-			if n >= 0 && s.At(n).Kind == token.Punct && s.At(n).Value == "\\" {
-				continue
-			}
-			decls = append(decls, i)
-		}
-	}
-	if len(decls) == 0 {
-		return []fqRegion{{name: "", start: 0, end: s.Len()}}
-	}
-	var regions []fqRegion
-	for k, d := range decls {
-		name, bodyStart, semiOrBrace := fqReadNamespaceName(s, d)
-		if semiOrBrace < 0 {
-			continue
-		}
-		if s.At(semiOrBrace).Value == "{" {
-			end := s.MatchForward(semiOrBrace)
-			if end < 0 {
-				end = s.Len()
-			}
-			regions = append(regions, fqRegion{name: name, start: bodyStart, end: end})
-		} else {
-			end := s.Len()
-			if k+1 < len(decls) {
-				end = decls[k+1]
-			}
-			regions = append(regions, fqRegion{name: name, start: bodyStart, end: end})
-		}
-	}
-	return regions
-}
-
-// fqReadNamespaceName reads the name after a `namespace` keyword, returning the
-// name, the index just after the `;`/`{`, and the index of that `;`/`{`.
-func fqReadNamespaceName(s *tokens.Stream, kw int) (name string, bodyStart, term int) {
-	var b strings.Builder
-	i := sigNext(s, kw)
-	for i >= 0 && i < s.Len() {
-		t := s.At(i)
-		if t.Kind == token.Ident {
-			b.WriteString(t.Value)
-			i = sigNext(s, i)
-			continue
-		}
-		if t.Kind == token.Punct && t.Value == "\\" {
-			b.WriteByte('\\')
-			i = sigNext(s, i)
-			continue
-		}
-		if t.Kind == token.Punct && (t.Value == ";" || t.Value == "{") {
-			return b.String(), i + 1, i
-		}
-		break
-	}
-	return "", -1, -1
 }

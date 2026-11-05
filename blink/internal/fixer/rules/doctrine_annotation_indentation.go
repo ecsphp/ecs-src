@@ -4,14 +4,21 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/DoctrineAnnotation/DoctrineAnnotationIndentationFixer.php
 //
 // DoctrineAnnotationIndentation indents Doctrine annotation continuation lines
-// with four spaces per brace level (indent_mixed_lines is false by default).
-type DoctrineAnnotationIndentation struct{}
+// with four spaces per brace level. It reads ignored_tags (the tags left alone,
+// shared with the other Doctrine annotation fixers) and indent_mixed_lines
+// (false by default: true indents one level deeper a closing line that starts
+// with content, as in `foo="bar")`).
+type DoctrineAnnotationIndentation struct {
+	indentMixedLines bool
+	ignoredTags      map[string]bool // nil keeps the default list
+}
 
 func (DoctrineAnnotationIndentation) Name() string {
 	return `PhpCsFixer\Fixer\DoctrineAnnotation\DoctrineAnnotationIndentationFixer`
@@ -24,8 +31,22 @@ func (DoctrineAnnotationIndentation) SourceURL() string {
 // the trailing (\r?\n)? mirrors PCRE's `$`, which also matches before a final newline
 var daIndentRe = regexp.MustCompile(`(\n( +\*)?) *(\r?\n)?$`)
 
-func (DoctrineAnnotationIndentation) Fix(s *tokens.Stream) bool {
-	return applyToDoctrineAnnotations(s, doctrineIgnoredTags, func(toks []daToken) []daToken {
+func (f DoctrineAnnotationIndentation) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["indent_mixed_lines"].(bool); ok {
+		f.indentMixedLines = v
+	}
+	if tags, ok := doctrineIgnoredTagsOption(config); ok {
+		f.ignoredTags = tags
+	}
+	return f
+}
+
+func (f DoctrineAnnotationIndentation) Fix(s *tokens.Stream) bool {
+	ignored := f.ignoredTags
+	if ignored == nil {
+		ignored = doctrineIgnoredTags
+	}
+	return applyToDoctrineAnnotations(s, ignored, func(toks []daToken) []daToken {
 		var positions []daSpan
 		for index := 0; index < len(toks); index++ {
 			if toks[index].typ != daTAt {
@@ -50,12 +71,16 @@ func (DoctrineAnnotationIndentation) Fix(s *tokens.Stream) bool {
 			opening, closing := daLineBracesCount(toks, index)
 			delta := opening - closing
 			mixedBraces := delta == 0 && opening > 0
+			extraIndentLevel := 0
 
 			if indentLevel > 0 && (delta < 0 || mixedBraces) {
 				indentLevel--
+				if f.indentMixedLines && daIsClosingLineWithMeaningfulContent(toks, index) {
+					extraIndentLevel = 1
+				}
 			}
 
-			repl := "${1}" + strings.Repeat(" ", 4*indentLevel+1)
+			repl := "${1}" + strings.Repeat(" ", 4*(indentLevel+extraIndentLevel)+1)
 			if daIndentRe.MatchString(toks[index].content) {
 				toks[index].content = daIndentRe.ReplaceAllString(toks[index].content, repl)
 			}
@@ -86,6 +111,21 @@ func daLineBracesCount(toks []daToken, index int) (int, int) {
 		}
 	}
 	return opening, closing
+}
+
+// daIsClosingLineWithMeaningfulContent reports whether the line starting at the
+// newline token index begins with something other than a closing brace.
+func daIsClosingLineWithMeaningfulContent(toks []daToken, index int) bool {
+	for i := index + 1; i < len(toks); i++ {
+		if toks[i].typ == daTNone {
+			if strings.Contains(toks[i].content, "\n") {
+				return false
+			}
+			continue
+		}
+		return toks[i].typ != daTCloseParen && toks[i].typ != daTCloseCurly
+	}
+	return false
 }
 
 type daSpan struct{ start, end int }

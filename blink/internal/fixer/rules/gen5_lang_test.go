@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 func TestGen5LangInclude(t *testing.T) {
@@ -82,47 +84,39 @@ func TestGen5LangEmptyLoopBody(t *testing.T) {
 	}
 }
 
-func TestGen5LangEmptyLoopCondition(t *testing.T) {
-	t.Parallel()
-	cases := []struct {
-		src     string
-		want    string
-		changed bool
-	}{
-		// empty for header -> while (true) (upstream default "while")
-		{`<?php for (;;) {}`, `<?php while (true) {}`, true},
-		{`<?php for(;;){ foo(); }`, `<?php while (true){ foo(); }`, true},
-		// interior whitespace in the header is normalized away
-		{`<?php for ( ; ; ) { foo(); }`, `<?php while (true) { foo(); }`, true},
-
-		// non-empty condition: untouched
-		{`<?php for ($i=0;$i<3;$i++) {}`, `<?php for ($i=0;$i<3;$i++) {}`, false},
-		// only one part empty: untouched
-		{`<?php for (;$i<3;) {}`, `<?php for (;$i<3;) {}`, false},
-		// already while (true): left alone (idempotent, do-while not handled)
-		{`<?php while (true) { foo(); }`, `<?php while (true) { foo(); }`, false},
-		// comment inside the header: skipped to avoid reordering it
-		{`<?php for (/* a */;;) {}`, `<?php for (/* a */;;) {}`, false},
-		// method named for is not a loop
-		{`<?php $o->for(;;);`, `<?php $o->for(;;);`, false},
-	}
-	for _, c := range cases {
-		got, changed := apply(t, EmptyLoopCondition{}, c.src)
-		if got != c.want || changed != c.changed {
-			t.Fatalf("src=%q changed=%v got=%q want=%q", c.src, changed, got, c.want)
-		}
-		if again, changed2 := apply(t, EmptyLoopCondition{}, got); changed2 || again != got {
-			t.Fatalf("not idempotent: %q -> %q changed=%v", got, again, changed2)
-		}
-	}
-}
-
 // TestGen5LangSourceURLs verifies each SourceURL matches SourceURLFor(Name()).
 func TestGen5LangSourceURLs(t *testing.T) {
 	t.Parallel()
 	for _, f := range []fixer.Fixer{Include{}, EmptyLoopBody{}, EmptyLoopCondition{}} {
 		if got, want := f.SourceURL(), fixer.SourceURLFor(f.Name()); got != want {
 			t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)
+		}
+	}
+}
+
+// A file whose loops need no conversion must come back untouched, its stream
+// version included: the tags are folded only when a loop is converted.
+func TestEmptyLoopConditionLeavesOtherLoopsUntouched(t *testing.T) {
+	t.Parallel()
+	const src = "<?php\n\n\nfor ($i = 0; $i < 3; $i++) {\n}\nwhile ($x) {\n}\n?>\n<p>x</p>\n<?php while ($y) {} ?>\n"
+	for name, f := range map[string]EmptyLoopCondition{
+		"while": {},
+		"for":   {For: true},
+	} {
+		src := src
+		if !f.For {
+			src += "<?php while (true) {}\n" // already in the while style
+		}
+		s := tokens.New(lexer.Lex(src))
+		before := s.Version()
+		if f.Fix(s) {
+			t.Errorf("%s: reported a change", name)
+		}
+		if s.Version() != before {
+			t.Errorf("%s: stream version moved from %d to %d", name, before, s.Version())
+		}
+		if got := s.Render(); got != src {
+			t.Errorf("%s: got %q", name, got)
 		}
 	}
 }

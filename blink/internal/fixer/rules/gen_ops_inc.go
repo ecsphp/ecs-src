@@ -1,8 +1,10 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
@@ -43,18 +45,6 @@ func sigNext(s *tokens.Stream, i int) int {
 func spanClean(s *tokens.Stream, a, b int) bool {
 	for j := a; j <= b && j < s.Len(); j++ {
 		if k := s.At(j).Kind; k == token.Comment || k == token.DocComment {
-			return false
-		}
-	}
-	return true
-}
-
-// inlineWSBetween reports whether every token strictly between a and b is
-// whitespace with no newline (so the two are on the same line, gap removable).
-func inlineWSBetween(s *tokens.Stream, a, b int) bool {
-	for j := a + 1; j < b; j++ {
-		t := s.At(j)
-		if t.Kind != token.Whitespace || hasNewline(t.Value) {
 			return false
 		}
 	}
@@ -268,11 +258,19 @@ func (StandardizeIncrement) Fix(s *tokens.Stream) bool {
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/IncrementStyleFixer.php
 //
-// IncrementStyle converts a post-increment statement to pre-increment
-// (`$i++;` -> `++$i;`, `$i--;` -> `--$i;`) using the default `pre` style. Only
-// standalone statements on a single plain variable are rewritten, where the
-// return value is discarded and post/pre are equivalent.
-type IncrementStyle struct{}
+// IncrementStyle moves an increment/decrement operator to the configured side
+// of its operand. With the default `pre` style a post-increment (`$i++`,
+// `$a->b[0]--`, `Foo::$n++`, ...) becomes a pre-increment; with `post` the
+// reverse. Like upstream, only an operation whose value is discarded is moved:
+// the operand starts a statement (after `;`, `{`, `}`, `)` or the open tag) and
+// is followed by `;` or `)` (a `for` step, the body of a brace-less `if`). The
+// operand is found by upstream's walk (variables, `$$`/`${}`, property and
+// static chains, offsets); the whitespace and comments around the operator stay
+// where they were.
+type IncrementStyle struct {
+	// Post selects the `post` style (`++$i` -> `$i++`); the default is `pre`.
+	Post bool
+}
 
 func (IncrementStyle) Name() string {
 	return `PhpCsFixer\Fixer\Operator\IncrementStyleFixer`
@@ -282,50 +280,198 @@ func (IncrementStyle) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/IncrementStyleFixer.php"
 }
 
-func (IncrementStyle) Fix(s *tokens.Stream) bool {
+// WithConfig reads `style` (`pre` or `post`).
+func (f IncrementStyle) WithConfig(config map[string]any) fixer.Fixer {
+	if style, ok := config["style"].(string); ok {
+		f.Post = style == "post"
+	}
+	return f
+}
+
+func (f IncrementStyle) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := 0; i < s.Len(); i++ {
+	for i := s.Len() - 1; i >= 0; i-- {
 		t := s.At(i)
 		if t.Kind != token.Punct || (t.Value != "++" && t.Value != "--") {
 			continue
 		}
-
-		// Operand: exactly one plain variable, on the same line as the operator.
-		lv := sigPrev(s, i)
-		if lv < 0 || s.At(lv).Kind != token.Variable {
-			continue
+		successor := incIsSuccessor(s, i)
+		if !f.Post && successor {
+			next := sigNext(s, i)
+			if next < 0 || !punctIn(s.At(next), ";", ")") {
+				continue
+			}
+			start := incFindStart(s, i)
+			if start < 0 || !incStatementBoundary(s, sigPrev(s, start)) {
+				continue
+			}
+			removeMergingWhitespace(s, i)
+			s.InsertAt(start, t)
+			changed = true
+		} else if f.Post && !successor {
+			if !incStatementBoundary(s, sigPrev(s, i)) {
+				continue
+			}
+			end := incFindEnd(s, i)
+			if end < 0 {
+				continue
+			}
+			if next := sigNext(s, end); next < 0 || !punctIn(s.At(next), ";", ")") {
+				continue
+			}
+			at := end + 1
+			for at < s.Len() && s.At(at).Kind == token.Whitespace {
+				at++
+			}
+			if at == i+1 {
+				continue // no operand (`foo()++`): the operator would stay put
+			}
+			s.InsertAt(at, t)
+			removeMergingWhitespace(s, i)
+			changed = true
 		}
-		if !inlineWSBetween(s, lv, i) {
-			continue
-		}
-
-		// The operand must open a statement (previous meaningful token is a
-		// boundary) and not be part of a larger lvalue.
-		p := sigPrev(s, lv)
-		if p < 0 {
-			continue
-		}
-		pv := s.At(p)
-		if lvaluePrefix(pv.Value) {
-			continue
-		}
-		if pv.Value != ";" && pv.Value != "{" && pv.Value != "}" && pv.Kind != token.OpenTag {
-			continue
-		}
-
-		// The operator must be a standalone statement, terminated by ';'.
-		endIdx := sigNext(s, i)
-		if endIdx < 0 || s.At(endIdx).Value != ";" {
-			continue
-		}
-
-		// Move the operator in front of the variable, dropping the inline gap.
-		s.ReplaceRange(lv+1, i, nil)
-		s.InsertAt(lv, token.Token{Kind: token.Punct, Value: t.Value})
-		changed = true
-		i = lv
 	}
 	return changed
+}
+
+// removeMergingWhitespace removes the token at i and joins the whitespace
+// tokens that end up adjacent, so the stream keeps one token per gap.
+func removeMergingWhitespace(s *tokens.Stream, i int) {
+	s.RemoveAt(i)
+	if i > 0 && i < s.Len() && s.At(i-1).Kind == token.Whitespace && s.At(i).Kind == token.Whitespace {
+		s.SetValue(i-1, s.At(i-1).Value+s.At(i).Value)
+		s.RemoveAt(i)
+	}
+}
+
+// incStatementBoundary reports whether the token at p may precede a moved
+// increment: `;`, `{`, `}`, `)` or the open tag (upstream's list).
+func incStatementBoundary(s *tokens.Stream, p int) bool {
+	if p < 0 {
+		return false
+	}
+	t := s.At(p)
+	return t.Kind == token.OpenTag || punctIn(t, ";", "{", "}", ")")
+}
+
+// incIsSuccessor ports TokensAnalyzer::isUnarySuccessorOperator: the operator
+// at i follows its operand (an offset `]`, a name, a variable, or the `}` of a
+// dynamic `${…}`/`->{…}` access).
+func incIsSuccessor(s *tokens.Stream, i int) bool {
+	p := sigPrev(s, i)
+	if p < 0 {
+		return false
+	}
+	t := s.At(p)
+	switch {
+	case t.Kind == token.Ident, t.Kind == token.Variable:
+		return true
+	case t.Kind != token.Punct:
+		return false
+	case t.Value == "]":
+		return true
+	case t.Value == "}":
+		return dynamicBraceClose(s, p)
+	}
+	return false
+}
+
+// dynamicBraceClose reports whether the "}" at i closes a dynamic variable or
+// property brace (`${…}`, `->{…}`, `?->{…}`), which PHP-CS-Fixer retags.
+func dynamicBraceClose(s *tokens.Stream, i int) bool {
+	open := s.MatchBackward(i)
+	return open >= 0 && dynamicBraceOpen(s, open)
+}
+
+// dynamicBraceOpen reports whether the "{" at i opens a dynamic variable or
+// property brace.
+func dynamicBraceOpen(s *tokens.Stream, i int) bool {
+	p := sigPrev(s, i)
+	if p < 0 {
+		return false
+	}
+	t := s.At(p)
+	return t.Kind == token.Variable && t.Value == "$" || punctIn(t, "->", "?->")
+}
+
+// incFindStart ports AbstractIncrementOperatorFixer::findStart: the first token
+// of the operand ending before the post-increment at i, or -1.
+func incFindStart(s *tokens.Stream, i int) int {
+	for {
+		i = sigPrev(s, i)
+		if i < 0 {
+			return -1
+		}
+		if t := s.At(i); punctIn(t, ")", "]", "}") {
+			if i = s.MatchBackward(i); i < 0 {
+				return -1
+			}
+		}
+		if s.At(i).Kind == token.Variable {
+			break
+		}
+	}
+	p := sigPrev(s, i)
+	if p < 0 {
+		return i
+	}
+	pt := s.At(p)
+	switch {
+	case pt.Kind == token.Variable && pt.Value == "$":
+		return incFindStart(s, i)
+	case punctIn(pt, "->", "?->"):
+		return incFindStart(s, p)
+	case pt.Kind == token.Punct && pt.Value == "::":
+		pp := sigPrev(s, p)
+		if pp < 0 || !incClassNamePart(s.At(pp)) {
+			return incFindStart(s, p)
+		}
+		// the class name: back over its parts (whitespace stops the walk)
+		j := p - 1
+		for j >= 0 && (incClassNamePart(s.At(j)) || s.At(j).Kind == token.Punct && s.At(j).Value == `\`) {
+			j--
+		}
+		return sigNext(s, j)
+	}
+	return i
+}
+
+// incClassNamePart reports whether t is a T_STRING or T_STATIC token.
+func incClassNamePart(t token.Token) bool {
+	return t.Kind == token.Ident || t.Kind == token.Keyword && t.Value == "static"
+}
+
+// incFindEnd ports IncrementStyleFixer::findEnd: the last token of the operand
+// following the pre-increment at i, or -1.
+func incFindEnd(s *tokens.Stream, i int) int {
+	next := sigNext(s, i)
+	for next >= 0 {
+		t := s.At(next)
+		if punctIn(t, "(", "[") || t.Kind == token.Punct && t.Value == "{" && dynamicBraceOpen(s, next) {
+			if next = s.MatchForward(next); next < 0 {
+				return -1
+			}
+		} else if t.Kind != token.Variable && !incClassNamePart(t) && (t.Kind != token.Punct || t.Value != `\`) {
+			break
+		}
+		i = next
+		next = sigNext(s, next)
+	}
+	if next < 0 {
+		return i
+	}
+	switch t := s.At(next); {
+	case punctIn(t, "->", "?->"):
+		return incFindEnd(s, next)
+	case t.Kind == token.Punct && t.Value == "::":
+		return incFindEnd(s, sigNext(s, next))
+	}
+	return i
+}
+
+// punctIn reports whether t is a punctuation token with one of the values vs.
+func punctIn(t token.Token, vs ...string) bool {
+	return t.Kind == token.Punct && slices.Contains(vs, t.Value)
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/LongToShorthandOperatorFixer.php

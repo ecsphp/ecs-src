@@ -98,11 +98,11 @@ by how often ECS applies them on the sample.
 ## PSR-12
 
 The `psr12` set implements the token-safe part of PHP-CS-Fixer's `@PSR-12`:
-casing (keywords, constants, static references, casts), operator spacing
-(assignment, arrow, comparison and logical operators), parenthesis and
-language-construct spacing, `else if` -> `elseif`, `declare` normalization,
-leading import slash removal, one import per statement, blank lines before a
-namespace, no blank lines after a class opening, and tab-to-space indentation.
+casing (keywords, constants, static references, casts), binary operator
+spacing, parenthesis and language-construct spacing, `else if` -> `elseif`,
+`declare` normalization, leading import slash removal, one import per
+statement, blank lines before a namespace, no blank lines after a class
+opening, and tab-to-space indentation.
 
 ## What it looks like
 
