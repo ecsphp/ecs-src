@@ -260,6 +260,8 @@ func ConstructFixers() []fixer.Fixer {
 		PhpUnitMock{},
 		PhpUnitDedicateAssertInternalType{},
 		PhpUnitNamespaced{},
+		PhpUnitDedicateAssert{},
+		PhpUnitTestCaseStaticMethodCalls{},
 		GlobalKeyword{},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
