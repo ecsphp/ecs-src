@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -26,7 +27,7 @@ func fqDocReservedIdentifiers(content string) []string {
 				break
 			}
 		}
-		q := -1
+		var q int
 		if t := m.litFold(p, "template"); t >= 0 {
 			q = t
 			for _, sfx := range []string{"-covariant", "-contravariant"} {
@@ -159,9 +160,9 @@ func fqDocReplaceSeeMembers(content string, fix func(string) string) string {
 				w += n
 				ends = append(ends, w)
 			}
-			for k := len(ends) - 1; k >= 0; k-- {
-				if fqDocLookaheadOK(content, ends[k], m.utf) {
-					end = ends[k]
+			for _, candidate := range slices.Backward(ends) {
+				if fqDocLookaheadOK(content, candidate, m.utf) {
+					end = candidate
 					break
 				}
 			}

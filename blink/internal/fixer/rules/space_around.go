@@ -39,15 +39,6 @@ func memberPrev(s *tokens.Stream, i int) bool {
 	return false
 }
 
-// isOperand reports whether a token can be the operand of ++/-- (a variable,
-// name, or a closing ) or ]).
-func isOperand(t token.Token) bool {
-	if t.Kind == token.Variable || t.Kind == token.Ident {
-		return true
-	}
-	return t.Kind == token.Punct && (t.Value == ")" || t.Value == "]")
-}
-
 // castAt detects a cast at an opening "(" and returns the type token index and
 // the closing ")" index. It reuses CastSpaces' guard so grouping, calls and
 // index accesses are not mistaken for casts.

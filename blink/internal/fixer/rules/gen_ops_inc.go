@@ -451,7 +451,7 @@ func incFindEnd(s *tokens.Stream, i int) int {
 			if next = s.MatchForward(next); next < 0 {
 				return -1
 			}
-		} else if !(t.Kind == token.Variable || incClassNamePart(t) || t.Kind == token.Punct && t.Value == `\`) {
+		} else if t.Kind != token.Variable && !incClassNamePart(t) && (t.Kind != token.Punct || t.Value != `\`) {
 			break
 		}
 		i = next

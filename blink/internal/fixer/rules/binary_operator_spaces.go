@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -109,12 +110,7 @@ func bosResolve(def string, overrides map[string]any) map[string]string {
 }
 
 func bosIsSupported(op string) bool {
-	for _, o := range bosSupportedOperators {
-		if o == op {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(bosSupportedOperators, op)
 }
 
 func bosIsAlignSingleSpace(strategy string) bool {
