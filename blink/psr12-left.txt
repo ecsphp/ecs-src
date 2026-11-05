@@ -18,9 +18,7 @@ ordered_class_elements          conservative: skips any class containing comment
 
 LEFTOVERS (bounded / low value)
 -------------------------------
-binary_operator_spaces          arithmetic/bitwise (+ - * / % & | ^): unary-
-                                ambiguous, need operand context (=, =>, comparison
-                                and logical operators are done)
+(none)
 
 
 IMPLEMENTED
@@ -29,7 +27,7 @@ casing:      lowercase_keywords, constant_case, lowercase_static_reference,
              lowercase_cast, short_scalar_cast
 spacing:     no_leading_namespace_whitespace, no_singleline_whitespace_before_semicolons,
              no_whitespace_in_blank_line, no_extra_blank_lines, space_after_semicolon,
-             binary_operator_spaces (=, =>, comparison, logical), concat_space,
+             binary_operator_spaces, concat_space,
              cast_spaces, ternary_operator_spaces, blank_line_after_opening_tag,
              no_trailing_whitespace, no_trailing_whitespace_in_comment,
              single_blank_line_at_eof
