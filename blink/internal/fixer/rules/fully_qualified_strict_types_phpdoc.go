@@ -4,303 +4,275 @@ import (
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
-	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
-// Default phpdoc_tags whose type expression is shortened.
-var fqPhpdocTags = map[string]bool{
-	"param": true, "phpstan-param": true, "phpstan-property": true,
-	"phpstan-property-read": true, "phpstan-property-write": true,
-	"phpstan-return": true, "phpstan-var": true, "property": true,
-	"property-read": true, "property-write": true, "psalm-param": true,
-	"psalm-property": true, "psalm-property-read": true, "psalm-property-write": true,
-	"psalm-return": true, "psalm-var": true, "return": true, "see": true,
-	"throws": true, "var": true,
-}
-
-var fqDocKeywords = map[string]bool{
-	"min": true, "max": true, "class-string": true, "int": true, "positive-int": true,
-	"negative-int": true, "non-empty-string": true, "numeric-string": true,
-	"array-key": true, "scalar": true, "non-empty-array": true, "non-empty-list": true,
-	"key-of": true, "value-of": true, "literal-string": true, "callable-string": true,
-	"double": true, "boolean": true, "integer": true, "this": true, "$this": true,
-	"lowercase-string": true, "non-falsy-string": true, "truthy-string": true,
-}
-
-func fqHSpace(c byte) bool { return c == ' ' || c == '\t' }
-func fqWS(c byte) bool {
-	return c == '\t' || c == '\n' || c == '\f' || c == '\r' || c == ' '
-}
-func fqTagChar(c byte) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-'
-}
-func fqNameStart(c byte) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c >= 0x80
-}
-func fqNameChar(c byte) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c >= 0x80
-}
-
-// fqDocTypeRun reports whether the non-whitespace run after a tag is a type
-// expression at all. php-cs-fixer only rewrites a type that matches its
-// TypeExpression grammar and ends at whitespace/"}"; a URL or path (e.g. after
-// "@see https://.../wp_query/") is not a type, so it is left untouched. A char
-// outside the type-expression set (notably "/" or ".") marks the run as not a type.
-func fqDocTypeRun(run []byte) bool {
-	for _, c := range run {
-		if fqNameChar(c) {
-			continue
-		}
-		switch c {
-		case '\\', '|', '&', '<', '>', ',', '(', ')', '[', ']', '{', '}',
-			'?', ':', '=', '\'', '"', '$', '*', '-', '+':
-		default:
-			return false
-		}
-	}
-	return true
-}
-
-// fqDocTemplateNames collects @template/@type declared identifiers (reserved).
-func fqDocTemplateNames(content string) []string {
+// fqDocReservedIdentifiers is the reserved-identifier scan of applyFix:
+// /\*\h*@(?:psalm-|phpstan-)?(?:template(?:-covariant|-contravariant)?|(?:import-)?type)\h+(identifier)(?!\S)/i
+func fqDocReservedIdentifiers(content string) []string {
+	m := docTypeMatcher{src: content, utf: docUTF(content)}
 	var out []string
-	b := []byte(content)
-	n := len(b)
-	prefixes := [][]byte{[]byte("psalm-"), []byte("phpstan-")}
-	kws := [][]byte{
-		[]byte("template-covariant"), []byte("template-contravariant"),
-		[]byte("template"), []byte("import-type"), []byte("type"),
-	}
-	for i := range n {
-		if b[i] != '*' {
+	for i := 0; i < len(content); i++ {
+		if content[i] != '*' {
 			continue
 		}
-		j := i + 1
-		for j < n && fqHSpace(b[j]) {
-			j++
-		}
-		if j >= n || b[j] != '@' {
+		p := m.skipH(i + 1)
+		if m.at(p) != '@' {
 			continue
 		}
-		rest := b[j+1:]
-		lower := []byte(strings.ToLower(string(rest)))
-		off := 0
-		for _, pfx := range prefixes {
-			if fqHasPrefix(lower, pfx) {
-				off = len(pfx)
+		p++
+		for _, pfx := range []string{"psalm-", "phpstan-"} {
+			if q := m.litFold(p, pfx); q >= 0 {
+				p = q
 				break
 			}
 		}
-		after := lower[off:]
-		var matched []byte
-		for _, kw := range kws {
-			if fqHasPrefix(after, kw) {
-				matched = kw
-				break
+		q := -1
+		if t := m.litFold(p, "template"); t >= 0 {
+			q = t
+			for _, sfx := range []string{"-covariant", "-contravariant"} {
+				if r := m.litFold(t, sfx); r >= 0 {
+					q = r
+					break
+				}
 			}
+		} else {
+			if r := m.litFold(p, "import-"); r >= 0 {
+				p = r
+			}
+			q = m.litFold(p, "type")
 		}
-		if matched == nil {
+		if q < 0 {
 			continue
 		}
-		p := j + 1 + off + len(matched)
-		hs := false
-		for p < n && fqHSpace(b[p]) {
-			p++
-			hs = true
+		h := m.skipH(q)
+		if h == q {
+			continue
 		}
-		if hs && p < n && fqNameStart(b[p]) {
-			st := p
-			p++
-			for p < n && fqNameChar(b[p]) {
-				p++
-			}
-			out = append(out, string(b[st:p]))
+		e := m.identifier(h)
+		if e < 0 || (e < len(content) && docS.at(content, e, m.utf) == 0) {
+			continue
 		}
+		out = append(out, content[h:e])
+		i = e - 1
 	}
 	return out
 }
 
-func fqHasPrefix(b, pfx []byte) bool {
-	if len(b) < len(pfx) {
-		return false
+// fixPhpDoc shortens the types of the phpdoc_tags tags of a docblock.
+func (c *fqCtx) fixPhpDoc(index int) {
+	if len(c.tags) == 0 {
+		return
 	}
-	for i := range pfx {
-		if b[i] != pfx[i] {
-			return false
-		}
+	content := c.s.At(index).Value
+	newContent := fqDocReplaceTypes(content, c.tags, c.fixPhpDocType)
+	if c.tags["see"] {
+		newContent = fqDocReplaceSeeMembers(newContent, c.fixPhpDocType)
 	}
-	return true
+	if newContent != content && !c.discovering {
+		c.addEdit(fqEdit{start: index, end: index, toks: []token.Token{{Kind: token.DocComment, Value: newContent}}})
+	}
 }
 
-// fqPhpDoc shortens class names inside each allowed docblock tag's type.
-func fqPhpDoc(s *tokens.Stream, idx int, uses *fqUses, ns string, reserved map[string]bool) (fqReplace, bool) {
-	content := s.At(idx).Value
-	newContent := fqPhpDocContent(content, uses, ns, reserved)
-	if newContent == content {
-		return fqReplace{}, false
-	}
-	tok := token.Token{Kind: token.DocComment, Value: newContent}
-	return fqReplace{start: idx, end: idx, raw: &tok}, true
+// fqDocLookaheadOK is (?!(?!\})\S) at p: the end, a "}" or a whitespace.
+func fqDocLookaheadOK(content string, p int, utf bool) bool {
+	return p >= len(content) || content[p] == '}' || docS.at(content, p, utf) > 0
 }
 
-// fqPhpDocContent mirrors ECS's `([*{]\h*@)(tag)(\h+)(type)` replace over the
-// allowed tags, using an explicit scanner (identical in go and rust).
-func fqPhpDocContent(content string, uses *fqUses, ns string, reserved map[string]bool) string {
-	b := []byte(content)
-	n := len(b)
-	var out []byte
-	i := 0
-	for i < n {
-		if b[i] == '*' || b[i] == '{' {
-			j := i + 1
-			for j < n && fqHSpace(b[j]) {
-				j++
-			}
-			if j < n && b[j] == '@' {
-				g1End := j + 1
-				t := g1End
-				for t < n && fqTagChar(b[t]) {
-					t++
-				}
-				if t > g1End {
-					tag := b[g1End:t]
-					h := t
-					for h < n && fqHSpace(b[h]) {
-						h++
-					}
-					if h > t && h < n && !fqWS(b[h]) && b[h] != '*' {
-						typeStart := h
-						te := h + 1
-						for te < n && !fqWS(b[te]) {
-							te++
-						}
-						out = append(out, b[i:g1End]...)
-						out = append(out, tag...)
-						out = append(out, b[t:h]...)
-						// the allowed tags match case-sensitively (in_array strict)
-						if fqPhpdocTags[string(tag)] && fqDocTypeRun(b[typeStart:te]) {
-							out = append(out, []byte(fqShortenDocType(string(b[typeStart:te]), uses, ns, reserved))...)
-						} else {
-							out = append(out, b[typeStart:te]...)
-						}
-						i = te
-						continue
-					}
-				}
-			}
-		}
-		out = append(out, b[i])
-		i++
-	}
-	return string(out)
-}
-
-// fqShortenDocType shortens each class-name atom in a type expression, skipping
-// variables ($x), string keys, array-shape keys and `::` members.
-func fqShortenDocType(typeStr string, uses *fqUses, ns string, reserved map[string]bool) string {
-	// a wildcard type argument (`*`, e.g. `Foo<*>` or `Rel<T, *, *>`) makes the
-	// whole type expression unparseable for ECS's TypeExpression, which then
-	// leaves it entirely fully qualified.
-	if strings.Contains(typeStr, "*") {
-		return typeStr
-	}
-	b := []byte(typeStr)
-	n := len(b)
-	var out []byte
-	i := 0
-	inString := byte(0)
-	for i < n {
-		c := b[i]
-		if inString != 0 {
-			out = append(out, c)
-			if c == inString {
-				inString = 0
-			}
-			i++
+// fqDocReplaceTypes is
+// preg_replace_callback('/([*{]\h*@)(\S+)(\h+)('.REGEX_TYPES.')(?!(?!\})\S)/', ...)
+// with fix applied to the types of the allowed tags.
+func fqDocReplaceTypes(content string, tags map[string]bool, fix func(string) string) string {
+	m := docTypeMatcher{src: content, utf: docUTF(content)}
+	var b strings.Builder
+	last := 0
+	for p := 0; p < len(content); p++ {
+		if content[p] != '*' && content[p] != '{' {
 			continue
 		}
-		if c == '\'' || c == '"' {
-			inString = c
-			out = append(out, c)
-			i++
+		q := m.skipH(p + 1)
+		if m.at(q) != '@' {
 			continue
 		}
-		// try to read an atom at i
-		j := i
-		if b[j] == '\\' && j+1 < n && fqNameStart(b[j+1]) {
-			j++
+		tagEnd := q + 1
+		for tagEnd < len(content) && docS.at(content, tagEnd, m.utf) == 0 {
+			tagEnd++
 		}
-		if j < n && fqNameStart(b[j]) {
-			start := i
-			j++
-			for j < n && fqNameChar(b[j]) {
-				j++
+		if tagEnd == q+1 {
+			continue
+		}
+		h := m.skipH(tagEnd)
+		if h == tagEnd {
+			continue
+		}
+		for _, e := range m.types(h) {
+			if !fqDocLookaheadOK(content, e, m.utf) {
+				continue
 			}
-			// TypeExpression's <name>: identifiers joined by "\\" or "-"
-			// ("positive-int", "key-of"); a dashed name is never a class
-			dashed := false
-			for j < n && (b[j] == '\\' || b[j] == '-') && j+1 < n && fqNameStart(b[j+1]) {
-				dashed = dashed || b[j] == '-'
-				j++
-				for j < n && fqNameChar(b[j]) {
-					j++
+			if tags[content[q+1:tagEnd]] {
+				b.WriteString(content[last:h])
+				b.WriteString(fix(content[h:e]))
+				last = e
+			}
+			p = e - 1
+			break
+		}
+	}
+	if last == 0 {
+		return content
+	}
+	b.WriteString(content[last:])
+	return b.String()
+}
+
+// fqDocReplaceSeeMembers is the @see pass:
+// /([*{]\h*)@see(\h+)(REGEX_CLASS)(::(?:\$\w+|\w+\(\)))(?!(?!\})\S)/
+func fqDocReplaceSeeMembers(content string, fix func(string) string) string {
+	m := docTypeMatcher{src: content, utf: docUTF(content)}
+	var b strings.Builder
+	last := 0
+	for p := 0; p < len(content); p++ {
+		if content[p] != '*' && content[p] != '{' {
+			continue
+		}
+		q := m.lit(m.skipH(p+1), "@see")
+		if q < 0 {
+			continue
+		}
+		h := m.skipH(q)
+		if h == q {
+			continue
+		}
+		classEnd := fqRegexClassAt(m, h)
+		if classEnd < 0 || m.lit(classEnd, "::") < 0 {
+			continue
+		}
+		r := classEnd + 2
+		end := -1
+		if m.at(r) == '$' {
+			// \$\w+ backtracks until the lookahead holds
+			var ends []int
+			for w := r + 1; ; {
+				n := docW.at(content, w, m.utf)
+				if n == 0 {
+					break
+				}
+				w += n
+				ends = append(ends, w)
+			}
+			for k := len(ends) - 1; k >= 0; k-- {
+				if fqDocLookaheadOK(content, ends[k], m.utf) {
+					end = ends[k]
+					break
 				}
 			}
-			atom := string(b[start:j])
-			if !dashed && fqDocAtomShortenable(b, start, j, n) {
-				out = append(out, []byte(fqMapDocAtom(atom, uses, ns, reserved))...)
-			} else {
-				out = append(out, b[start:j]...)
+		} else {
+			w := docW.skip(content, r, m.utf)
+			if w > r && m.lit(w, "()") >= 0 && fqDocLookaheadOK(content, w+2, m.utf) {
+				end = w + 2
 			}
-			i = j
+		}
+		if end < 0 {
 			continue
 		}
-		out = append(out, c)
-		i++
+		b.WriteString(content[last:h])
+		b.WriteString(fix(content[h:classEnd]))
+		last = classEnd
+		p = end - 1
 	}
-	return string(out)
+	if last == 0 {
+		return content
+	}
+	b.WriteString(content[last:])
+	return b.String()
 }
 
-// fqDocAtomShortenable guards against non-type atoms.
-func fqDocAtomShortenable(b []byte, start, end, n int) bool {
-	// preceded by `$` (variable), `::` (class constant / member) or a digit
-	// (the letters of a number constant: "1e3", "0x1F"); a single `:` is a
-	// shape value or callable return type ("array{key:\Foo}", "\Closure():\Foo")
-	if start > 0 {
-		p := b[start-1]
-		if p == '$' || (p == ':' && start >= 2 && b[start-2] == ':') || (p >= '0' && p <= '9') {
-			return false
-		}
+// fixPhpDocType is fixPhpDocType: TypeExpression::mapTypes over the type,
+// shortening every type that is a bare class name.
+func (c *fqCtx) fixPhpDocType(typ string) string {
+	v, ok := fqMapTypes(typ, c.docTypeCallback)
+	if !ok {
+		c.fail = true
+		return typ
 	}
-	// array-shape / object-shape key: atom followed by a single `:`, or by
-	// `?:` for an optional key
-	k := end
-	if k < n && b[k] == '?' {
-		k++
-	}
-	if k < n && b[k] == ':' && (k+1 >= n || b[k+1] != ':') {
-		return false
-	}
-	// generic base (`Foo<...>`): ECS shortens some but keeps others (wildcards,
-	// multi-arg spaced generics its parser rejects); leaving every generic base
-	// fully qualified is byte-safe and never over-shortens. (Valid callable
-	// bases `Closure(...)` are not guarded - ECS shortens those.)
-	if end < n && b[end] == '<' {
-		return false
-	}
-	return true
+	return v
 }
 
-func fqMapDocAtom(atom string, uses *fqUses, ns string, reserved map[string]bool) string {
-	if !strings.Contains(atom, "\\") {
-		lower := strings.ToLower(atom)
-		if fqReservedTypes[lower] || fqDocKeywords[lower] {
-			return atom
+func (c *fqCtx) docTypeCallback(v string) string {
+	ts, ok := parsePHPTypeValue(v)
+	if !ok {
+		c.fail = true
+		return v
+	}
+	if _, glue := ts.composite(); glue != 0 {
+		return v
+	}
+	if !fqIsRegexClass(v) || v == "min" || v == "max" {
+		return v
+	}
+	if short, changed := c.determineShortType(v); changed {
+		return short
+	}
+	return v
+}
+
+// fqIsRegexClass is preg_match('/^'.REGEX_CLASS.'$/', v).
+func fqIsRegexClass(v string) bool {
+	m := docTypeMatcher{src: v, utf: docUTF(v)}
+	e := fqRegexClassAt(m, 0)
+	return e >= 0 && (e == len(v) || (e == len(v)-1 && v[e] == '\n'))
+}
+
+// fqMapTypes ports TypeExpression::mapTypes: the inner type expressions are
+// mapped first (in the order parse registers them), then the type itself.
+// ok is false when the value does not parse, or would make PHP's
+// TypeExpression misbehave.
+func fqMapTypes(s string, cb func(string) string) (string, bool) {
+	ts, ok := parsePHPTypeValue(s)
+	if !ok {
+		return s, false
+	}
+	var inners []phpTypeSpan
+	if spans, glue := ts.composite(); glue != 0 {
+		inners = spans
+	} else {
+		t, _ := parsePHPType(s, 0)
+		switch {
+		case t.prefixLen > 0 && t.nullableLen > 0:
+			// PHP cuts the nullable part's length off the front, prefix included
+			return s, false
+		case t.nullableLen > 0:
+			inners = []phpTypeSpan{{t.nullableLen, len(s)}}
+		case t.arrayStart < t.end:
+			inners = []phpTypeSpan{{0, t.arrayStart}}
+		case t.prefixLen > 0:
+			// the generic, callable, shape and parenthesized branches only
+			// register inner types when they start the value; a class
+			// constant registers its class at offset 0, over the prefix
+			if nameEnd, ok := parsePHPTypeName(s, t.prefixLen); ok && strings.HasPrefix(s[nameEnd:], "::") {
+				return s, false
+			}
+		case s[0] == '(':
+			inners = t.inners
+		default:
+			// a generic, callable, array shape or class constant registers
+			// its name first
+			if nameEnd, ok := parsePHPTypeName(s, 0); ok && nameEnd < len(s) {
+				inners = append([]phpTypeSpan{{0, nameEnd}}, t.inners...)
+			}
 		}
 	}
-	repl, changed := fqDetermineShort(atom, uses, ns, reserved)
-	if !changed {
-		return atom
+	value, offset := s, 0
+	for _, sp := range inners {
+		orig := s[sp.start:sp.end]
+		mapped, ok := fqMapTypes(orig, cb)
+		if !ok {
+			return s, false
+		}
+		if mapped != orig {
+			at := sp.start + offset
+			value = value[:at] + mapped + value[at+len(orig):]
+			offset += len(mapped) - len(orig)
+		}
 	}
-	return repl
+	return cb(value), true
 }
