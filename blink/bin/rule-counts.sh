@@ -19,14 +19,16 @@ START="<!-- rule-counts:start -->"
 END="<!-- rule-counts:end -->"
 
 go build -C "$ROOT" -o /tmp/blink-count . >&2
-go_count=$(/tmp/blink-count list-checkers | grep -cE '^[[:space:]]*- ')
+/tmp/blink-count list-checkers > /tmp/blink-checkers.txt
+# blink's own fixers only; the deprecated names listed after them are not rules of their own
+go_count=$(awk '/^Deprecated/ {exit} /^[[:space:]]*- / {n++} END {print n+0}' /tmp/blink-checkers.txt)
 
 # the universe blink is measured against (parity denominator)
 go run -C "$ROOT" ./cmd/list-universe > /tmp/blink-universe.txt
 ecs=$(grep -c . /tmp/blink-universe.txt)
 
-# universe fixers blink has not ported yet
-/tmp/blink-count list-checkers | sed 's/^[[:space:]]*-[[:space:]]*//' | LC_ALL=C sort -u > /tmp/blink-impl.txt
+# universe fixers blink has not ported yet; a deprecated name blink runs counts as ported
+sed 's/^[[:space:]]*-[[:space:]]*//' /tmp/blink-checkers.txt | LC_ALL=C sort -u > /tmp/blink-impl.txt
 missing=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | sed -E 's#.*\\##')
 missing_count=$(printf '%s' "$missing" | grep -c . || true)
 

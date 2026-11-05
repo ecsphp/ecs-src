@@ -585,6 +585,16 @@ func DeprecatedOptions(class string, options map[string]any) (map[string]any, bo
 	return alias.options(options), true
 }
 
+// DeprecatedNames returns the deprecated classes ByName resolves, sorted.
+func DeprecatedNames() []string {
+	names := make([]string, 0, len(deprecatedAliases))
+	for name := range deprecatedAliases {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	return names
+}
+
 // ByName returns the fixer whose Name matches, if any, configured with
 // PHP-CS-Fixer's defaults like every fixer All returns. A deprecated class
 // resolves to its successor, configured as the deprecated fixer configures it
