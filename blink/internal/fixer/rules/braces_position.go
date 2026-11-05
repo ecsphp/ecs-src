@@ -16,6 +16,9 @@ import (
 // with the declaration; control structures keep it on the same line after a
 // single space. Closures and free blocks are left alone by default. Each brace
 // position is configurable; empty option fields keep this default behaviour.
+// The body of a closure or an anonymous class is broken into lines as
+// php-cs-fixer does (allow_single_line_anonymous_functions,
+// allow_single_line_empty_anonymous_classes); other bodies are not yet.
 type BracesPosition struct {
 	classesOpeningBrace            string
 	functionsOpeningBrace          string
@@ -28,6 +31,9 @@ type BracesPosition struct {
 	// its own.
 	allowSingleLineAnonFns    bool
 	allowSingleLineAnonFnsSet bool
+	// noSingleLineEmptyAnonClasses is allow_single_line_empty_anonymous_classes
+	// set to false: an empty anonymous class body is put on lines of its own too
+	noSingleLineEmptyAnonClasses bool
 }
 
 const (
@@ -51,8 +57,9 @@ func (f BracesPosition) WithConfig(config map[string]any) fixer.Fixer {
 	if v, ok := config["control_structures_opening_brace"].(string); ok {
 		f.controlStructuresOpeningBrace = v
 	}
-	// allow_single_line_empty_anonymous_classes is accepted but not applied: blink
-	// already keeps single-line empty bodies (matching the default true).
+	if v, ok := config["allow_single_line_empty_anonymous_classes"].(bool); ok {
+		f.noSingleLineEmptyAnonClasses = !v
+	}
 	if v, ok := config["allow_single_line_anonymous_functions"].(bool); ok {
 		f.allowSingleLineAnonFns = v
 		f.allowSingleLineAnonFnsSet = true
@@ -70,6 +77,10 @@ func (BracesPosition) SourceURL() string {
 
 func (f BracesPosition) Fix(s *tokens.Stream) bool {
 	changed := false
+	// php-cs-fixer's $allowSingleLineUntil: the body of the first block left on
+	// one line, inside which no anonymous class body is broken into lines. Kept
+	// as the index of its "{", which later edits (all after it) do not move.
+	singleLineOpen := -1
 	for i := 0; i < s.Len(); i++ {
 		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
 			continue
@@ -100,13 +111,22 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 
 		// an empty class/function body already collapsed to "{}" stays on its
 		// line - ECS keeps "class A {}" as-is (single_line_empty_body owns the
-		// collapse); only reflow a body with content
-		if (kind == braceClassLike || kind == braceFunctionDecl) && s.MatchForward(i) == i+1 {
+		// collapse); only reflow a body with content. Anonymous classes follow
+		// php-cs-fixer (allow_single_line_empty_anonymous_classes).
+		if (kind == braceClassLike && category != "anon_classes" || kind == braceFunctionDecl) && s.MatchForward(i) == i+1 {
 			continue
 		}
 
-		// php-cs-fixer's $addNewlinesInsideBraces, for closures only so far
-		newlinesInside := kind == braceClosure && f.closureBodyNeedsNewlines(s, i)
+		// php-cs-fixer's $addNewlinesInsideBraces, for closures and anonymous
+		// classes only so far
+		var newlinesInside bool
+		switch category {
+		case "anon_functions":
+			newlinesInside = f.closureBodyNeedsNewlines(s, i)
+		case "anon_classes":
+			newlinesInside = f.anonClassBodyNeedsNewlines(s, i, singleLineOpen)
+		}
+		markSingleLine := (category == "anon_functions" || category == "anon_classes") && !newlinesInside && singleLineOpen < 0
 		if newlinesInside && bpOpenBraceNeedsNewline(s, i) {
 			changed = editSlotAfter(s, i, "\n"+lineIndent(s, i)) || changed
 		}
@@ -138,8 +158,33 @@ func (f BracesPosition) Fix(s *tokens.Stream) bool {
 		if newlinesInside && bpCloseBraceOnOwnLine(s, i) {
 			changed = true
 		}
+		if markSingleLine {
+			singleLineOpen = i
+		}
 	}
 	return changed
+}
+
+// anonClassBodyNeedsNewlines reports whether the body of the anonymous class
+// whose "{" is at open goes on lines of its own. With
+// allow_single_line_empty_anonymous_classes (the default) an empty body may
+// stay on one line, and when false every body is broken, unless it sits in the
+// body of the block left on one line at singleLineOpen; either way a body
+// already holding a line break, or (when allowed) holding code, is broken.
+func (f BracesPosition) anonClassBodyNeedsNewlines(s *tokens.Stream, open, singleLineOpen int) bool {
+	allowIfEmpty := !f.noSingleLineEmptyAnonClasses
+	nested := singleLineOpen >= 0 && open < s.MatchForward(singleLineOpen)
+	if !allowIfEmpty && !nested {
+		return true
+	}
+	closeIdx := s.MatchForward(open)
+	for j := open + 1; j < closeIdx; j++ {
+		t := s.At(j)
+		if allowIfEmpty && t.Kind != token.Whitespace && !isComment(t) || t.Kind == token.Whitespace && hasNewline(t.Value) {
+			return true
+		}
+	}
+	return false
 }
 
 // bpBraceTarget is PHP-CS-Fixer's $moveBraceToIndex: where the brace goes so that a
