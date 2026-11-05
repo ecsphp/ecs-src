@@ -22,6 +22,7 @@ var fixerPriority = map[string]int{
 	"RemoveDeadVarThisFixer":                   -37,
 	"AddMissingParamNameFixer":                 0,
 	"AlignMultilineCommentFixer":               27,
+	"CommentToPhpdocFixer":                     26,
 	"ArrayIndentationFixer":                    29,
 	"ArrayListItemNewlineFixer":                40,
 	"StandaloneLineInMultilineArrayFixer":      5,
