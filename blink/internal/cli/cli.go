@@ -138,6 +138,10 @@ func listCheckers() int {
 	for _, r := range rules.All() {
 		fmt.Printf("  - %s\n", r.Name())
 	}
+	fmt.Println("Deprecated names, run as their successor:")
+	for _, name := range rules.DeprecatedNames() {
+		fmt.Printf("  - %s\n", name)
+	}
 	return 0
 }
 
@@ -149,7 +153,7 @@ Usage:
   blink --fix [paths...]      fix paths in place
   blink --config FILE ...     use a blink.json config
   blink --ecs-config FILE ... use an ECS dump-config JSON (blink mode)
-  blink list-checkers         list registered fixers
+  blink list-checkers         list registered fixers and deprecated names
 
 Loads blink.json from the working directory when present.
 Runs across all CPU cores by default.

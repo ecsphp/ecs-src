@@ -196,20 +196,29 @@ func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
 			classesByFixer[resolved.Name()] = append(classesByFixer[resolved.Name()], rule.Class)
 		}
 
-		if len(rule.Config) > 0 {
-			if configurable, ok := resolved.(fixer.RawConfigurableFixer); ok && len(rule.RawConfig) > 0 {
-				resolved = configurable.WithRawConfig(rule.RawConfig)
+		options, rawOptions := rule.Config, rule.RawConfig
+		// a deprecated class that configures its successor its own way keeps
+		// that configuration: it runs beside the successor, as in PHP-CS-Fixer
+		key := resolved.Name()
+		if translated, ok := rules.DeprecatedOptions(rule.Class, rule.Config); ok {
+			options, rawOptions = translated, nil
+			key = rule.Class
+		}
+
+		if len(options) > 0 {
+			if configurable, ok := resolved.(fixer.RawConfigurableFixer); ok && len(rawOptions) > 0 {
+				resolved = configurable.WithRawConfig(rawOptions)
 			} else if configurable, ok := resolved.(fixer.ConfigurableFixer); ok {
-				resolved = configurable.WithConfig(rule.Config)
+				resolved = configurable.WithConfig(options)
 			} else {
 				resolution.ConfigIgnored = append(resolution.ConfigIgnored, rule.Class)
 			}
 		}
 
-		// key on the resolved fixer name, so a deprecated class and its
-		// successor (both resolving to one fixer) are not added twice
-		if !seen[resolved.Name()] {
-			seen[resolved.Name()] = true
+		// a deprecated class sharing its successor's options collapses into
+		// the successor, so the one fixer is not added twice
+		if !seen[key] {
+			seen[key] = true
 			resolution.Mapped++
 			config.Rules = append(config.Rules, resolved)
 		}

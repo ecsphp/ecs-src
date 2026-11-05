@@ -503,19 +503,116 @@ func fixerPriorityOf(f fixer.Fixer) int {
 	return fixerPriority[short]
 }
 
+// deprecatedAlias is a deprecated PHP-CS-Fixer fixer that only proxies a
+// successor blink implements.
+type deprecatedAlias struct {
+	successor string
+	// options maps the deprecated fixer's options to its successor's; nil when
+	// they are the same options.
+	options func(deprecated map[string]any) map[string]any
+}
+
+// fixedOptions is for a deprecated fixer that has no options of its own.
+func fixedOptions(successor map[string]any) func(map[string]any) map[string]any {
+	return func(map[string]any) map[string]any { return successor }
+}
+
 // deprecatedAliases maps a deprecated PHP-CS-Fixer class to its successor, so a
-// dumped ECS config that still references the old name resolves to the fixer.
-var deprecatedAliases = map[string]string{
-	`PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`: `PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer`,
+// dumped ECS config that still references the old name resolves to the fixer,
+// configured as the deprecated fixer configures it.
+var deprecatedAliases = map[string]deprecatedAlias{
+	`PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`: {successor: `PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer`},
+	`PhpCsFixer\Fixer\Basic\CurlyBracesPositionFixer`:              {successor: `PhpCsFixer\Fixer\Basic\BracesPositionFixer`},
+	`PhpCsFixer\Fixer\Operator\NewWithBracesFixer`:                 {successor: `PhpCsFixer\Fixer\Operator\NewWithParenthesesFixer`},
+	`PhpCsFixer\Fixer\Whitespace\CompactNullableTypehintFixer`:     {successor: `PhpCsFixer\Fixer\Whitespace\CompactNullableTypeDeclarationFixer`},
+	`PhpCsFixer\Fixer\Whitespace\NoSpacesInsideParenthesisFixer`:   {successor: `PhpCsFixer\Fixer\Whitespace\SpacesInsideParenthesesFixer`},
+	`PhpCsFixer\Fixer\ArrayNotation\NoTrailingCommaInSinglelineArrayFixer`: {
+		successor: `PhpCsFixer\Fixer\Basic\NoTrailingCommaInSinglelineFixer`,
+		options:   fixedOptions(map[string]any{"elements": []string{"array"}}),
+	},
+	`PhpCsFixer\Fixer\ControlStructure\NoTrailingCommaInListCallFixer`: {
+		successor: `PhpCsFixer\Fixer\Basic\NoTrailingCommaInSinglelineFixer`,
+		options:   fixedOptions(map[string]any{"elements": []string{"array_destructuring"}}),
+	},
+	`PhpCsFixer\Fixer\FunctionNotation\NoTrailingCommaInSinglelineFunctionCallFixer`: {
+		successor: `PhpCsFixer\Fixer\Basic\NoTrailingCommaInSinglelineFixer`,
+		options:   fixedOptions(map[string]any{"elements": []string{"arguments", "array_destructuring"}}),
+	},
+	`PhpCsFixer\Fixer\FunctionNotation\FunctionTypehintSpaceFixer`: {
+		successor: `PhpCsFixer\Fixer\Whitespace\TypeDeclarationSpacesFixer`,
+		options:   fixedOptions(map[string]any{"elements": []string{"function"}}),
+	},
+	`PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAfterConstructFixer`: {
+		successor: `PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAroundConstructFixer`,
+		options:   singleSpaceAfterConstructOptions,
+	},
+}
+
+// singleSpaceAfterConstructDefault is SingleSpaceAfterConstructFixer's default
+// `constructs`: every construct it knows but type_colon.
+var singleSpaceAfterConstructDefault = []string{
+	"abstract", "as", "attribute", "break", "case", "catch", "class", "clone", "comment",
+	"const", "const_import", "continue", "do", "echo", "else", "elseif", "enum", "extends",
+	"final", "finally", "for", "foreach", "function", "function_import", "global", "goto",
+	"if", "implements", "include", "include_once", "instanceof", "insteadof", "interface",
+	"match", "named_argument", "namespace", "new", "open_tag_with_echo", "php_doc",
+	"php_open", "print", "private", "protected", "public", "readonly", "require",
+	"require_once", "return", "static", "switch", "throw", "trait", "try", "use",
+	"use_lambda", "use_trait", "var", "while", "yield", "yield_from",
+}
+
+// singleSpaceAfterConstructOptions ports SingleSpaceAfterConstructFixer's
+// configurePostNormalisation.
+func singleSpaceAfterConstructOptions(deprecated map[string]any) map[string]any {
+	constructs, ok := deprecated["constructs"]
+	if !ok {
+		constructs = singleSpaceAfterConstructDefault
+	}
+	return map[string]any{
+		"constructs_contain_a_single_space":     []string{"yield_from"},
+		"constructs_preceded_by_a_single_space": []string{},
+		"constructs_followed_by_a_single_space": constructs,
+	}
+}
+
+// DeprecatedOptions maps the options of a deprecated class to its successor's.
+// It reports false when no mapping is needed.
+func DeprecatedOptions(class string, options map[string]any) (map[string]any, bool) {
+	alias, ok := deprecatedAliases[class]
+	if !ok || alias.options == nil {
+		return nil, false
+	}
+	return alias.options(options), true
+}
+
+// DeprecatedNames returns the deprecated classes ByName resolves, sorted.
+func DeprecatedNames() []string {
+	names := make([]string, 0, len(deprecatedAliases))
+	for name := range deprecatedAliases {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	return names
 }
 
 // ByName returns the fixer whose Name matches, if any, configured with
-// PHP-CS-Fixer's defaults like every fixer All returns.
+// PHP-CS-Fixer's defaults like every fixer All returns. A deprecated class
+// resolves to its successor, configured as the deprecated fixer configures it
+// by default.
 func ByName(name string) (fixer.Fixer, bool) {
 	registryOnce.Do(buildRegistry)
-	if canonical, ok := deprecatedAliases[name]; ok {
-		name = canonical
+	alias, deprecated := deprecatedAliases[name]
+	if !deprecated {
+		f, ok := reg.byName[name]
+		return f, ok
 	}
-	f, ok := reg.byName[name]
-	return f, ok
+	f, ok := reg.byName[alias.successor]
+	if !ok || alias.options == nil {
+		return f, ok
+	}
+	configurable, ok := f.(fixer.ConfigurableFixer)
+	if !ok {
+		return nil, false
+	}
+	return configurable.WithConfig(alias.options(nil)), true
 }

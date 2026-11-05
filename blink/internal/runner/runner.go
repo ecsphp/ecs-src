@@ -144,7 +144,9 @@ func fixFile(cfg *config.Config, ruleSkips map[string][]*finder.PathMatcher, pat
 		if skippedFor(ruleSkips[rule.Name()], path) {
 			continue
 		}
-		if isCandidate(rule, stream) && rule.Fix(stream) {
+		// a deprecated class configured beside its successor runs as a second
+		// instance of the same fixer, which is listed once
+		if isCandidate(rule, stream) && rule.Fix(stream) && !slices.Contains(res.AppliedRules, rule.Name()) {
 			res.AppliedRules = append(res.AppliedRules, rule.Name())
 		}
 		// ECS does this after every fixer that changed the file. Blink rules may

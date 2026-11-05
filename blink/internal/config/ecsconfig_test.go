@@ -358,3 +358,106 @@ func TestLoadECSPerPathSkipOnDeprecatedAlias(t *testing.T) {
 		})
 	}
 }
+
+// fixWith runs the rules an ECS config resolves to over code.
+func fixWith(t *testing.T, rules []string, config, code string) string {
+	t.Helper()
+	entries := make([]string, 0, len(rules))
+	for _, class := range rules {
+		entries = append(entries, `{"class": "`+esc(class)+`", "config": `+config+`}`)
+	}
+	cfg, resolution, err := LoadECS(writeECS(t, `{"rules": [`+strings.Join(entries, ",")+`]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resolution.Unsupported) != 0 || len(resolution.ConfigIgnored) != 0 {
+		t.Fatalf("unsupported %v, config ignored %v", resolution.Unsupported, resolution.ConfigIgnored)
+	}
+	s := tokens.New(lexer.Lex(code))
+	for _, rule := range cfg.Rules {
+		rule.Fix(s)
+		s.ClearEmptyTokens()
+	}
+	return s.Render()
+}
+
+// Each deprecated PHP-CS-Fixer class runs its successor the way the deprecated
+// fixer's proxy configures it.
+func TestLoadECSRunsDeprecatedAliasesAsTheirProxy(t *testing.T) {
+	cases := []struct {
+		class, config, in, want string
+	}{
+		{
+			`PhpCsFixer\Fixer\ArrayNotation\NoTrailingCommaInSinglelineArrayFixer`, `{}`,
+			"<?php\n$a = [1, 2,];\nfoo(1, 2,);\nlist($b, $c,) = $d;\n",
+			"<?php\n$a = [1, 2];\nfoo(1, 2,);\nlist($b, $c,) = $d;\n",
+		},
+		{
+			`PhpCsFixer\Fixer\ControlStructure\NoTrailingCommaInListCallFixer`, `{}`,
+			"<?php\n$a = [1, 2,];\nfoo(1, 2,);\nlist($b, $c,) = $d;\n",
+			"<?php\n$a = [1, 2,];\nfoo(1, 2,);\nlist($b, $c) = $d;\n",
+		},
+		{
+			`PhpCsFixer\Fixer\FunctionNotation\NoTrailingCommaInSinglelineFunctionCallFixer`, `{}`,
+			"<?php\n$a = [1, 2,];\nfoo(1, 2,);\nlist($b, $c,) = $d;\n",
+			"<?php\n$a = [1, 2,];\nfoo(1, 2);\nlist($b, $c) = $d;\n",
+		},
+		{
+			`PhpCsFixer\Fixer\FunctionNotation\FunctionTypehintSpaceFixer`, `{}`,
+			"<?php\nclass A { public int  $p; }\nfunction f(int  $a) {}\n",
+			"<?php\nclass A { public int  $p; }\nfunction f(int $a) {}\n",
+		},
+		{
+			`PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAfterConstructFixer`, `{}`,
+			"<?php\nforeach ($a  as  $b) {}\nreturn  1;\n",
+			"<?php\nforeach ($a  as $b) {}\nreturn 1;\n",
+		},
+		{
+			`PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAfterConstructFixer`, `{"constructs": ["echo"]}`,
+			"<?php\necho  1;\nreturn  2;\n",
+			"<?php\necho 1;\nreturn  2;\n",
+		},
+		{
+			`PhpCsFixer\Fixer\Operator\NewWithBracesFixer`, `{}`,
+			"<?php\n$a = new Foo;\n",
+			"<?php\n$a = new Foo();\n",
+		},
+		{
+			`PhpCsFixer\Fixer\Operator\NewWithBracesFixer`, `{"named_class": false}`,
+			"<?php\n$a = new Foo;\n",
+			"<?php\n$a = new Foo;\n",
+		},
+		{
+			`PhpCsFixer\Fixer\Whitespace\CompactNullableTypehintFixer`, `{}`,
+			"<?php\nfunction f(?  int $a) {}\n",
+			"<?php\nfunction f(?int $a) {}\n",
+		},
+		{
+			`PhpCsFixer\Fixer\Whitespace\NoSpacesInsideParenthesisFixer`, `{}`,
+			"<?php\nfoo( 1, 2 );\n",
+			"<?php\nfoo(1, 2);\n",
+		},
+		{
+			`PhpCsFixer\Fixer\Basic\CurlyBracesPositionFixer`, `{}`,
+			"<?php\nclass A {\n}\n",
+			"<?php\nclass A\n{\n}\n",
+		},
+	}
+	for _, c := range cases {
+		if got := fixWith(t, []string{c.class}, c.config, c.in); got != c.want {
+			t.Errorf("%s %s:\ngot  %q\nwant %q", c.class, c.config, got, c.want)
+		}
+	}
+}
+
+// Two deprecated classes proxying one successor with different options both
+// keep theirs, rather than collapsing into whichever comes first.
+func TestLoadECSKeepsEachDeprecatedAliasConfiguration(t *testing.T) {
+	got := fixWith(t, []string{
+		`PhpCsFixer\Fixer\ArrayNotation\NoTrailingCommaInSinglelineArrayFixer`,
+		`PhpCsFixer\Fixer\ControlStructure\NoTrailingCommaInListCallFixer`,
+	}, `{}`, "<?php\n$a = [1, 2,];\nfoo(1, 2,);\nlist($b, $c,) = $d;\n")
+	if want := "<?php\n$a = [1, 2];\nfoo(1, 2,);\nlist($b, $c) = $d;\n"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
