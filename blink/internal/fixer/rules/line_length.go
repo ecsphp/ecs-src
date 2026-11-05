@@ -71,18 +71,20 @@ func (f LineLength) Fix(s *tokens.Stream) bool {
 	// not-yet-visited lower indices stay valid; the outermost closer is processed
 	// first, which is what makes nested calls resolve outer-to-inner
 	n := s.Len()
+	inserted := -1
 	for pos := n - 1; pos >= 0; pos-- {
 		if pos >= s.Len() {
 			continue
 		}
 		t := s.At(pos)
+		before := s.Len()
 		switch {
 		case t.Kind == token.Punct && t.Value == ")":
 			if f.processMethodCall(s, pos) {
 				changed = true
 			}
 		case llIsAttribute(t):
-			if f.processAttribute(s, pos) {
+			if f.processAttribute(s, pos, inserted) {
 				changed = true
 			}
 		case t.Kind == token.Keyword && strings.EqualFold(t.Value, "new"):
@@ -102,6 +104,9 @@ func (f LineLength) Fix(s *tokens.Stream) bool {
 				changed = true
 			}
 		}
+		if s.Len() > before {
+			inserted = pos
+		}
 	}
 	return changed
 }
@@ -117,7 +122,8 @@ func (f LineLength) processMethodCall(s *tokens.Stream, closeIdx int) bool {
 	if s.At(name).Kind != token.Ident {
 		return false
 	}
-	if v := s.At(name).Value; v == "" || v[0] < 'a' || v[0] > 'z' {
+	// eval, exit and die are tokens of their own for PHP, not names
+	if v := s.At(name).Value; v == "" || v[0] < 'a' || v[0] > 'z' || v == "eval" || v == "exit" || v == "die" {
 		return false
 	}
 	// empty argument list
@@ -126,7 +132,7 @@ func (f LineLength) processMethodCall(s *tokens.Stream, closeIdx int) bool {
 	}
 	// a comment inside is unsafe to reflow
 	for j := open; j <= closeIdx && j < s.Len(); j++ {
-		if k := s.At(j).Kind; k == token.Comment || k == token.DocComment {
+		if s.At(j).Kind == token.Comment {
 			return false
 		}
 	}
@@ -187,7 +193,8 @@ func (f LineLength) shouldSkip(s *tokens.Stream, open, closeIdx int) bool {
 	if closeIdx-open <= 1 {
 		return true
 	}
-	if nx := sigNext(s, open); nx >= 0 && nx < closeIdx && s.At(nx).StartsHeredoc() {
+	// HeredocAnalyzer only looks for "<<<" in the first token, whatever its kind
+	if nx := sigNext(s, open); nx >= 0 && nx < closeIdx && llIsHeredocForAnalyzer(s.At(nx)) {
 		return true
 	}
 	for j := open + 1; j < closeIdx; j++ {
@@ -195,11 +202,17 @@ func (f LineLength) shouldSkip(s *tokens.Stream, open, closeIdx int) bool {
 		if t.Kind == token.Punct && t.Value == "=>" {
 			return true
 		}
-		if k := t.Kind; k == token.Comment || k == token.DocComment {
+		if t.Kind == token.Comment {
 			return true
 		}
 	}
 	return false
+}
+
+// llIsHeredocForAnalyzer is HeredocAnalyzer's check for "<<<" in the first token. For PHP the
+// first token of an interpolated string or a backtick string is only its opening quote.
+func llIsHeredocForAnalyzer(t token.Token) bool {
+	return strings.Contains(t.Value, "<<<") && (t.StartsHeredoc() || (t.IsLiteral() && !t.IsShellExec()))
 }
 
 // transform decides break vs inline the way LineLengthTransformer does.
@@ -275,7 +288,7 @@ func (f LineLength) fullLineLength(s *tokens.Stream, open, closeIdx int) int {
 		p--
 	}
 	if p >= 0 {
-		length += len(s.At(p).Value)
+		length += llLineStartLength(s, p)
 	}
 	for j := open; j < closeIdx && j < s.Len(); j++ {
 		if s.At(j).Kind == token.Whitespace {
@@ -325,6 +338,21 @@ func (f LineLength) breakItems(s *tokens.Stream, open, closeIdx int) bool {
 	return changed
 }
 
+// llLineStartLength counts the token that starts the line. PHP's "<?php" token holds its
+// line break: it stops at the whitespace after it when that holds another line break, and
+// otherwise goes on to count the tag.
+func llLineStartLength(s *tokens.Stream, p int) int {
+	v := s.At(p).Value
+	if p == 0 || s.At(p).Kind != token.Whitespace || !strings.HasPrefix(s.At(p-1).Value, "<?php") {
+		return len(v)
+	}
+	rest := strings.TrimPrefix(strings.TrimPrefix(v, "\r"), "\n")
+	if hasNewline(rest) {
+		return len(rest)
+	}
+	return len(s.At(p-1).Value) + len(v)
+}
+
 // breakCloser inserts the newline before the closer; for a non-method call that
 // ends with "])" it breaks before the "]" instead (shouldAddNewlineEarlier).
 func (f LineLength) breakCloser(s *tokens.Stream, open, closeIdx int, itemWS, closeWS string) bool {
@@ -334,7 +362,8 @@ func (f LineLength) breakCloser(s *tokens.Stream, open, closeIdx int, itemWS, cl
 	pp := closeIdx - 3
 	// method([...]) breaks before the "]"; method([]) and method([[...]]) do not
 	if !isMethodCall && prev > open && llIsArrayCloseTok(s, prev) && !llClosesEmptyArray(s, prev) {
-		if pp > open && !llIsArrayEdgeTok(s, pp) {
+		// isEmptyArray also takes a whitespace token for an empty array
+		if pp > open && !llIsArrayEdgeTok(s, pp) && s.At(pp).Kind != token.Whitespace {
 			return llEnsureWS(s, prev, 0, itemWS)
 		}
 	}
@@ -371,6 +400,14 @@ func (f LineLength) inlineItems(s *tokens.Stream, open, closeIdx int) bool {
 			}
 			continue
 		}
+		if csbIsKeyword(t, "array") {
+			if open := nextMeaningfulIndex(s, i); open >= 0 && isPunctVal(s, open, "(") {
+				if m := s.MatchForward(open); m > i {
+					i = m
+				}
+				continue
+			}
+		}
 		if t.Kind != token.Whitespace {
 			continue
 		}
@@ -393,87 +430,22 @@ func (f LineLength) inlineItems(s *tokens.Stream, open, closeIdx int) bool {
 	return changed
 }
 
-// processAttribute expands a too-long "#[Attr(...)]" onto multiple lines by
-// rewriting the attribute's text and re-lexing it back into the stream.
-func (f LineLength) processAttribute(s *tokens.Stream, pos int) bool {
-	if !f.breakLongLines {
-		return false
-	}
+// processAttribute handles the first "(" of an attribute, like BlockFinder's
+// createAttributeBlockInfo: in "#[A(1), B(2)]" only the block of A. BlockFinder finds that
+// block only through a cache that an insert clears, so PHP leaves the attribute alone once
+// a block inside it was broken.
+func (f LineLength) processAttribute(s *tokens.Stream, pos, inserted int) bool {
 	end := s.AttributeEnd(pos)
-	if end < 0 {
-		return false
-	}
-	v := attributeText(s, pos, end)
-	if !strings.Contains(v, "(") {
-		return false
-	}
-	attrFirst := v
-	if before, _, ok := strings.Cut(v, "\n"); ok {
-		attrFirst = before
-	}
-	if f.attributeColumn(s, pos)+len(attrFirst) <= f.lineLength {
-		return false
-	}
-	base := lineIndent(s, pos)
-	return rewriteAttributeText(s, pos, end, func(v string) (string, bool) {
-		nv := llExpandAttribute(v, base)
-		return nv, nv != ""
-	})
-}
-
-// attributeColumn is the rendered column at which the attribute token starts.
-func (f LineLength) attributeColumn(s *tokens.Stream, idx int) int {
-	length := 0
-	cp := idx - 1
-	for cp >= 0 {
-		t := s.At(cp)
-		if llIsNewlineOrOpenTag(t) {
-			break
+	for open := pos + 1; open < end; open++ {
+		if isPunctVal(s, open, "(") {
+			closeIdx := s.MatchForward(open)
+			if closeIdx < 0 || (open <= inserted && inserted <= closeIdx) || f.shouldSkip(s, open, closeIdx) {
+				return false
+			}
+			return f.transform(s, open, closeIdx)
 		}
-		c := t.Value
-		if nl := strings.LastIndexByte(c, '\n'); nl >= 0 {
-			length += len(c) - nl - 1
-			cp--
-			break
-		}
-		length += len(c)
-		cp--
 	}
-	if cp >= 0 && cp < s.Len() {
-		c := s.At(cp).Value
-		length += len(c) - strings.Count(c, "\n")
-	}
-	return length
-}
-
-// llExpandAttribute rewrites the first top-level "(...)" of an attribute so each
-// argument sits on its own line, indented one level past base.
-func llExpandAttribute(v, base string) string {
-	open := strings.IndexByte(v, '(')
-	if open < 0 {
-		return ""
-	}
-	closeIdx := matchParen(v, open)
-	if closeIdx < 0 {
-		return ""
-	}
-	args, _ := splitTopLevelArgs(v[open+1 : closeIdx])
-	if len(args) == 0 {
-		return ""
-	}
-	var b strings.Builder
-	b.WriteString(v[:open+1])
-	for _, arg := range args {
-		b.WriteString("\n")
-		b.WriteString(base)
-		b.WriteString(llIndent)
-		b.WriteString(arg)
-		b.WriteByte(',')
-	}
-	// drop the trailing comma of the last item (attributes keep none here)
-	out := strings.TrimSuffix(b.String(), ",")
-	out += "\n" + base + v[closeIdx:]
-	return out
+	return false
 }
 
 // llEnsureWS ports PhpCsFixer Tokens::ensureWhitespaceAtIndex: overwrite an

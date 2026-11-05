@@ -134,28 +134,48 @@ func (TrimArraySpaces) SourceURL() string {
 func (TrimArraySpaces) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind != token.Punct || s.At(i).Value != "[" || isOffsetOpen(s, i) {
+		t := s.At(i)
+		isBracket := t.Kind == token.Punct && t.Value == "[" && !isOffsetOpen(s, i)
+		isLongArray := isPunctVal(s, i, "(") && parenOpensArray(s, i)
+		if !isBracket && !isLongArray {
 			continue
 		}
 		closeIdx := s.MatchForward(i)
 		if closeIdx < 0 {
 			continue
 		}
-		// a space kept next to a comment is left alone ("[ // note" / "/* note */ ]");
-		// a space after a trailing comma ("1, ]") is also kept, matching php-cs-fixer
-		prevComma := closeIdx-2 > i && s.At(closeIdx-2).Kind == token.Punct && s.At(closeIdx-2).Value == ","
-		if closeIdx-1 > i && s.At(closeIdx-1).Kind == token.Whitespace && !hasNewline(s.At(closeIdx-1).Value) &&
-			!commentAt(s, closeIdx-2) && !prevComma {
-			s.RemoveAt(closeIdx - 1)
+		// a space after a trailing comma ("1, ]") is kept, matching php-cs-fixer
+		before := closeIdx - 1
+		if before > i && s.At(before).Kind == token.Whitespace && !hasNewline(s.At(before).Value) &&
+			!isPunctVal(s, before-1, ",") {
+			s.RemoveAt(before)
 			changed = true
+			closeIdx--
 		}
-		if i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) &&
-			!commentAt(s, i+2) {
+		if trimArrayClearsAfterOpen(s, i, closeIdx) {
 			s.RemoveAt(i + 1)
 			changed = true
 		}
 	}
 	return changed
+}
+
+// trimArrayClearsAfterOpen keeps the space before a line comment that shares its line with
+// more code, as PHP-CS-Fixer does.
+func trimArrayClearsAfterOpen(s *tokens.Stream, open, closeIdx int) bool {
+	if s.At(open+1).Kind != token.Whitespace || hasNewline(s.At(open+1).Value) {
+		return false
+	}
+	next := open + 2
+	if !isComment(s.At(next)) || strings.HasPrefix(s.At(next).Value, "/*") {
+		return true
+	}
+	after := s.At(next + 1)
+	lastBeforeClose := closeIdx - 1
+	if s.At(lastBeforeClose).Kind == token.Whitespace {
+		lastBeforeClose--
+	}
+	return next == lastBeforeClose || (after.Kind == token.Whitespace && !hasNewline(after.Value))
 }
 
 // nativeTypeNames are the built-in type names lowercased in type declarations.

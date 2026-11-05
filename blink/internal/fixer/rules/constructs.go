@@ -594,20 +594,29 @@ func (f NoSpacesInsideParenthesis) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
-		if t.Kind == token.Punct && t.Value == "(" &&
+		if t.Kind == token.Punct && t.Value == "(" && !parenOpensArray(s, i) &&
 			i+1 < s.Len() && s.At(i+1).Kind == token.Whitespace && !hasNewline(s.At(i+1).Value) &&
 			!commentAt(s, i+2) { // keep the space before a trailing comment
 			s.RemoveAt(i + 1)
 			changed = true
 		}
 		if s.At(i).Kind == token.Punct && s.At(i).Value == ")" &&
-			i >= 1 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) {
+			i >= 1 && s.At(i-1).Kind == token.Whitespace && !hasNewline(s.At(i-1).Value) &&
+			!parenOpensArray(s, s.MatchBackward(i)) && !isPunctVal(s, prevMeaningfulIndex(s, i), ",") {
 			s.RemoveAt(i - 1)
 			i--
 			changed = true
 		}
 	}
 	return changed
+}
+
+func parenOpensArray(s *tokens.Stream, open int) bool {
+	if open < 0 {
+		return false
+	}
+	prev := prevMeaningfulIndex(s, open)
+	return prev >= 0 && csbIsKeyword(s.At(prev), "array")
 }
 
 // spacesInsideParenthesesSingle walks right to left so insertions never shift
