@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -35,8 +36,8 @@ func dataProviderReturnTypeClass(s *tokens.Stream, start, end int) bool {
 	providers := puDataProviders(s, start, end)
 	changed := false
 	// reverse order so an insert never shifts a provider not yet visited
-	for i := len(providers) - 1; i >= 0; i-- {
-		if dataProviderReturnTypeOne(s, providers[i].nameIndex) {
+	for _, dp := range slices.Backward(providers) {
+		if dataProviderReturnTypeOne(s, dp.nameIndex) {
 			changed = true
 		}
 	}
