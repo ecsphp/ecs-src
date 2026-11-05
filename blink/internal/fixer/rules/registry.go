@@ -306,6 +306,7 @@ func StructuralFixers() []fixer.Fixer {
 		RemoveSlashFromNativeConstant{},
 		FullyQualifiedStrictTypes{},
 		SingleImportPerStatement{},
+		GroupImport{},
 		OrderedImports{},
 		BlankLineBetweenImportGroups{},
 		SingleLineAfterImports{},

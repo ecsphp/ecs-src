@@ -242,6 +242,7 @@ var fixerPriority = map[string]int{
 	"SingleBlankLineAtEofFixer":                       -100,
 	"SingleClassElementPerStatementFixer":             56,
 	"SingleImportPerStatementFixer":                   1,
+	"GroupImportFixer":                                0,
 	"SingleLineAfterImportsFixer":                     -11,
 	"NoBlankLineBetweenImportsFixer":                  -35,
 	"SpaceAfterCommaHereNowDocFixer":                  0,
