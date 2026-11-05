@@ -4,7 +4,7 @@ import "testing"
 
 func TestPhpdocAlign(t *testing.T) {
 	t.Parallel()
-	f := PhpdocAlign{}
+	f := PhpdocAlign{}.WithConfig(map[string]any{"align": "left", "spacing": map[string]any{"param": 2}}).(fixerRule)
 
 	// left align: param uses spacing 2, return uses spacing 1
 	got, changed := apply(t, f, "<?php\n\nclass T\n{\n    /**\n     * @param mixed $value\n     * @return   array\n     */\n    public function a($value) {}\n}\n")

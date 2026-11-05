@@ -7,10 +7,9 @@ import (
 
 func phpAlignIsHSpace(c byte) bool { return c == ' ' || c == '\t' }
 
-// phpAlignGetMatches parses a docblock line, mirroring PhpdocAlignFixer::getMatches
-// for the laravel config (default tags). Returns nil when the line is not a tag
+// getMatches parses a docblock line, mirroring PhpdocAlignFixer::getMatches. Returns nil when the line is not a tag
 // line (or, when matchCommentOnly, not a description continuation line).
-func phpAlignGetMatches(rawLine string, matchCommentOnly bool) *alignMatch {
+func (f PhpdocAlign) getMatches(rawLine string, matchCommentOnly bool) *alignMatch {
 	line := strings.TrimRight(rawLine, "\r\n")
 	// ^(?P<indent>(?:\ {2}|\t)*)\ ?\*
 	i := 0
@@ -42,7 +41,7 @@ func phpAlignGetMatches(rawLine string, matchCommentOnly bool) *alignMatch {
 		j++
 	}
 	if j < len(line) && line[j] == '@' {
-		if m := phpAlignParseTag(indent, line, j+1); m != nil {
+		if m := f.parseTag(indent, line, j+1); m != nil {
 			return m
 		}
 	}
@@ -81,11 +80,10 @@ func phpAlignGetMatches(rawLine string, matchCommentOnly bool) *alignMatch {
 	return &alignMatch{indent: indent, tag: "", isTag: false, desc: desc}
 }
 
-// phpAlignParseTag parses from just after '@'. off points at the first char of the tag name.
-func phpAlignParseTag(indent, line string, off int) *alignMatch {
-	// read tag name = [a-zA-Z0-9_-]+
+// parseTag parses from just after '@'. off points at the first char of the tag name.
+func (f PhpdocAlign) parseTag(indent, line string, off int) *alignMatch {
 	e := off
-	for e < len(line) && phpAlignTagNameChar(line[e]) {
+	for e < len(line) && !phpAlignIsWS(line[e]) {
 		e++
 	}
 	tag := line[off:e]
@@ -93,25 +91,20 @@ func phpAlignParseTag(indent, line string, off int) *alignMatch {
 		return nil
 	}
 
-	if phpAlignInList(tag, phpAlignNameTags) {
+	tags := f.Tags
+	if tags == nil {
+		tags = phpAlignDefaultTags
+	}
+	if !slices.Contains(tags, tag) {
+		return nil
+	}
+	if slices.Contains(phpAlignNameTags, tag) {
 		return phpAlignParseNameTag(indent, tag, line, e)
 	}
-	if phpAlignInList(tag, phpAlignNoNameTags) {
-		return phpAlignParseNoNameTag(indent, tag, line, e)
-	}
-	// method tags not aligned in this config path unless present; DEFAULT_TAGS has "method"
-	if phpAlignInList(tag, phpAlignMethodTags) {
+	if slices.Contains(phpAlignMethodTags, tag) {
 		return phpAlignParseMethodTag(indent, tag, line, e)
 	}
-	return nil
-}
-
-func phpAlignTagNameChar(c byte) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-'
-}
-
-func phpAlignInList(tag string, list []string) bool {
-	return slices.Contains(list, tag)
+	return phpAlignParseNoNameTag(indent, tag, line, e)
 }
 
 // name tag: @tag \s+ (hint)? \s* (var=(?:&|\.{3})?\$\S+) (?:\s+ desc)? \h*$
