@@ -28,6 +28,7 @@ const PhpCodeSnifferSourceBase = "https://github.com/PHPCSStandards/PHP_CodeSnif
 var ecsSrcOnlyFixers = map[string]bool{
 	`Symplify\CodingStandard\Fixer\Spacing\StandaloneLineRequiredParamFixer`:              true,
 	`Symplify\CodingStandard\Fixer\Spacing\StandaloneLinePlainConstructorParamFixer`:      true,
+	`Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer`:                    true,
 	`Symplify\CodingStandard\Fixer\Spacing\StandaloneLineSymfonyAttributeParamFixer`:      true,
 	`Symplify\CodingStandard\Fixer\Spacing\NoBlankLineBetweenImportsFixer`:                true,
 	`Symplify\CodingStandard\Fixer\Spacing\SpaceAfterCommaHereNowDocFixer`:                true,

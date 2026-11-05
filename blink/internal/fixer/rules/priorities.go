@@ -52,6 +52,7 @@ var fixerPriority = map[string]int{
 	"NullableTypeDeclarationFixer":                    2,
 	"OrderedTypesFixer":                               0,
 	"MethodChainingIndentationFixer":                  0,
+	"MethodChainingNewlineFixer":                      39,
 	"BlankLineAfterStrictTypesFixer":                  0,
 	"BlankLineBetweenImportGroupsFixer":               -40,
 	"BlankLinesBeforeNamespaceFixer":                  -31,
