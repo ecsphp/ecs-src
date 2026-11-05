@@ -1,9 +1,10 @@
 package rules
 
 import (
-	"sort"
+	"slices"
 	"strings"
 
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
@@ -11,9 +12,16 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/OrderedInterfacesFixer.php
 //
 // OrderedInterfaces sorts the interface list of an "implements" or
-// "interface extends" clause. Default config: alpha order, ascending,
-// case-insensitive.
-type OrderedInterfaces struct{}
+// "interface extends" clause. The zero value is the default config: alpha
+// order, ascending, case-insensitive. Names are compared with "\" read as a
+// space, as upstream does: strcasecmp (ASCII case folding) or, case-sensitive,
+// a byte comparison; the `length` order compares byte lengths. The sort is
+// stable, so equal keys keep their source order in both directions.
+type OrderedInterfaces struct {
+	Length        bool // order: length (default alpha)
+	Descend       bool // direction: descend (default ascend)
+	CaseSensitive bool // case_sensitive
+}
 
 func (OrderedInterfaces) Name() string {
 	return `PhpCsFixer\Fixer\ClassNotation\OrderedInterfacesFixer`
@@ -23,7 +31,22 @@ func (OrderedInterfaces) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/OrderedInterfacesFixer.php"
 }
 
-func (OrderedInterfaces) Fix(s *tokens.Stream) bool {
+// WithConfig reads `order` (alpha, length), `direction` (ascend, descend) and
+// `case_sensitive`.
+func (f OrderedInterfaces) WithConfig(config map[string]any) fixer.Fixer {
+	if v, ok := config["order"].(string); ok {
+		f.Length = v == "length"
+	}
+	if v, ok := config["direction"].(string); ok {
+		f.Descend = v == "descend"
+	}
+	if v, ok := config["case_sensitive"].(bool); ok {
+		f.CaseSensitive = v
+	}
+	return f
+}
+
+func (f OrderedInterfaces) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
@@ -66,8 +89,17 @@ func (OrderedInterfaces) Fix(s *tokens.Stream) bool {
 		for gi, g := range groups {
 			items[gi] = keyed{toks: g, key: interfaceSortKey(g), orig: gi}
 		}
-		sort.SliceStable(items, func(a, b int) bool {
-			return strings.ToLower(items[a].key) < strings.ToLower(items[b].key)
+		slices.SortStableFunc(items, func(a, b keyed) int {
+			var score int
+			if f.Length {
+				score = len(a.key) - len(b.key)
+			} else {
+				score = phpNameCompare(a.key, b.key, f.CaseSensitive)
+			}
+			if f.Descend {
+				score = -score
+			}
+			return score
 		})
 
 		reordered := false
@@ -131,4 +163,14 @@ func interfaceSortKey(group []token.Token) string {
 		b.WriteString(strings.ReplaceAll(t.Value, `\`, " "))
 	}
 	return b.String()
+}
+
+// phpNameCompare compares two names the way the ordering fixers do: PHP's
+// strcasecmp (which folds ASCII letters only) or, case-sensitive, `<=>` (a byte
+// comparison, as names are never numeric strings).
+func phpNameCompare(a, b string, caseSensitive bool) int {
+	if !caseSensitive {
+		a, b = asciiLower(a), asciiLower(b)
+	}
+	return strings.Compare(a, b)
 }
