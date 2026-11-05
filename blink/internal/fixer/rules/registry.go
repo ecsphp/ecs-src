@@ -269,6 +269,8 @@ func ConstructFixers() []fixer.Fixer {
 		PhpUnitInternalClass{},
 		PhpUnitSizeClass{},
 		PhpUnitTestClassRequiresCovers{},
+		PhpUnitExpectation{},
+		PhpUnitNoExpectationAnnotation{},
 		GlobalKeyword{},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
