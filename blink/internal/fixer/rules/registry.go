@@ -208,6 +208,7 @@ func PhpdocFixers() []fixer.Fixer {
 		PhpdocSummary{},
 		PhpdocOrder{},
 		PhpdocTagType{},
+		PhpdocTagNoNamedArguments{},
 	}
 }
 

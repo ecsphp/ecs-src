@@ -243,6 +243,7 @@ var fixerPriority = map[string]int{
 	"PhpdocScalarFixer":                               0,
 	"PhpdocSingleLineVarSpacingFixer":                 -10,
 	"PhpdocTagCasingFixer":                            0,
+	"PhpdocTagNoNamedArgumentsFixer":                  0,
 	"PhpdocTrimConsecutiveBlankLineSeparationFixer":   -41,
 	"PhpdocTrimFixer":                                 -5,
 	"PhpdocTypesFixer":                                0,
