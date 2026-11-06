@@ -109,6 +109,8 @@ var fixerPriority = map[string]int{
 	"OctalNotationFixer":                              0,
 	"NumericLiteralSeparatorFixer":                    0,
 	"AttributeEmptyParenthesesFixer":                  0,
+	"OrderedAttributesFixer":                          0,
+	"GeneralAttributeRemoveFixer":                     0,
 	"NoBlankLinesBeforeNamespaceFixer":                0,
 	"SetTypeToCastFixer":                              0,
 	"PowToExponentiationFixer":                        32,
