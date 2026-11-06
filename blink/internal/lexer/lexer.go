@@ -262,7 +262,7 @@ func (l *lexer) identKind(word string) token.Kind {
 	}
 	lp := strings.ToLower(prev)
 	// a function or method name, also "function &list()"
-	if lp == "function" || (lp == "&" && strings.EqualFold(l.significantBefore(1), "function")) {
+	if l.keywordBefore(0, "function") || (lp == "&" && l.keywordBefore(1, "function")) {
 		return token.Ident
 	}
 	// a namespace segment like "Enum\Action" is an identifier, not a keyword
@@ -302,8 +302,8 @@ func (l *lexer) identKind(word string) token.Kind {
 			return token.Ident
 		}
 	}
-	// the method of a trait alias "{ list as protected; }"
-	if (prev == "{" || prev == ";") && l.wordAt(next, "as") {
+	// the method of a trait alias "{ list as protected; }", not "{ case As; }"
+	if (prev == "{" || prev == ";") && l.wordAt(next, "as") && isIdentStart(l.byteAt(l.skipTrivia(next+len("as")))) {
 		return token.Ident
 	}
 	// a call to a function named readonly, unless "(" opens a DNF type
@@ -326,18 +326,27 @@ var memberModifiers = map[string]bool{
 
 // significantBefore returns the value of the non-trivia token emitted n
 // tokens before the last one (0 is lastSignificant), or "" when there is none.
-func (l *lexer) significantBefore(n int) string {
+func (l *lexer) significantBefore(n int) string { return l.significantTokenBefore(n).Value }
+
+// keywordBefore reports whether the non-trivia token emitted n tokens before
+// the last one is the keyword word, not a name spelled like it.
+func (l *lexer) keywordBefore(n int, word string) bool {
+	tk := l.significantTokenBefore(n)
+	return tk.Kind == token.Keyword && strings.EqualFold(tk.Value, word)
+}
+
+func (l *lexer) significantTokenBefore(n int) token.Token {
 	for _, tk := range slices.Backward(l.toks) {
 		switch tk.Kind {
 		case token.Whitespace, token.Comment, token.DocComment:
 			continue
 		}
 		if n == 0 {
-			return tk.Value
+			return tk
 		}
 		n--
 	}
-	return ""
+	return token.Token{}
 }
 
 // wordAt reports whether the source at p spells word, in any case, as a whole name.
