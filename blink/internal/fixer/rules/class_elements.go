@@ -112,7 +112,13 @@ func (f SingleClassElementPerStatement) splitClassElement(s *tokens.Stream, m in
 
 	firstElem := -1
 	if isConst {
-		firstElem = skipWhitespace(s, k+1)
+		// the name is before the first "=", so the type joins the prefix: "const string A = ..."
+		for x := k + 1; x < semi; x++ {
+			if isPunctVal(s, x, "=") {
+				firstElem = sigPrev(s, x)
+				break
+			}
+		}
 	} else {
 		depth := 0
 		for x := m; x < semi; x++ {
