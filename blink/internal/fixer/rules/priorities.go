@@ -45,6 +45,7 @@ var fixerPriority = map[string]int{
 	"PhpUnitMockFixer":                         0,
 	"PhpUnitDedicateAssertInternalTypeFixer":   -16,
 	"PhpUnitNamespacedFixer":                   2,
+	"PhpUnitAttributesFixer":                   8,
 	"PhpUnitDedicateAssertFixer":               -9,
 	"PhpUnitTestCaseStaticMethodCallsFixer":    0,
 	"PhpUnitDataProviderMethodOrderFixer":      64,
