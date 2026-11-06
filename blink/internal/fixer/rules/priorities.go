@@ -171,6 +171,7 @@ var fixerPriority = map[string]int{
 	"NewExpressionParenthesesFixer":                   29,
 	"NotOperatorWithSpaceFixer":                       -10,
 	"SimplifiedIfReturnFixer":                         1,
+	"ReturnAssignmentFixer":                           -15,
 	"ReturnToYieldFromFixer":                          1,
 	"YieldFromArrayToYieldsFixer":                     0,
 	"NoBinaryStringFixer":                             40,
