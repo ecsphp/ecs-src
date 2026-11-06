@@ -141,6 +141,7 @@ var fixerPriority = map[string]int{
 	"IsNullFixer":                                     1,
 	"DirConstantFixer":                                40,
 	"CombineNestedDirnameFixer":                       35,
+	"RegularCallableCallFixer":                        2,
 	"ImplodeCallFixer":                                37,
 	"NoUselessSprintfFixer":                           42,
 	"ModernizeTypesCastingFixer":                      31,
