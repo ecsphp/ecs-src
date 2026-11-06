@@ -75,7 +75,7 @@ ecs_php="$WORKDIR/ecs.php"
     echo "    ->withPreparedSets(${sets_args})"
     skip_args=$(jq -r '(.skip // []) | map("'"'"'\(.)'"'"'") | join(", ")' "$CORPUS")
     [ -n "$skip_args" ] && echo "    ->withSkip([${skip_args}])"
-    echo '    ->withoutParallel();'
+    echo '    ->withParallel();'
 } > "$ecs_php"
 
 # 3. fetch the corpus once, then two identical copies
