@@ -14,7 +14,7 @@ with `bin/rule-counts.sh`; CI keeps it current.
 | tool | rules | coverage |
 |---|---:|---:|
 | fixer universe (PHP-CS-Fixer + Symplify + sniffs) | 338 | 100% |
-| blink | 306 | 93% |
+| blink | 309 | 94% |
 <!-- rule-counts:end -->
 
 ## Build

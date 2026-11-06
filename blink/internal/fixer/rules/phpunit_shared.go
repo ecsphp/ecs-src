@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -155,4 +156,147 @@ func puNextNonWhitespace(s *tokens.Stream, i int) int {
 		}
 	}
 	return -1
+}
+
+// Helpers for the AbstractPhpUnitFixer ports that add a class-level annotation
+// (PhpUnitInternalClass, PhpUnitSizeClass, PhpUnitTestClassRequiresCovers),
+// mirroring DocBlockAnnotationTrait.
+
+// puClassKeywordBefore returns the index of the `class` keyword owning the body
+// that opens at openBrace, mirroring getPrevTokenOfKind($startIndex, [[T_CLASS]]).
+func puClassKeywordBefore(s *tokens.Stream, openBrace int) int {
+	for j := openBrace - 1; j >= 0; j-- {
+		if kwIs(s.At(j), "class") {
+			return j
+		}
+	}
+	return -1
+}
+
+// puClassModifiers mirrors TokensAnalyzer::getClassyModifiers: the final/abstract/
+// readonly keywords in the modifier run before the class keyword.
+func puClassModifiers(s *tokens.Stream, classIdx int) map[string]bool {
+	mods := map[string]bool{}
+	idx := classIdx
+	for {
+		p := sigPrev(s, idx)
+		if p < 0 || s.At(p).Kind != token.Keyword {
+			break
+		}
+		lo := strings.ToLower(s.At(p).Value)
+		if lo != "final" && lo != "abstract" && lo != "readonly" {
+			break
+		}
+		mods[lo] = true
+		idx = p
+	}
+	return mods
+}
+
+// puEnsureClassDocBlockAnnotation mirrors
+// DocBlockAnnotationTrait::ensureIsDocBlockWithAnnotation. preventingAttrShortNames
+// are matched against the lowercased last segment of each attribute name before
+// the class, standing in for upstream's fully-qualified attribute resolution.
+func puEnsureClassDocBlockAnnotation(s *tokens.Stream, classIdx int, annotation string, preventingAnnotations, preventingAttrShortNames []string) bool {
+	if puIsPreventedByAttribute(s, classIdx, preventingAttrShortNames) {
+		return false
+	}
+	docBlockIndex := puAnnotationDocBlockIndex(s, classIdx)
+	if docBlockIndex >= 0 && s.At(docBlockIndex).Kind == token.DocComment {
+		return puUpdateDocBlockIfNeeded(s, docBlockIndex, annotation, preventingAnnotations)
+	}
+	ptaCreateDocBlock(s, docBlockIndex, annotation)
+	return docBlockIndex >= 0
+}
+
+// puUpdateDocBlockIfNeeded mirrors DocBlockAnnotationTrait::updateDocBlockIfNeeded.
+func puUpdateDocBlockIfNeeded(s *tokens.Stream, docBlockIndex int, annotation string, preventingAnnotations []string) bool {
+	lines := splitDocLines(s.At(docBlockIndex).Value)
+	if puDocHasAnnotationOfType(lines, preventingAnnotations...) {
+		return false
+	}
+	if len(lines) == 1 && !puDocHasAnnotationOfType(lines, annotation) {
+		lines = puMakeMultiLine(lines, detectIndent(s, puNextNonWhitespace(s, docBlockIndex)))
+	}
+	originalIndent := detectIndent(s, docBlockIndex)
+	out := append([]string{}, lines[:len(lines)-1]...)
+	out = append(out, originalIndent+" * @"+annotation+"\n")
+	out = append(out, lines[len(lines)-1])
+	s.SetValue(docBlockIndex, strings.Join(out, ""))
+	return true
+}
+
+// puMakeMultiLine mirrors DocBlock::makeMultiLine for a single-line docblock.
+func puMakeMultiLine(lines []string, indent string) []string {
+	content := ptaSingleLineDocBlockEntry(lines[0])
+	if content == "" {
+		return []string{"/**\n", indent + " *\n", indent + " */"}
+	}
+	return []string{"/**\n", indent + " * " + content + "\n", indent + " */"}
+}
+
+// puDocHasAnnotationOfType mirrors DocBlock::getAnnotationsOfType being non-empty.
+func puDocHasAnnotationOfType(lines []string, names ...string) bool {
+	for _, ann := range docAnnotations(lines) {
+		if slices.Contains(names, ann.name) {
+			return true
+		}
+	}
+	return false
+}
+
+// puIsPreventedByAttribute mirrors DocBlockAnnotationTrait::isPreventedByAttribute,
+// matching the lowercased short name of each attribute before the class.
+func puIsPreventedByAttribute(s *tokens.Stream, classIdx int, shortNames []string) bool {
+	if len(shortNames) == 0 {
+		return false
+	}
+	idx := classIdx
+	for {
+		idx = sigPrev(s, idx)
+		if idx < 0 {
+			return false
+		}
+		if t := s.At(idx); t.Kind == token.Keyword {
+			if lo := strings.ToLower(t.Value); lo == "final" || lo == "readonly" {
+				continue
+			}
+		}
+		break
+	}
+	if s.At(idx).Kind != token.AttributeEnd {
+		return false
+	}
+	start := s.AttributeStartOf(idx)
+	if start < 0 {
+		return false
+	}
+	for _, name := range puAttributeShortNames(attributeText(s, start, idx)) {
+		if slices.Contains(shortNames, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// puAttributeShortNames returns the lowercased last-segment name of each attribute
+// in a folded "#[...]" attribute token.
+func puAttributeShortNames(v string) []string {
+	inner := strings.TrimSuffix(strings.TrimPrefix(v, "#["), "]")
+	var out []string
+	for part := range strings.SplitSeq(inner, ",") {
+		part = strings.TrimSpace(part)
+		if i := strings.IndexByte(part, '('); i >= 0 {
+			part = part[:i]
+		}
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if i := strings.LastIndex(part, `\`); i >= 0 {
+			part = part[i+1:]
+		}
+		out = append(out, strings.ToLower(part))
+	}
+	return out
 }
