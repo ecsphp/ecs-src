@@ -296,6 +296,8 @@ func ConstructFixers() []fixer.Fixer {
 		CombineConsecutiveUnsets{},
 		NoUnsetOnProperty{},
 		GetClassToClassKeyword{},
+		ClassKeywordRemove{},
+		ClassKeyword{},
 		LogicalOperators{},
 		TernaryToElvisOperator{},
 		EchoTagSyntax{},

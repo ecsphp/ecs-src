@@ -74,6 +74,8 @@ var fixerPriority = map[string]int{
 	"CastSpacesFixer":                                 -10,
 	"ClassAttributesSeparationFixer":                  55,
 	"ClassDefinitionFixer":                            36,
+	"ClassKeywordFixer":                               8,
+	"ClassKeywordRemoveFixer":                         0,
 	"ClassReferenceNameCasingFixer":                   0,
 	"CleanNamespaceFixer":                             10,
 	"CompactNullableTypeDeclarationFixer":             0,
