@@ -18,6 +18,7 @@ func SpacingFixers() []fixer.Fixer {
 		NoSinglelineWhitespaceBeforeSemicolons{},
 		MultilineWhitespaceBeforeSemicolons{},
 		NoWhitespaceInBlankLine{},
+		SuperfluousWhitespace{},
 		SpaceAfterSemicolon{},
 		BinaryOperatorSpaces{},
 		TernaryOperatorSpaces{},
