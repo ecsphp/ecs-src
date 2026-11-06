@@ -89,31 +89,27 @@ rev=$(git -C "$src" rev-parse --short HEAD 2>/dev/null || echo "?")
 ours="$WORKDIR/ours"; ecs="$WORKDIR/ecs"
 rm -rf "$ours" "$ecs"; cp -r "$src" "$ours"; cp -r "$src" "$ecs"
 
-abs_paths_ours=(); abs_paths_ecs=(); abs_paths_src=()
+abs_paths_ours=(); abs_paths_ecs=()
 for p in "${paths[@]}"; do
     [ -d "$ours/$p" ] && abs_paths_ours+=("$ours/$p")
     [ -d "$ecs/$p" ] && abs_paths_ecs+=("$ecs/$p")
-    [ -d "$src/$p" ] && abs_paths_src+=("$src/$p")
 done
 file_count=$(cd "$src" && find "${paths[@]}" -name '*.php' 2>/dev/null | wc -l)
 log "corpus $name @ $rev: $file_count PHP files in ${paths[*]}"
 
-# 4. fix one tree with blink, the other with the PHP engine
+# 4. fix one tree with blink, the other with the PHP engine; the PHP run's json
+#    lists the checkers it applied to each file, for attribution
 log "fixing with blink (--blink) ..."
 ECS_BLINK_BIN="$blink_bin" "$REPO_ROOT/bin/ecs" check --fix --no-progress-bar \
     --config "$ecs_php" --blink "${abs_paths_ours[@]}" >/dev/null 2>&1 || true
 log "fixing with PHP ECS ..."
-"$REPO_ROOT/bin/ecs" check --fix --no-progress-bar \
-    --config "$ecs_php" "${abs_paths_ecs[@]}" >/dev/null 2>&1 || true
-
-# 5. the checkers ECS applied on the pristine tree, as JSON, for attribution
-log "collecting applied checkers (PHP ECS, json) ..."
 ecs_json="$WORKDIR/ecs.json"
-"$REPO_ROOT/bin/ecs" check --no-progress-bar --output-format=json \
-    --config "$ecs_php" "${abs_paths_src[@]}" > "$ecs_json" 2>/dev/null || echo '{}' > "$ecs_json"
+"$REPO_ROOT/bin/ecs" check --fix --no-progress-bar --output-format=json --memory-limit=1G \
+    --config "$ecs_php" "${abs_paths_ecs[@]}" > "$ecs_json" 2>/dev/null || true
+jq -e . "$ecs_json" >/dev/null 2>&1 || echo '{}' > "$ecs_json"
 
-# 6. diff the two trees, attribute each differing file to the ECS checkers that
-#    touched it on the pristine sample
+# 5. diff the two trees, attribute each differing file to the ECS checkers that
+#    touched it
 log "diffing blink vs PHP ECS trees ..."
 report="$WORKDIR/report.txt"
 details="$WORKDIR/details.md"
@@ -127,9 +123,9 @@ while IFS= read -r f; do
     total=$((total + 1))
     diff -q "$ours/$f" "$ecs/$f" >/dev/null 2>&1 && continue
     differ=$((differ + 1))
-    # attribute to the ECS checkers that touched the pristine file; keys may be
-    # absolute ($src/$f) or relative ($f) depending on how ECS emitted the json
-    checkers=$(jq -r --arg a "$src/$f" --arg r "$f" \
+    # attribute to the ECS checkers that touched the file; keys may be
+    # absolute ($ecs/$f) or relative ($f) depending on how ECS emitted the json
+    checkers=$(jq -r --arg a "$ecs/$f" --arg r "$f" \
         '(.files[$a] // .files[$r]).diffs[]?.applied_checkers[]?' "$ecs_json" 2>/dev/null \
         | sed -E 's#.*\\##' | sort -u | paste -sd, - || true)
     echo "--- $f${checkers:+  [${checkers}]}" >> "$report"
