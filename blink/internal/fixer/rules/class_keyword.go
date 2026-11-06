@@ -55,7 +55,7 @@ func ckIsQualifiedName(name string) bool {
 	if !strings.Contains(name, `\`) {
 		return false
 	}
-	for _, seg := range strings.Split(name, `\`) {
+	for seg := range strings.SplitSeq(name, `\`) {
 		if !ckIsIdentifier(seg) {
 			return false
 		}

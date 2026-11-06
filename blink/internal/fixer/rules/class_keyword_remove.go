@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -105,8 +106,7 @@ func (ClassKeywordRemove) Fix(s *tokens.Stream) bool {
 		return false
 	}
 	// apply high index first so earlier offsets stay valid, as PHP-CS-Fixer does
-	for k := len(hits) - 1; k >= 0; k-- {
-		h := hits[k]
+	for _, h := range slices.Backward(hits) {
 		for i := h.begin; i <= h.classIdx; i++ {
 			t := s.At(i)
 			if t.Kind == token.Comment || t.Kind == token.DocComment {
@@ -209,8 +209,8 @@ func ckrResolve(prefix string, imports []ckrImport, classString string, leading 
 		prefix = ""
 	} else {
 		first := classString
-		if idx := strings.IndexByte(classString, '\\'); idx >= 0 {
-			first = classString[:idx]
+		if before, _, ok := strings.Cut(classString, "\\"); ok {
+			first = before
 		}
 		for _, e := range imports {
 			if e.aliased && classString == e.alias {
