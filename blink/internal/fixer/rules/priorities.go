@@ -132,6 +132,7 @@ var fixerPriority = map[string]int{
 	"CombineConsecutiveUnsetsFixer":                   24,
 	"NoUnsetOnPropertyFixer":                          25,
 	"GetClassToClassKeywordFixer":                     1,
+	"ClassKeywordRemoveFixer":                         0,
 	"LogicalOperatorsFixer":                           0,
 	"TernaryToElvisOperatorFixer":                     2,
 	"EchoTagSyntaxFixer":                              0,

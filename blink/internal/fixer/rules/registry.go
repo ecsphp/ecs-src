@@ -297,7 +297,10 @@ func ConstructFixers() []fixer.Fixer {
 		NoUnsetOnProperty{},
 		GetClassToClassKeyword{},
 		ClassKeywordRemove{},
+<<<<<<< HEAD
 		ClassKeyword{},
+=======
+>>>>>>> 8f741397a6 (Blink: port ClassKeywordRemoveFixer from PHP-CS-Fixer)
 		LogicalOperators{},
 		TernaryToElvisOperator{},
 		EchoTagSyntax{},
