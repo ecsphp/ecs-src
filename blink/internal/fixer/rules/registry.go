@@ -109,6 +109,7 @@ func CommonFixers() []fixer.Fixer {
 		AssignNullCoalescingToCoalesceEqual{},
 		NullableTypeDeclarationForDefaultNullValue{},
 		SingleLineCommentStyle{},
+		HeaderComment{},
 		ExplicitIndirectVariable{},
 		ExplicitStringVariable{},
 		NoNullPropertyInitialization{},
