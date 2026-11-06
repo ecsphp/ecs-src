@@ -162,6 +162,8 @@ func CommonFixers() []fixer.Fixer {
 		OctalNotation{},
 		NumericLiteralSeparator{},
 		AttributeEmptyParentheses{},
+		OrderedAttributes{},
+		GeneralAttributeRemove{},
 	}
 }
 
