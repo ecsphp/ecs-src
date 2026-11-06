@@ -118,6 +118,8 @@ var fixerPriority = map[string]int{
 	"NoTrailingWhitespaceInStringFixer":               0,
 	"HeredocClosingMarkerFixer":                       0,
 	"MultilineStringToHeredocFixer":                   16,
+	"StringImplicitBackslashesFixer":                  15,
+	"HeredocIndentationFixer":                         -26,
 	"NonPrintableCharacterFixer":                      0,
 	"NoHomoglyphNamesFixer":                           0,
 	"ModernSerializationMethodsFixer":                 0,
