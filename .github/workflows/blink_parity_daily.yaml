@@ -1,0 +1,74 @@
+name: Blink Parity Daily
+
+# Daily cron parity check for the laravel and symfony corpora on main.
+# Opens a PR with the divergence report only when a corpus exceeds its
+# ratchet threshold; stays silent when both are within budget.
+
+on:
+    schedule:
+        - cron: '0 3 * * *'
+    workflow_dispatch: null
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    parity-daily:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.10"
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.4"
+                  coverage: none
+
+            - uses: "ramsey/composer-install@v4"
+
+            - name: Run parity for laravel and symfony
+              id: parity
+              run: |
+                  set +e
+                  mkdir -p blink/parity/reports
+                  day="$(date -u +%F)"
+                  report="blink/parity/reports/parity-${day}.md"
+                  : > "$report"
+                  drift=0
+                  for corpus in laravel symfony; do
+                      out="$(blink/parity/run.sh "blink/parity/corpora/${corpus}.json" 2>/dev/null)"
+                      code=$?
+                      printf '%s\n\n' "$out" >> "$report"
+                      if [ "$code" -eq 2 ]; then
+                          echo "::error::parity setup error for ${corpus}"
+                          exit 2
+                      fi
+                      [ "$code" -eq 1 ] && drift=1
+                  done
+                  {
+                      echo "day=${day}"
+                      echo "report=${report}"
+                      echo "drift=${drift}"
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Open PR on drift
+              if: steps.parity.outputs.drift == '1'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  day="${{ steps.parity.outputs.day }}"
+                  report="${{ steps.parity.outputs.report }}"
+                  branch="parity/report-${day}"
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git checkout -b "$branch"
+                  git add "$report"
+                  git commit -m "Blink parity drift report ${day}"
+                  git push -u origin "$branch"
+                  gh pr create --base main --head "$branch" \
+                      --title "Blink parity drift: laravel/symfony ${day}" \
+                      --body-file "$report"
