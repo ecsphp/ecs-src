@@ -141,6 +141,8 @@ func CommonFixers() []fixer.Fixer {
 		NoTrailingWhitespaceInString{},
 		HeredocClosingMarker{},
 		MultilineStringToHeredoc{},
+		StringImplicitBackslashes{},
+		HeredocIndentation{},
 		NonPrintableCharacter{},
 		NoHomoglyphNames{},
 		ModernSerializationMethods{},
@@ -557,6 +559,10 @@ var deprecatedAliases = map[string]deprecatedAlias{
 		successor: `PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAroundConstructFixer`,
 		options:   singleSpaceAfterConstructOptions,
 	},
+	`PhpCsFixer\Fixer\StringNotation\EscapeImplicitBackslashesFixer`: {
+		successor: `PhpCsFixer\Fixer\StringNotation\StringImplicitBackslashesFixer`,
+		options:   escapeImplicitBackslashesOptions,
+	},
 }
 
 // singleSpaceAfterConstructDefault is SingleSpaceAfterConstructFixer's default
@@ -583,6 +589,25 @@ func singleSpaceAfterConstructOptions(deprecated map[string]any) map[string]any 
 		"constructs_contain_a_single_space":     []string{"yield_from"},
 		"constructs_preceded_by_a_single_space": []string{},
 		"constructs_followed_by_a_single_space": constructs,
+	}
+}
+
+// escapeImplicitBackslashesOptions ports EscapeImplicitBackslashesFixer's
+// configurePostNormalisation: each enabled option escapes, the others ignore.
+func escapeImplicitBackslashesOptions(deprecated map[string]any) map[string]any {
+	mode := func(option string, enabled bool) string {
+		if v, ok := deprecated[option].(bool); ok {
+			enabled = v
+		}
+		if enabled {
+			return "escape"
+		}
+		return "ignore"
+	}
+	return map[string]any{
+		"single_quoted": mode("single_quoted", false),
+		"double_quoted": mode("double_quoted", true),
+		"heredoc":       mode("heredoc_syntax", true),
 	}
 }
 

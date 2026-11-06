@@ -418,6 +418,11 @@ func TestLoadECSRunsDeprecatedAliasesAsTheirProxy(t *testing.T) {
 			"<?php\necho 1;\nreturn  2;\n",
 		},
 		{
+			`PhpCsFixer\Fixer\StringNotation\EscapeImplicitBackslashesFixer`, `{"single_quoted": true, "double_quoted": false}`,
+			"<?php\n$a = 'a\\b\\\\c';\n$b = \"a\\b\";\n",
+			"<?php\n$a = 'a\\\\b\\\\c';\n$b = \"a\\b\";\n",
+		},
+		{
 			`PhpCsFixer\Fixer\Operator\NewWithBracesFixer`, `{}`,
 			"<?php\n$a = new Foo;\n",
 			"<?php\n$a = new Foo();\n",
