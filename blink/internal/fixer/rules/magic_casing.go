@@ -10,19 +10,19 @@ import (
 )
 
 var magicConstants = map[string]string{
-	"__line__":                 "__LINE__",
-	"__file__":                 "__FILE__",
-	"__dir__":                  "__DIR__",
-	"__function__":             "__FUNCTION__",
-	"__class__":                "__CLASS__",
-	"__trait__":                "__TRAIT__",
-	"__method__":               "__METHOD__",
-	"__namespace__":            "__NAMESPACE__",
-	"__compiler_halt_offset__": "__COMPILER_HALT_OFFSET__",
+	"__line__":      "__LINE__",
+	"__file__":      "__FILE__",
+	"__dir__":       "__DIR__",
+	"__function__":  "__FUNCTION__",
+	"__class__":     "__CLASS__",
+	"__trait__":     "__TRAIT__",
+	"__method__":    "__METHOD__",
+	"__namespace__": "__NAMESPACE__",
+	"__property__":  "__PROPERTY__",
 }
 
-// magicConstantNames are the constants MagicConstantCasing recases.
-var magicConstantNames = slices.Collect(maps.Keys(magicConstants))
+// magicConstantNames are the words MagicConstantCasing recases; "class" only in "::class".
+var magicConstantNames = append(slices.Collect(maps.Keys(magicConstants)), "class")
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Casing/MagicConstantCasingFixer.php
 //
@@ -46,6 +46,11 @@ func (MagicConstantCasing) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
+		if t.Kind == token.Ident && t.Value != "class" && strings.EqualFold(t.Value, "class") && isPunctVal(s, sigPrev(s, i), "::") {
+			s.SetValue(i, "class")
+			changed = true
+			continue
+		}
 		if t.Kind != token.Ident {
 			continue
 		}

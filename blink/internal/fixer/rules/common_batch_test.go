@@ -89,3 +89,12 @@ func TestMagicCasing(t *testing.T) {
 		t.Fatalf("method: changed=%v got=%q want=%q", changed, got, want)
 	}
 }
+
+// The same constants as PHP-CS-Fixer, which gives the expected output.
+func TestMagicConstantCasingUpstreamList(t *testing.T) {
+	t.Parallel()
+	got, changed := apply(t, MagicConstantCasing{}, "<?php\nclass A { public int $p { get => __property__; } }\necho __compiler_halt_offset__, A::CLASS, $a::Class, A:: /* c */ CLASS, $a->CLASS;\n")
+	if want := "<?php\nclass A { public int $p { get => __PROPERTY__; } }\necho __compiler_halt_offset__, A::class, $a::class, A:: /* c */ class, $a->CLASS;\n"; !changed || got != want {
+		t.Fatalf("changed=%v got=%q want=%q", changed, got, want)
+	}
+}
