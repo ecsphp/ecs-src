@@ -302,6 +302,56 @@ func TestReservedWordInNamePositionIsIdent(t *testing.T) {
 	}
 }
 
+// Every PHP reserved word and compile-time constant is a name (T_STRING) in these
+// positions, and the keywords around it stay keywords. __halt_compiler is the
+// one PHP does not accept as a name.
+func TestEveryReservedWordIsIdentAsName(t *testing.T) {
+	words := strings.Fields(`abstract and array as break callable case catch class clone
+		const continue declare default die do echo else elseif empty enddeclare endfor
+		endforeach endif endswitch endwhile enum eval exit extends final finally fn for
+		foreach function global goto if implements include include_once instanceof
+		insteadof interface isset list match namespace new or print private protected
+		public readonly require require_once return static switch throw trait try unset
+		use var while xor yield
+		__class__ __dir__ __file__ __function__ __line__ __method__ __namespace__
+		__property__ __trait__`)
+	templates := []string{
+		"<?php enum E: string { case W = 'x'; }",
+		"<?php enum E { case W; }",
+		"<?php enum E { case A; case W; case B; }",
+		"<?php class A { const W = 1; }",
+		"<?php class A { const int W = 1; }",
+		"<?php class A { const X = 1, W = 2; }",
+		"<?php $a = E::W;",
+		"<?php $a = E::W->value;",
+		"<?php class A { public function W() {} }",
+		"<?php f(W: 1);",
+		"<?php $a->W();",
+		"<?php $a?->W;",
+		"<?php class A { use T { W as g; } }",
+	}
+	keywords := map[string]bool{"enum": true, "case": true, "class": true, "const": true, "public": true, "function": true, "use": true, "as": true}
+	for _, word := range words {
+		for _, name := range []string{strings.ToUpper(word), strings.ToUpper(word[:1]) + word[1:]} {
+			for _, tpl := range templates {
+				src := strings.Replace(tpl, "W", name, 1)
+				found := false
+				for _, tk := range Lex(src) {
+					switch {
+					case tk.Value == name:
+						found = tk.Kind == token.Ident
+					case keywords[tk.Value] && tk.Kind != token.Keyword:
+						t.Errorf("%q in %q: got %s, want Keyword", tk.Value, src, tk.Kind)
+					}
+				}
+				if !found {
+					t.Errorf("%q in %q is not an Ident", name, src)
+				}
+			}
+		}
+	}
+}
+
 // PHP's scanner reads the full open tag in any case, followed by whitespace or
 // the end of the file; otherwise "<?" is the short open tag.
 func TestLexOpenTagAnyCase(t *testing.T) {

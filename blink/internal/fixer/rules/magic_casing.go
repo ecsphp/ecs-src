@@ -49,7 +49,7 @@ func (MagicConstantCasing) Fix(s *tokens.Stream) bool {
 		if t.Kind != token.Ident {
 			continue
 		}
-		if canonical, ok := magicConstants[strings.ToLower(t.Value)]; ok && canonical != t.Value {
+		if canonical, ok := magicConstants[strings.ToLower(t.Value)]; ok && canonical != t.Value && !taInNamePosition(s, i) {
 			s.SetValue(i, canonical)
 			changed = true
 		}
