@@ -84,6 +84,11 @@ func TestMagicCasing(t *testing.T) {
 	if want := "<?php echo __LINE__, __DIR__;"; !changed || got != want {
 		t.Fatalf("const: changed=%v got=%q want=%q", changed, got, want)
 	}
+	// names spelled like a magic constant are T_STRING
+	in := "<?php enum E { case __class__; case __dir__ = 1; } class A { const int __line__ = 1; function __file__() {} } f(__method__: A::__trait__, b: $a->__namespace__);"
+	if got, changed := apply(t, MagicConstantCasing{}, in); changed || got != in {
+		t.Fatalf("names: changed=%v got=%q", changed, got)
+	}
 	got, changed = apply(t, MagicMethodCasing{}, "<?php class A { public function __CONSTRUCT() {} public function __tostring() {} }")
 	if want := "<?php class A { public function __construct() {} public function __toString() {} }"; !changed || got != want {
 		t.Fatalf("method: changed=%v got=%q want=%q", changed, got, want)

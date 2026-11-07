@@ -10,8 +10,9 @@ import (
 // Helpers mirroring PHP-CS-Fixer's Tokens and TokensAnalyzer.
 
 // taInNamePosition reports whether the token at i follows "->", "?->", "::",
-// "function" or "const", or neighbours a namespace separator: the positions
-// where PHP's TOKEN_PARSE tokenizer turns a reserved word into a T_STRING.
+// "function" or "const", neighbours a namespace separator, or is the name of a
+// constant, an enum case or a named argument: the positions where PHP's
+// TOKEN_PARSE tokenizer turns a reserved word into a T_STRING.
 func taInNamePosition(s *tokens.Stream, i int) bool {
 	if i+1 < s.Len() && isPunctVal(s, i+1, `\`) {
 		return true
@@ -20,9 +21,20 @@ func taInNamePosition(s *tokens.Stream, i int) bool {
 	if p < 0 {
 		return false
 	}
+	n := sigNext(s, i)
+	// "const int X = 1", "const A = 1, X = 2", "case X = 1": only a name takes a single "="
+	if isPunctVal(s, n, "=") {
+		return true
+	}
 	t := s.At(p)
 	if t.Kind == token.Punct {
+		if (t.Value == "(" || t.Value == ",") && isPunctVal(s, n, ":") {
+			return true // a named argument
+		}
 		return t.Value == "->" || t.Value == "?->" || t.Value == "::" || t.Value == `\`
+	}
+	if kwIs(t, "case") && isPunctVal(s, n, ";") {
+		return true // a pure enum case
 	}
 	return kwIs(t, "function") || kwIs(t, "const")
 }
