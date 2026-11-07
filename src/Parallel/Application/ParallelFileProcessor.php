@@ -74,7 +74,8 @@ final readonly class ParallelFileProcessor
             &$jobs,
             $processPool
         ): void {
-            $inDecoder = new Decoder($connection, true, 512, 0, 4 * 1024 * 1024);
+            // a job's message carries the full diffs of its files, several MiB for big files
+            $inDecoder = new Decoder($connection, true, 512, 0, 128 * 1024 * 1024);
             $outEncoder = new Encoder($connection);
 
             $inDecoder->on(ReactEvent::DATA, function (array $data) use (
