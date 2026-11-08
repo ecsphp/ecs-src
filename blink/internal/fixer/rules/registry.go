@@ -287,7 +287,6 @@ func ConstructFixers() []fixer.Fixer {
 		PhpdocToComment{},
 		CommentToPhpdoc{},
 		PhpdocAlign{},
-		ParamReturnAndVarTagMalforms{},
 		GeneralPhpdocTagRename{},
 		DeclareStrictTypes{},
 		VoidReturn{},

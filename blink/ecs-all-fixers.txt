@@ -314,7 +314,6 @@ Symplify\CodingStandard\Fixer\Commenting\DoubleAsteriskInlineVarFixer
 Symplify\CodingStandard\Fixer\Commenting\FixParamNameTypoFixer
 Symplify\CodingStandard\Fixer\Commenting\FixTagTypoFixer
 Symplify\CodingStandard\Fixer\Commenting\MergeDocBlockStartFixer
-Symplify\CodingStandard\Fixer\Commenting\ParamReturnAndVarTagMalformsFixer
 Symplify\CodingStandard\Fixer\Commenting\RemoveDeadParamFixer
 Symplify\CodingStandard\Fixer\Commenting\RemoveDeadVarThisFixer
 Symplify\CodingStandard\Fixer\Commenting\RemoveParamDescriptionDuplicateNameFixer
