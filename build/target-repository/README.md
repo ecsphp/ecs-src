@@ -12,7 +12,7 @@ Easy Coding Standard (ECS) is a single tool that runs [PHP_CodeSniffer](https://
 ## Killer Features
 
 - Install on **any PHP 7.2-PHP 8.5** project with any dependencies
-- Blazing fast with parallel run out of the box
+- Blazing fast - parallel PHP engine, or the bundled Go engine via [`--blink`](#blazing-fast-with---blink) for up to 100x speedup
 - Use [PHP_CodeSniffer or PHP-CS-Fixer](https://tomasvotruba.com/blog/2017/05/03/combine-power-of-php-code-sniffer-and-php-cs-fixer-in-3-lines/) - anything you like
 - Use [**prepared sets**](#prepared-sets) to save time
 
@@ -45,6 +45,28 @@ vendor/bin/ecs src tests
 ```
 
 That's it!
+
+<br>
+
+## Blazing fast with `--blink`
+
+ECS bundles a Go engine ("blink") that applies the same rules as the PHP run, across all CPU cores. Pass `--blink` to use it:
+
+```bash
+vendor/bin/ecs check --blink          # report
+vendor/bin/ecs check --blink --fix    # rewrite in place
+```
+
+When every rule in your `ecs.php` is covered by the Go engine, a plain `vendor/bin/ecs check` uses it automatically and falls back to the PHP engine otherwise.
+
+Measured on real frameworks with the prepared sets below, parallel enabled:
+
+| framework | files | ECS (PHP) | `--blink` (Go) |
+| --- | ---: | ---: | ---: |
+| `symfony/symfony` (`src`) | 13,091 | 315 s | 3.1 s |
+| `laravel/framework` (`src`) | 1,749 | 42 s | 1.1 s |
+
+Numbers vary with hardware and rule set. The Go engine ships prebuilt for Linux, macOS and Windows, so no Go toolchain is needed.
 
 <br>
 
