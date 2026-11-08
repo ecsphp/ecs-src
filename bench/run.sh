@@ -85,6 +85,18 @@ file_count=$(cd "$src" && find "${paths[@]}" -name '*.php' 2>/dev/null | wc -l)
 # abs_paths helper: resolve the corpus-relative paths inside a given tree
 abs() { local tree="$1"; shift; for p in "$@"; do echo "$tree/$p"; done; }
 
+# a crash is abnormal termination, distinct from a tool reporting findings or
+# fixing files: a signal, exit 255, or a PHP/Symfony fatal-exception signature
+# in the output. A reported time is only meaningful for a run that completed, so
+# a crash fails the whole benchmark rather than recording a partial time.
+is_crash() {
+    local code="$1" log="$2"
+    (( code >= 128 )) && return 0
+    (( code == 255 )) && return 0
+    grep -qiE 'PHP Fatal error|Uncaught |Segmentation fault|Allowed memory size|(^|[[:space:]])In [A-Za-z0-9_./-]+\.php line [0-9]+' "$log" && return 0
+    return 1
+}
+
 # time a command, in seconds, over a fresh copy of the corpus paths
 declare -A SECONDS_BY
 measure() {
@@ -92,10 +104,16 @@ measure() {
     local tree="$WORKDIR/tree"
     rm -rf "$tree"; mkdir -p "$tree"
     for p in "${paths[@]}"; do mkdir -p "$tree/$(dirname "$p")"; cp -r "$src/$p" "$tree/$p"; done
-    local start end
+    local log="$WORKDIR/run.log" start end code=0
     start=$(date +%s.%N)
-    "$@" >/dev/null 2>&1 || true
+    "$@" >"$log" 2>&1 || code=$?
     end=$(date +%s.%N)
+    if is_crash "$code" "$log"; then
+        echo "bench: '$label' crashed (exit $code) - refusing to report a time" >&2
+        echo "----- last output -----" >&2
+        tail -n 20 "$log" >&2
+        exit 1
+    fi
     SECONDS_BY[$label]=$(awk "BEGIN{printf \"%.1f\", $end - $start}")
     printf '    %-28s %6ss\n' "$label" "${SECONDS_BY[$label]}" >&2
 }

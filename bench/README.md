@@ -18,5 +18,11 @@ Requires `go`, `jq` and `composer` on `PATH`. The native tools are installed
 into a temporary directory, since ECS scopes its own vendored php-cs-fixer and
 it cannot run standalone from the repo `vendor/`.
 
+A reported time is only meaningful for a run that completed, so the benchmark
+aborts (rather than recording a partial time) if any engine crashes - a signal,
+exit 255, or a PHP/Symfony fatal-exception signature in its output.
+
 > Laravel's `tests` dir triggers a pathological php-cs-fixer fix loop, so the
-> laravel run is limited to `src`.
+> laravel run is limited to `src`. php-cs-fixer and Pint also abort on
+> `symfony/symfony` `src`: it carries a `@php-cs-fixer-ignore` annotation for a
+> rule their ruleset does not enable, which their shared Runner treats as fatal.
