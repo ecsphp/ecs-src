@@ -4,16 +4,20 @@ set -euo pipefail
 # Speed benchmark for ECS: runs `bin/ecs check` (no fix) over a target project
 # with a heavy config (PER-CS + all Symplify sets), cache cleared each run.
 #
+# Runs single process (parallel disabled in bench/ecs-bench.php) so timing
+# reflects the engine, not worker orchestration across cores. That makes a
+# full run noticeably slower than a normal parallel `bin/ecs` run.
+#
 # Usage:
 #   bench/run.sh [TARGET_PATH] [RUNS]
 #
 # Defaults:
 #   TARGET_PATH  /var/www/rector-src/src
-#   RUNS         3
+#   RUNS         1
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET="${1:-/var/www/rector-src/src}"
-RUNS="${2:-3}"
+RUNS="${2:-1}"
 
 if [[ ! -e "${TARGET}" ]]; then
     echo "Target does not exist: ${TARGET}" >&2
@@ -26,7 +30,7 @@ FILE_COUNT="$(find "${TARGET}" -name '*.php' | wc -l | tr -d ' ')"
 
 echo "ECS speed benchmark"
 echo "  target: ${TARGET} (${FILE_COUNT} PHP files)"
-echo "  config: bench/ecs-bench.php (PER-CS + all Symplify sets)"
+echo "  config: bench/ecs-bench.php (PER-CS + all Symplify sets, single process)"
 echo "  runs:   ${RUNS} (cache cleared before each)"
 echo
 
