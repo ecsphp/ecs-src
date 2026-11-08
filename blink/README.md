@@ -13,8 +13,8 @@ with `bin/rule-counts.sh`; CI keeps it current.
 <!-- rule-counts:start -->
 | tool | rules | coverage |
 |---|---:|---:|
-| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | 338 | 100% |
-| blink | 323 | 98% |
+| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | 337 | 100% |
+| blink | 322 | 98% |
 <!-- rule-counts:end -->
 
 ## Build
