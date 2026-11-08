@@ -12,9 +12,9 @@ use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
 use PhpCsFixer\Fixer\CastNotation\LowercaseCastFixer;
 use PhpCsFixer\Fixer\CastNotation\ShortScalarCastFixer;
 use PhpCsFixer\Fixer\ClassNotation\ClassDefinitionFixer;
+use PhpCsFixer\Fixer\ClassNotation\ModifierKeywordsFixer;
 use PhpCsFixer\Fixer\ClassNotation\NoBlankLinesAfterClassOpeningFixer;
 use PhpCsFixer\Fixer\ClassNotation\SingleClassElementPerStatementFixer;
-use PhpCsFixer\Fixer\ClassNotation\VisibilityRequiredFixer;
 use PhpCsFixer\Fixer\Comment\NoTrailingWhitespaceInCommentFixer;
 use PhpCsFixer\Fixer\ControlStructure\ControlStructureBracesFixer;
 use PhpCsFixer\Fixer\ControlStructure\ControlStructureContinuationPositionFixer;
@@ -63,7 +63,7 @@ return ECSConfig::configure()
     ->withConfiguredRule(NoExtraBlankLinesFixer::class, [
         'tokens' => ['curly_brace_block'],
     ])
-    ->withConfiguredRule(VisibilityRequiredFixer::class, [
+    ->withConfiguredRule(ModifierKeywordsFixer::class, [
         'elements' => ['const', 'method', 'property'],
     ])
     ->withConfiguredRule(MethodArgumentSpaceFixer::class, [
@@ -119,6 +119,5 @@ return ECSConfig::configure()
         SwitchCaseSpaceFixer::class,
         TernaryOperatorSpacesFixer::class,
         UnaryOperatorSpacesFixer::class,
-        VisibilityRequiredFixer::class,
         WhitespaceAfterCommaInArrayFixer::class,
     ]);
