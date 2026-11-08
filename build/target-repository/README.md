@@ -65,11 +65,13 @@ Wall-clock `--fix` over a fresh clone, each tool with a representative rule set 
 | --- | ---: | ---: |
 | **ECS `--blink`** (Go) | **3.1 s** | **1.1 s** |
 | ECS (PHP) | 315 s | 42 s |
-| php-cs-fixer (`@PER-CS`, `@Symfony`) | 7.9 s | 25 s |
-| PHP_CodeSniffer (`phpcbf`, PSR-12) | 147 s | 25 s |
-| Laravel Pint (`laravel` preset) | 97 s | 199 s |
+| php-cs-fixer (`@PER-CS`, `@Symfony`) | 132 s | 25 s |
+| PHP_CodeSniffer (`phpcbf`, PSR-12) | 132 s | 25 s |
+| Laravel Pint (`laravel` preset) | 1,543 s | 199 s |
 
 Different tools apply different rules, so this compares each at a representative job, not rule for rule. Numbers vary with hardware. The Go engine ships prebuilt for Linux, macOS and Windows, so no Go toolchain is needed.
+
+On `symfony/symfony` `src`, php-cs-fixer and Pint also need the rules its `@php-cs-fixer-ignore` annotations reference (`--allow-risky`) enabled, or they abort before running.
 
 <br>
 
