@@ -49,6 +49,15 @@ The shape is:
 
 Configured fixer options are read off the fixer instance; sniff properties are not extracted yet. A skipped interface or parent class (ECS matches class skips with `is_a()`) is dumped as is, followed by one entry per configured checker it covers, so ecs-go can match skips by exact checker class.
 
+## Automatic dispatch
+
+`ECS_AUTO_BLINK=1` lets a plain `vendor/bin/ecs check` (no `--blink`) hand the run to ecs-go on its own, but only when ecs-go covers every rule the config resolves. ECS queries the binary's `list-checkers` and, if all configured rules map to a blink fixer, runs blink; if any rule is a custom sniff/fixer or a not-yet-ported rule, it falls back to the PHP engine silently. It is off by default and meant for testing.
+
+```bash
+ECS_AUTO_BLINK=1 vendor/bin/ecs check        # blink when fully covered, else PHP
+ECS_AUTO_BLINK=1 vendor/bin/ecs check --fix
+```
+
 ## Binary resolution
 
 The ecs-go binary is looked up in this order:
