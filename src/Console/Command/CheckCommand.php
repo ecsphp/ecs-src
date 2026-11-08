@@ -126,16 +126,12 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
             return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
 
-        // experimental auto-blink (off by default, opt in with ECS_AUTO_BLINK=1):
-        // hand the run to ecs-go only when it covers every configured rule, else
-        // fall back to the PHP engine silently
-        if ($this->isAutoBlinkEnabled()) {
-            $configData = $this->blinkConfigDumper->dump($configuration->getSources());
-
-            if ($this->blinkSupportResolver->isFullySupported($configData)) {
-                $blinkExitCode = $this->blinkRunner->run($configData, $fix);
-                return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
-            }
+        // auto-blink: hand the run to ecs-go when it covers every configured rule,
+        // else fall back to the PHP engine silently
+        $configData = $this->blinkConfigDumper->dump($configuration->getSources());
+        if ($this->blinkSupportResolver->isFullySupported($configData)) {
+            $blinkExitCode = $this->blinkRunner->run($configData, $fix);
+            return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
 
         $this->memoryLimitter->adjust($configuration);
@@ -149,13 +145,6 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         }
 
         return $exitCode;
-    }
-
-    private function isAutoBlinkEnabled(): bool
-    {
-        $value = getenv('ECS_AUTO_BLINK');
-
-        return ! in_array($value, [false, '', '0'], true);
     }
 
     private function printRunFooter(int $filesCount, float $startTime): void

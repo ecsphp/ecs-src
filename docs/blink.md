@@ -51,11 +51,11 @@ Configured fixer options are read off the fixer instance; sniff properties are n
 
 ## Automatic dispatch
 
-`ECS_AUTO_BLINK=1` lets a plain `vendor/bin/ecs check` (no `--blink`) hand the run to ecs-go on its own, but only when ecs-go covers every rule the config resolves. ECS queries the binary's `list-checkers` and, if all configured rules map to a blink fixer, runs blink; if any rule is a custom sniff/fixer or a not-yet-ported rule, it falls back to the PHP engine silently. It is off by default and meant for testing.
+A plain `vendor/bin/ecs check` (no `--blink`) hands the run to ecs-go on its own when ecs-go covers every rule the config resolves. ECS queries the binary's `list-checkers` and, if all configured rules map to a blink fixer, runs blink; if any rule is a custom sniff/fixer or a not-yet-ported rule, or no binary is available, it falls back to the PHP engine silently.
 
 ```bash
-ECS_AUTO_BLINK=1 vendor/bin/ecs check        # blink when fully covered, else PHP
-ECS_AUTO_BLINK=1 vendor/bin/ecs check --fix
+vendor/bin/ecs check        # blink when fully covered, else PHP
+vendor/bin/ecs check --fix
 ```
 
 ## Binary resolution
