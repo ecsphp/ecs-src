@@ -1,0 +1,5 @@
+#!/bin/sh
+printf '%s\n' \
+'Registered checkers:' \
+'  - PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer' \
+'  - PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer'

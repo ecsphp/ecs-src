@@ -10,6 +10,7 @@ use Symplify\EasyCodingStandard\Application\EasyCodingStandardApplication;
 use Symplify\EasyCodingStandard\Blink\BlinkCommitRunner;
 use Symplify\EasyCodingStandard\Blink\BlinkConfigDumper;
 use Symplify\EasyCodingStandard\Blink\BlinkRunner;
+use Symplify\EasyCodingStandard\Blink\BlinkSupportResolver;
 use Symplify\EasyCodingStandard\Configuration\ConfigInitializer;
 use Symplify\EasyCodingStandard\Configuration\ConfigurationFactory;
 use Symplify\EasyCodingStandard\Console\ExitCode;
@@ -30,6 +31,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         private BlinkRunner $blinkRunner,
         private BlinkCommitRunner $blinkCommitRunner,
         private BlinkConfigDumper $blinkConfigDumper,
+        private BlinkSupportResolver $blinkSupportResolver,
         private EasyCodingStandardStyle $easyCodingStandardStyle,
     ) {
     }
@@ -120,6 +122,14 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
                 return $this->blinkCommitRunner->run($configData);
             }
 
+            $blinkExitCode = $this->blinkRunner->run($configData, $fix);
+            return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+        }
+
+        // auto-blink: hand the run to ecs-go when it covers every configured rule,
+        // else fall back to the PHP engine silently
+        $configData = $this->blinkConfigDumper->dump($configuration->getSources());
+        if ($this->blinkSupportResolver->isFullySupported($configData)) {
             $blinkExitCode = $this->blinkRunner->run($configData, $fix);
             return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
