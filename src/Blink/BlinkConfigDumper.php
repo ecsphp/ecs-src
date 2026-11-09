@@ -8,6 +8,7 @@ use PhpCsFixer\Fixer\ConfigurableFixerInterface;
 use PhpCsFixer\Fixer\FixerInterface;
 use ReflectionProperty;
 use stdClass;
+use Symplify\EasyCodingStandard\Config\ECSConfig;
 use Symplify\EasyCodingStandard\FixerRunner\Application\FixerFileProcessor;
 use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedCriteriaResolver;
 use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
@@ -23,6 +24,7 @@ final readonly class BlinkConfigDumper
         private SniffFileProcessor $sniffFileProcessor,
         private FixerFileProcessor $fixerFileProcessor,
         private SkippedCriteriaResolver $skippedCriteriaResolver,
+        private ECSConfig $ecsConfig,
     ) {
     }
 
@@ -137,7 +139,9 @@ final readonly class BlinkConfigDumper
         }
 
         if (! property_exists($fixer, 'configuration')) {
-            return new stdClass();
+            $configuration = $this->ecsConfig->getCheckerConfiguration()[$fixer::class] ?? [];
+
+            return $configuration === [] ? new stdClass() : $configuration;
         }
 
         $reflectionProperty = new ReflectionProperty($fixer, 'configuration');

@@ -9,6 +9,7 @@ use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
 use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
 use PhpCsFixer\Fixer\Import\FullyQualifiedStrictTypesFixer;
 use stdClass;
+use Symplify\CodingStandard\Fixer\LineLength\LineLengthFixer;
 use Symplify\EasyCodingStandard\Blink\BlinkConfigDumper;
 use Symplify\EasyCodingStandard\Testing\PHPUnit\AbstractTestCase;
 
@@ -45,6 +46,21 @@ final class BlinkConfigDumperTest extends AbstractTestCase
         $this->assertSame([
             'syntax' => 'long',
         ], $configByClass[ArraySyntaxFixer::class]);
+    }
+
+    public function testDumpTakesConfigFromEcsConfigForFixerWithoutConfigurationProperty(): void
+    {
+        $data = $this->blinkConfigDumper->dump([]);
+
+        $configByClass = [];
+        foreach ($data['rules'] as $rule) {
+            $configByClass[$rule['class']] = $rule['config'];
+        }
+
+        $this->assertArrayHasKey(LineLengthFixer::class, $configByClass);
+        $this->assertSame([
+            LineLengthFixer::INLINE_SHORT_LINES => false,
+        ], $configByClass[LineLengthFixer::class]);
     }
 
     public function testDumpDropsOptionsLeftAtDefault(): void
