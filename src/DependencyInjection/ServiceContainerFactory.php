@@ -31,6 +31,9 @@ final class ServiceContainerFactory
 
         $ecsConfig = new ECSConfig();
 
+        // config
+        $ecsConfig->service(ECSConfig::class, static fn (): ECSConfig => $ecsConfig);
+
         // console
         $ecsConfig->service(
             EasyCodingStandardStyle::class,
