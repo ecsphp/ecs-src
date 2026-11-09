@@ -1143,14 +1143,6 @@
             "config": {}
         },
         {
-            "class": "Symplify\\CodingStandard\\Fixer\\Commenting\\ParamReturnAndVarTagMalformsFixer",
-            "config": {}
-        },
-        {
-            "class": "Symplify\\CodingStandard\\Fixer\\Commenting\\ParamReturnAndVarTagMalformsFixer",
-            "config": {}
-        },
-        {
             "class": "PhpCsFixer\\Fixer\\Basic\\NoMultipleStatementsPerLineFixer",
             "config": {}
         },

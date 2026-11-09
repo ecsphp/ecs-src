@@ -422,7 +422,6 @@ var commonMembers = map[string]bool{
 	"NullableTypeDeclarationForDefaultNullValueFixer": true,
 	"ObjectOperatorWithoutWhitespaceFixer":            true,
 	"OrderedImportsFixer":                             true,
-	"ParamReturnAndVarTagMalformsFixer":               true,
 	"PhpdocIndentFixer":                               true,
 	"PhpdocInlineTagNormalizerFixer":                  true,
 	"PhpdocLineSpanFixer":                             true,
