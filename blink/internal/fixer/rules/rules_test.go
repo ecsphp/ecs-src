@@ -535,6 +535,23 @@ func TestNoTrailingWhitespace(t *testing.T) {
 	if _, changed := apply(t, NoTrailingWhitespace{}, "<?php $x = 1;\n"); changed {
 		t.Fatal("clean input should not change")
 	}
+	// as in PHP-CS-Fixer: only the part before a token's first line break is
+	// trimmed, so whitespace-only lines and the next line's indent stay
+	src := "<?php\nfunction f()\n{\n    $a = 1; \n        \n    $b = 2;\n}\n"
+	got, changed = apply(t, NoTrailingWhitespace{}, src)
+	if want := "<?php\nfunction f()\n{\n    $a = 1;\n        \n    $b = 2;\n}\n"; !changed || got != want {
+		t.Fatalf("blank line: changed=%v got=%q want=%q", changed, got, want)
+	}
+	// a single-line run is trimmed only at the end of the file
+	got, changed = apply(t, NoTrailingWhitespace{}, "<?php $x = 1;  ")
+	if want := "<?php $x = 1;"; !changed || got != want {
+		t.Fatalf("eof: changed=%v got=%q want=%q", changed, got, want)
+	}
+	// \r\n and a lone \r count as line breaks
+	got, changed = apply(t, NoTrailingWhitespace{}, "<?php $x = 1; \r\n$y = 2;\t\r$z = 3;\n")
+	if want := "<?php $x = 1;\r\n$y = 2;\r$z = 3;\n"; !changed || got != want {
+		t.Fatalf("crlf: changed=%v got=%q want=%q", changed, got, want)
+	}
 }
 
 func TestSingleBlankLineAtEndOfFile(t *testing.T) {
