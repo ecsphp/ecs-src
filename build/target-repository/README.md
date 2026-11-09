@@ -4,15 +4,10 @@
 
 Easy Coding Standard (ECS) is a single tool that runs [PHP_CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer) and [PHP-CS-Fixer](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer) rules together, configured through one simple PHP file.
 
-> [!NOTE]
-> This is the **deployed** package. Development happens in the [ecs-src](https://github.com/easy-coding-standard/ecs-src) repository - report issues and send pull requests there.
-
-<br>
-
 ## Killer Features
 
-- Install on **any PHP 7.2-PHP 8.5** project with any dependencies
 - Blazing fast - parallel PHP engine, or the bundled Go engine via [`--blink`](#blazing-fast-with---blink) for up to 100x speedup
+- Install on **any PHP 7.2-PHP 8.5** project with any dependencies
 - Use [PHP_CodeSniffer or PHP-CS-Fixer](https://tomasvotruba.com/blog/2017/05/03/combine-power-of-php-code-sniffer-and-php-cs-fixer-in-3-lines/) - anything you like
 - Use [**prepared sets**](#prepared-sets) to save time
 
@@ -281,3 +276,8 @@ Do you use another tool and want to migrate? It's pretty straightforward - here 
 
 * for [PHP_CodeSniffer](https://tomasvotruba.com/blog/2018/06/04/how-to-migrate-from-php-code-sniffer-to-easy-coding-standard)
 * and [PHP CS Fixer](https://tomasvotruba.com/blog/2018/06/07/how-to-migrate-from-php-cs-fixer-to-easy-coding-standard).
+
+<br>
+
+> [!NOTE]
+> This is the **deployed** package. Development happens in the [ecs-src](https://github.com/easy-coding-standard/ecs-src) repository - report issues and send pull requests there.
