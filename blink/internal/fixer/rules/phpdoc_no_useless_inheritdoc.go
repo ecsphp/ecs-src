@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -34,8 +35,8 @@ func (PhpdocNoUselessInheritdoc) Fix(s *tokens.Stream) bool {
 	}
 	// docs are in ascending order; fixing from the end keeps earlier indices valid
 	changed := false
-	for k := len(docs) - 1; k >= 0; k-- {
-		if inheritdocFixDoc(s, docs[k]) {
+	for _, doc := range slices.Backward(docs) {
+		if inheritdocFixDoc(s, doc) {
 			changed = true
 		}
 	}
