@@ -4,12 +4,24 @@
 
 Easy Coding Standard (ECS) is a single tool that runs [PHP_CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer) and [PHP-CS-Fixer](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer) rules together, configured through one simple PHP file.
 
+**Fixes all of Symfony in 3 seconds. php-cs-fixer and PHP_CodeSniffer take over 2 minutes.**
+
+| `--fix` on a fresh clone | Symfony `src` (13,091 files) | Laravel `src` (1,749 files) |
+| --- | ---: | ---: |
+| **ECS `--blink`** | **3.1 s** | **1.1 s** |
+| php-cs-fixer | 132 s - 42x slower | 25 s - 23x slower |
+| PHP_CodeSniffer | 132 s - 42x slower | 25 s - 23x slower |
+
+See [full benchmark](#blazing-fast-with---blink).
+
+<br>
+
 ## Killer Features
 
-- Blazing fast - parallel PHP engine, or the bundled Go engine via [`--blink`](#blazing-fast-with---blink) for up to 100x speedup
+- Blazing fast - fixes all **13,091 files of Symfony in 3.1 s** with the bundled Go engine via [`--blink`](#blazing-fast-with---blink), 100x faster than the PHP engine (315 s) and 42x faster than php-cs-fixer (132 s)
 - Install on **any PHP 7.2-PHP 8.5** project with any dependencies
 - Use [PHP_CodeSniffer or PHP-CS-Fixer](https://tomasvotruba.com/blog/2017/05/03/combine-power-of-php-code-sniffer-and-php-cs-fixer-in-3-lines/) - anything you like
-- Use [**prepared sets**](#prepared-sets) to save time
+- Use [**14 prepared sets**](#prepared-sets) to save time
 
 <br>
 
