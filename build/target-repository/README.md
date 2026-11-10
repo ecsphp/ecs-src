@@ -1,4 +1,4 @@
-# The Easiest way to use Coding Standard
+# The Easiest and Fastest Coding Standard
 
 [![Downloads total](https://img.shields.io/packagist/dt/symplify/easy-coding-standard.svg?style=flat-square)](https://packagist.org/packages/symplify/easy-coding-standard/stats)
 
