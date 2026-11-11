@@ -270,19 +270,40 @@ func hasDocOrAttrAbove(s *tokens.Stream, start int) bool {
 	return s.At(j).Kind == token.DocComment || s.AttributeStartOf(j) >= 0
 }
 
-// setNewlineCount rewrites the whitespace token at idx to hold exactly req
-// newlines while keeping the trailing line indentation. Returns whether it
+// setNewlineCount makes the whitespace token at idx hold req newlines, as
+// PHP-CS-Fixer's correctLineBreaks does: a token that already has req is left
+// as it is (even a blank line holding spaces), a missing newline is prepended,
+// and surplus line breaks are dropped from the start. Returns whether it
 // changed the value.
 func setNewlineCount(s *tokens.Stream, idx, req int) bool {
 	v := s.At(idx).Value
-	indent := ""
-	if nl := strings.LastIndexByte(v, '\n'); nl >= 0 {
-		indent = v[nl+1:]
-	}
-	want := strings.Repeat("\n", req) + indent
-	if v == want {
+	have := strings.Count(v, "\n")
+	switch {
+	case have == req:
 		return false
+	case have < req:
+		s.SetValue(idx, strings.Repeat("\n", req-have)+v)
+	default:
+		s.SetValue(idx, dropLineBreaks(v, have-req))
 	}
-	s.SetValue(idx, want)
 	return true
+}
+
+// dropLineBreaks removes the first n line breaks ("\r\n" or "\n") from v.
+func dropLineBreaks(v string, n int) string {
+	var b strings.Builder
+	b.Grow(len(v))
+	for i := 0; i < len(v); i++ {
+		if n > 0 && v[i] == '\n' {
+			n--
+			continue
+		}
+		if n > 0 && v[i] == '\r' && i+1 < len(v) && v[i+1] == '\n' {
+			n--
+			i++
+			continue
+		}
+		b.WriteByte(v[i])
+	}
+	return b.String()
 }
