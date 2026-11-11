@@ -594,10 +594,34 @@ func reflowParen(s *tokens.Stream, open, closeIdx int, collapseBlanks bool) bool
 	if reflowBreakAfterComments(s, open, closeIdx, base) {
 		changed = true
 	}
-	if editSlotAfter(s, open, argNL) {
+	if reflowAfterOpen(s, open, argNL) {
 		changed = true
 	}
 	return changed
+}
+
+// reflowAfterOpen breaks the line after an argument list's "(" the way
+// php-cs-fixer's fixNewline does: a comment right after "(" keeps its place,
+// and with one whitespace before the comment only the next argument is moved,
+// and only when it does not start a line already.
+func reflowAfterOpen(s *tokens.Stream, open int, argNL string) bool {
+	if open+1 < s.Len() && isComment(s.At(open+1)) {
+		return false
+	}
+	if open+2 < s.Len() && isComment(s.At(open+2)) {
+		next := sigNext(s, open+2)
+		if next < 0 {
+			return false
+		}
+		if prev := s.At(next - 1); prev.Kind == token.Whitespace && hasNewline(prev.Value) {
+			return false
+		}
+		return editSlotBefore(s, next, argNL)
+	}
+	if isPunctVal(s, sigNext(s, open), ")") {
+		return false
+	}
+	return editSlotAfter(s, open, argNL)
 }
 
 // reflowBreakAfterComments puts a top-level block comment that is followed by
