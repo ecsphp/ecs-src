@@ -99,7 +99,10 @@ func (f LineLength) Fix(s *tokens.Stream) bool {
 			if f.processOpener(s, pos) {
 				changed = true
 			}
-		case t.Kind == token.Punct && t.Value == "]" && llIsArrayClose(s, pos):
+		// like Symplify, only array literals: a destructuring target ("[$a, $b] =",
+		// "foreach (... as [...])") is a different token kind there and is skipped
+		case t.Kind == token.Punct && t.Value == "]" && llIsArrayClose(s, pos) &&
+			!arrayNotationIsDestructuring(s, s.MatchBackward(pos)):
 			if f.processArrayClose(s, pos) {
 				changed = true
 			}
