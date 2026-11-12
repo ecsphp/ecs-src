@@ -94,7 +94,7 @@ var perCSRules = []setRule{
 		"anonymous_class": false,
 	}},
 	{`PhpCsFixer\Fixer\Whitespace\NoExtraBlankLinesFixer`, map[string]any{
-		"tokens": []any{"use"},
+		"tokens": []any{"curly_brace_block", "use"},
 	}},
 	{`PhpCsFixer\Fixer\ClassNotation\OrderedClassElementsFixer`, map[string]any{
 		"order": []any{"use_trait"},
