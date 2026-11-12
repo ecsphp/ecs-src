@@ -140,3 +140,21 @@ func TestSymplifyDocBlockSourceURLs(t *testing.T) {
 		}
 	}
 }
+
+// TestRemoveMethodNameDuplicateDescriptionSSuffix removes descriptions whose first word
+// genuinely ends with "s", e.g. "has" on has() (mirrors ecsphp/ecs#341).
+func TestRemoveMethodNameDuplicateDescriptionSSuffix(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ desc, method string }{
+		{"has", "has"},
+		{"Is alive", "isAlive"},
+		{"fetchStats", "fetchStats"},
+		{"Contacts a user", "contactUser"},
+	} {
+		src := "<?php\nclass A {\n    /**\n     * " + tc.desc + "\n     */\n    function " + tc.method + "() {}\n}\n"
+		got, changed := apply(t, RemoveMethodNameDuplicateDescription{}, src)
+		if want := "<?php\nclass A {\n    /**\n     */\n    function " + tc.method + "() {}\n}\n"; !changed || got != want {
+			t.Fatalf("%s: changed=%v got=%q want=%q", tc.desc, changed, got, want)
+		}
+	}
+}

@@ -336,10 +336,7 @@ func (RemoveMethodNameDuplicateDescription) Fix(s *tokens.Stream) bool {
 		lineChanged := false
 		for _, line := range lines {
 			l := articlesRe.ReplaceAllString(line, "")
-			l = thirdPersonSRe.ReplaceAllString(l, "$1")
-			spaceless := spaceNlRe.ReplaceAllString(l, "")
-			spaceless = strings.TrimRight(spaceless, ".!")
-			if isDuplicateDescription(spaceless, methodName) {
+			if isDuplicateLine(l, methodName) || isDuplicateLine(thirdPersonSRe.ReplaceAllString(l, "$1"), methodName) {
 				lineChanged = true
 				continue
 			}
@@ -351,6 +348,11 @@ func (RemoveMethodNameDuplicateDescription) Fix(s *tokens.Stream) bool {
 		}
 	}
 	return changed
+}
+
+func isDuplicateLine(line, methodName string) bool {
+	spaceless := strings.TrimRight(spaceNlRe.ReplaceAllString(line, ""), ".!")
+	return isDuplicateDescription(spaceless, methodName)
 }
 
 func isDuplicateDescription(spaceless, methodName string) bool {
