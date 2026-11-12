@@ -24,3 +24,30 @@ func TestNoExtraBlankLinesConfig(t *testing.T) {
 		t.Fatalf("use: got=%q", got)
 	}
 }
+
+func TestNoExtraBlankLinesCurlyBraceBlock(t *testing.T) {
+	t.Parallel()
+	f := NoExtraBlankLines{}.WithConfig(map[string]any{"tokens": []any{"curly_brace_block"}}).(fixerRule)
+
+	got, changed := apply(t, f, "<?php\nclass A\n{\n\n    public function run()\n    {\n\n        return 1;\n\n    }\n\n}\n")
+	if want := "<?php\nclass A\n{\n    public function run()\n    {\n        return 1;\n    }\n}\n"; !changed || got != want {
+		t.Fatalf("block: changed=%v got=%q", changed, got)
+	}
+
+	// single-line block, dynamic property, group import and interpolation braces are left alone
+	for _, in := range []string{
+		"<?php\n$f = function () { return 1; };\n$a->{\n\n'b'\n\n};\n",
+		"<?php\nuse A\\{\n\n    B,\n\n    C\n};\n",
+		"<?php\n$s = \"x {$a\n\n} y\";\n",
+	} {
+		if got, _ := apply(t, f, in); got != in {
+			t.Fatalf("skip: got=%q", got)
+		}
+	}
+
+	// a multi-line docblock before "}" still counts as the last line break
+	got, _ = apply(t, f, "<?php\nif ($x) {\n    /**\n     * d\n     */\n\n}\n")
+	if want := "<?php\nif ($x) {\n    /**\n     * d\n     */\n}\n"; got != want {
+		t.Fatalf("docblock: got=%q", got)
+	}
+}

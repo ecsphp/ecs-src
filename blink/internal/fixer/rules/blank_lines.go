@@ -65,10 +65,57 @@ func (f NoExtraBlankLines) Fix(s *tokens.Stream) bool {
 	if f.enabled("use_trait") && noExtraBlankLinesUse(s, true) {
 		changed = true
 	}
+	if f.enabled("curly_brace_block") && noExtraBlankLinesCurlyBraceBlock(s) {
+		changed = true
+	}
 	if f.enabled("extra") && noExtraBlankLinesExtra(s) {
 		changed = true
 	}
 	return changed
+}
+
+// noExtraBlankLinesCurlyBraceBlock strips blank lines after the opening "{" and
+// before the closing "}" of a multi-line block. Dynamic access braces and group
+// import braces are not plain "{" tokens in PHP-CS-Fixer, so they are skipped.
+func noExtraBlankLinesCurlyBraceBlock(s *tokens.Stream) bool {
+	changed := false
+	for index := s.Len() - 1; index > 0; index-- {
+		t := s.At(index)
+		if t.Kind != token.Punct || t.Value != "{" || noExtraBlankLinesIsSpecialBrace(s, index) {
+			continue
+		}
+		end := s.MatchForward(index)
+		if end < 0 {
+			continue
+		}
+		for i := end - 1; i >= index; i-- {
+			if strings.Contains(s.At(i).Value, "\n") {
+				if noExtraBlankLinesRemoveAfter(s, i) {
+					changed = true
+				}
+				if noExtraBlankLinesRemoveAfter(s, index) {
+					changed = true
+				}
+				break
+			}
+		}
+	}
+	return changed
+}
+
+func noExtraBlankLinesIsSpecialBrace(s *tokens.Stream, index int) bool {
+	if index > 0 && s.At(index-1).Value == "$" {
+		return true
+	}
+	prev, ok := prevSignificant(s, index)
+	if !ok {
+		return false
+	}
+	switch prev.Value {
+	case "->", "?->", "::", "$":
+		return true
+	}
+	return strings.HasSuffix(prev.Value, "\\")
 }
 
 // noExtraBlankLinesExtra collapses runs of blank lines to a single blank line.

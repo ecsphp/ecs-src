@@ -92,7 +92,7 @@ return ECSConfig::configure()
         'anonymous_class' => false,
     ])
     ->withConfiguredRule(NoExtraBlankLinesFixer::class, [
-        'tokens' => ['use'],
+        'tokens' => ['curly_brace_block', 'use'],
     ])
     ->withConfiguredRule(OrderedClassElementsFixer::class, [
         'order' => ['use_trait'],
