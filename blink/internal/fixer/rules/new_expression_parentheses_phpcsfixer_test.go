@@ -57,5 +57,13 @@ func TestNewExpressionParenthesesPhpCsFixerCases(t *testing.T) {
 		{"expr no args no change", nil, "<?php (new (foo()))->bar;", "<?php (new (foo()))->bar;"},
 		{"expr no args no change wp", wp, "<?php (new (foo()))->bar;", "<?php (new (foo()))->bar;"},
 		{"expr wrap", wp, "<?php new (foo())()->bar;", "<?php (new (foo())())->bar;"},
+
+		// call argument parentheses are not instantiation parentheses
+		{"chain keeps call args", nil, "<?php (new Foo())\n    ->do(new Bar())\n    ->do(new Bar());", "<?php new Foo()\n    ->do(new Bar())\n    ->do(new Bar());"},
+		{"function call arg", nil, "<?php foo(new Bar())->baz();", "<?php foo(new Bar())->baz();"},
+		{"variable call arg", nil, "<?php $f(new Bar())->baz();", "<?php $f(new Bar())->baz();"},
+		{"index call arg", nil, "<?php $a[0](new Bar())->baz();", "<?php $a[0](new Bar())->baz();"},
+		{"method call arg static", nil, "<?php $o->m(new Bar())::baz();", "<?php $o->m(new Bar())::baz();"},
+		{"function call arg wp", wp, "<?php foo(new Bar())->baz();", "<?php foo(new Bar())->baz();"},
 	})
 }

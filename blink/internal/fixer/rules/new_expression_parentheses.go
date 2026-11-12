@@ -130,10 +130,11 @@ func nepEnsureNotWrapped(s *tokens.Stream, exprStart, exprEnd int) bool {
 }
 
 // nepIsWrappingPair reports whether openIndex is the instantiation "(" directly
-// before "new" and closeIndex is its matching ")".
+// before "new" and closeIndex is its matching ")". Call argument parentheses,
+// as in "foo(new Bar())->baz()", are not instantiation parentheses.
 func nepIsWrappingPair(s *tokens.Stream, openIndex, closeIndex int) bool {
 	return isPunctVal(s, openIndex, "(") && isPunctVal(s, closeIndex, ")") &&
-		s.MatchForward(openIndex) == closeIndex
+		s.MatchForward(openIndex) == closeIndex && isClassInstantiationCloseParen(s, closeIndex)
 }
 
 // nepFollowedByCall reports whether the token at i is "->", "?->" or "::".
