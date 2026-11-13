@@ -100,8 +100,8 @@ func insideDeclareArgs(s *tokens.Stream, i int) bool {
 }
 
 // normalizeSpaceAround forces exactly one space on both sides of every token the
-// target predicate selects. Whitespace spanning a newline is left alone so
-// intentional alignment survives.
+// target predicate selects. Whitespace spanning a newline or sitting next to a
+// comment is left alone so intentional alignment survives.
 func normalizeSpaceAround(s *tokens.Stream, target func(*tokens.Stream, int) bool) bool {
 	changed := false
 	i := 0
@@ -114,7 +114,7 @@ func normalizeSpaceAround(s *tokens.Stream, target func(*tokens.Stream, int) boo
 		if i > 0 {
 			prev := s.At(i - 1)
 			if prev.Kind == token.Whitespace {
-				if !hasNewline(prev.Value) && prev.Value != " " {
+				if !hasNewline(prev.Value) && prev.Value != " " && !commentAt(s, i-2) {
 					s.SetValue(i-1, " ")
 					changed = true
 				}
@@ -128,7 +128,7 @@ func normalizeSpaceAround(s *tokens.Stream, target func(*tokens.Stream, int) boo
 		if i+1 < s.Len() {
 			next := s.At(i + 1)
 			if next.Kind == token.Whitespace {
-				if !hasNewline(next.Value) && next.Value != " " {
+				if !hasNewline(next.Value) && next.Value != " " && !commentAt(s, i+2) {
 					s.SetValue(i+1, " ")
 					changed = true
 				}

@@ -12,6 +12,9 @@ func TestConcatSpaceConfigCases(t *testing.T) {
 	}{
 		{"default one", ConcatSpace{}, "<?php $a = 'a'.'b';", "<?php $a = 'a' . 'b';"},
 		{"one explicit", ConcatSpace{}.WithConfig(map[string]any{"spacing": "one"}).(fixerRule), "<?php $a = 'a'.'b';", "<?php $a = 'a' . 'b';"},
+		{"one keeps gap before comment", ConcatSpace{}, "<?php $a = 'a' .     // c\n    'b';", "<?php $a = 'a' .     // c\n    'b';"},
+		{"one keeps gap after comment", ConcatSpace{}, "<?php $a = 'a' /* c */   . 'b';", "<?php $a = 'a' /* c */   . 'b';"},
+		{"one still fixes gap before code", ConcatSpace{}, "<?php $a = 'a'   .   'b';", "<?php $a = 'a' . 'b';"},
 		{"none", ConcatSpace{}.WithConfig(map[string]any{"spacing": "none"}).(fixerRule), "<?php $a = 'a' . 'b';", "<?php $a = 'a'.'b';"},
 		{"attribute concat spaced", ConcatSpace{}, "<?php #[WithEnv('K', __DIR__.'/x.php')]\nclass C {}", "<?php #[WithEnv('K', __DIR__ . '/x.php')]\nclass C {}"},
 		{"attribute concat none", ConcatSpace{}.WithConfig(map[string]any{"spacing": "none"}).(fixerRule), "<?php #[WithEnv('K', __DIR__ . '/x.php')]\nclass C {}", "<?php #[WithEnv('K', __DIR__.'/x.php')]\nclass C {}"},
