@@ -128,23 +128,16 @@ func newSymScan(s *tokens.Stream) *symScan {
 func (sc *symScan) tok(i int) token.Token { return sc.s.At(i) }
 
 func (sc *symScan) isPunct(i int, v string) bool {
-	if i < 0 || i >= sc.n {
-		return false
-	}
-	t := sc.s.At(i)
-	return t.Kind == token.Punct && t.Value == v
+	return i >= 0 && i < sc.n && sc.s.Kind(i) == token.Punct && sc.s.At(i).Value == v
 }
 
 func (sc *symScan) isKeyword(i int, words ...string) bool {
-	if i < 0 || i >= sc.n {
+	if i < 0 || i >= sc.n || sc.s.Kind(i) != token.Keyword || sc.namedArgKW[i] {
 		return false
 	}
-	t := sc.s.At(i)
-	if t.Kind != token.Keyword || sc.namedArgKW[i] {
-		return false
-	}
+	v := sc.s.At(i).Value
 	for _, w := range words {
-		if strings.EqualFold(t.Value, w) {
+		if strings.EqualFold(v, w) {
 			return true
 		}
 	}
@@ -152,7 +145,7 @@ func (sc *symScan) isKeyword(i int, words ...string) bool {
 }
 
 func (sc *symScan) isKind(i int, k token.Kind) bool {
-	return i >= 0 && i < sc.n && sc.s.At(i).Kind == k
+	return i >= 0 && i < sc.n && sc.s.Kind(i) == k
 }
 
 func (sc *symScan) isTString(i int) bool { return i >= 0 && i < sc.n && sc.tstr[i] }
@@ -184,13 +177,29 @@ var phpCastNames = map[string]bool{
 	"real": true, "string": true, "binary": true, "object": true, "unset": true, "void": true,
 }
 
+// phpTStringWordMaxLen is the length of the longest word computeTString looks for.
+var phpTStringWordMaxLen = func() int {
+	n := max(len("namespace"), len("from"))
+	for _, m := range []map[string]bool{phpMagicConstants, phpNonStringNames, phpCastNames} {
+		for w := range m {
+			n = max(n, len(w))
+		}
+	}
+	return n
+}()
+
 // computeTString reports whether token i is a T_STRING in PHP-CS-Fixer's model.
 func (sc *symScan) computeTString(i int) bool {
 	t := sc.s.At(i)
 	if t.Kind != token.Ident {
 		return false
 	}
-	lower := strings.ToLower(t.Value)
+	// lower is only compared with the short words below; a longer ASCII name
+	// cannot be one of them, so it skips the lowercasing copy
+	lower := ""
+	if len(t.Value) <= phpTStringWordMaxLen || !isASCII(t.Value) {
+		lower = strings.ToLower(t.Value)
+	}
 	prev, next := sc.prevM(i), sc.nextM(i)
 	member := sc.isPunct(prev, "->") || sc.isPunct(prev, "?->") || sc.isPunct(prev, "::") ||
 		sc.isKeyword(prev, "function", "const")
@@ -247,6 +256,9 @@ func (sc *symScan) isNamespaceOperator(i int) bool {
 // isClassy reports a class/interface/trait/enum declaration keyword (T_CLASS
 // includes anonymous classes; Foo::class is never a keyword token here).
 func (sc *symScan) isClassy(i int) bool {
+	if !sc.isKind(i, token.Keyword) {
+		return false
+	}
 	if sc.isKeyword(i, "class", "interface", "trait") {
 		return !sc.isPunct(sc.prevM(i), "::")
 	}

@@ -9,6 +9,9 @@
 # Usage:
 #   bench/blink-before-after.sh [base-ref] [corpus-dir] [set] [runs]
 #
+# set is a blink set name or comma-separated rule classes, e.g.
+#   'PhpCsFixer\Fixer\Import\GlobalNamespaceImportFixer,PhpCsFixer\Fixer\Import\FullyQualifiedStrictTypesFixer'
+#
 # Defaults: base-ref origin/main, corpus-dir vendor/ of this repo, set common
 # (the heaviest prepared set, docblock rules included), 5 runs. CPU seconds
 # are the steadier number on a busy machine; wall seconds depend on free cores.
@@ -35,7 +38,13 @@ git -C "$REPO_ROOT" archive "$BASE_REF" blink | tar -x -C "$WORKDIR/base"
 ( cd "$WORKDIR/base/blink" && go build -o "$WORKDIR/before" . ) || fail "base build failed"
 ( cd "$REPO_ROOT/blink" && go build -o "$WORKDIR/after" . ) || fail "build failed"
 
-printf '{"paths": ["%s"], "sets": ["%s"]}\n' "$CORPUS" "$SET" > "$WORKDIR/blink.json"
+# a set name, or comma-separated rule classes to bench rules outside the sets
+if [[ "$SET" == *\\* ]]; then
+    rules=$(printf '%s' "$SET" | sed 's/\\/\\\\/g; s/[[:space:]]//g; s/,/", "/g')
+    printf '{"paths": ["%s"], "rules": ["%s"]}\n' "$CORPUS" "$rules" > "$WORKDIR/blink.json"
+else
+    printf '{"paths": ["%s"], "sets": ["%s"]}\n' "$CORPUS" "$SET" > "$WORKDIR/blink.json"
+fi
 
 # run <name> <iteration>: one check run, appending "wall cpu" to <name>.times
 run() {

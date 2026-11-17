@@ -37,9 +37,11 @@ exit 255, or a PHP/Symfony fatal-exception signature in its output.
 ```bash
 bench/blink-before-after.sh                          # origin/main vs this checkout
 bench/blink-before-after.sh origin/main ../corpus common 7
+bench/blink-before-after.sh origin/main ../corpus 'PhpCsFixer\Fixer\Import\GlobalNamespaceImportFixer' 9
 ```
 
 Builds blink at the base ref and from this checkout, runs both in check mode
 over the same corpus (default: this repo's `vendor/`) and set, and prints
-median wall and CPU seconds. Runs alternate between the two builds, and the
-script fails if their reports differ.
+median wall and CPU seconds. The set argument also takes comma-separated rule
+classes, for rules no set includes. Runs alternate between the two builds, and
+the script fails if their reports differ.

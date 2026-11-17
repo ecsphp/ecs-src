@@ -404,11 +404,15 @@ func gniFunctionDeclarations(sc *symScan, start, end int) []int {
 
 func gniImportClasses(sc *symScan, edits *streamEdits) map[string]string {
 	global, other := gniFilterUses(sc, "class", false, false)
+	// docs with a fully qualified type, the only ones the second pass rewrites
 	var docs []int
 	for i := 0; i < sc.n; i++ {
 		if sc.isKind(i, token.DocComment) {
-			docs = append(docs, i)
+			qualified := false
 			traverseDocTypes(sc.tok(i).Value, func(typ string) string {
+				if strings.HasPrefix(typ, `\`) {
+					qualified = true
+				}
 				if !strings.Contains(typ, `\`) {
 					name := strings.ToLower(typ)
 					if _, ok := global[name]; !ok {
@@ -417,6 +421,9 @@ func gniImportClasses(sc *symScan, edits *streamEdits) map[string]string {
 				}
 				return typ
 			})
+			if qualified {
+				docs = append(docs, i)
+			}
 		}
 		if !sc.isClassy(i) {
 			continue
