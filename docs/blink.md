@@ -17,7 +17,7 @@ A plain `vendor/bin/ecs check` uses blink automatically when every rule in `ecs.
 
 ## Inspect the config
 
-ECS passes the resolved paths, rules and skips to blink as JSON. Print it with:
+ECS passes the resolved paths, indentation, rules and skips to blink as JSON. Print it with:
 
 ```bash
 vendor/bin/ecs dump-config

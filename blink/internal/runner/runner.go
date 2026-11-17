@@ -126,6 +126,7 @@ func fixFile(cfg *config.Config, ruleSkips map[string][]*finder.PathMatcher, pat
 
 	stream := tokens.New(lexer.Lex(original))
 	stream.SetPath(path)
+	stream.SetIndent(cfg.Indent)
 	res := FileResult{Path: path}
 
 	for _, rule := range cfg.Rules {

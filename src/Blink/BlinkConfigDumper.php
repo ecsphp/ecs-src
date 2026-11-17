@@ -10,12 +10,13 @@ use ReflectionProperty;
 use stdClass;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 use Symplify\EasyCodingStandard\FixerRunner\Application\FixerFileProcessor;
+use Symplify\EasyCodingStandard\FixerRunner\WhitespacesFixerConfigFactory;
 use Symplify\EasyCodingStandard\Skipper\SkipCriteriaResolver\SkippedCriteriaResolver;
 use Symplify\EasyCodingStandard\SniffRunner\Application\SniffFileProcessor;
 
 /**
  * Turns the resolved ecs.php configuration into the JSON shape the ecs-go blink
- * runner consumes: paths, rules (each a class and its config) and skips. See
+ * runner consumes: paths, indent, rules (each a class and its config) and skips. See
  * docs/blink.md for the schema.
  */
 final readonly class BlinkConfigDumper
@@ -25,17 +26,20 @@ final readonly class BlinkConfigDumper
         private FixerFileProcessor $fixerFileProcessor,
         private SkippedCriteriaResolver $skippedCriteriaResolver,
         private ECSConfig $ecsConfig,
+        private WhitespacesFixerConfigFactory $whitespacesFixerConfigFactory,
     ) {
     }
 
     /**
      * @param string[] $paths
-     * @return array{paths: string[], rules: array<array{class: string, config: object|array<string, mixed>}>, skips: array<array{path?: string, class?: string, paths?: string[]}>}
+     * @return array{paths: string[], indent: string, rules: array<array{class: string, config: object|array<string, mixed>}>, skips: array<array{path?: string, class?: string, paths?: string[]}>}
      */
     public function dump(array $paths): array
     {
         return [
             'paths' => array_values($paths),
+            'indent' => $this->whitespacesFixerConfigFactory->create()
+                ->getIndent(),
             'rules' => $this->dumpRules(),
             'skips' => $this->dumpSkips(),
         ];

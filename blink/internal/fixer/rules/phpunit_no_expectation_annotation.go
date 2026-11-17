@@ -84,7 +84,7 @@ func phpUnitNoExpClass(s *tokens.Stream, startIndex, endIndex int) bool {
 
 		callCode := "<?php $this->" + method + "(" + strings.Join(params, ", ") + ");"
 		body := lexer.Lex(callCode)[2:] // drop the open tag and the single space after it
-		newToks := append([]token.Token{{Kind: token.Whitespace, Value: "\n" + originalIndent + "    "}}, body...)
+		newToks := append([]token.Token{{Kind: token.Whitespace, Value: "\n" + originalIndent + s.Indent()}}, body...)
 
 		docContent := strings.Join(lines, "")
 		if docContent == "" {

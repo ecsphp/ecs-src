@@ -60,7 +60,7 @@ func (MethodChainingIndentation) Fix(s *tokens.Stream) bool {
 func chainExpectedIndent(s *tokens.Stream, opIdx int) string {
 	end := prevMeaningfulIndex(s, opIdx)
 	if end < 0 {
-		return "    "
+		return s.Indent()
 	}
 	for i := end; i >= 0; i-- {
 		if s.At(i).Kind == token.Punct && s.At(i).Value == ")" {
@@ -73,11 +73,11 @@ func chainExpectedIndent(s *tokens.Stream, opIdx int) string {
 			continue
 		}
 		if chainRequiresExtraIndent(s, i, end) {
-			return ind + "    "
+			return ind + s.Indent()
 		}
 		return ind
 	}
-	return "    "
+	return s.Indent()
 }
 
 // prevMeaningfulIndex skips whitespace and comments, mirroring php-cs-fixer's

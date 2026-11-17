@@ -168,7 +168,7 @@ func (f MultilinePromotedProperties) fixParameter(s *tokens.Stream, index int, i
 	if f.keepBlankLines && index < s.Len() && s.At(index).Kind == token.Whitespace && strings.Contains(s.At(index).Value, "\n") {
 		return false
 	}
-	return mppEnsureWhitespace(s, index, 0, "\n"+indent+"    ")
+	return mppEnsureWhitespace(s, index, 0, "\n"+indent+s.Indent())
 }
 
 // mppBlockStart returns the matching opener when index is a block closer (")",

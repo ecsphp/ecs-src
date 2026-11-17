@@ -388,7 +388,7 @@ func (f ClassDefinition) makeInheritanceMultiLine(s *tokens.Stream, start, end i
 			}
 		}
 		if !onOwnLine {
-			ws := token.Token{Kind: token.Whitespace, Value: "\n    "}
+			ws := token.Token{Kind: token.Whitespace, Value: "\n" + s.Indent()}
 			if s.At(breakAt-1).Kind == token.Whitespace {
 				s.Set(breakAt-1, ws)
 			} else {

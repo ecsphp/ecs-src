@@ -56,7 +56,7 @@ func (StandaloneLineSymfonyAttributeParam) Fix(s *tokens.Stream) bool {
 		}
 		base := lineIndentBefore(s, i)
 		if rewriteAttributeText(s, i, end, func(v string) (string, bool) {
-			return reflowSymfonyAttribute(v, base)
+			return reflowSymfonyAttribute(v, base, s.Indent())
 		}) {
 			changed = true
 			i = s.AttributeEnd(i)
@@ -67,7 +67,7 @@ func (StandaloneLineSymfonyAttributeParam) Fix(s *tokens.Stream) bool {
 
 // reflowSymfonyAttribute rewrites the attribute string so each top-level
 // argument sits on its own line. base is the indentation of the attribute line.
-func reflowSymfonyAttribute(attr, base string) (string, bool) {
+func reflowSymfonyAttribute(attr, base, indentUnit string) (string, bool) {
 	open := strings.IndexByte(attr, '(')
 	if open < 0 {
 		return attr, false
@@ -89,7 +89,7 @@ func reflowSymfonyAttribute(attr, base string) (string, bool) {
 		return attr, false
 	}
 
-	indent := base + "    "
+	indent := base + indentUnit
 	var b strings.Builder
 	b.WriteString(attr[:open+1])
 	for idx, arg := range args {
