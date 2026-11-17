@@ -37,7 +37,7 @@ func main() {
 	}
 
 	for _, path := range cache[fixer.SourceBase] {
-		if fqcn := fixerFQCN(path, `PhpCsFixer\Fixer\`); fqcn != "" {
+		if fqcn := fixerFQCN(path, `PhpCsFixer\Fixer\`); fqcn != "" && !deprecatedFixers[fqcn] {
 			universe[fqcn] = true
 		}
 	}
@@ -69,6 +69,29 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// deprecatedFixers are PHP-CS-Fixer fixers implementing DeprecatedFixerInterface;
+// each is superseded by another fixer, so they are not rules of their own
+var deprecatedFixers = map[string]bool{
+	`PhpCsFixer\Fixer\ArrayNotation\NoTrailingCommaInSinglelineArrayFixer`:           true,
+	`PhpCsFixer\Fixer\Basic\BracesFixer`:                                             true,
+	`PhpCsFixer\Fixer\Basic\CurlyBracesPositionFixer`:                                true,
+	`PhpCsFixer\Fixer\Casing\NativeFunctionTypeDeclarationCasingFixer`:               true,
+	`PhpCsFixer\Fixer\ClassNotation\VisibilityRequiredFixer`:                         true,
+	`PhpCsFixer\Fixer\ControlStructure\NoTrailingCommaInListCallFixer`:               true,
+	`PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer`:                   true,
+	`PhpCsFixer\Fixer\FunctionNotation\FunctionTypehintSpaceFixer`:                   true,
+	`PhpCsFixer\Fixer\FunctionNotation\NoTrailingCommaInSinglelineFunctionCallFixer`: true,
+	`PhpCsFixer\Fixer\LanguageConstruct\ClassKeywordRemoveFixer`:                     true,
+	`PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAfterConstructFixer`:              true,
+	`PhpCsFixer\Fixer\NamespaceNotation\NoBlankLinesBeforeNamespaceFixer`:            true,
+	`PhpCsFixer\Fixer\NamespaceNotation\SingleBlankLineBeforeNamespaceFixer`:         true,
+	`PhpCsFixer\Fixer\Operator\NewWithBracesFixer`:                                   true,
+	`PhpCsFixer\Fixer\Phpdoc\PhpdocTypesNoDuplicatesFixer`:                           true,
+	`PhpCsFixer\Fixer\StringNotation\EscapeImplicitBackslashesFixer`:                 true,
+	`PhpCsFixer\Fixer\Whitespace\CompactNullableTypehintFixer`:                       true,
+	`PhpCsFixer\Fixer\Whitespace\NoSpacesInsideParenthesisFixer`:                     true,
 }
 
 func loadCache(path string) (map[string][]string, error) {
