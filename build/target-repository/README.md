@@ -20,8 +20,8 @@ See [full benchmark](#blazing-fast-with---blink).
 
 - Blazing fast - fixes all **13,103 files of Symfony in 2.9 s**, 49x faster than php-cs-fixer (141.6 s)
 - Install on **any PHP 7.2-PHP 8.5** project with any dependencies
-- Use [PHP_CodeSniffer or PHP-CS-Fixer](https://tomasvotruba.com/blog/2017/05/03/combine-power-of-php-code-sniffer-and-php-cs-fixer-in-3-lines/) - anything you like
 - Use [**14 prepared sets**](#prepared-sets) to save time
+- Use [PHP-CS-Fixer or PHP_CodeSniffer](https://tomasvotruba.com/blog/2017/05/03/combine-power-of-php-code-sniffer-and-php-cs-fixer-in-3-lines/) - anything you like
 
 <br>
 
