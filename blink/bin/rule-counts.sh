@@ -6,6 +6,8 @@
 #   bin/rule-counts.sh          update README in place
 #   bin/rule-counts.sh --check  fail (exit 1) if README is out of date
 #
+# Both modes fail (exit 1) while any PHP-CS-Fixer fixer is missing in blink.
+#
 # Sources:
 #   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers plus the
 #              PHP_CodeSniffer sniffs ECS references from its sets or blink implements
@@ -31,6 +33,7 @@ ecs=$(grep -c . /tmp/blink-universe.txt)
 sed 's/^[[:space:]]*-[[:space:]]*//' /tmp/blink-checkers.txt | LC_ALL=C sort -u > /tmp/blink-impl.txt
 missing=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | sed -E 's#.*\\##')
 missing_count=$(printf '%s' "$missing" | grep -c . || true)
+missing_phpcsfixer=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | grep '^PhpCsFixer\\' || true)
 
 # blink rules within the universe; blink's own extras never push parity past 100%
 implemented=$(( ecs - missing_count ))
@@ -75,6 +78,12 @@ fi
 echo "Missing in blink ($missing_count):"
 if [ -n "$missing" ]; then
     printf '  %s\n' $missing
+fi
+
+if [ -n "$missing_phpcsfixer" ]; then
+    echo "PHP-CS-Fixer fixers not implemented in blink:" >&2
+    printf '  %s\n' $missing_phpcsfixer >&2
+    exit 1
 fi
 
 if [ "${1:-}" = "--check" ]; then
