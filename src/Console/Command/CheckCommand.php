@@ -49,6 +49,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
     /**
      * @param bool   $dirty        Check only files with uncommitted git changes
      * @param bool   $blink        [EXPERIMENTAL] run the ecs-go Go binary instead of the PHP engine
+     * @param bool   $noBlink      Force the PHP engine, even if every rule is available in blink
      * @param bool   $commit       [EXPERIMENTAL] with --blink, apply rules one by one and commit each separately
      * @param string $config       Path to config file
      * @param string $outputFormat Select output format
@@ -76,6 +77,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         bool $debug = false,
         bool $dirty = false,
         bool $blink = false,
+        bool $noBlink = false,
         bool $commit = false,
         string $config = '',
         string $outputFormat = ConsoleOutputFormatter::NAME,
@@ -88,6 +90,12 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
             $this->easyCodingStandardStyle->error(
                 'The --commit option works only together with --blink. It runs the ecs-go engine rule by rule and creates one git commit per rule. Re-run as: vendor/bin/ecs check --blink --commit'
             );
+
+            return ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+        }
+
+        if ($blink && $noBlink) {
+            $this->easyCodingStandardStyle->error('The --blink and --no-blink options cannot be used together.');
 
             return ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
@@ -128,10 +136,12 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
 
         // auto-blink: hand the run to ecs-go when it covers every configured rule,
         // else fall back to the PHP engine silently
-        $configData = $this->blinkConfigDumper->dump($configuration->getSources());
-        if ($this->blinkSupportResolver->isFullySupported($configData)) {
-            $blinkExitCode = $this->blinkRunner->run($configData, $fix, $configuration->shouldShowDiffs());
-            return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+        if (! $noBlink) {
+            $configData = $this->blinkConfigDumper->dump($configuration->getSources());
+            if ($this->blinkSupportResolver->isFullySupported($configData)) {
+                $blinkExitCode = $this->blinkRunner->run($configData, $fix, $configuration->shouldShowDiffs());
+                return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+            }
         }
 
         $this->memoryLimitter->adjust($configuration);

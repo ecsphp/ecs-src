@@ -11,7 +11,7 @@ vendor/bin/ecs check src --blink      # limit to a path - pass it before the fla
 
 `--no-diffs` works as usual. Rules blink can't map are reported and skipped.
 
-A plain `vendor/bin/ecs check` uses blink automatically when every rule in `ecs.php` is available in Go, and falls back to the PHP engine otherwise.
+A plain `vendor/bin/ecs check` uses blink automatically when every rule in `ecs.php` is available in Go, and falls back to the PHP engine otherwise. Pass `--no-blink` to force the PHP engine anyway, e.g. to compare the speed.
 
 `--commit` needs a clean working tree. Each commit is named `[Group] RuleName`.
 
