@@ -10,9 +10,9 @@
   "date": "2026-11-17",
   "cores": 24,
   "seconds": {
-    "ECS (PHP)": 37.3,
-    "--blink (Go)": 1.1,
-    "php-cs-fixer (@PER-CS,@Symfony)": 24.2,
-    "phpcbf (PSR12)": 23.0
+    "ECS (PHP)": 36.7,
+    "--blink (Go)": 1.0,
+    "php-cs-fixer (@PER-CS,@Symfony)": 28.2,
+    "phpcbf (PSR12)": 29.6
   }
 }

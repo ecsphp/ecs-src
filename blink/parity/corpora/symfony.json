@@ -4,6 +4,5 @@
     "paths": ["src"],
     "skip": ["*/node_modules/*", "*/Fixtures/*", "*/Fixture/*"],
     "sets": ["psr12", "perCs", "common", "standaloneLine", "cleanCode"],
-    "max_diff_percent": 3.0,
-    "bench_remove": ["src/Symfony/Component/Uid/BinaryUtil.php"]
+    "max_diff_percent": 3.0
 }
