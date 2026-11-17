@@ -11,10 +11,10 @@ bench/run.sh blink/parity/corpora/laravel.json src
 
 The corpus files live in `blink/parity/corpora/`. Each engine runs in `--fix`
 mode over a fresh copy of the same files. ECS, `--blink` and `phpcbf` run across
-all cores; php-cs-fixer runs sequentially (as shipped). Numbers are
-wall-clock seconds and vary with hardware and rule set.
+all cores; php-cs-fixer runs at its defaults. Numbers are wall-clock seconds
+and vary with hardware and rule set.
 
-Each run also writes `bench/results/<corpus>.json` with the corpus revision,
+Each run also writes `bench/results/<date>/<corpus>.json` with the corpus revision,
 file count, ECS revision, date, core count and per-engine seconds.
 
 Requires `go`, `jq` and `composer` on `PATH`. The native tools are installed
@@ -27,7 +27,6 @@ exit 255, or a PHP/Symfony fatal-exception signature in its output.
 
 > Laravel's `tests` dir triggers a pathological php-cs-fixer fix loop, so the
 > laravel run is limited to `src`. php-cs-fixer also aborts on
-> `symfony/symfony` `src`: `Uid/BinaryUtil.php` carries a `@php-cs-fixer-ignore`
-> annotation for a rule php-cs-fixer does not know, which its Runner treats as
-> fatal. Files listed in the corpus `bench_remove` are deleted from the clone, so
-> every engine runs on the same set.
+> `symfony/symfony` `src` on any `@php-cs-fixer-ignore` annotation for a rule its
+> ruleset does not enable, so those comment lines are stripped from the clone -
+> the same for every engine.

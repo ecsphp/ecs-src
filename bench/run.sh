@@ -16,7 +16,7 @@
 # ECS and --blink run in parallel across all cores; the native tools run at
 # their default settings. Numbers are wall-clock seconds and vary with hardware.
 #
-# Results are printed as a markdown table and written to bench/results/<name>.json.
+# Results are printed as a markdown table and written to bench/results/<date>/<name>.json.
 set -euo pipefail
 
 fail() { echo "bench: $*" >&2; exit 2; }
@@ -81,8 +81,9 @@ git clone --depth 1 --branch "$ref" "$repo" "$src" >/dev/null 2>&1 \
     || git clone --depth 1 "$repo" "$src" >/dev/null 2>&1 \
     || fail "clone failed: $repo"
 rev=$(git -C "$src" rev-parse --short HEAD 2>/dev/null || echo "?")
-# files a native tool cannot process at all, removed for every engine
-while IFS= read -r f; do rm -f "$src/$f"; done < <(jq -r '(.bench_remove // [])[]' "$CORPUS")
+# php-cs-fixer aborts the whole run on a @php-cs-fixer-ignore for a rule it does
+# not enable, so these comment lines are stripped for every engine
+grep -rlZ --include='*.php' '@php-cs-fixer-ignore' "$src" | xargs -0 -r sed -i '/^\s*\/\/ @php-cs-fixer-ignore/d' || true
 file_count=$(cd "$src" && find "${paths[@]}" -name '*.php' 2>/dev/null | wc -l)
 
 # abs_paths helper: resolve the corpus-relative paths inside a given tree
@@ -140,7 +141,8 @@ for label in "ECS (PHP)" "--blink (Go)" "php-cs-fixer (@PER-CS,@Symfony)" "phpcb
 done
 
 # 6. json results, committed alongside the script
-results_dir="$REPO_ROOT/bench/results"
+run_date=$(date -u +%Y-%m-%d)
+results_dir="$REPO_ROOT/bench/results/$run_date"
 mkdir -p "$results_dir"
 timings='{}'
 for label in "ECS (PHP)" "--blink (Go)" "php-cs-fixer (@PER-CS,@Symfony)" "phpcbf (PSR12)"; do
@@ -149,7 +151,7 @@ done
 jq -n \
     --arg name "$name" --arg repo "$repo" --arg rev "$rev" \
     --arg ecs_rev "$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "?")" \
-    --arg date "$(date -u +%Y-%m-%d)" \
+    --arg date "$run_date" \
     --argjson files "$file_count" --argjson cores "$(nproc)" \
     --argjson timings "$timings" \
     '{name: $name, repo: $repo, rev: $rev, paths: $ARGS.positional, files: $files, ecs_rev: $ecs_rev, date: $date, cores: $cores, seconds: $timings}' \
