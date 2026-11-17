@@ -103,6 +103,8 @@ return ECSConfig::configure()
     );
 ```
 
+`common: true` enables all of these at once:
+
 | Set | What it covers |
 | --- | --- |
 | `arrays` | array syntax, spacing, trailing commas, indentation |
@@ -113,12 +115,16 @@ return ECSConfig::configure()
 | `comments` | comment style, spacing, empty-comment cleanup |
 | `casing` | native function/type, magic method, literal casing |
 | `cleanup` | dead statements, useless returns/casts, unused closure imports |
+| `cleanCode` | dead code, unused imports, redundant syntax |
+
+Standalone sets, not part of `common`:
+
+| Set | What it covers |
+| --- | --- |
 | `psr12` | the [PSR-12](https://www.php-fig.org/psr/psr-12/) coding style |
 | `perCs` | the [PER Coding Style](https://www.php-fig.org/per/coding-style/) (PHP-CS-Fixer's `@PER-CS`) |
-
-Or enable all topic sets at once with `->withPreparedSets(common: true)`. `psr12` and `perCs` are not part of `common`.
-
-Standalone presets are also available: `cleanCode: true` (dead code, unused imports, redundant syntax), `standaloneLine: true` (each constructor param on its own line), and `laravel: true` (the [Laravel Pint](https://github.com/laravel/pint/blob/main/resources/presets/laravel.php) ruleset):
+| `standaloneLine` | each constructor param on its own line |
+| `laravel` | the [Laravel Pint](https://github.com/laravel/pint/blob/main/resources/presets/laravel.php) ruleset |
 
 ```php
 use Symplify\EasyCodingStandard\Config\ECSConfig;
