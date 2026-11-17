@@ -113,10 +113,12 @@ return ECSConfig::configure()
 | `comments` | comment style, spacing, empty-comment cleanup |
 | `casing` | native function/type, magic method, literal casing |
 | `cleanup` | dead statements, useless returns/casts, unused closure imports |
+| `psr12` | the [PSR-12](https://www.php-fig.org/psr/psr-12/) coding style |
+| `perCs` | the [PER Coding Style](https://www.php-fig.org/per/coding-style/) (PHP-CS-Fixer's `@PER-CS`) |
 
 Or enable everything at once with `->withPreparedSets(common: true)`.
 
-Standalone presets are also available: `psr12: true`, `perCs: true`, `cleanCode: true` (dead code, unused imports, redundant syntax), `standaloneLine: true` (each constructor param on its own line), and `laravel: true` (the [Laravel Pint](https://github.com/laravel/pint/blob/main/resources/presets/laravel.php) ruleset):
+Standalone presets are also available: `cleanCode: true` (dead code, unused imports, redundant syntax), `standaloneLine: true` (each constructor param on its own line), and `laravel: true` (the [Laravel Pint](https://github.com/laravel/pint/blob/main/resources/presets/laravel.php) ruleset):
 
 ```php
 use Symplify\EasyCodingStandard\Config\ECSConfig;
