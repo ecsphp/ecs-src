@@ -30,41 +30,58 @@ func splitPHPDocLines(content string) []*phpDocLine {
 	return lines
 }
 
-var (
-	// /\*\s*\S+/ and /\*\s*@/
-	phpDocUsefulRe = regexp.MustCompile(`\*[` + pcreSpaceClass + `]*[^` + pcreSpaceClass + `]`)
-	phpDocTagRe    = regexp.MustCompile(`\*[` + pcreSpaceClass + `]*@`)
-)
+// pcreStarThenSpaces reports whether match holds for the offset after some
+// "*" and the UCP \s run that follows it.
+func pcreStarThenSpaces(line string, match func(j int) bool) bool {
+	for i := 0; i < len(line); i++ {
+		if line[i] == '*' && match(pcreSkip(line, i+1, pcreIsSpace)) {
+			return true
+		}
+	}
+	return false
+}
 
 // containsUsefulContent ports Line::containsUsefulContent.
 func (l *phpDocLine) containsUsefulContent() bool {
-	if !phpDocUsefulRe.MatchString(l.content) {
+	// /\*\s*\S+/
+	if !pcreStarThenSpaces(l.content, func(j int) bool { return j < len(l.content) }) {
 		return false
 	}
 	return strings.Trim(strings.NewReplacer("/", " ", "*", " ").Replace(l.content), " \t\n\r\x00\x0B") != ""
 }
 
-// containsATag ports Line::containsATag.
+// containsATag ports Line::containsATag, /\*\s*@/.
 func (l *phpDocLine) containsATag() bool {
-	return phpDocTagRe.MatchString(l.content)
+	return pcreStarThenSpaces(l.content, func(j int) bool { return j < len(l.content) && l.content[j] == '@' })
 }
 
 func (l *phpDocLine) isTheStart() bool { return strings.Contains(l.content, "/**") }
 func (l *phpDocLine) isTheEnd() bool   { return strings.Contains(l.content, "*/") }
 
-// phpDocTagNameRe is Tag::getName's /@[a-zA-Z0-9_-]+(?=\s|$)/ without the
-// lookahead, which phpDocTagName checks by hand.
-var phpDocTagNameRe = regexp.MustCompile(`@[a-zA-Z0-9_-]+`)
-
-// phpDocTagName ports Tag::getName: the first "@name" on the line that is
-// followed by whitespace or the end, or "other".
+// phpDocTagName ports Tag::getName, /@[a-zA-Z0-9_-]+(?=\s|$)/: the first
+// "@name" on the line that is followed by whitespace or the end, or "other".
 func phpDocTagName(line string) string {
-	for _, m := range phpDocTagNameRe.FindAllStringIndex(line, -1) {
-		if r, _ := pcreRuneAt(line, m[1]); m[1] == len(line) || pcreIsSpace(r) {
-			return line[m[0]+1 : m[1]]
+	for i := 0; i < len(line); i++ {
+		if line[i] != '@' {
+			continue
 		}
+		end := i + 1
+		for end < len(line) && isTagNameByte(line[end]) {
+			end++
+		}
+		if end == i+1 {
+			continue
+		}
+		if r, _ := pcreRuneAt(line, end); end == len(line) || pcreIsSpace(r) {
+			return line[i+1 : end]
+		}
+		i = end - 1
 	}
 	return "other"
+}
+
+func isTagNameByte(c byte) bool {
+	return c == '_' || c == '-' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9')
 }
 
 // phpDocAnnotation is DocBlock\Annotation: the lines [start, end] of one tag.

@@ -10,28 +10,67 @@ import (
 // opening "/**" and closing "*/" are lines too. Rebuilding concatenates them,
 // so a removed line (set to "") disappears and addBlank appends a blank line.
 
-var docLineSplitRe = regexp.MustCompile(`[^\n\r]+(?:\r\n|\r|\n)*`)
-
 // splitDocLines mirrors DocBlock's Preg::split('/([^\n\r]+\R*)/', ...) so each
-// line carries its own trailing newline(s).
+// line carries its own trailing newline(s): every run of other characters plus
+// the \r and \n after it. Newlines before the first such run are dropped.
 func splitDocLines(content string) []string {
-	return docLineSplitRe.FindAllString(content, -1)
+	var lines []string
+	i := skipLineBreaks(content, 0)
+	for i < len(content) {
+		start := i
+		for i < len(content) && content[i] != '\n' && content[i] != '\r' {
+			i++
+		}
+		i = skipLineBreaks(content, i)
+		lines = append(lines, content[start:i])
+	}
+	return lines
+}
+
+func skipLineBreaks(s string, i int) int {
+	for i < len(s) && (s[i] == '\n' || s[i] == '\r') {
+		i++
+	}
+	return i
 }
 
 var (
-	docLineTagRe    = regexp.MustCompile(`\*\s*@`)
-	docLineUsefulRe = regexp.MustCompile(`\*\s*\S+`)
 	// the optional trailing newline mirrors PCRE's `$`, which also matches just
 	// before a single newline at the end of the subject
 	docLineAddBlankRe = regexp.MustCompile(`^([\t ]*\*)[^\r\n]*(\r?\n)(?:\r?\n)?$`)
 )
 
+// isRESpace is Go regexp's ASCII \s.
+func isRESpace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r'
+}
+
+// starThenSpaces reports whether match holds for the offset after some "*" and
+// the \s run that follows it.
+func starThenSpaces(line string, match func(j int) bool) bool {
+	for i := 0; i < len(line); i++ {
+		if line[i] != '*' {
+			continue
+		}
+		j := i + 1
+		for j < len(line) && isRESpace(line[j]) {
+			j++
+		}
+		if match(j) {
+			return true
+		}
+	}
+	return false
+}
+
+// lineContainsTag is /\*\s*@/.
 func lineContainsTag(line string) bool {
-	return docLineTagRe.MatchString(line)
+	return starThenSpaces(line, func(j int) bool { return j < len(line) && line[j] == '@' })
 }
 
 func lineContainsUsefulContent(line string) bool {
-	if !docLineUsefulRe.MatchString(line) {
+	// /\*\s*\S+/: a "*" followed, after spaces, by anything else
+	if !starThenSpaces(line, func(j int) bool { return j < len(line) }) {
 		return false
 	}
 	replaced := make([]rune, 0, len(line))
