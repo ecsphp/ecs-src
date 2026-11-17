@@ -8,7 +8,7 @@ Easy Coding Standard (ECS) is a single tool that runs [PHP_CodeSniffer](https://
 
 | `--fix` on a fresh clone | Symfony `src` (13,103 files) | Laravel `src` (1,749 files) |
 | --- | ---: | ---: |
-| **ECS `--blink`** | **2.9 s** | **1.0 s** |
+| **ECS** | **2.9 s** | **1.0 s** |
 | php-cs-fixer | 141.6 s | 25.8 s |
 | PHP_CodeSniffer | 133.7 s | 26.7 s |
 
@@ -66,12 +66,11 @@ vendor/bin/ecs check --blink --fix    # rewrite in place
 
 When every rule in your `ecs.php` is covered by the Go engine, a plain `vendor/bin/ecs check` uses it automatically and falls back to the PHP engine otherwise.
 
-Wall-clock `--fix` over a fresh clone, each tool with a representative rule set (ECS, `--blink` and `phpcbf` run across all cores; php-cs-fixer and Pint run sequentially, as shipped):
+Wall-clock `--fix` over a fresh clone, each tool with a representative rule set (ECS and `phpcbf` run across all cores; php-cs-fixer and Pint run sequentially, as shipped):
 
 | engine | symfony `src` (13,103 files) | laravel `src` (1,749 files) |
 | --- | ---: | ---: |
-| **ECS `--blink`** (Go) | **2.9 s** | **1.0 s** |
-| ECS (PHP) | 315 s | 42 s |
+| **ECS** | **2.9 s** | **1.0 s** |
 | php-cs-fixer (`@PER-CS`, `@Symfony`) | 141.6 s | 25.8 s |
 | PHP_CodeSniffer (`phpcbf`, PSR-12) | 133.7 s | 26.7 s |
 | Laravel Pint (`laravel` preset) | 1,543 s | 199 s |
