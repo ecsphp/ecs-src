@@ -41,8 +41,6 @@ func (f StatementIndentation) WithConfig(config map[string]any) fixer.Fixer {
 	return f
 }
 
-const stmtIndentUnit = "    "
-
 type stmtScope struct {
 	kind          string // "block" | "block_signature" | "statement"
 	skip          bool
@@ -303,7 +301,7 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 				} else {
 					whitespaces = scopes[cur].initialIndent
 					if indent {
-						whitespaces += stmtIndentUnit
+						whitespaces += s.Indent()
 					}
 				}
 				content = stmtReplaceBlockIndent(content, whitespaces)

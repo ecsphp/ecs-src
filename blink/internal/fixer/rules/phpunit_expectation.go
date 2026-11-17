@@ -143,7 +143,7 @@ func phpUnitExpectationRewrite(s *tokens.Stream, thisIdx, nameIdx int, newName s
 			{Kind: token.Punct, Value: ";"},
 		}
 		if multiline {
-			overrideStart = append(overrideStart, token.Token{Kind: token.Whitespace, Value: indent + "    "})
+			overrideStart = append(overrideStart, token.Token{Kind: token.Whitespace, Value: indent + s.Indent()})
 			overrideBefore = append([]token.Token{{Kind: token.Whitespace, Value: indent}}, overrideBefore...)
 		}
 

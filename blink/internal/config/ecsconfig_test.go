@@ -466,3 +466,20 @@ func TestLoadECSKeepsEachDeprecatedAliasConfiguration(t *testing.T) {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 }
+
+func TestLoadECSReadsIndent(t *testing.T) {
+	c, _, err := LoadECS(writeECS(t, `{"indent": "\t", "rules": [{"class": "`+esc(knownRuleA)+`", "config": {}}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Indent != "\t" {
+		t.Fatalf("indent = %q, want a tab", c.Indent)
+	}
+}
+
+func TestLoadECSRejectsUnknownIndent(t *testing.T) {
+	_, _, err := LoadECS(writeECS(t, `{"indent": "   ", "rules": [{"class": "`+esc(knownRuleA)+`", "config": {}}]}`))
+	if err == nil || !strings.Contains(err.Error(), "unsupported indent") {
+		t.Fatalf("want unsupported indent error, got %v", err)
+	}
+}

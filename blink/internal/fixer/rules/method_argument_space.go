@@ -553,7 +553,7 @@ func placeAttributesInParen(s *tokens.Stream, open, closeIdx int, placement stri
 func reflowParen(s *tokens.Stream, open, closeIdx int, collapseBlanks bool) bool {
 	changed := false
 	base := lineIndentBefore(s, open)
-	argNL := "\n" + base + "    "
+	argNL := "\n" + base + s.Indent()
 
 	var commas []int
 	depth := 0
@@ -665,7 +665,7 @@ func reflowBreakAfterComments(s *tokens.Stream, open, closeIdx int, base string)
 			(c.Kind == token.Punct && (c.Value == "," || c.Value == ")" || c.Value == "]" || c.Value == "}")) {
 			continue
 		}
-		if editSlotAfter(s, j, "\n"+base+"    ") {
+		if editSlotAfter(s, j, "\n"+base+s.Indent()) {
 			changed = true
 		}
 	}
@@ -701,7 +701,7 @@ func reflowAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks b
 				changed = true
 			}
 		}
-		if editSlotAfter(s, n, "\n"+base+"    ") {
+		if editSlotAfter(s, n, "\n"+base+s.Indent()) {
 			changed = true
 		}
 		return changed
@@ -842,12 +842,12 @@ func argNLAfterComma(s *tokens.Stream, comma int, base string, collapseBlanks bo
 					}
 				}
 				if keep {
-					return strings.Repeat("\n", newlines) + base + "    "
+					return strings.Repeat("\n", newlines) + base + s.Indent()
 				}
 			}
 		}
 	}
-	return "\n" + base + "    "
+	return "\n" + base + s.Indent()
 }
 
 // editSlotAfter sets the whitespace immediately after token idx to val.

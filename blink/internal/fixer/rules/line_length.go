@@ -25,7 +25,6 @@ type LineLength struct {
 
 const (
 	llDefaultLineLength = 120
-	llIndent            = "    "
 	llEnding            = "\n"
 )
 
@@ -314,8 +313,8 @@ func (f LineLength) fullLineLength(s *tokens.Stream, open, closeIdx int) int {
 // closer on its own line (ports TokensNewliner::breakItems with LineKind::CALLS).
 func (f LineLength) breakItems(s *tokens.Stream, open, closeIdx int) bool {
 	level := llIndentLevel(s, open)
-	itemWS := llEnding + strings.Repeat(llIndent, level+1)
-	closeWS := llEnding + strings.Repeat(llIndent, level)
+	itemWS := llEnding + strings.Repeat(s.Indent(), level+1)
+	closeWS := llEnding + strings.Repeat(s.Indent(), level)
 	// closer first
 	changed := f.breakCloser(s, open, closeIdx, itemWS, closeWS)
 	// commas, bottom-up
@@ -480,7 +479,7 @@ func llIndentLevel(s *tokens.Stream, idx int) int {
 	for j := idx; j >= 1; j-- {
 		c := s.At(j).Value
 		if nl := strings.LastIndexByte(c, '\n'); nl >= 0 {
-			return strings.Count(c[nl+1:], llIndent)
+			return strings.Count(c[nl+1:], s.Indent())
 		}
 	}
 	return 0

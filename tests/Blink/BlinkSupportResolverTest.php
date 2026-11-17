@@ -84,11 +84,11 @@ final class BlinkSupportResolverTest extends TestCase
         ]));
     }
 
-    public function testTabIndentationIsNotSupported(): void
+    public function testTabIndentationIsSupported(): void
     {
         SimpleParameterProvider::setParameter(Option::INDENTATION, Option::INDENTATION_TAB);
 
-        $this->assertFalse($this->blinkSupportResolver->isFullySupported($this->createPortedConfigData()));
+        $this->assertTrue($this->blinkSupportResolver->isFullySupported($this->createPortedConfigData()));
     }
 
     public function testWindowsLineEndingIsNotSupported(): void

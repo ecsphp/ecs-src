@@ -24,8 +24,6 @@ func (ArrayIndentation) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Whitespace/ArrayIndentationFixer.php"
 }
 
-const arrayIndentUnit = "    "
-
 type aiScope struct {
 	kind          string // "array" or "expression"
 	endIndex      int
@@ -81,7 +79,7 @@ func (ArrayIndentation) Fix(s *tokens.Stream) bool {
 				}
 				extra := ""
 				if indent {
-					extra = arrayIndentUnit
+					extra = s.Indent()
 				}
 				content = aiReindentArray(t.Value, sc.initialIndent+extra)
 				prevLineInitialIndent = aiExtractIndent(t.Value)

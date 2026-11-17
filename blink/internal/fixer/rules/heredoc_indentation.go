@@ -95,7 +95,7 @@ func (f HeredocIndentation) fixHeredoc(s *tokens.Stream, chunks map[int][]encPar
 
 	indent := detectIndent(s, first)
 	if !f.SameAsStart {
-		indent += "    "
+		indent += s.Indent()
 	}
 
 	// repl holds the new value of each piece, keyed by token then part (-1 for

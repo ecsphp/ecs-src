@@ -51,6 +51,7 @@ type ecsSkip struct {
 // ecsFile is the on-disk shape of `ecs dump-config` output.
 type ecsFile struct {
 	PHPVersion string              `json:"php_version"`
+	Indent     string              `json:"indent"`
 	Paths      []string            `json:"paths"`
 	Rules      []ecsConfiguredRule `json:"rules"`
 	Skips      []ecsSkip           `json:"skips"`
@@ -138,7 +139,12 @@ func LoadECS(path string) (*Config, *ECSResolution, error) {
 
 // resolveECS turns an ECS dump-config into a Config plus a mapping report.
 func resolveECS(f ecsFile) (*Config, *ECSResolution, error) {
-	config := &Config{Paths: f.Paths, Jobs: runtime.NumCPU()}
+	switch f.Indent {
+	case "", "    ", "  ", "\t":
+	default:
+		return nil, nil, fmt.Errorf("unsupported indent %q; use four spaces, two spaces or a tab", f.Indent)
+	}
+	config := &Config{Paths: f.Paths, Jobs: runtime.NumCPU(), Indent: f.Indent}
 	if len(config.Paths) == 0 {
 		config.Paths = []string{"."}
 	}

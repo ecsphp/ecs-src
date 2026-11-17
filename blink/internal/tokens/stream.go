@@ -15,6 +15,8 @@ import (
 type Stream struct {
 	toks []token.Token
 	path string
+	// indent is one indentation level, "" meaning the default four spaces.
+	indent string
 	// mayHaveEmpty lets ClearEmptyTokens skip the scan when no empty value was
 	// written since its last call.
 	mayHaveEmpty bool
@@ -40,6 +42,20 @@ func (s *Stream) SetPath(p string) { s.path = p }
 // Path returns the source file path set by the runner, or "" when the stream was
 // built from a string with no backing file.
 func (s *Stream) Path() string { return s.path }
+
+// DefaultIndent is one indentation level when none is configured.
+const DefaultIndent = "    "
+
+// SetIndent records one indentation level, ECS's withSpacing(indentation: ...).
+func (s *Stream) SetIndent(indent string) { s.indent = indent }
+
+// Indent returns one indentation level: the configured one, or four spaces.
+func (s *Stream) Indent() string {
+	if s.indent == "" {
+		return DefaultIndent
+	}
+	return s.indent
+}
 
 func (s *Stream) Len() int { return len(s.toks) }
 

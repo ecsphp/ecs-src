@@ -217,6 +217,9 @@ func (IndentationType) SourceURL() string {
 }
 
 func (IndentationType) Fix(s *tokens.Stream) bool {
+	if s.Indent() == "\t" {
+		return indentWithTabs(s)
+	}
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
@@ -262,6 +265,114 @@ func reindentCommentTabs(v string) string {
 		if strings.Contains(line[:j], "\t") {
 			lines[k] = strings.ReplaceAll(line[:j], "\t", "    ") + line[j:]
 		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+// indentWithTabs ports IndentationTypeFixer for a tab indent: tabs in an indent
+// are normalized to four spaces, then every four spaces become one tab.
+func indentWithTabs(s *tokens.Stream) bool {
+	changed := false
+	for i := range s.Len() {
+		t := s.At(i)
+		var v string
+		switch t.Kind {
+		case token.Whitespace:
+			v = tabIndentWhitespace(t.Value, i > 0 && strings.Contains(s.At(i-1).Value, "\n"))
+		case token.Comment, token.DocComment:
+			v = tabIndentComment(t.Value)
+		default:
+			continue
+		}
+		if v != t.Value {
+			s.SetValue(i, v)
+			changed = true
+		}
+	}
+	return changed
+}
+
+// tabIndentWhitespace rewrites the indent after each line break; the first
+// segment is an indent too when the previous token ended the line.
+func tabIndentWhitespace(v string, afterLineBreak bool) string {
+	parts := strings.Split(v, "\n")
+	start := 1
+	if afterLineBreak {
+		start = 0
+	}
+	for k := start; k < len(parts); k++ {
+		part := parts[k]
+		j := 0
+		for j < len(part) && (part[j] == ' ' || part[j] == '\t') {
+			j++
+		}
+		if j > 0 {
+			parts[k] = strings.ReplaceAll(normalizeIndentTabs(part[:j]), "    ", "\t") + part[j:]
+		}
+	}
+	return strings.Join(parts, "\n")
+}
+
+// normalizeIndentTabs is Preg::replace('/(?:(?<! ) {1,3})?\t/', '    ', $indent):
+// a tab, with up to three spaces before it that follow no other space, becomes
+// four spaces.
+func normalizeIndentTabs(indent string) string {
+	var b strings.Builder
+	for p := 0; p < len(indent); {
+		if p == 0 || indent[p-1] != ' ' {
+			n := 0
+			for n < 3 && p+n < len(indent) && indent[p+n] == ' ' {
+				n++
+			}
+			if n > 0 && p+n < len(indent) && indent[p+n] == '\t' {
+				b.WriteString("    ")
+				p += n + 1
+				continue
+			}
+		}
+		if indent[p] == '\t' {
+			b.WriteString("    ")
+		} else {
+			b.WriteByte(indent[p])
+		}
+		p++
+	}
+	return b.String()
+}
+
+// tabIndentComment ports fixIndentInComment: tabs in each line's leading
+// whitespace become four spaces, then each leading run of four spaces a tab.
+func tabIndentComment(v string) string {
+	lines := strings.Split(v, "\n")
+	for k, line := range lines {
+		// '/^(?:(?<! ) {1,3})?\t/m' until nothing matches
+		for {
+			n := 0
+			for n < 3 && n < len(line) && line[n] == ' ' {
+				n++
+			}
+			if n < len(line) && line[n] == '\t' {
+				line = "    " + line[n+1:]
+				continue
+			}
+			if len(line) > 0 && line[0] == '\t' {
+				line = "    " + line[1:]
+				continue
+			}
+			break
+		}
+		// '/^(\ +)?\t/m' until nothing matches
+		j := 0
+		for j < len(line) && (line[j] == ' ' || line[j] == '\t') {
+			j++
+		}
+		line = strings.ReplaceAll(line[:j], "\t", "    ") + line[j:]
+		// '/^(?:    )+/m' to tabs
+		j = 0
+		for j+4 <= len(line) && line[j:j+4] == "    " {
+			j += 4
+		}
+		lines[k] = strings.Repeat("\t", j/4) + line[j:]
 	}
 	return strings.Join(lines, "\n")
 }

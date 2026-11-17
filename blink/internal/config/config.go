@@ -21,6 +21,8 @@ type Config struct {
 	Skip  []string // ECS skip paths (globs, directories, files); see finder.PathMatcher
 	Rules []fixer.Fixer
 	Jobs  int // parallel workers
+	// Indent is one indentation level; "" means the default four spaces.
+	Indent string
 	// PerPathRuleSkips disables a single rule on a subset of paths, keyed by the
 	// rule's name (its PHP-CS-Fixer FQCN); mirrors ECS's per-path skip config.
 	// It holds one path list per configured class behind the rule (an alias and
