@@ -103,20 +103,6 @@ return ECSConfig::configure()
     );
 ```
 
-`common: true` enables all of these at once:
-
-| Set | What it covers |
-| --- | --- |
-| `arrays` | array syntax, spacing, trailing commas, indentation |
-| `spaces` | whitespace, operator/type spacing, blank lines |
-| `namespaces` | imports ordering, unused/needless-alias imports |
-| `docblocks` | phpdoc tags, types, alignment, cleanup |
-| `controlStructures` | control flow, casing, operators, class structure |
-| `comments` | comment style, spacing, empty-comment cleanup |
-| `casing` | native function/type, magic method, literal casing |
-| `cleanup` | dead statements, useless returns/casts, unused closure imports |
-| `cleanCode` | dead code, unused imports, redundant syntax |
-
 Standalone sets, not part of `common`:
 
 | Set | What it covers |
@@ -133,6 +119,20 @@ return ECSConfig::configure()
     ->withPaths([__DIR__ . '/src', __DIR__ . '/tests'])
     ->withPreparedSets(laravel: true);
 ```
+
+`common: true` enables all of these at once:
+
+| Set | What it covers |
+| --- | --- |
+| `arrays` | array syntax, spacing, trailing commas, indentation |
+| `spaces` | whitespace, operator/type spacing, blank lines |
+| `namespaces` | imports ordering, unused/needless-alias imports |
+| `docblocks` | phpdoc tags, types, alignment, cleanup |
+| `controlStructures` | control flow, casing, operators, class structure |
+| `comments` | comment style, spacing, empty-comment cleanup |
+| `casing` | native function/type, magic method, literal casing |
+| `cleanup` | dead statements, useless returns/casts, unused closure imports |
+| `cleanCode` | dead code, unused imports, redundant syntax |
 
 <br>
 
