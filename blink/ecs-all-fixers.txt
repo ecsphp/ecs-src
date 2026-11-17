@@ -14,7 +14,6 @@ PhpCsFixer\Fixer\Alias\RandomApiMigrationFixer
 PhpCsFixer\Fixer\Alias\SetTypeToCastFixer
 PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer
 PhpCsFixer\Fixer\ArrayNotation\NoMultilineWhitespaceAroundDoubleArrowFixer
-PhpCsFixer\Fixer\ArrayNotation\NoTrailingCommaInSinglelineArrayFixer
 PhpCsFixer\Fixer\ArrayNotation\NoWhitespaceBeforeCommaInArrayFixer
 PhpCsFixer\Fixer\ArrayNotation\NoWhitespaceInEmptyArrayFixer
 PhpCsFixer\Fixer\ArrayNotation\NormalizeIndexBraceFixer
@@ -26,9 +25,7 @@ PhpCsFixer\Fixer\AttributeNotation\AttributeBlockNoSpacesFixer
 PhpCsFixer\Fixer\AttributeNotation\AttributeEmptyParenthesesFixer
 PhpCsFixer\Fixer\AttributeNotation\GeneralAttributeRemoveFixer
 PhpCsFixer\Fixer\AttributeNotation\OrderedAttributesFixer
-PhpCsFixer\Fixer\Basic\BracesFixer
 PhpCsFixer\Fixer\Basic\BracesPositionFixer
-PhpCsFixer\Fixer\Basic\CurlyBracesPositionFixer
 PhpCsFixer\Fixer\Basic\EncodingFixer
 PhpCsFixer\Fixer\Basic\NoMultipleStatementsPerLineFixer
 PhpCsFixer\Fixer\Basic\NoTrailingCommaInSinglelineFixer
@@ -45,7 +42,6 @@ PhpCsFixer\Fixer\Casing\LowercaseStaticReferenceFixer
 PhpCsFixer\Fixer\Casing\MagicConstantCasingFixer
 PhpCsFixer\Fixer\Casing\MagicMethodCasingFixer
 PhpCsFixer\Fixer\Casing\NativeFunctionCasingFixer
-PhpCsFixer\Fixer\Casing\NativeFunctionTypeDeclarationCasingFixer
 PhpCsFixer\Fixer\Casing\NativeTypeDeclarationCasingFixer
 PhpCsFixer\Fixer\CastNotation\CastSpacesFixer
 PhpCsFixer\Fixer\CastNotation\LowercaseCastFixer
@@ -77,7 +73,6 @@ PhpCsFixer\Fixer\ClassNotation\SingleClassElementPerStatementFixer
 PhpCsFixer\Fixer\ClassNotation\SingleTraitInsertPerStatementFixer
 PhpCsFixer\Fixer\ClassNotation\StaticPrivateMethodFixer
 PhpCsFixer\Fixer\ClassNotation\StringableForToStringFixer
-PhpCsFixer\Fixer\ClassNotation\VisibilityRequiredFixer
 PhpCsFixer\Fixer\ClassUsage\DateTimeImmutableFixer
 PhpCsFixer\Fixer\Comment\CommentToPhpdocFixer
 PhpCsFixer\Fixer\Comment\HeaderCommentFixer
@@ -96,10 +91,8 @@ PhpCsFixer\Fixer\ControlStructure\IncludeFixer
 PhpCsFixer\Fixer\ControlStructure\NoAlternativeSyntaxFixer
 PhpCsFixer\Fixer\ControlStructure\NoBreakCommentFixer
 PhpCsFixer\Fixer\ControlStructure\NoSuperfluousElseifFixer
-PhpCsFixer\Fixer\ControlStructure\NoTrailingCommaInListCallFixer
 PhpCsFixer\Fixer\ControlStructure\NoUnneededBracesFixer
 PhpCsFixer\Fixer\ControlStructure\NoUnneededControlParenthesesFixer
-PhpCsFixer\Fixer\ControlStructure\NoUnneededCurlyBracesFixer
 PhpCsFixer\Fixer\ControlStructure\NoUselessElseFixer
 PhpCsFixer\Fixer\ControlStructure\SimplifiedIfReturnFixer
 PhpCsFixer\Fixer\ControlStructure\SwitchCaseSemicolonToColonFixer
@@ -116,14 +109,12 @@ PhpCsFixer\Fixer\FunctionNotation\DateTimeCreateFromFormatCallFixer
 PhpCsFixer\Fixer\FunctionNotation\FopenFlagOrderFixer
 PhpCsFixer\Fixer\FunctionNotation\FopenFlagsFixer
 PhpCsFixer\Fixer\FunctionNotation\FunctionDeclarationFixer
-PhpCsFixer\Fixer\FunctionNotation\FunctionTypehintSpaceFixer
 PhpCsFixer\Fixer\FunctionNotation\ImplodeCallFixer
 PhpCsFixer\Fixer\FunctionNotation\LambdaNotUsedImportFixer
 PhpCsFixer\Fixer\FunctionNotation\MethodArgumentSpaceFixer
 PhpCsFixer\Fixer\FunctionNotation\MultilinePromotedPropertiesFixer
 PhpCsFixer\Fixer\FunctionNotation\NativeFunctionInvocationFixer
 PhpCsFixer\Fixer\FunctionNotation\NoSpacesAfterFunctionNameFixer
-PhpCsFixer\Fixer\FunctionNotation\NoTrailingCommaInSinglelineFunctionCallFixer
 PhpCsFixer\Fixer\FunctionNotation\NoUnreachableDefaultArgumentValueFixer
 PhpCsFixer\Fixer\FunctionNotation\NoUselessPrintfFixer
 PhpCsFixer\Fixer\FunctionNotation\NoUselessSprintfFixer
@@ -147,7 +138,6 @@ PhpCsFixer\Fixer\Import\OrderedImportsFixer
 PhpCsFixer\Fixer\Import\SingleImportPerStatementFixer
 PhpCsFixer\Fixer\Import\SingleLineAfterImportsFixer
 PhpCsFixer\Fixer\LanguageConstruct\ClassKeywordFixer
-PhpCsFixer\Fixer\LanguageConstruct\ClassKeywordRemoveFixer
 PhpCsFixer\Fixer\LanguageConstruct\CombineConsecutiveIssetsFixer
 PhpCsFixer\Fixer\LanguageConstruct\CombineConsecutiveUnsetsFixer
 PhpCsFixer\Fixer\LanguageConstruct\DeclareEqualNormalizeFixer
@@ -160,15 +150,12 @@ PhpCsFixer\Fixer\LanguageConstruct\GetClassToClassKeywordFixer
 PhpCsFixer\Fixer\LanguageConstruct\IsNullFixer
 PhpCsFixer\Fixer\LanguageConstruct\NoUnsetOnPropertyFixer
 PhpCsFixer\Fixer\LanguageConstruct\NullableTypeDeclarationFixer
-PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAfterConstructFixer
 PhpCsFixer\Fixer\LanguageConstruct\SingleSpaceAroundConstructFixer
 PhpCsFixer\Fixer\ListNotation\ListSyntaxFixer
 PhpCsFixer\Fixer\NamespaceNotation\BlankLineAfterNamespaceFixer
 PhpCsFixer\Fixer\NamespaceNotation\BlankLinesBeforeNamespaceFixer
 PhpCsFixer\Fixer\NamespaceNotation\CleanNamespaceFixer
-PhpCsFixer\Fixer\NamespaceNotation\NoBlankLinesBeforeNamespaceFixer
 PhpCsFixer\Fixer\NamespaceNotation\NoLeadingNamespaceWhitespaceFixer
-PhpCsFixer\Fixer\NamespaceNotation\SingleBlankLineBeforeNamespaceFixer
 PhpCsFixer\Fixer\Naming\NoHomoglyphNamesFixer
 PhpCsFixer\Fixer\Operator\AssignNullCoalescingToCoalesceEqualFixer
 PhpCsFixer\Fixer\Operator\BinaryOperatorSpacesFixer
@@ -177,7 +164,6 @@ PhpCsFixer\Fixer\Operator\IncrementStyleFixer
 PhpCsFixer\Fixer\Operator\LogicalOperatorsFixer
 PhpCsFixer\Fixer\Operator\LongToShorthandOperatorFixer
 PhpCsFixer\Fixer\Operator\NewExpressionParenthesesFixer
-PhpCsFixer\Fixer\Operator\NewWithBracesFixer
 PhpCsFixer\Fixer\Operator\NewWithParenthesesFixer
 PhpCsFixer\Fixer\Operator\NoSpaceAroundDoubleColonFixer
 PhpCsFixer\Fixer\Operator\NoUselessConcatOperatorFixer
@@ -255,7 +241,6 @@ PhpCsFixer\Fixer\Phpdoc\PhpdocToCommentFixer
 PhpCsFixer\Fixer\Phpdoc\PhpdocTrimConsecutiveBlankLineSeparationFixer
 PhpCsFixer\Fixer\Phpdoc\PhpdocTrimFixer
 PhpCsFixer\Fixer\Phpdoc\PhpdocTypesFixer
-PhpCsFixer\Fixer\Phpdoc\PhpdocTypesNoDuplicatesFixer
 PhpCsFixer\Fixer\Phpdoc\PhpdocTypesOrderFixer
 PhpCsFixer\Fixer\Phpdoc\PhpdocVarAnnotationCorrectOrderFixer
 PhpCsFixer\Fixer\Phpdoc\PhpdocVarWithoutNameFixer
@@ -270,7 +255,6 @@ PhpCsFixer\Fixer\Semicolon\SpaceAfterSemicolonFixer
 PhpCsFixer\Fixer\Strict\DeclareStrictTypesFixer
 PhpCsFixer\Fixer\Strict\StrictComparisonFixer
 PhpCsFixer\Fixer\Strict\StrictParamFixer
-PhpCsFixer\Fixer\StringNotation\EscapeImplicitBackslashesFixer
 PhpCsFixer\Fixer\StringNotation\ExplicitStringVariableFixer
 PhpCsFixer\Fixer\StringNotation\HeredocClosingMarkerFixer
 PhpCsFixer\Fixer\StringNotation\HeredocToNowdocFixer
@@ -286,14 +270,12 @@ PhpCsFixer\Fixer\Whitespace\ArrayIndentationFixer
 PhpCsFixer\Fixer\Whitespace\BlankLineBeforeStatementFixer
 PhpCsFixer\Fixer\Whitespace\BlankLineBetweenImportGroupsFixer
 PhpCsFixer\Fixer\Whitespace\CompactNullableTypeDeclarationFixer
-PhpCsFixer\Fixer\Whitespace\CompactNullableTypehintFixer
 PhpCsFixer\Fixer\Whitespace\HeredocIndentationFixer
 PhpCsFixer\Fixer\Whitespace\IndentationTypeFixer
 PhpCsFixer\Fixer\Whitespace\LineEndingFixer
 PhpCsFixer\Fixer\Whitespace\MethodChainingIndentationFixer
 PhpCsFixer\Fixer\Whitespace\NoExtraBlankLinesFixer
 PhpCsFixer\Fixer\Whitespace\NoSpacesAroundOffsetFixer
-PhpCsFixer\Fixer\Whitespace\NoSpacesInsideParenthesisFixer
 PhpCsFixer\Fixer\Whitespace\NoTrailingWhitespaceFixer
 PhpCsFixer\Fixer\Whitespace\NoWhitespaceInBlankLineFixer
 PhpCsFixer\Fixer\Whitespace\SingleBlankLineAtEofFixer
