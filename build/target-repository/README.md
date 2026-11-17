@@ -116,7 +116,7 @@ return ECSConfig::configure()
 | `psr12` | the [PSR-12](https://www.php-fig.org/psr/psr-12/) coding style |
 | `perCs` | the [PER Coding Style](https://www.php-fig.org/per/coding-style/) (PHP-CS-Fixer's `@PER-CS`) |
 
-Or enable everything at once with `->withPreparedSets(common: true)`.
+Or enable all topic sets at once with `->withPreparedSets(common: true)`. `psr12` and `perCs` are not part of `common`.
 
 Standalone presets are also available: `cleanCode: true` (dead code, unused imports, redundant syntax), `standaloneLine: true` (each constructor param on its own line), and `laravel: true` (the [Laravel Pint](https://github.com/laravel/pint/blob/main/resources/presets/laravel.php) ruleset):
 
