@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
 # Wall-clock benchmark: ECS (PHP engine) and --blink (Go engine) against the
-# native tools they wrap - php-cs-fixer, PHP_CodeSniffer (phpcbf) and Laravel
-# Pint - over the same real-world corpus, each in --fix mode on a fresh copy.
+# native tools they wrap - php-cs-fixer and PHP_CodeSniffer (phpcbf) - over the
+# same real-world corpus, each in --fix mode on a fresh copy.
 #
 # Usage:
 #   bench/run.sh [corpus.json] [path ...]
@@ -15,6 +15,8 @@
 #
 # ECS and --blink run in parallel across all cores; the native tools run at
 # their default settings. Numbers are wall-clock seconds and vary with hardware.
+#
+# Results are printed as a markdown table and written to bench/results/<name>.json.
 set -euo pipefail
 
 fail() { echo "bench: $*" >&2; exit 2; }
@@ -49,15 +51,14 @@ blink_bin="$WORKDIR/blink"
 
 # 2. install the native tools in isolation - ECS scopes its own vendored
 #    php-cs-fixer, so it cannot be run standalone from the repo vendor
-echo "==> installing php-cs-fixer, php_codesniffer, pint" >&2
+echo "==> installing php-cs-fixer, php_codesniffer" >&2
 tools="$WORKDIR/tools"
 mkdir -p "$tools"
 composer --working-dir="$tools" require \
-    friendsofphp/php-cs-fixer squizlabs/php_codesniffer laravel/pint \
+    friendsofphp/php-cs-fixer squizlabs/php_codesniffer \
     --no-interaction --quiet || fail "native tool install failed"
 pcf="$tools/vendor/bin/php-cs-fixer"
 phpcbf="$tools/vendor/bin/phpcbf"
-pint="$tools/vendor/bin/pint"
 
 # 3. the shared ECS config: corpus paths, skips and prepared sets
 ecs_php="$WORKDIR/ecs.php"
@@ -80,6 +81,8 @@ git clone --depth 1 --branch "$ref" "$repo" "$src" >/dev/null 2>&1 \
     || git clone --depth 1 "$repo" "$src" >/dev/null 2>&1 \
     || fail "clone failed: $repo"
 rev=$(git -C "$src" rev-parse --short HEAD 2>/dev/null || echo "?")
+# files a native tool cannot process at all, removed for every engine
+while IFS= read -r f; do rm -f "$src/$f"; done < <(jq -r '(.bench_remove // [])[]' "$CORPUS")
 file_count=$(cd "$src" && find "${paths[@]}" -name '*.php' 2>/dev/null | wc -l)
 
 # abs_paths helper: resolve the corpus-relative paths inside a given tree
@@ -121,11 +124,10 @@ measure() {
 tree="$WORKDIR/tree"
 echo "==> $name @ $rev: $file_count PHP files in ${paths[*]}" >&2
 
-measure "ECS (PHP)"      "$REPO_ROOT/bin/ecs" check --fix --no-progress-bar --memory-limit=1G --config "$ecs_php" $(abs "$tree" "${paths[@]}")
-ECS_BLINK_BIN="$blink_bin" measure "--blink (Go)" "$REPO_ROOT/bin/ecs" check --fix --no-progress-bar --config "$ecs_php" --blink $(abs "$tree" "${paths[@]}")
+measure "ECS (PHP)"      "$REPO_ROOT/bin/ecs" check --fix --no-progress-bar --no-diffs --no-blink --memory-limit=1G --config "$ecs_php" $(abs "$tree" "${paths[@]}")
+ECS_BLINK_BIN="$blink_bin" measure "--blink (Go)" "$REPO_ROOT/bin/ecs" check --fix --no-progress-bar --no-diffs --config "$ecs_php" --blink $(abs "$tree" "${paths[@]}")
 measure "php-cs-fixer (@PER-CS,@Symfony)" "$pcf" fix $(abs "$tree" "${paths[@]}") --rules=@PER-CS,@Symfony --using-cache=no --no-interaction -q
 measure "phpcbf (PSR12)" "$phpcbf" --standard=PSR12 --parallel="$(nproc)" $(abs "$tree" "${paths[@]}")
-measure "pint (laravel preset)" "$pint" $(abs "$tree" "${paths[@]}")
 
 # 5. markdown table on stdout
 echo
@@ -133,6 +135,23 @@ echo "## $name @ $rev - $file_count PHP files (${paths[*]})"
 echo
 echo "| engine | time |"
 echo "| --- | ---: |"
-for label in "ECS (PHP)" "--blink (Go)" "php-cs-fixer (@PER-CS,@Symfony)" "phpcbf (PSR12)" "pint (laravel preset)"; do
+for label in "ECS (PHP)" "--blink (Go)" "php-cs-fixer (@PER-CS,@Symfony)" "phpcbf (PSR12)"; do
     echo "| ${label} | ${SECONDS_BY[$label]:-?} s |"
 done
+
+# 6. json results, committed alongside the script
+results_dir="$REPO_ROOT/bench/results"
+mkdir -p "$results_dir"
+timings='{}'
+for label in "ECS (PHP)" "--blink (Go)" "php-cs-fixer (@PER-CS,@Symfony)" "phpcbf (PSR12)"; do
+    timings=$(jq --arg k "$label" --arg v "${SECONDS_BY[$label]:-}" '. + {($k): (if $v == "" then null else ($v | tonumber) end)}' <<<"$timings")
+done
+jq -n \
+    --arg name "$name" --arg repo "$repo" --arg rev "$rev" \
+    --arg ecs_rev "$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "?")" \
+    --arg date "$(date -u +%Y-%m-%d)" \
+    --argjson files "$file_count" --argjson cores "$(nproc)" \
+    --argjson timings "$timings" \
+    '{name: $name, repo: $repo, rev: $rev, paths: $ARGS.positional, files: $files, ecs_rev: $ecs_rev, date: $date, cores: $cores, seconds: $timings}' \
+    --args "${paths[@]}" > "$results_dir/$name.json"
+echo "==> wrote $results_dir/$name.json" >&2
