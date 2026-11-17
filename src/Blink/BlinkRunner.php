@@ -26,14 +26,14 @@ final readonly class BlinkRunner
     /**
      * @param array{paths: string[], rules: array<mixed>, skips: array<mixed>} $configData
      */
-    public function run(array $configData, bool $isFixMode): int
+    public function run(array $configData, bool $isFixMode, bool $showDiffs = true): int
     {
         $binary = $this->ecsGoBinaryLocator->locate();
 
         $configPath = $this->writeConfig($configData);
 
         try {
-            $arguments = $this->createArguments($binary, $configPath, $isFixMode);
+            $arguments = $this->createArguments($binary, $configPath, $isFixMode, $showDiffs);
 
             // string command, as the array form needs PHP 7.4 and the release is downgraded to 7.2
             $command = implode(' ', array_map(escapeshellarg(...), $arguments));
@@ -53,14 +53,22 @@ final readonly class BlinkRunner
     /**
      * @return string[]
      */
-    public function createArguments(string $binary, string $configPath, bool $isFixMode): array
-    {
+    public function createArguments(
+        string $binary,
+        string $configPath,
+        bool $isFixMode,
+        bool $showDiffs = true
+    ): array {
         $arguments = [$binary, '--ecs-config', $configPath];
 
         // ecs-go reports by default; --fix rewrites in place, matching the
         // check-vs-fix split of ECS itself
         if ($isFixMode) {
             $arguments[] = '--fix';
+        }
+
+        if (! $showDiffs) {
+            $arguments[] = '--no-diffs';
         }
 
         return $arguments;

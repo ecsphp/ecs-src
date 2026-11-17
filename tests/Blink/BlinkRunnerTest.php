@@ -30,4 +30,11 @@ final class BlinkRunnerTest extends TestCase
 
         $this->assertSame(['ecs-go', '--ecs-config', '/tmp/ecs-blink.json', '--fix'], $arguments);
     }
+
+    public function testCreateArgumentsWithoutDiffs(): void
+    {
+        $arguments = $this->blinkRunner->createArguments('ecs-go', '/tmp/ecs-blink.json', false, false);
+
+        $this->assertSame(['ecs-go', '--ecs-config', '/tmp/ecs-blink.json', '--no-diffs'], $arguments);
+    }
 }
