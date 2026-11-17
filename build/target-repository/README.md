@@ -278,14 +278,5 @@ vendor/bin/ecs list-checkers --output-format json
 
 <br>
 
-## How to Migrate from another coding standard tool?
-
-Do you use another tool and want to migrate? It's pretty straightforward - here is "how to":
-
-* for [PHP_CodeSniffer](https://tomasvotruba.com/blog/2018/06/04/how-to-migrate-from-php-code-sniffer-to-easy-coding-standard)
-* and [PHP CS Fixer](https://tomasvotruba.com/blog/2018/06/07/how-to-migrate-from-php-cs-fixer-to-easy-coding-standard).
-
-<br>
-
 > [!NOTE]
 > This is the **deployed** package. Development happens in the [ecs-src](https://github.com/easy-coding-standard/ecs-src) repository - report issues and send pull requests there.
