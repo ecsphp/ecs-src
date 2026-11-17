@@ -25,4 +25,4 @@ Please make sure `composer lint` and `composer test` pass before sending a pull 
 | php-cs-fixer (`@PER-CS`, `@Symfony`) | 141.6 s | 25.8 s |
 | PHP_CodeSniffer (`phpcbf`, PSR-12) | 133.7 s | 26.7 s |
 
-If every rule in `ecs.php` is available in Go, a plain `vendor/bin/ecs check` runs blink instead of the PHP engine automatically - no `--blink` needed. Otherwise it falls back to PHP.
+If every rule in `ecs.php` is available in Go, a plain `vendor/bin/ecs check` runs blink instead of the PHP engine automatically - no `--blink` needed. Otherwise it falls back to PHP. Use `--no-blink` to force the PHP engine, e.g. to compare the speed.
