@@ -39,6 +39,24 @@ func TestNoBreakComment(t *testing.T) {
 	}
 }
 
+// exit and die end a case like return does; a member named exit does not.
+func TestNoBreakCommentExit(t *testing.T) {
+	t.Parallel()
+	f := NoBreakComment{}
+
+	for _, end := range []string{"exit(0);", "exit;", "die(0);", "DIE;"} {
+		src := "<?php\nswitch ($arg) {\n    case '--version':\n        echo \"1.0\\n\";\n        " + end + "\n    case '--quiet':\n        $quiet = true;\n\n        break;\n}\n"
+		if got, changed := apply(t, f, src); changed {
+			t.Fatalf("%s must not gain a comment:\n got: %q", end, got)
+		}
+	}
+
+	got, changed := apply(t, f, "<?php\nswitch ($f) {\n    case 1:\n        $x->exit();\n    case 2:\n        bar();\n        break;\n}\n")
+	if want := "<?php\nswitch ($f) {\n    case 1:\n        $x->exit();\n        // no break\n    case 2:\n        bar();\n        break;\n}\n"; !changed || got != want {
+		t.Fatalf("member exit: changed=%v got=%q", changed, got)
+	}
+}
+
 // A named argument "default:" is not a switch's default label.
 func TestNoBreakCommentNamedArgumentDefault(t *testing.T) {
 	t.Parallel()
