@@ -17,4 +17,12 @@ composer lint.fix     # auto-fix rector + coding standard
 
 Please make sure `composer lint` and `composer test` pass before sending a pull request.
 
-Experimental [`--blink` mode](docs/blink.md) runs the reco Go binary instead of the PHP engine.
+[`--blink` mode](docs/blink.md) runs the bundled Go binary instead of the PHP engine - out of the box, no Go toolchain needed:
+
+| `--fix` on a fresh clone | Symfony `src` (13,103 files) | Laravel `src` (1,749 files) |
+| --- | ---: | ---: |
+| **ECS** | **2.9 s** | **1.0 s** |
+| php-cs-fixer (`@PER-CS`, `@Symfony`) | 141.6 s | 25.8 s |
+| PHP_CodeSniffer (`phpcbf`, PSR-12) | 133.7 s | 26.7 s |
+
+If every rule in `ecs.php` is available in Go, a plain `vendor/bin/ecs check` runs blink instead of the PHP engine automatically - no `--blink` needed. Otherwise it falls back to PHP.

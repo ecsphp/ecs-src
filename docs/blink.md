@@ -1,78 +1,40 @@
-# Blink mode (experimental)
+# Blink mode
 
-`--blink` hands the run over to the [`ecs-go`](https://github.com/TomasVotruba/ecs-go) Go binary instead of the PHP engine:
-
-```bash
-vendor/bin/ecs check --blink          # report only (like a normal check)
-vendor/bin/ecs check --blink --fix    # rewrite files in place
-vendor/bin/ecs check --blink --commit # apply rules one by one, one git commit per rule
-vendor/bin/ecs check src --blink      # limit to a path - pass the path before the flag
-```
-
-Pass any explicit path before the flags (`check src --blink`), as with `--fix`; a path written after a boolean flag is consumed as that flag's value.
-
-ECS resolves the configuration from `ecs.php` (paths, rules and skips) exactly as usual, dumps it to a temporary JSON file, and hands that file to ecs-go via `--ecs-config`. ecs-go maps each ECS rule onto its own fixer by class name, applies the shared paths and skips, and reports every rule it could not map. The check/fix split maps onto ecs-go directly:
-
-- `--blink` runs `ecs-go --ecs-config <config.json>` - reports without writing.
-- `--blink --fix` runs `ecs-go --ecs-config <config.json> --fix` - rewrites in place.
-- `--no-diffs` is passed on as `ecs-go --no-diffs` - hides the per-file diffs.
-
-The exit code of `ecs-go` is passed through.
-
-## Commit per rule
-
-`--blink --commit` applies the resolved rules one at a time, each in its own fix run, and turns every rule that actually changed files into a single git commit (`[Group] RuleName`, from the rule's namespace). Rules that change nothing are skipped. It requires `--blink`; used alone it errors. Run it on a clean working tree, since each commit stages tracked changes with `git add --update`.
-
-## Dumping the config
-
-The JSON ecs-go consumes can also be inspected on its own:
+`--blink` runs your `ecs.php` rules with the bundled Go binary instead of the PHP engine:
 
 ```bash
-vendor/bin/ecs dump-config        # print the resolved paths, rules and skips as JSON
+vendor/bin/ecs check --blink          # report
+vendor/bin/ecs check --blink --fix    # rewrite in place
+vendor/bin/ecs check --blink --commit # one git commit per rule that changed files
+vendor/bin/ecs check src --blink      # limit to a path - pass it before the flags
 ```
 
-The shape is:
+`--no-diffs` works as usual. Rules blink can't map are reported and skipped.
 
-```json
-{
-  "paths": ["/abs/src"],
-  "rules": [
-    { "class": "PhpCsFixer\\Fixer\\ArrayNotation\\ArraySyntaxFixer", "config": { "syntax": "short" } },
-    { "class": "PhpCsFixer\\Fixer\\CastNotation\\LowercaseCastFixer", "config": {} }
-  ],
-  "skips": [
-    { "path": "*/Legacy/*" },
-    { "class": "PhpCsFixer\\Fixer\\Import\\OrderedImportsFixer" },
-    { "class": "PhpCsFixer\\Fixer\\CastNotation\\LowercaseCastFixer", "paths": ["*/tests/*"] }
-  ]
-}
-```
+A plain `vendor/bin/ecs check` uses blink automatically when every rule in `ecs.php` is available in Go, and falls back to the PHP engine otherwise.
 
-Configured fixer options are read off the fixer instance; sniff properties are not extracted yet. A skipped interface or parent class (ECS matches class skips with `is_a()`) is dumped as is, followed by one entry per configured checker it covers, so ecs-go can match skips by exact checker class.
+`--commit` needs a clean working tree. Each commit is named `[Group] RuleName`.
 
-## Automatic dispatch
+## Inspect the config
 
-A plain `vendor/bin/ecs check` (no `--blink`) hands the run to ecs-go on its own when ecs-go covers every rule the config resolves. ECS queries the binary's `list-checkers` and, if all configured rules map to a blink fixer, runs blink; if any rule is a custom sniff/fixer or a not-yet-ported rule, or no binary is available, it falls back to the PHP engine silently.
+ECS passes the resolved paths, rules and skips to blink as JSON. Print it with:
 
 ```bash
-vendor/bin/ecs check        # blink when fully covered, else PHP
-vendor/bin/ecs check --fix
+vendor/bin/ecs dump-config
 ```
 
-## Binary resolution
+## Binary
 
-The ecs-go binary is looked up in this order:
+The binary ships in `bin/` as `blink-<platform>` for Linux, macOS and Windows, so no Go toolchain is needed. Lookup order:
 
-1. the `ECS_BLINK_BIN` environment variable, if it points to an existing file;
-2. the binary bundled with ECS in `bin/` as `blink-<platform>` (Linux, macOS and Windows, amd64 and arm64);
-3. `vendor/bin/ecs-go`, if present;
-4. `ecs-go` on the `PATH`.
-
-If none is found, `--blink` fails with an error explaining how to provide the binary.
+1. `ECS_BLINK_BIN` environment variable
+2. bundled `bin/blink-<platform>`
+3. `vendor/bin/ecs-go`
+4. `ecs-go` on the `PATH`
 
 ## Custom fixers
 
-blink can't run PHP fixers. To use your own, port them to Go and build your own blink binary with the `github.com/ecsphp/ecs-src/blink/extend` package:
+blink can't run PHP fixers. Port yours to Go and build your own binary with the `github.com/ecsphp/ecs-src/blink/extend` package:
 
 ```go
 package main
@@ -85,17 +47,7 @@ func main() {
 }
 ```
 
-- `Name()` returns the PHP fixer's class name. The rule stays in `ecs.php` as usual.
-- A fixer runs only when the config lists it. It is never part of a set or the default run.
-- `WithConfig` gets only the options that differ from the PHP defaults, so it must apply those defaults itself.
-- Fixers with the same priority run in class-name order.
+- `Name()` returns the PHP fixer's class name; keep the rule in `ecs.php`.
+- `WithConfig` gets only options that differ from the PHP defaults.
 
-Build it (`go get github.com/ecsphp/ecs-src/blink@<commit>`) and point ECS at it with `ECS_BLINK_BIN`. See [`blink/examples/customfixer`](../blink/examples/customfixer/main.go).
-
-## Prototype caveat
-
-This is an RFC-stage prototype. ecs-go reads the rules and skips from your `ecs.php` (not just the paths), and because every ecs-go fixer is named by its PHP-CS-Fixer class, the rules map straight across by name. Every rule ecs-go has no fixer for is reported and skipped, and a configured rule runs with ecs-go's built-in behaviour (its configuration is not modelled yet) and is noted in the report. So a blink run is never silently narrower than your config, but it is not yet equivalent to a full ECS run.
-
-## Bundled binary
-
-The release build cross-compiles ecs-go from its `main` branch and ships it in `bin/` as `blink-<platform>`, so `--blink` works out of the box on Linux, macOS and Windows - no Go toolchain needed.
+Point ECS at it with `ECS_BLINK_BIN`. See [`blink/examples/customfixer`](../blink/examples/customfixer/main.go).
