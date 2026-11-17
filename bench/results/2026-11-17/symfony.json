@@ -1,0 +1,18 @@
+{
+  "name": "symfony",
+  "repo": "https://github.com/symfony/symfony.git",
+  "rev": "26687110",
+  "paths": [
+    "src"
+  ],
+  "files": 13137,
+  "ecs_rev": "624a4427ef",
+  "date": "2026-11-17",
+  "cores": 24,
+  "seconds": {
+    "ECS (PHP)": 290.7,
+    "--blink (Go)": 2.9,
+    "php-cs-fixer (@PER-CS,@Symfony)": 135.3,
+    "phpcbf (PSR12)": 154.1
+  }
+}
