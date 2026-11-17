@@ -24,6 +24,5 @@ Please make sure `composer lint` and `composer test` pass before sending a pull 
 | **ECS** | **2.9 s** | **1.0 s** |
 | php-cs-fixer (`@PER-CS`, `@Symfony`) | 141.6 s | 25.8 s |
 | PHP_CodeSniffer (`phpcbf`, PSR-12) | 133.7 s | 26.7 s |
-| Laravel Pint (`laravel` preset) | 1,543 s | 199 s |
 
 If every rule in `ecs.php` is available in Go, a plain `vendor/bin/ecs check` runs blink instead of the PHP engine automatically - no `--blink` needed. Otherwise it falls back to PHP.
