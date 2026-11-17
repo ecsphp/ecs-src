@@ -278,5 +278,4 @@ vendor/bin/ecs list-checkers --output-format json
 
 <br>
 
-> [!NOTE]
-> This is the **deployed** package. Development happens in the [ecs-src](https://github.com/easy-coding-standard/ecs-src) repository - report issues and send pull requests there.
+<sub>This is the deployed package. Development happens in the [ecs-src](https://github.com/easy-coding-standard/ecs-src) repository - report issues and send pull requests there.</sub>
