@@ -1,4 +1,4 @@
-# The Fastest CS for PHP
+# The Fastest Coding Standard for PHP
 
 [![Downloads total](https://img.shields.io/packagist/dt/symplify/easy-coding-standard.svg?style=flat-square)](https://packagist.org/packages/symplify/easy-coding-standard/stats)
 
