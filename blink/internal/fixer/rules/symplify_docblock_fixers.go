@@ -248,9 +248,39 @@ var wordRe = regexp.MustCompile(`[a-zA-Z]+`)
 
 // resolveWords splits camelCase, lowercases and extracts word runs.
 func resolveWords(value string) []string {
-	spaced := camelBoundaryRe.ReplaceAllString(value, "$1 $2")
-	return wordRe.FindAllString(strings.ToLower(spaced), -1)
+	if !isASCII(value) {
+		// lowercasing some non-ASCII letters yields ASCII ones (Kelvin sign to "k")
+		spaced := camelBoundaryRe.ReplaceAllString(value, "$1 $2")
+		return wordRe.FindAllString(strings.ToLower(spaced), -1)
+	}
+	var words []string
+	start := -1
+	for i := 0; i <= len(value); i++ {
+		isLetter := i < len(value) && isASCIILetter(value[i])
+		if start >= 0 && (!isLetter || isLowerByte(value[i-1]) && isUpperByte(value[i])) {
+			words = append(words, strings.ToLower(value[start:i]))
+			start = -1
+		}
+		if isLetter && start < 0 {
+			start = i
+		}
+	}
+	return words
 }
+
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= 0x80 {
+			return false
+		}
+	}
+	return true
+}
+
+func isLowerByte(c byte) bool     { return 'a' <= c && c <= 'z' }
+func isUpperByte(c byte) bool     { return 'A' <= c && c <= 'Z' }
+func isASCIILetter(c byte) bool   { return isLowerByte(c) || isUpperByte(c) }
+func isASCIIWordByte(c byte) bool { return isASCIILetter(c) || c == '_' || ('0' <= c && c <= '9') }
 
 // --- RemovePropertyVariableNameDescription: drop trailing "$name" from @var ---
 
@@ -303,10 +333,6 @@ func (RemovePropertyVariableNameDescription) Fix(s *tokens.Stream) bool {
 
 // --- RemoveMethodNameDuplicateDescription ---
 
-var articlesRe = regexp.MustCompile(`(?i)\b(?:a|an|the)\b`)
-var thirdPersonSRe = regexp.MustCompile(`^([\s*]*\w+?)s\b`)
-var spaceNlRe = regexp.MustCompile(`[\s\n]+`)
-
 type RemoveMethodNameDuplicateDescription struct{}
 
 func (RemoveMethodNameDuplicateDescription) Name() string {
@@ -335,8 +361,8 @@ func (RemoveMethodNameDuplicateDescription) Fix(s *tokens.Stream) bool {
 		var kept []string
 		lineChanged := false
 		for _, line := range lines {
-			l := articlesRe.ReplaceAllString(line, "")
-			if isDuplicateLine(l, methodName) || isDuplicateLine(thirdPersonSRe.ReplaceAllString(l, "$1"), methodName) {
+			l := removeArticles(line)
+			if isDuplicateLine(l, methodName) || isDuplicateLine(dropThirdPersonS(l), methodName) {
 				lineChanged = true
 				continue
 			}
@@ -350,8 +376,52 @@ func (RemoveMethodNameDuplicateDescription) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
+// removeArticles drops every word "a", "an" or "the", ignoring case, as
+// /(?i)\b(?:a|an|the)\b/ replaced by "".
+func removeArticles(line string) string {
+	var b strings.Builder
+	kept := 0
+	for i := 0; i < len(line); {
+		if !isASCIIWordByte(line[i]) {
+			i++
+			continue
+		}
+		end := i + 1
+		for end < len(line) && isASCIIWordByte(line[end]) {
+			end++
+		}
+		if w := line[i:end]; strings.EqualFold(w, "a") || strings.EqualFold(w, "an") || strings.EqualFold(w, "the") {
+			b.WriteString(line[kept:i])
+			kept = end
+		}
+		i = end
+	}
+	if kept == 0 {
+		return line
+	}
+	b.WriteString(line[kept:])
+	return b.String()
+}
+
+// dropThirdPersonS drops the "s" ending the first word, as /^([\s*]*\w+?)s\b/
+// replaced by "$1".
+func dropThirdPersonS(line string) string {
+	start := 0
+	for start < len(line) && (line[start] == '*' || isRESpace(line[start])) {
+		start++
+	}
+	end := start
+	for end < len(line) && isASCIIWordByte(line[end]) {
+		end++
+	}
+	if end-start < 2 || line[end-1] != 's' {
+		return line
+	}
+	return line[:end-1] + line[end:]
+}
+
 func isDuplicateLine(line, methodName string) bool {
-	spaceless := strings.TrimRight(spaceNlRe.ReplaceAllString(line, ""), ".!")
+	spaceless := strings.TrimRight(removeRESpaces(line), ".!")
 	return isDuplicateDescription(spaceless, methodName)
 }
 
@@ -539,4 +609,18 @@ func removeDocLinesMatching(content string, re *regexp.Regexp) string {
 		return content
 	}
 	return strings.Join(lines, "")
+}
+
+// removeRESpaces drops every \s, as /[\s\n]+/ replaced by "".
+func removeRESpaces(s string) string {
+	if !strings.ContainsAny(s, " \t\n\f\r") {
+		return s
+	}
+	b := make([]byte, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		if !isRESpace(s[i]) {
+			b = append(b, s[i])
+		}
+	}
+	return string(b)
 }

@@ -88,17 +88,21 @@ func clearUselessDocContent(docContent, className string) string {
 			}
 			continue
 		}
-		if match := heredocOpenerRegex.FindStringSubmatch(line); match != nil {
-			heredocLabel = match[1]
-			inHeredoc = true
-			kept = append(kept, line)
-			continue
+		if strings.Contains(line, "<<<") {
+			if match := heredocOpenerRegex.FindStringSubmatch(line); match != nil {
+				heredocLabel = match[1]
+				inHeredoc = true
+				kept = append(kept, line)
+				continue
+			}
 		}
 		if className != "" && strings.Trim(line, "* ") == className {
 			continue
 		}
-		for _, re := range uselessCommentRegexes {
-			line = re.ReplaceAllString(line, "")
+		if mayHoldUselessComment(line) {
+			for _, re := range uselessCommentRegexes {
+				line = re.ReplaceAllString(line, "")
+			}
 		}
 		if line == "" {
 			continue
@@ -109,7 +113,37 @@ func clearUselessDocContent(docContent, className string) string {
 		return ""
 	}
 	commentText := strings.Join(kept, "\n")
-	return doctrineGeneratedRegex.ReplaceAllString(commentText, "")
+	if !isASCII(commentText) || containsFoldASCII(commentText, "doctrine") {
+		commentText = doctrineGeneratedRegex.ReplaceAllString(commentText, "")
+	}
+	return commentText
+}
+
+// mayHoldUselessComment rules out a line no uselessCommentRegexes can match:
+// each needs one of these words, and each removes a suffix, so no removal
+// makes a later one match. Under (?i) some non-ASCII letters match ASCII ones
+// (the long s matches "s"), so such a line is always checked.
+func mayHoldUselessComment(line string) bool {
+	if !isASCII(line) || strings.Contains(line, "// TODO: ") {
+		return true
+	}
+	for _, word := range []string{"constructor", "class", "trait", "interface"} {
+		if containsFoldASCII(line, word) {
+			return true
+		}
+	}
+	return false
+}
+
+// containsFoldASCII reports whether s holds the lowercase ASCII word, ignoring
+// ASCII case.
+func containsFoldASCII(s, word string) bool {
+	for i := 0; i+len(word) <= len(s); i++ {
+		if strings.EqualFold(s[i:i+len(word)], word) {
+			return true
+		}
+	}
+	return false
 }
 
 func isHeredocCloser(line, label string) bool {

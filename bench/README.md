@@ -31,3 +31,15 @@ exit 255, or a PHP/Symfony fatal-exception signature in its output.
 > annotation for a rule php-cs-fixer does not know, which its Runner treats as
 > fatal. Files listed in the corpus `bench_remove` are deleted from the clone, so
 > every engine runs on the same set.
+
+## Before/after for blink performance work
+
+```bash
+bench/blink-before-after.sh                          # origin/main vs this checkout
+bench/blink-before-after.sh origin/main ../corpus common 7
+```
+
+Builds blink at the base ref and from this checkout, runs both in check mode
+over the same corpus (default: this repo's `vendor/`) and set, and prints
+median wall and CPU seconds. Runs alternate between the two builds, and the
+script fails if their reports differ.
