@@ -76,8 +76,6 @@ Wall-clock `--fix` over a fresh clone, each tool with a representative rule set 
 
 Different tools apply different rules, so this compares each at a representative job, not rule for rule. Numbers vary with hardware. The Go engine ships prebuilt for Linux, macOS and Windows, so no Go toolchain is needed.
 
-On `symfony/symfony` `src`, php-cs-fixer also needs the rules its `@php-cs-fixer-ignore` annotations reference (`--allow-risky`) enabled, or it aborts before running.
-
 <br>
 
 ## Configure
