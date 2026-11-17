@@ -122,25 +122,30 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
             $dirty,
         );
 
-        // experimental: hand the resolved config to the ecs-go Go binary and skip the PHP engine
-        if ($blink) {
-            $configData = $this->blinkConfigDumper->dump($configuration->getSources());
-
-            if ($commit) {
-                return $this->blinkCommitRunner->run($configData);
-            }
-
-            $blinkExitCode = $this->blinkRunner->run($configData, $fix, $configuration->shouldShowDiffs());
-            return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
-        }
-
-        // auto-blink: hand the run to ecs-go when it covers every configured rule,
-        // else fall back to the PHP engine silently
+        // hand the run to ecs-go when it covers every configured rule and the spacing, else fall back to the PHP engine
         if (! $noBlink) {
             $configData = $this->blinkConfigDumper->dump($configuration->getSources());
             if ($this->blinkSupportResolver->isFullySupported($configData)) {
+                if ($commit) {
+                    return $this->blinkCommitRunner->run($configData);
+                }
+
                 $blinkExitCode = $this->blinkRunner->run($configData, $fix, $configuration->shouldShowDiffs());
                 return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+            }
+
+            if ($commit) {
+                $this->easyCodingStandardStyle->error(
+                    'The --commit option needs every rule and the spacing in ecs.php to be supported by blink. Some are not, so there is nothing to commit rule by rule.'
+                );
+
+                return ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
+            }
+
+            if ($blink && $configuration->getOutputFormat() === ConsoleOutputFormatter::NAME) {
+                $this->easyCodingStandardStyle->warning(
+                    'blink does not support every rule or the spacing in ecs.php, running the PHP engine instead.'
+                );
             }
         }
 
