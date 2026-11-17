@@ -74,7 +74,7 @@ Wall-clock `--fix` over a fresh clone, each tool with a representative rule set 
 | php-cs-fixer (`@PER-CS`, `@Symfony`) | 141.6 s | 25.8 s |
 | PHP_CodeSniffer (`phpcbf`, PSR-12) | 133.7 s | 26.7 s |
 
-Different tools apply different rules, so this compares each at a representative job, not rule for rule. Numbers vary with hardware. The Go engine ships prebuilt for Linux, macOS and Windows, so no Go toolchain is needed.
+Different tools apply different rules, so this compares each at a representative job, not rule for rule. Numbers vary with hardware.
 
 <br>
 
