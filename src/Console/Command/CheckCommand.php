@@ -122,7 +122,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
                 return $this->blinkCommitRunner->run($configData);
             }
 
-            $blinkExitCode = $this->blinkRunner->run($configData, $fix);
+            $blinkExitCode = $this->blinkRunner->run($configData, $fix, $configuration->shouldShowDiffs());
             return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
 
@@ -130,7 +130,7 @@ final readonly class CheckCommand implements CommandInterface, DefaultCommandInt
         // else fall back to the PHP engine silently
         $configData = $this->blinkConfigDumper->dump($configuration->getSources());
         if ($this->blinkSupportResolver->isFullySupported($configData)) {
-            $blinkExitCode = $this->blinkRunner->run($configData, $fix);
+            $blinkExitCode = $this->blinkRunner->run($configData, $fix, $configuration->shouldShowDiffs());
             return $blinkExitCode === ExitCode::SUCCESS ? ExitCode::SUCCESS : ExitCode::CHANGED_CODE_OR_FOUND_ERRORS;
         }
 

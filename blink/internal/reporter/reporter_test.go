@@ -11,7 +11,7 @@ import (
 
 func TestReportClean(t *testing.T) {
 	var buf bytes.Buffer
-	code := Report(&buf, nil, false)
+	code := Report(&buf, nil, false, true)
 	if code != 0 {
 		t.Fatalf("clean exit code = %d, want 0", code)
 	}
@@ -27,7 +27,7 @@ func TestReportCheckFixable(t *testing.T) {
 		AppliedRules: []string{`PhpCsFixer\Fixer\Semicolon\SpaceAfterSemicolonFixer`},
 		Diff:         "--- Original\n+++ New\n@@ @@\n-$a=1;$b=2;\n+$a=1; $b=2;\n",
 	}}
-	code := Report(&buf, results, false)
+	code := Report(&buf, results, false, true)
 	out := buf.String()
 	if code != 1 {
 		t.Fatalf("check exit code = %d, want 1", code)
@@ -51,7 +51,7 @@ func TestReportFixed(t *testing.T) {
 		{Path: "a.php", AppliedRules: []string{"X"}, Diff: "--- Original\n+++ New\n@@ @@\n-$a=1;\n+$a = 1;\n"},
 		{Path: "b.php", AppliedRules: []string{"Y"}, Diff: "--- Original\n+++ New\n@@ @@\n-$b=2;\n+$b = 2;\n"},
 	}
-	code := Report(&buf, results, true)
+	code := Report(&buf, results, true, true)
 	out := buf.String()
 	if code != 0 {
 		t.Fatalf("fix exit code = %d, want 0", code)
@@ -86,5 +86,27 @@ func TestRelativePathReadsRelativePathsFromCwd(t *testing.T) {
 		if got := relativePath(cwd, path); got != want {
 			t.Errorf("relativePath(%s, %q) = %q, want %q", cwd, path, got, want)
 		}
+	}
+}
+
+func TestReportNoDiffs(t *testing.T) {
+	var buf bytes.Buffer
+	results := []runner.FileResult{{
+		Path:         "src/Foo.php",
+		AppliedRules: []string{`PhpCsFixer\Fixer\Semicolon\SpaceAfterSemicolonFixer`},
+		Diff:         "--- Original\n+++ New\n@@ @@\n-$a=1;$b=2;\n+$a=1; $b=2;\n",
+	}}
+	code := Report(&buf, results, false, false)
+	out := buf.String()
+	if code != 1 {
+		t.Fatalf("check exit code = %d, want 1", code)
+	}
+	for _, unwanted := range []string{"1) src/Foo.php", "begin diff", "Applied checkers:"} {
+		if strings.Contains(out, unwanted) {
+			t.Fatalf("output has %q with diffs hidden:\n%s", unwanted, out)
+		}
+	}
+	if !strings.Contains(out, "1 error is fixable!") {
+		t.Fatalf("missing fixable warning:\n%s", out)
 	}
 }

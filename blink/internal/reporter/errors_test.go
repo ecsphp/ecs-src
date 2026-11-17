@@ -28,7 +28,7 @@ func TestReportCheckErrors(t *testing.T) {
 		{Path: "src/b.php", Errors: []fixer.CodingStandardError{globalError(5, "q")}},
 		{Path: "src/a.php", Errors: []fixer.CodingStandardError{globalError(5, "x"), globalError(6, "z")}},
 	}
-	code := Report(&buf, results, false)
+	code := Report(&buf, results, false, true)
 	if code != 1 {
 		t.Fatalf("exit code = %d, want 1", code)
 	}
@@ -51,7 +51,7 @@ func TestReportCheckErrorsAndDiffs(t *testing.T) {
 	results := []runner.FileResult{
 		{Path: "a.php", AppliedRules: []string{"X"}, Diff: "--- Original\n+++ New\n@@ @@\n-$a=1;\n+$a = 1;\n", Errors: []fixer.CodingStandardError{globalError(1, "w")}},
 	}
-	if code := Report(&buf, results, false); code != 1 {
+	if code := Report(&buf, results, false, true); code != 1 {
 		t.Fatalf("exit code = %d, want 1", code)
 	}
 	out := buf.String()
@@ -72,7 +72,7 @@ func TestReportCheckErrorsAndDiffs(t *testing.T) {
 func TestReportFixWithErrors(t *testing.T) {
 	var buf bytes.Buffer
 	results := []runner.FileResult{{Path: "a.php", Errors: []fixer.CodingStandardError{globalError(2, "w")}}}
-	if code := Report(&buf, results, true); code != 1 {
+	if code := Report(&buf, results, true, true); code != 1 {
 		t.Fatalf("exit code = %d, want 1", code)
 	}
 	out := buf.String()

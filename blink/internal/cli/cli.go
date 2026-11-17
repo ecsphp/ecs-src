@@ -27,6 +27,7 @@ func Main() {
 
 func run(args []string) int {
 	fix := false
+	showDiffs := true
 	configPath := ""
 	ecsConfigPath := ""
 	var paths []string
@@ -36,6 +37,8 @@ func run(args []string) int {
 		switch {
 		case a == "--fix":
 			fix = true
+		case a == "--no-diffs":
+			showDiffs = false
 		case a == "list-checkers":
 			return listCheckers()
 		case a == "-h" || a == "--help":
@@ -91,7 +94,7 @@ func run(args []string) int {
 		return 2
 	}
 
-	code := reporter.Report(os.Stdout, results, fix)
+	code := reporter.Report(os.Stdout, results, fix, showDiffs)
 
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
@@ -151,6 +154,7 @@ func usage() {
 Usage:
   blink [paths...]            check paths (default: .)
   blink --fix [paths...]      fix paths in place
+  blink --no-diffs [paths...] hide per-file diffs
   blink --config FILE ...     use a blink.json config
   blink --ecs-config FILE ... use an ECS dump-config JSON (blink mode)
   blink list-checkers         list registered fixers and deprecated names

@@ -15,6 +15,7 @@ ECS resolves the configuration from `ecs.php` (paths, rules and skips) exactly a
 
 - `--blink` runs `ecs-go --ecs-config <config.json>` - reports without writing.
 - `--blink --fix` runs `ecs-go --ecs-config <config.json> --fix` - rewrites in place.
+- `--no-diffs` is passed on as `ecs-go --no-diffs` - hides the per-file diffs.
 
 The exit code of `ecs-go` is passed through.
 

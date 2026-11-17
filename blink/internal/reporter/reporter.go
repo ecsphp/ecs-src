@@ -26,8 +26,8 @@ type formatter struct {
 
 // Report writes results to w and returns the process exit code (0 when clean or
 // after a fix that leaves no errors, 1 otherwise; "ecs check --blink" turns 1
-// into 2, as ECS does).
-func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
+// into 2, as ECS does). showDiffs false hides the per-file diffs, like ECS --no-diffs.
+func Report(w io.Writer, results []runner.FileResult, isFixer bool, showDiffs bool) int {
 	f := newFormatter(w)
 
 	var diffs []runner.FileResult
@@ -42,7 +42,9 @@ func Report(w io.Writer, results []runner.FileResult, isFixer bool) int {
 	}
 
 	// Both check and --fix list the per-file diff, matching ECS.
-	f.reportFileDiffs(diffs)
+	if showDiffs {
+		f.reportFileDiffs(diffs)
+	}
 
 	if len(diffs) == 0 && len(errs) == 0 {
 		f.success("No errors found. Great job - your code is shiny in style!")
