@@ -108,6 +108,12 @@ func fixNoBreakCase(s *tokens.Stream, casePosition int, m noBreakCommentMatcher)
 	for i := casePosition + 1; i < s.Len(); i++ {
 		t := s.At(i)
 
+		// blink lexes the exit/die construct (PHP's T_EXIT) as an Ident
+		if taIsConstruct(s, i, "exit") || taIsConstruct(s, i, "die") {
+			fallThrough = false
+			continue
+		}
+
 		if t.Kind == token.Keyword {
 			lv := strings.ToLower(t.Value)
 			if structureKinds[lv] || lv == "else" || lv == "do" || lv == "class" {
@@ -116,7 +122,7 @@ func fixNoBreakCase(s *tokens.Stream, casePosition int, m noBreakCommentMatcher)
 				continue
 			}
 			switch lv {
-			case "break", "continue", "return", "exit", "die", "goto":
+			case "break", "continue", "return", "goto":
 				fallThrough = false
 				continue
 			case "throw":
