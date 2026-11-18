@@ -44,6 +44,9 @@ final readonly class BlinkRunner
             // string command, as the array form needs PHP 7.4 and the release is downgraded to 7.2
             $command = implode(' ', array_map(escapeshellarg(...), $arguments));
 
+            // blink lints each fixed file with this PHP before writing it
+            putenv('BLINK_PHP=' . PHP_BINARY);
+
             // inherit the terminal, so ecs-go detects a TTY and colors its output
             $process = proc_open($command, [STDIN, STDOUT, STDERR], $pipes);
             if (! is_resource($process)) {

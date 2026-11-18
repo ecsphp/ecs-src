@@ -168,6 +168,13 @@ func fixFile(cfg *config.Config, ruleSkips map[string][]*finder.PathMatcher, pat
 	res.Diff = diff.Unified(original, res.After)
 
 	if write {
+		if lintErr, ok := lintFixed(cfg.PHPBinary, original, res); !ok {
+			res.AppliedRules = nil
+			res.Diff = ""
+			res.After = original
+			res.Errors = append(res.Errors, lintErr)
+			return res, nil
+		}
 		info, statErr := os.Stat(path)
 		mode := os.FileMode(0o644)
 		if statErr == nil {

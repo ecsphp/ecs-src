@@ -28,6 +28,8 @@ type Config struct {
 	// It holds one path list per configured class behind the rule (an alias and
 	// its successor are two checkers in ECS); the rule is off where all match.
 	PerPathRuleSkips map[string][][]string
+	// PHPBinary lints each fixed file before it is written; "" skips the lint.
+	PHPBinary string
 }
 
 // Configure returns a config seeded with the default psr12 + common sets,
