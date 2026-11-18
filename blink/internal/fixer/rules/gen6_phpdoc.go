@@ -38,7 +38,7 @@ func summaryCorrectlyFormatted(content string) bool {
 
 func (PhpdocSummary) Fix(s *tokens.Stream) bool {
 	return applyToDocblocks(s, func(d *docblock) bool {
-		if d.single {
+		if d.single || d.openingLineStartsWithTag() {
 			return false
 		}
 		first, last := summaryRange(d)

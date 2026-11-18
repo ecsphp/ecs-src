@@ -47,6 +47,9 @@ func TestPhpdocSummary(t *testing.T) {
 	if _, changed := apply(t, PhpdocSummary{}, "<?php\nclass A {\n    /** Summary without period */\n    public $a;\n}"); changed {
 		t.Fatal("single-line docblock must not change")
 	}
+	if _, changed := apply(t, PhpdocSummary{}, "<?php\n/** @param array{\n *   a: string,\n * } $args\n */\nfunction f(array $args) {}"); changed {
+		t.Fatal("docblock whose opening line starts with a tag has no summary")
+	}
 }
 
 func TestPhpdocTagType(t *testing.T) {
