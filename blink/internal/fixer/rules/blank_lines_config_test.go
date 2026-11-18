@@ -18,6 +18,18 @@ func TestNoExtraBlankLinesConfig(t *testing.T) {
 		t.Fatalf("throw: got=%q", got)
 	}
 
+	// throw after a short ternary is an expression, so the blank line stays
+	got, _ = apply(t, f, "<?php\nfunction foo($a)\n{\n    $b = $a\n        ?: throw new Exception(\"x\");\n\n    return $b;\n}\n")
+	if want := "<?php\nfunction foo($a)\n{\n    $b = $a\n        ?: throw new Exception(\"x\");\n\n    return $b;\n}\n"; got != want {
+		t.Fatalf("throw after short ternary: got=%q", got)
+	}
+
+	// throw after a case label still ends a statement
+	got, _ = apply(t, f, "<?php\nswitch ($a) {\n    case 1:\n        throw new Exception(\"x\");\n\n    default:\n        break;\n}\n")
+	if want := "<?php\nswitch ($a) {\n    case 1:\n        throw new Exception(\"x\");\n    default:\n        break;\n}\n"; got != want {
+		t.Fatalf("throw in switch: got=%q", got)
+	}
+
 	// use: blank line between two imports is removed
 	got, _ = apply(t, f, "<?php\nuse A\\B;\n\nuse C\\D;\n")
 	if want := "<?php\nuse A\\B;\nuse C\\D;\n"; got != want {
