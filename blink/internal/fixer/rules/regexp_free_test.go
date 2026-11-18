@@ -64,7 +64,12 @@ func TestRegexpFreeScannersMatchRegexps(t *testing.T) {
 		return wordRe.FindAllString(strings.ToLower(spaced), -1)
 	}
 
-	inputs := regexpFreeInputs(200_000)
+	// -race makes the scanners ~10x slower; the plain run keeps all inputs
+	n := 200_000
+	if raceEnabled {
+		n = 20_000
+	}
+	inputs := regexpFreeInputs(n)
 	for shard := range regexpFreeShards {
 		t.Run(fmt.Sprintf("shard%d", shard), func(t *testing.T) {
 			t.Parallel()
