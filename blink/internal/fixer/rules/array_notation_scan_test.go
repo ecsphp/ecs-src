@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"strings"
 	"testing"
@@ -140,6 +141,10 @@ func checkArrayNotationScanEdits(t *testing.T, toks []token.Token, label string)
 	}
 }
 
+// arrayNotationScanShards splits the random streams over parallel subtests,
+// each with its own seed.
+const arrayNotationScanShards = 16
+
 func TestArrayNotationScanMatchesBackwardScans(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewPCG(1, 2))
@@ -148,10 +153,16 @@ func TestArrayNotationScanMatchesBackwardScans(t *testing.T) {
 		checkArrayNotationScan(t, r, tokens.New(toks), src)
 		checkArrayNotationScanEdits(t, toks, src)
 	}
-	for range 20000 {
-		s := randomArrayNotationStream(r)
-		label := "random " + renderTokens(s)
-		checkArrayNotationScan(t, r, s, label)
-		checkArrayNotationScanEdits(t, s.Tokens(), label)
+	for shard := range arrayNotationScanShards {
+		t.Run(fmt.Sprintf("shard%d", shard), func(t *testing.T) {
+			t.Parallel()
+			r := rand.New(rand.NewPCG(1, uint64(2+shard)))
+			for range 20000 / arrayNotationScanShards {
+				s := randomArrayNotationStream(r)
+				label := "random " + renderTokens(s)
+				checkArrayNotationScan(t, r, s, label)
+				checkArrayNotationScanEdits(t, s.Tokens(), label)
+			}
+		})
 	}
 }
