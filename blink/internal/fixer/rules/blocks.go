@@ -30,9 +30,10 @@ var controlKeywords = map[string]bool{
 // backwards, jumping over (...) groups, until it meets a construct keyword or a
 // statement boundary.
 func classifyBrace(s *tokens.Stream, brace int) (braceKind, int) {
-	// a "{" right after "->", "?->" or "::" is dynamic access ("$o->{$p}"), not a block
+	// a "{" right after "->", "?->", "::" or a lone "$" is dynamic access
+	// ("$o->{$p}", "${$p}"), not a block
 	if p := prevMeaningfulIndex(s, brace); p >= 0 {
-		if pt := s.At(p); pt.Kind == token.Punct && (pt.Value == "->" || pt.Value == "?->" || pt.Value == "::") {
+		if pt := s.At(p); isLoneDollar(pt) || pt.Kind == token.Punct && (pt.Value == "->" || pt.Value == "?->" || pt.Value == "::") {
 			return braceOther, -1
 		}
 	}
