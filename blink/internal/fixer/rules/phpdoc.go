@@ -62,7 +62,7 @@ func (PhpdocTrim) Fix(s *tokens.Stream) bool {
 			return false
 		}
 		before := len(d.inner)
-		for len(d.inner) > 0 && strings.TrimSpace(d.inner[0].content) == "" {
+		for !d.openingLineHasContent() && len(d.inner) > 0 && strings.TrimSpace(d.inner[0].content) == "" {
 			d.inner = d.inner[1:]
 		}
 		for len(d.inner) > 0 && strings.TrimSpace(d.inner[len(d.inner)-1].content) == "" {

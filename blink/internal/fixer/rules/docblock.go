@@ -49,6 +49,11 @@ func parseDoc(v string) (docblock, bool) {
 	return d, true
 }
 
+// openingLineHasContent reports whether text follows "/**" on the opening line.
+func (d docblock) openingLineHasContent() bool {
+	return strings.TrimSpace(strings.TrimPrefix(d.open, "/**")) != ""
+}
+
 func (d docblock) render() string {
 	if d.single {
 		if len(d.inner) == 0 || d.inner[0].content == "" {
