@@ -54,6 +54,11 @@ func (d docblock) openingLineHasContent() bool {
 	return strings.TrimSpace(strings.TrimPrefix(d.open, "/**")) != ""
 }
 
+// openingLineStartsWithTag reports whether the "/** @tag" opening line carries a tag.
+func (d docblock) openingLineStartsWithTag() bool {
+	return strings.HasPrefix(strings.TrimSpace(strings.TrimPrefix(d.open, "/**")), "@")
+}
+
 func (d docblock) render() string {
 	if d.single {
 		if len(d.inner) == 0 || d.inner[0].content == "" {
