@@ -19,6 +19,10 @@ func TestPhpdocTrim(t *testing.T) {
 	if _, changed := apply(t, PhpdocTrim{}, "<?php\n/**\n *\n */\nfunction f() {}"); changed {
 		t.Fatal("empty docblock must be left untouched")
 	}
+	// a blank line after text on the opening line is not leading whitespace
+	if _, changed := apply(t, PhpdocTrim{}, "<?php\n/** @param int $a\n *\n * @return int\n */\nfunction f(int $a) {}"); changed {
+		t.Fatal("blank line between tags must stay when the docblock opens with a tag")
+	}
 }
 
 func TestPhpdocNoEmptyReturn(t *testing.T) {
