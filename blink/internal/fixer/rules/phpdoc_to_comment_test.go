@@ -40,3 +40,22 @@ func TestPhpdocToComment(t *testing.T) {
 		t.Fatalf("echo: changed=%v got=%q", changed, got)
 	}
 }
+
+func TestPhpdocToCommentKeepsDocblockBeforeAttributes(t *testing.T) {
+	t.Parallel()
+	f := PhpdocToComment{}
+
+	cases := map[string]string{
+		"class":          "<?php\n$x = 1;\n\n/** Class doc */\n#[AsCommand('app:list')]\nfinal class A {}\n",
+		"property":       "<?php\nclass A\n{\n    /** The name. */\n    #[\\Deprecated]\n    private string $name = '';\n}\n",
+		"method":         "<?php\nclass A\n{\n    /** Runs it. */\n    #[\\Override]\n    public function run(): void {}\n}\n",
+		"function":       "<?php\n$x = 1;\n\n/** A function. */\n#[\\Deprecated]\nfunction bar(): void {}\n",
+		"several groups": "<?php\n$x = 1;\n\n/** Class doc */\n#[A]\n#[B(['x' => 1]), C]\nclass A {}\n",
+	}
+	for name, in := range cases {
+		if got, changed := apply(t, f, in); changed {
+			t.Errorf("%s: docblock before an attribute must stay a docblock, got %q", name, got)
+		}
+	}
+
+}

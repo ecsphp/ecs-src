@@ -59,14 +59,22 @@ func docIsHeaderComment(s *tokens.Stream, index int) bool {
 }
 
 // docNextTokenIndex mirrors CommentsAnalyzer::getNextTokenIndex - the next
-// meaningful token, skipping attributes (already comments here) and stepping
-// past a leading "(".
+// meaningful token, skipping attributes and stepping past a leading "(".
 func docNextTokenIndex(s *tokens.Stream, index int) int {
-	next := sigNext(s, index)
-	for next >= 0 && isPunctVal(s, next, "(") {
+	next := index
+	for {
 		next = sigNext(s, next)
+		for next >= 0 && s.At(next).Kind == token.AttributeStart {
+			end := s.AttributeEnd(next)
+			if end < 0 {
+				return -1
+			}
+			next = sigNext(s, end)
+		}
+		if next < 0 || !isPunctVal(s, next, "(") {
+			return next
+		}
 	}
-	return next
 }
 
 func docIsBeforeStructuralElement(s *tokens.Stream, index int) bool {
