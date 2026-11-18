@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ForbiddenFunctionsSniff;
+use PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\GlobalKeywordSniff;
 use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
 use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
 use PhpCsFixer\Fixer\CastNotation\LowercaseCastFixer;
@@ -16,7 +18,12 @@ return ECSConfig::configure()
     ->withConfiguredRule(LineLengthFixer::class, [
         LineLengthFixer::INLINE_SHORT_LINES => false,
     ])
-    ->withRules([LowercaseCastFixer::class, FullyQualifiedStrictTypesFixer::class])
+    ->withConfiguredRule(ForbiddenFunctionsSniff::class, [
+        'forbiddenFunctions' => [
+            'dump' => null,
+        ],
+    ])
+    ->withRules([LowercaseCastFixer::class, FullyQualifiedStrictTypesFixer::class, GlobalKeywordSniff::class])
     ->withSkip([
         __DIR__ . '/legacy/*',
         LowercaseKeywordsFixer::class,

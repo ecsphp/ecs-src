@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Symplify\EasyCodingStandard\Tests\Blink;
 
 use Override;
+use PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ForbiddenFunctionsSniff;
+use PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\GlobalKeywordSniff;
 use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
 use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
 use PhpCsFixer\Fixer\Import\FullyQualifiedStrictTypesFixer;
@@ -61,6 +63,23 @@ final class BlinkConfigDumperTest extends AbstractTestCase
         $this->assertSame([
             LineLengthFixer::INLINE_SHORT_LINES => false,
         ], $configByClass[LineLengthFixer::class]);
+    }
+
+    public function testDumpExtractsConfiguredSniffConfig(): void
+    {
+        $data = $this->blinkConfigDumper->dump([]);
+
+        $configByClass = [];
+        foreach ($data['rules'] as $rule) {
+            $configByClass[$rule['class']] = $rule['config'];
+        }
+
+        $this->assertSame([
+            'forbiddenFunctions' => [
+                'dump' => null,
+            ],
+        ], $configByClass[ForbiddenFunctionsSniff::class]);
+        $this->assertEquals(new stdClass(), $configByClass[GlobalKeywordSniff::class]);
     }
 
     public function testDumpDropsOptionsLeftAtDefault(): void
