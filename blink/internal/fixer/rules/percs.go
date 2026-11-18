@@ -11,7 +11,8 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/Operator/NewWithParenthesesFixer.php
 //
 // NewWithParentheses adds parentheses to a parameterless "new": "new Foo" ->
-// "new Foo()". Anonymous classes and dynamic "new $var" are left alone.
+// "new Foo()". With anonymous_class false it removes the empty "()" of
+// "new class() {}" instead.
 type NewWithParentheses struct {
 	// SkipNamedClass and SkipAnonymousClass disable the named_class/anonymous_class options.
 	SkipNamedClass     bool
@@ -53,8 +54,12 @@ func (f NewWithParentheses) Fix(s *tokens.Stream) bool {
 		if nt.Kind == token.Keyword && strings.ToLower(nt.Value) == "class" {
 			// anonymous class: "new class extends X" -> "new class() extends X"
 			// (ECS's psr12 config sets anonymous_class => true)
-			if f.SkipAnonymousClass || nextSignificantValue(s, j) == "(" {
-				continue // disabled, or already "new class(...)"
+			if f.SkipAnonymousClass {
+				changed = removeEmptyAnonymousClassParens(s, j) || changed
+				continue
+			}
+			if nextSignificantValue(s, j) == "(" {
+				continue // already "new class(...)"
 			}
 			s.InsertAt(j+1, token.Token{Kind: token.Punct, Value: "("})
 			s.InsertAt(j+2, token.Token{Kind: token.Punct, Value: ")"})
@@ -103,6 +108,28 @@ func (f NewWithParentheses) Fix(s *tokens.Stream) bool {
 		changed = true
 	}
 	return changed
+}
+
+// removeEmptyAnonymousClassParens drops the "()" after the "class" keyword at
+// classIdx, unless it has arguments or is followed by an object operator.
+func removeEmptyAnonymousClassParens(s *tokens.Stream, classIdx int) bool {
+	open := nextSignificantIndex(s, classIdx)
+	if open < 0 || !isPunctVal(s, open, "(") {
+		return false
+	}
+	closeIdx := nextSignificantIndex(s, open)
+	if closeIdx < 0 || !isPunctVal(s, closeIdx, ")") {
+		return false
+	}
+	if after := nextSignificantValue(s, closeIdx); after == "->" || after == "?->" {
+		return false
+	}
+	s.RemoveAt(closeIdx)
+	s.RemoveAt(open)
+	if open < s.Len() && s.Kind(open) == token.Whitespace && s.Kind(open-1) == token.Whitespace {
+		s.RemoveAt(open)
+	}
+	return true
 }
 
 // consumeNewStaticTail advances past the "::member" and "[subscript]" tail of a

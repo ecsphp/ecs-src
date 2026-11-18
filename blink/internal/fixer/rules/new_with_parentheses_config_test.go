@@ -20,6 +20,18 @@ func TestNewWithParenthesesConfig(t *testing.T) {
 		t.Fatalf("anonymous off got=%q want=%q", got, want)
 	}
 
+	f = NewWithParentheses{}.WithConfig(map[string]any{"anonymous_class": false})
+	for _, c := range [][2]string{
+		{"<?php $a = new class() extends Foo {};", "<?php $a = new class extends Foo {};"},
+		{"<?php $a = new class() implements Bar {};", "<?php $a = new class implements Bar {};"},
+		{"<?php $a = new class () {};", "<?php $a = new class {};"},
+		{"<?php $a = new class($x) extends Foo {};", "<?php $a = new class($x) extends Foo {};"},
+	} {
+		if g, _ := apply(t, f.(fixerRule), c[0]); g != c[1] {
+			t.Fatalf("anonymous off: got=%q want=%q", g, c[1])
+		}
+	}
+
 	// a dynamic class name via "::member" / "[subscript]" already carries its
 	// call parentheses, so none are inserted after the leading name
 	for _, c := range []string{
