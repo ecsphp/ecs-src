@@ -65,6 +65,23 @@ func TestBracesPositionDynamicAccessLeftAlone(t *testing.T) {
 	}
 }
 
+func TestBracesPositionDynamicVariableLeftAlone(t *testing.T) {
+	t.Parallel()
+	// the "{" of "${$b}" is a dynamic variable, not the control block's brace
+	for _, src := range []string{
+		"<?php\n\nif (${$b}) {\n}\n",
+		"<?php\n\nif (isset(${$b})) {\n}\n",
+		"<?php\n\nif (empty(${$b})) {\n}\n",
+		"<?php\n\nif (foo(${$b})) {\n}\n",
+		"<?php\n\nwhile (isset(${$b})) {\n}\n",
+		"<?php\n\nif ($a) {\n} elseif (isset(${$b})) {\n}\n",
+	} {
+		if got, changed := apply(t, BracesPosition{}, src); changed || got != src {
+			t.Fatalf("dynamic variable brace must not get a space: changed=%v\n got: %q\nwant: %q", changed, got, src)
+		}
+	}
+}
+
 func TestClassifyBrace(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
