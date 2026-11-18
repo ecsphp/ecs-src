@@ -3,6 +3,7 @@ package rules
 import (
 	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -13,12 +14,12 @@ import (
 //
 // BracesPosition places opening braces per PSR-12: classes/interfaces/traits/
 // enums and named functions/methods get their "{" on the next line, aligned
-// with the declaration; control structures keep it on the same line after a
-// single space. Closures and free blocks are left alone by default. Each brace
-// position is configurable; empty option fields keep this default behaviour.
-// The body of a closure or an anonymous class is broken into lines as
-// php-cs-fixer does (allow_single_line_anonymous_functions,
-// allow_single_line_empty_anonymous_classes); other bodies are not yet.
+// with the declaration; control structures, closures and anonymous classes
+// keep it on the same line after a single space. Each brace position is
+// configurable; empty option fields keep this default behaviour. A body
+// written on the line of its "{" is put on lines of its own, unless it is one
+// PHP-CS-Fixer allows on one line (allow_single_line_anonymous_functions,
+// allow_single_line_empty_anonymous_classes).
 type BracesPosition struct {
 	classesOpeningBrace            string
 	functionsOpeningBrace          string
@@ -27,8 +28,8 @@ type BracesPosition struct {
 	controlStructuresOpeningBrace  string
 	// allowSingleLineAnonFnsSet records whether the option was given; the value
 	// defaults to true (php-cs-fixer 3 default), which keeps a single-line
-	// closure body on its line, while false puts every closure body on lines of
-	// its own.
+	// closure or property hook body on its line, while false puts every such
+	// body on lines of its own.
 	allowSingleLineAnonFns    bool
 	allowSingleLineAnonFnsSet bool
 	// noSingleLineEmptyAnonClasses is allow_single_line_empty_anonymous_classes
@@ -77,114 +78,234 @@ func (BracesPosition) SourceURL() string {
 
 func (f BracesPosition) Fix(s *tokens.Stream) bool {
 	changed := false
-	// php-cs-fixer's $allowSingleLineUntil: the body of the first block left on
-	// one line, inside which no anonymous class body is broken into lines. Kept
-	// as the index of its "{", which later edits (all after it) do not move.
-	singleLineOpen := -1
+	// PHP-CS-Fixer's $allowSingleLineUntil: the "}" of the first body left on
+	// one line, before which a body is broken into lines only when it already
+	// spans lines (or, for an anonymous class allowed on one line, holds code)
+	singleLineUntil := -1
 	for i := 0; i < s.Len(); i++ {
-		if s.At(i).Kind != token.Punct || s.At(i).Value != "{" {
+		c, ok := f.bpConstruct(s, i)
+		if !ok {
 			continue
 		}
-		// a property hook list is CT::T_PROPERTY_HOOK_BRACE_OPEN in
-		// PHP-CS-Fixer, not a "{" this fixer moves
-		if isPropertyHookBrace(s, i) {
-			continue
-		}
-		kind, kw := classifyBrace(s, i)
+		open := c.open
+		closeIdx := s.MatchForward(open)
+		lenBefore := s.Len()
+		nested := singleLineUntil >= 0 && c.index < singleLineUntil
 
-		var category string
-		switch kind {
-		case braceClassLike:
-			category = "classes"
-			if taIsAnonymousClass(s, kw) {
-				category = "anon_classes"
-			}
-		case braceFunctionDecl:
-			category = "functions"
-		case braceClosure:
-			category = "anon_functions"
-		case braceControl:
-			category = "control"
-		default:
-			continue
-		}
-
-		// an empty class/function body already collapsed to "{}" stays on its
-		// line - ECS keeps "class A {}" as-is (single_line_empty_body owns the
-		// collapse); only reflow a body with content. Anonymous classes follow
-		// php-cs-fixer (allow_single_line_empty_anonymous_classes).
-		if (kind == braceClassLike && category != "anon_classes" || kind == braceFunctionDecl) && s.MatchForward(i) == i+1 {
-			continue
-		}
-
-		// php-cs-fixer's $addNewlinesInsideBraces, for closures and anonymous
-		// classes only so far
-		var newlinesInside bool
-		switch category {
-		case "anon_functions":
-			newlinesInside = f.closureBodyNeedsNewlines(s, i)
-		case "anon_classes":
-			newlinesInside = f.anonClassBodyNeedsNewlines(s, i, singleLineOpen)
-		}
-		markSingleLine := (category == "anon_functions" || category == "anon_classes") && !newlinesInside && singleLineOpen < 0
-		if newlinesInside && bpOpenBraceNeedsNewline(s, i) {
-			changed = editSlotAfter(s, i, "\n"+lineIndent(s, i)) || changed
-		}
-
-		if nextLine, handle := f.wantNextLine(category, s, i); handle {
-			if target := bpBraceTarget(s, i, nextLine); target >= 0 {
-				i = bpMoveBrace(s, i, target)
-				changed = true
-			}
-			want := " "
-			if nextLine {
-				// php-cs-fixer aligns the brace with the line holding the keyword
-				want = "\n" + lineIndent(s, kw)
-			}
-			switch {
-			case !nextLine && bpFollowsLineComment(s, i):
-			case i > 0 && s.At(i-1).Kind == token.Whitespace:
-				if s.At(i-1).Value != want {
-					s.SetValue(i-1, want)
-					changed = true
+		// an unclosed "{" (PHP-CS-Fixer throws on it) still gets its position
+		newlinesInside := closeIdx >= 0
+		markSingleLine := false
+		if newlinesInside && (c.allowSingleLine || c.allowSingleLineIfEmpty || nested) {
+			newlinesInside = false
+			for j := open + 1; j < closeIdx; j++ {
+				t := s.At(j)
+				if c.allowSingleLineIfEmpty && t.Kind != token.Whitespace && !isComment(t) || t.Kind == token.Whitespace && hasNewline(t.Value) {
+					newlinesInside = true
+					break
 				}
-			default:
-				s.InsertAt(i, token.Token{Kind: token.Whitespace, Value: want})
-				i++
-				changed = true
 			}
+			markSingleLine = !newlinesInside && singleLineUntil < 0
+		}
+		if newlinesInside && bpOpenBraceNeedsNewline(s, open) {
+			changed = editSlotAfter(s, open, "\n"+lineIndent(s, open)) || changed
 		}
 
-		if newlinesInside && bpCloseBraceOnOwnLine(s, i) {
+		nextLine := c.position == bracesNextLine && !funcSignatureMultiline(s, open)
+		if target := bpBraceTarget(s, open, nextLine); target >= 0 {
+			open = bpMoveBrace(s, open, target)
 			changed = true
 		}
-		if markSingleLine {
-			singleLineOpen = i
+		want := " "
+		if nextLine {
+			// PHP-CS-Fixer aligns the brace with the line holding the keyword
+			want = "\n" + lineIndent(s, c.index)
+		}
+		switch {
+		case !nextLine && bpFollowsLineComment(s, open):
+		case open > 0 && s.At(open-1).Kind == token.Whitespace:
+			if s.At(open-1).Value != want {
+				s.SetValue(open-1, want)
+				changed = true
+			}
+		default:
+			s.InsertAt(open, token.Token{Kind: token.Whitespace, Value: want})
+			open++
+			changed = true
+		}
+
+		if newlinesInside && bpCloseBraceOnOwnLine(s, open) {
+			changed = true
+		}
+		switch {
+		case markSingleLine:
+			singleLineUntil = s.MatchForward(open)
+		case nested:
+			singleLineUntil += s.Len() - lenBefore
 		}
 	}
 	return changed
 }
 
-// anonClassBodyNeedsNewlines reports whether the body of the anonymous class
-// whose "{" is at open goes on lines of its own. With
-// allow_single_line_empty_anonymous_classes (the default) an empty body may
-// stay on one line, and when false every body is broken, unless it sits in the
-// body of the block left on one line at singleLineOpen; either way a body
-// already holding a line break, or (when allowed) holding code, is broken.
-func (f BracesPosition) anonClassBodyNeedsNewlines(s *tokens.Stream, open, singleLineOpen int) bool {
-	allowIfEmpty := !f.noSingleLineEmptyAnonClasses
-	nested := singleLineOpen >= 0 && open < s.MatchForward(singleLineOpen)
-	if !allowIfEmpty && !nested {
-		return true
+// bpConstruct is one construct BracesPositionFixer handles: index is the
+// token it starts from (past an array default value for a property), open
+// its body's "{", position where that brace goes.
+type bpConstruct struct {
+	index, open                             int
+	position                                string
+	allowSingleLine, allowSingleLineIfEmpty bool
+}
+
+var bpControlKeywords = map[string]bool{
+	"declare": true, "do": true, "else": true, "elseif": true, "finally": true, "for": true, "foreach": true,
+	"if": true, "while": true, "try": true, "catch": true, "switch": true, "match": true,
+}
+
+// bpConstruct mirrors one step of PHP-CS-Fixer's loop over the tokens: the
+// construct the token at i starts, if any. Its branches are those of
+// BracesPositionFixer::applyFix: classy, function, control structure, property
+// with a hook list, and property hook.
+func (f BracesPosition) bpConstruct(s *tokens.Stream, i int) (bpConstruct, bool) {
+	t := s.At(i)
+	c := bpConstruct{index: i}
+	switch {
+	case taIsClassy(s, i):
+		c.open = bpNextOf(s, i, false, false)
+		if c.open < 0 {
+			return c, false
+		}
+		if taIsAnonymousClass(s, i) {
+			c.allowSingleLineIfEmpty = !f.noSingleLineEmptyAnonClasses
+			c.position = bpPosition(f.anonymousClassesOpeningBrace, bracesSameLine)
+		} else {
+			c.position = bpPosition(f.classesOpeningBrace, bracesNextLine)
+		}
+	case kwIs(t, "function"):
+		c.open = bpNextOf(s, i, true, false)
+		if c.open < 0 || !bpIsBodyBrace(s, c.open) {
+			return c, false
+		}
+		if taIsLambda(s, i) {
+			c.allowSingleLine = !f.allowSingleLineAnonFnsSet || f.allowSingleLineAnonFns
+			c.position = bpPosition(f.anonymousFunctionsOpeningBrace, bracesSameLine)
+		} else {
+			c.position = bpPosition(f.functionsOpeningBrace, bracesNextLine)
+		}
+	case t.Kind == token.Keyword && bpControlKeywords[strings.ToLower(t.Value)]:
+		c.open = sigNext(s, bpParenthesisEnd(s, i))
+		if c.open < 0 || !bpIsBodyBrace(s, c.open) {
+			return c, false
+		}
+		c.position = bpPosition(f.controlStructuresOpeningBrace, bracesSameLine)
+	case t.Kind == token.Variable && !isLoneDollar(t):
+		next := sigNext(s, i)
+		if !isPunctVal(s, next, "=") && !bpIsHookListBrace(s, next) {
+			return c, false
+		}
+		// the default value: an array is skipped, so a "{" inside it is not the hook list
+		if isPunctVal(s, next, "=") {
+			next = sigNext(s, next)
+			if isPunctVal(s, next, "[") {
+				c.index = s.MatchForward(next)
+			} else if next >= 0 && kwIs(s.At(next), "array") {
+				if next = sigNext(s, next); isPunctVal(s, next, "(") {
+					c.index = s.MatchForward(next)
+				}
+			}
+		}
+		if c.index < 0 {
+			return c, false
+		}
+		c.open = bpNextOf(s, c.index, true, true)
+		if c.open < 0 || !bpIsHookListBrace(s, c.open) {
+			return c, false
+		}
+		multiline := false
+		for j := c.open; j <= s.MatchForward(c.open) && !multiline; j++ {
+			multiline = strings.Contains(s.At(j).Value, "\n")
+		}
+		if !multiline {
+			return c, false
+		}
+		c.position = bpPosition(f.controlStructuresOpeningBrace, bracesSameLine)
+	case t.Kind == token.Ident:
+		p := sigPrev(s, i)
+		if p < 0 || !isPunctVal(s, p, "}") && !isPunctVal(s, p, ";") && s.At(p).Kind != token.AttributeEnd && !bpIsHookListBrace(s, p) {
+			return c, false
+		}
+		c.open = sigNext(s, bpParenthesisEnd(s, i))
+		if c.open < 0 || !bpIsBodyBrace(s, c.open) {
+			return c, false
+		}
+		c.allowSingleLine = !f.allowSingleLineAnonFnsSet || f.allowSingleLineAnonFns
+		c.position = bpPosition(f.controlStructuresOpeningBrace, bracesSameLine)
+	default:
+		return c, false
 	}
-	closeIdx := s.MatchForward(open)
-	for j := open + 1; j < closeIdx; j++ {
-		t := s.At(j)
-		if allowIfEmpty && t.Kind != token.Whitespace && !isComment(t) || t.Kind == token.Whitespace && hasNewline(t.Value) {
-			return true
+	return c, true
+}
+
+// bpPosition is the configured brace position, or def when the option is unset.
+func bpPosition(configured, def string) string {
+	if configured == "" {
+		return def
+	}
+	return configured
+}
+
+// bpParenthesisEnd is BracesPositionFixer::findParenthesisEnd: the ")" closing
+// the "(" right after the token at i, or i when no "(" follows.
+func bpParenthesisEnd(s *tokens.Stream, i int) int {
+	n := sigNext(s, i)
+	if !isPunctVal(s, n, "(") {
+		return i
+	}
+	if closing := s.MatchForward(n); closing >= 0 {
+		return closing
+	}
+	return i
+}
+
+// bpIsBodyBrace reports whether the "{" at i is a plain brace for PHP-CS-Fixer,
+// not one of the braces its transformers retag: dynamic access ("$o->{$p}",
+// "${$p}"), a group import ("use A\{B, C}") or a property hook list.
+func bpIsBodyBrace(s *tokens.Stream, i int) bool {
+	if !isPunctVal(s, i, "{") || isPropertyHookBrace(s, i) {
+		return false
+	}
+	if p := sigPrev(s, i); p >= 0 {
+		pt := s.At(p)
+		if isLoneDollar(pt) || pt.Kind == token.Punct && (pt.Value == "->" || pt.Value == "?->" || pt.Value == "::" || pt.Value == `\`) {
+			return false
 		}
 	}
-	return false
+	return true
+}
+
+// bpIsHookListBrace reports whether the token at i is the "{" of a property hook
+// list (CT::T_PROPERTY_HOOK_BRACE_OPEN).
+func bpIsHookListBrace(s *tokens.Stream, i int) bool {
+	return isPunctVal(s, i, "{") && isPropertyHookBrace(s, i)
+}
+
+// bpNextOf is the Tokens::getNextTokenOfKind call of each branch: the index of
+// the first plain "{" after i or, when stopAtSemicolon, of the first ";" or
+// property hook list "{"; property adds the tokens a property declaration
+// stops at: ".", an interpolated string and "?>". It returns -1 when none.
+func bpNextOf(s *tokens.Stream, i int, stopAtSemicolon, property bool) int {
+	for j := i + 1; j < s.Len(); j++ {
+		t := s.At(j)
+		switch {
+		case t.Kind == token.Punct && t.Value == "{":
+			if bpIsBodyBrace(s, j) || stopAtSemicolon && isPropertyHookBrace(s, j) {
+				return j
+			}
+		case stopAtSemicolon && t.Kind == token.Punct && t.Value == ";":
+			return j
+		case property && (t.Kind == token.Punct && t.Value == "." || t.Kind == token.CloseTag || t.Kind == token.String && t.Part != token.Whole):
+			return j
+		}
+	}
+	return -1
 }
 
 // bpBraceTarget is PHP-CS-Fixer's $moveBraceToIndex: where the brace goes so that a
@@ -226,8 +347,8 @@ func bpTargetAfterComment(s *tokens.Stream, open int) int {
 	target := -1
 	for i := open + 1; i < closing; i++ {
 		t := s.At(i)
-		// PHP-CS-Fixer has already put a one-line body on its own line at this point;
-		// blink has not, so stop at code or the brace would jump over it
+		// PHP-CS-Fixer goes on past code when a comment kept the body on the brace
+		// line ("{ /* c */ a(); // d"), and the brace jumps over that code
 		if t.Kind == token.Whitespace && hasNewline(t.Value) || t.Kind != token.Whitespace && !isComment(t) {
 			break
 		}
@@ -298,23 +419,6 @@ func bpMoveBrace(s *tokens.Stream, open, target int) int {
 	return index
 }
 
-// closureBodyNeedsNewlines reports whether the body of the anonymous function
-// whose "{" is at open goes on lines of its own: always when
-// allow_single_line_anonymous_functions is false, and otherwise only when
-// some whitespace inside the braces already holds a line break.
-func (f BracesPosition) closureBodyNeedsNewlines(s *tokens.Stream, open int) bool {
-	if f.allowSingleLineAnonFnsSet && !f.allowSingleLineAnonFns {
-		return true
-	}
-	closeIdx := s.MatchForward(open)
-	for j := open + 1; j < closeIdx; j++ {
-		if s.At(j).Kind == token.Whitespace && hasNewline(s.At(j).Value) {
-			return true
-		}
-	}
-	return false
-}
-
 // bpOpenBraceNeedsNewline reports whether php-cs-fixer breaks the line after
 // the "{" at open: not when a line break already follows it (comments
 // directly after the brace aside), when a comment shares its line, or when
@@ -369,38 +473,6 @@ func bpCloseBraceOnOwnLine(s *tokens.Stream, open int) bool {
 		s.InsertAt(prev+1, token.Token{Kind: token.Whitespace, Value: ws})
 	}
 	return true
-}
-
-// wantNextLine resolves the configured position for a brace category to whether
-// the "{" goes on the next line. handle is false for closures left at their
-// default (blink does not move anonymous-function braces unless configured).
-func (f BracesPosition) wantNextLine(category string, s *tokens.Stream, brace int) (nextLine, handle bool) {
-	var pos, def string
-	switch category {
-	case "classes":
-		pos, def = f.classesOpeningBrace, bracesNextLine
-	case "functions":
-		pos, def = f.functionsOpeningBrace, bracesNextLine
-	case "anon_classes":
-		pos, def = f.anonymousClassesOpeningBrace, bracesSameLine
-	case "control":
-		pos, def = f.controlStructuresOpeningBrace, bracesSameLine
-	case "anon_functions":
-		if f.anonymousFunctionsOpeningBrace == "" {
-			return false, false
-		}
-		pos, def = f.anonymousFunctionsOpeningBrace, bracesSameLine
-	default:
-		return false, false
-	}
-	if pos == "" {
-		pos = def
-	}
-	if pos == bracesSameLine {
-		return false, true
-	}
-	// next_line_unless_newline_at_signature_end
-	return !funcSignatureMultiline(s, brace), true
 }
 
 // funcSignatureMultiline is the next_line_unless_newline_at_signature_end
