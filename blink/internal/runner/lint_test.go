@@ -127,4 +127,3 @@ func TestRunFixWithoutPHPBinary(t *testing.T) {
 		t.Fatalf("want the fix applied, got %+v", results)
 	}
 }
-
