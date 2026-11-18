@@ -34,17 +34,28 @@ func checkCandidates() int {
 		return true
 	})
 	slices.Sort(srcs)
-	failed := 0
-	for _, f := range Builtin() {
+	fixers := Builtin()
+	violations := make([][]string, len(fixers))
+	var wg sync.WaitGroup
+	for i, f := range fixers {
 		c, ok := f.(fixer.Candidate)
 		if !ok {
 			continue
 		}
-		for _, src := range srcs {
-			if msg := candidateViolation(c, f, src); msg != "" {
-				fmt.Fprintln(os.Stderr, msg)
-				failed++
+		wg.Go(func() {
+			for _, src := range srcs {
+				if msg := candidateViolation(c, f, src); msg != "" {
+					violations[i] = append(violations[i], msg)
+				}
 			}
+		})
+	}
+	wg.Wait()
+	failed := 0
+	for _, msgs := range violations {
+		for _, msg := range msgs {
+			fmt.Fprintln(os.Stderr, msg)
+			failed++
 		}
 	}
 	if failed > 0 {
