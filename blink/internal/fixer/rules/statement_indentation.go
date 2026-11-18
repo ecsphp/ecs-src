@@ -75,6 +75,7 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 	previousLineNewIndent := ""
 	noBracesBlockStarts := map[int]bool{}
 	caseBlockStarts := map[int]int{}
+	alternativeBlockStarts := map[int]int{}
 	inTemplate := false
 
 	changed := false
@@ -107,7 +108,9 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 			cur++
 		}
 
-		if _, isCase := caseBlockStarts[index]; stmtIsBlockFirst(s, &tr, index) || isCase {
+		_, isCase := caseBlockStarts[index]
+		_, isAlternative := alternativeBlockStarts[index]
+		if stmtIsBlockFirst(s, &tr, index) || isCase || isAlternative {
 			ei := -1
 			eiInclusive := true
 
@@ -119,6 +122,8 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 			case t.Kind == token.Punct && t.Value == ":":
 				if _, ok := caseBlockStarts[index]; ok {
 					ei, eiInclusive = f.findCaseBlockEnd(s, index)
+				} else if belongsToAlternativeSyntax(s, index) {
+					ei = stmtAlternativeBlockEnd(s, alternativeBlockStarts[index])
 				}
 			case t.Kind == token.Punct && t.Value == "{":
 				ei = s.MatchForward(index)
@@ -218,6 +223,8 @@ func (f StatementIndentation) Fix(s *tokens.Stream) bool {
 					}
 					if t.Kind == token.Keyword && stmtKwIn(t.Value, "case", "default") {
 						caseBlockStarts[e] = index
+					} else if belongsToAlternativeSyntax(s, e) {
+						alternativeBlockStarts[e] = index
 					}
 					sigEnd = e
 					break
@@ -575,14 +582,49 @@ func stmtExtractIndent(content string) string {
 	return rest[:i]
 }
 
-// stmtReplaceBlockIndent replaces the trailing "(newlines)(hspaces)" of content
-// with the same newlines followed by whitespaces (Preg '/(\R+)\h*$/').
+// stmtReplaceBlockIndent ports Preg::replace('/(\R+)\h*$/', '$1'.whitespaces):
+// every newline run followed by horizontal space up to the end, or up to a final
+// "\n" ($ without D), keeps its newlines and gets whitespaces as indent. So a
+// whitespace-only line right before the last newline is reindented too.
 func stmtReplaceBlockIndent(content, whitespaces string) string {
-	e := len(content)
-	for e > 0 && (content[e-1] == ' ' || content[e-1] == '\t') {
-		e--
+	n := len(content)
+	isNewline := func(c byte) bool { return c == '\n' || c == '\r' }
+	var b strings.Builder
+	last := 0
+	for i := 0; i < n; {
+		if !isNewline(content[i]) {
+			i++
+			continue
+		}
+		runEnd := i
+		for runEnd < n && isNewline(content[runEnd]) {
+			runEnd++
+		}
+		matchEnd, newlinesEnd := -1, -1
+		// \R+ backtracks, \h* cannot: only its greedy end can reach $
+		for r := runEnd; r > i; r-- {
+			k := r
+			for k < n && (content[k] == ' ' || content[k] == '\t') {
+				k++
+			}
+			if k == n || (k == n-1 && content[k] == '\n') {
+				matchEnd, newlinesEnd = k, r
+				break
+			}
+		}
+		if matchEnd < 0 {
+			i++
+			continue
+		}
+		b.WriteString(content[last:newlinesEnd])
+		b.WriteString(whitespaces)
+		last, i = matchEnd, matchEnd
 	}
-	return content[:e] + whitespaces
+	if last == 0 {
+		return content
+	}
+	b.WriteString(content[last:])
+	return b.String()
 }
 
 // stmtReplaceStatementIndent replaces a trailing "newline + initial + hspaces"
@@ -620,7 +662,9 @@ func stmtReplaceCommentIndent(comment, initial, newIndent string) string {
 		if strings.HasPrefix(body, initial) {
 			rest := body[len(initial):]
 			trimmed := strings.TrimLeft(rest, " \t")
-			if trimmed != "" { // only lines with meaningful content
+			// \h*\S+: the indent must be followed by content, and "\r" of a CRLF
+			// blank line is not
+			if trimmed != "" && !strings.ContainsRune("\r\v\f", rune(trimmed[0])) {
 				lines[i] = newIndent + rest + nlSuffix
 			}
 		}
@@ -701,7 +745,11 @@ func (f StatementIndentation) findCaseBlockEnd(s *tokens.Stream, index int) (int
 				cp := s.MatchForward(op)
 				if cp >= 0 {
 					brace := nextMeaningfulIndex(s, cp)
-					if brace >= 0 && s.At(brace).Kind == token.Punct && s.At(brace).Value == "{" {
+					if brace >= 0 && s.At(brace).Kind == token.Punct && s.At(brace).Value == ":" {
+						if be := stmtAlternativeBlockEnd(s, index); be >= 0 {
+							index = be
+						}
+					} else if brace >= 0 && s.At(brace).Kind == token.Punct && s.At(brace).Value == "{" {
 						if be := s.MatchForward(brace); be >= 0 {
 							index = be
 						}
@@ -719,7 +767,7 @@ func (f StatementIndentation) findCaseBlockEnd(s *tokens.Stream, index int) (int
 		if t.Kind == token.Keyword && stmtKwIn(t.Value, "case", "default") {
 			return stmtLeadingCommentsStart(s, index), true
 		}
-		if t.Kind == token.Punct && t.Value == "}" {
+		if (t.Kind == token.Punct && t.Value == "}") || (t.Kind == token.Keyword && stmtKwIn(t.Value, "endswitch")) {
 			return prevSignificantIndex(s, index), false
 		}
 	}
@@ -760,6 +808,59 @@ func stmtLeadingCommentsStart(s *tokens.Stream, index int) int {
 
 // stmtNoBreakComment matches the fall-through markers NoBreakCommentFixer writes.
 var stmtNoBreakComment = regexp.MustCompile(`(?i)^(?://|#|/\*\*?)\s*(?:no\s*break|fall[\s-]*through)\s*(?:\*/)?$`)
+
+// stmtAlternativeBlockEdges ports AlternativeSyntaxAnalyzer's block edges: the
+// keywords that end the alternative syntax block each keyword starts.
+var stmtAlternativeBlockEdges = map[string][]string{
+	"if":      {"endif", "else", "elseif"},
+	"else":    {"endif"},
+	"elseif":  {"endif", "else", "elseif"},
+	"for":     {"endfor"},
+	"foreach": {"endforeach"},
+	"while":   {"endwhile"},
+	"switch":  {"endswitch"},
+}
+
+// stmtAlternativeBlockEnd ports findAlternativeSyntaxBlockEnd: the keyword that
+// ends the alternative syntax block started at index, skipping nested blocks of
+// the same kind, or -1.
+func stmtAlternativeBlockEnd(s *tokens.Stream, index int) int {
+	start := strings.ToLower(s.At(index).Value)
+	ends, ok := stmtAlternativeBlockEdges[start]
+	if !ok {
+		return -1
+	}
+	for j := index + 1; j < s.Len(); j++ {
+		t := s.At(j)
+		if t.Kind != token.Keyword {
+			continue
+		}
+		v := strings.ToLower(t.Value)
+		if slices.Contains(ends, v) {
+			return j
+		}
+		if v == start && stmtIsAlternativeBlockStart(s, j) {
+			if j = stmtAlternativeBlockEnd(s, j); j < 0 {
+				return -1
+			}
+		}
+	}
+	return -1
+}
+
+// stmtIsAlternativeBlockStart ports isStartOfAlternativeSyntaxBlock.
+func stmtIsAlternativeBlockStart(s *tokens.Stream, index int) bool {
+	if _, ok := stmtAlternativeBlockEdges[strings.ToLower(s.At(index).Value)]; !ok || s.At(index).Kind != token.Keyword {
+		return false
+	}
+	next := nextMeaningfulIndex(s, index)
+	if next >= 0 && s.At(next).Kind == token.Punct && s.At(next).Value == "(" {
+		if c := s.MatchForward(next); c >= 0 {
+			next = nextMeaningfulIndex(s, c)
+		}
+	}
+	return next >= 0 && s.At(next).Kind == token.Punct && s.At(next).Value == ":"
+}
 
 // stmtIsPropertyStart ports isPropertyStart: the last modifier before a typed or
 // named property declaration.
