@@ -10,7 +10,7 @@ import (
 //
 // PhpdocSummary ends a docblock's summary (short description) with a full stop.
 // A summary already closed by sentence-final punctuation, an {@inheritdoc}, or a
-// label-style first line ending in ":" is left alone.
+// label-style first line ending in ":" is left alone, as is a single-line docblock.
 type PhpdocSummary struct{}
 
 func (PhpdocSummary) Name() string {
@@ -38,6 +38,9 @@ func summaryCorrectlyFormatted(content string) bool {
 
 func (PhpdocSummary) Fix(s *tokens.Stream) bool {
 	return applyToDocblocks(s, func(d *docblock) bool {
+		if d.single {
+			return false
+		}
 		first, last := summaryRange(d)
 		if first < 0 {
 			return false

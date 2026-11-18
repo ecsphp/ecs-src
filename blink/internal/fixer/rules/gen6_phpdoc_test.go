@@ -44,6 +44,9 @@ func TestPhpdocSummary(t *testing.T) {
 	if _, changed := apply(t, PhpdocSummary{}, "<?php\n/**\n * Example:\n * more text\n */\nfunction f() {}"); changed {
 		t.Fatal("label summary ending in ':' must not change")
 	}
+	if _, changed := apply(t, PhpdocSummary{}, "<?php\nclass A {\n    /** Summary without period */\n    public $a;\n}"); changed {
+		t.Fatal("single-line docblock must not change")
+	}
 }
 
 func TestPhpdocTagType(t *testing.T) {
