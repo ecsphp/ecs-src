@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime"
 	"runtime/debug"
@@ -93,6 +94,7 @@ func run(args []string) int {
 	}
 	// CLI paths override the config; runs across all CPU cores by default
 	cfg.WithPaths(paths...)
+	cfg.PHPBinary = resolvePHPBinary()
 
 	start := time.Now()
 	// JSON output stays parseable: no progress bar and no footer, as in ECS
@@ -121,6 +123,19 @@ func run(args []string) int {
 	runtime.ReadMemStats(&mem)
 	reporter.Footer(os.Stdout, progress.Total(), time.Since(start), mem.Sys)
 	return code
+}
+
+// resolvePHPBinary returns the BLINK_PHP binary (ECS sets it to its own PHP),
+// else php on PATH, else "" (no lint after fixing).
+func resolvePHPBinary() string {
+	if explicit := os.Getenv("BLINK_PHP"); explicit != "" {
+		return explicit
+	}
+	path, err := exec.LookPath("php")
+	if err != nil {
+		return ""
+	}
+	return path
 }
 
 // loadConfig uses an explicit --config path, else a blink.json in the working
@@ -182,6 +197,8 @@ Usage:
   blink list-checkers         list registered fixers and deprecated names
 
 Loads blink.json from the working directory when present.
+With --fix, each fixed file is linted with $BLINK_PHP (default: php on PATH)
+and left unchanged when it no longer parses.
 Runs across all CPU cores by default.
 `)
 }
