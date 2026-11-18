@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"regexp"
 	"slices"
@@ -33,7 +34,12 @@ func regexpFreeInputs(n int) []string {
 	return inputs
 }
 
+// regexpFreeShards splits the inputs over parallel subtests, as one serial
+// loop takes minutes under -race.
+const regexpFreeShards = 32
+
 func TestRegexpFreeScannersMatchRegexps(t *testing.T) {
+	t.Parallel()
 	var (
 		docLineSplit  = regexp.MustCompile(`[^\n\r]+(?:\r\n|\r|\n)*`)
 		docLineTag    = regexp.MustCompile(`\*\s*@`)
@@ -58,27 +64,34 @@ func TestRegexpFreeScannersMatchRegexps(t *testing.T) {
 		return wordRe.FindAllString(strings.ToLower(spaced), -1)
 	}
 
-	for _, in := range regexpFreeInputs(200_000) {
-		check := func(name string, got, want any) {
-			t.Helper()
-			if !equalAny(got, want) {
-				t.Fatalf("%s(%q) = %q, regexp gives %q", name, in, got, want)
+	inputs := regexpFreeInputs(200_000)
+	for shard := range regexpFreeShards {
+		t.Run(fmt.Sprintf("shard%d", shard), func(t *testing.T) {
+			t.Parallel()
+			for k := shard; k < len(inputs); k += regexpFreeShards {
+				in := inputs[k]
+				check := func(name string, got, want any) {
+					t.Helper()
+					if !equalAny(got, want) {
+						t.Fatalf("%s(%q) = %q, regexp gives %q", name, in, got, want)
+					}
+				}
+				check("splitDocLines", splitDocLines(in), docLineSplit.FindAllString(in, -1))
+				check("lineContainsTag", lineContainsTag(in), docLineTag.MatchString(in))
+				check("useful", starThenSpaces(in, func(j int) bool { return j < len(in) }), docLineUseful.MatchString(in))
+				line := &phpDocLine{content: in}
+				check("containsATag", line.containsATag(), phpDocTag.MatchString(in))
+				check("pcreUseful", pcreStarThenSpaces(in, func(j int) bool { return j < len(in) }), phpDocUseful.MatchString(in))
+				check("phpDocTagName", phpDocTagName(in), tagNameByRegexp(in))
+				check("resolveWords", resolveWords(in), wordsByRegexp(in))
+				check("removeArticles", removeArticles(in), articles.ReplaceAllString(in, ""))
+				check("dropThirdPersonS", dropThirdPersonS(in), thirdPersonS.ReplaceAllString(in, "$1"))
+				check("removeRESpaces", removeRESpaces(in), spaceNl.ReplaceAllString(in, ""))
+				for _, className := range []string{"", "Foo"} {
+					check("clearUselessDocContent", clearUselessDocContent(in, className), clearUselessDocContentByRegexp(in, className))
+				}
 			}
-		}
-		check("splitDocLines", splitDocLines(in), docLineSplit.FindAllString(in, -1))
-		check("lineContainsTag", lineContainsTag(in), docLineTag.MatchString(in))
-		check("useful", starThenSpaces(in, func(j int) bool { return j < len(in) }), docLineUseful.MatchString(in))
-		line := &phpDocLine{content: in}
-		check("containsATag", line.containsATag(), phpDocTag.MatchString(in))
-		check("pcreUseful", pcreStarThenSpaces(in, func(j int) bool { return j < len(in) }), phpDocUseful.MatchString(in))
-		check("phpDocTagName", phpDocTagName(in), tagNameByRegexp(in))
-		check("resolveWords", resolveWords(in), wordsByRegexp(in))
-		check("removeArticles", removeArticles(in), articles.ReplaceAllString(in, ""))
-		check("dropThirdPersonS", dropThirdPersonS(in), thirdPersonS.ReplaceAllString(in, "$1"))
-		check("removeRESpaces", removeRESpaces(in), spaceNl.ReplaceAllString(in, ""))
-		for _, className := range []string{"", "Foo"} {
-			check("clearUselessDocContent", clearUselessDocContent(in, className), clearUselessDocContentByRegexp(in, className))
-		}
+		})
 	}
 }
 
