@@ -1,0 +1,9 @@
+{
+    "paths": ["."],
+    "rules": [
+        {
+            "class": "PhpCsFixer\\Fixer\\Whitespace\\StatementIndentationFixer",
+            "config": {}
+        }
+    ]
+}
