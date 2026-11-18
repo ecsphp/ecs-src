@@ -5,13 +5,13 @@ import (
 	"testing"
 )
 
-// PHP-CS-Fixer first puts the body on its own line, which blink does not do, so its output
-// is no reference. The brace must not jump over the code to reach the comment.
+// The class body is put on its own line first, so the method's brace then goes after the
+// comment, as PHP-CS-Fixer does. The expected output comes from PHP-CS-Fixer.
 func TestBracesPositionBraceStaysBeforeCode(t *testing.T) {
 	t.Parallel()
 	got, _ := apply(t, BracesPosition{}, "<?php\nclass A { public function f() { // c\n        echo 1;\n    }\n}\n")
-	if !strings.HasPrefix(got, "<?php\nclass A\n{ public function f()") {
-		t.Fatalf("got=%q", got)
+	if want := "<?php\nclass A\n{\npublic function f() // c\n{echo 1;\n    }\n}\n"; got != want {
+		t.Fatalf("\n got=%q\nwant=%q", got, want)
 	}
 }
 
