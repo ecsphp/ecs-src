@@ -37,4 +37,21 @@ final class BlinkRunnerTest extends TestCase
 
         $this->assertSame(['ecs-go', '--ecs-config', '/tmp/ecs-blink.json', '--no-diffs'], $arguments);
     }
+
+    public function testCreateArgumentsWithJsonOutputFormat(): void
+    {
+        $arguments = $this->blinkRunner->createArguments('ecs-go', '/tmp/ecs-blink.json', false, true, 'json');
+
+        $this->assertSame(
+            ['ecs-go', '--ecs-config', '/tmp/ecs-blink.json', '--output-format', 'json'],
+            $arguments
+        );
+    }
+
+    public function testSupportsOnlyConsoleAndJsonOutputFormats(): void
+    {
+        $this->assertTrue($this->blinkRunner->supportsOutputFormat('console'));
+        $this->assertTrue($this->blinkRunner->supportsOutputFormat('json'));
+        $this->assertFalse($this->blinkRunner->supportsOutputFormat('checkstyle'));
+    }
 }

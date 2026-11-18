@@ -9,7 +9,7 @@ vendor/bin/ecs check --blink --commit # one git commit per rule that changed fil
 vendor/bin/ecs check src --blink      # limit to a path - pass it before the flags
 ```
 
-`--no-diffs` works as usual. Rules blink can't map are reported and skipped.
+`--no-diffs` and `--output-format=json` work as usual. Rules blink can't map are reported and skipped.
 
 A plain `vendor/bin/ecs check` uses blink automatically when every rule in `ecs.php` is available in Go, and falls back to the PHP engine otherwise. Pass `--no-blink` to force the PHP engine anyway, e.g. to compare the speed.
 

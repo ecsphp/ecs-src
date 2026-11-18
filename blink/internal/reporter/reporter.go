@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -240,20 +241,25 @@ func (f formatter) reportFileDiffs(results []runner.FileResult) {
 	}
 }
 
-// formatDiff wraps a unified diff in the begin/end frame and colors +, - and @
-// lines, matching ECS's ColorConsoleDiffFormatter.
+// hunkHeaderRe is ColorConsoleDiffFormatter::AT_DIFF_LINE_REGEX, which turns
+// "@@ -67,6 +67,8 @@" into "@@ Line 67 @@".
+var hunkHeaderRe = regexp.MustCompile(`^@@ -(\d+),\d+ \+\d+,\d+ @@$`)
+
+// formatDiff wraps a unified diff in the begin/end frame, shows hunk headers as
+// "@@ Line N @@" and colors +, - and @ lines, matching ECS's
+// ColorConsoleDiffFormatter.
 func (f formatter) formatDiff(diff string) string {
 	var colored []string
 	for line := range strings.SplitSeq(strings.TrimRight(diff, "\n"), "\n") {
 		switch {
 		case line == "--- Original", line == "+++ New":
 			continue
+		case strings.HasPrefix(line, "@"):
+			line = f.fg(hunkHeaderRe.ReplaceAllString(line, "@@ Line $1 @@"), 36) // cyan
 		case strings.HasPrefix(line, "+"):
 			line = f.fg(line, 32) // green
 		case strings.HasPrefix(line, "-"):
 			line = f.fg(line, 31) // red
-		case strings.HasPrefix(line, "@"):
-			line = f.fg(line, 36) // cyan
 		case line == " ":
 			line = ""
 		}

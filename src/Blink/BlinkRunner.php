@@ -6,6 +6,8 @@ namespace Symplify\EasyCodingStandard\Blink;
 
 use Nette\Utils\FileSystem;
 use Nette\Utils\Json;
+use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
+use Symplify\EasyCodingStandard\Console\Output\JsonOutputFormatter;
 use Symplify\EasyCodingStandard\Exception\ShouldNotHappenException;
 
 /**
@@ -26,14 +28,18 @@ final readonly class BlinkRunner
     /**
      * @param array{paths: string[], rules: array<mixed>, skips: array<mixed>} $configData
      */
-    public function run(array $configData, bool $isFixMode, bool $showDiffs = true): int
-    {
+    public function run(
+        array $configData,
+        bool $isFixMode,
+        bool $showDiffs = true,
+        string $outputFormat = ConsoleOutputFormatter::NAME
+    ): int {
         $binary = $this->ecsGoBinaryLocator->locate();
 
         $configPath = $this->writeConfig($configData);
 
         try {
-            $arguments = $this->createArguments($binary, $configPath, $isFixMode, $showDiffs);
+            $arguments = $this->createArguments($binary, $configPath, $isFixMode, $showDiffs, $outputFormat);
 
             // string command, as the array form needs PHP 7.4 and the release is downgraded to 7.2
             $command = implode(' ', array_map(escapeshellarg(...), $arguments));
@@ -57,7 +63,8 @@ final readonly class BlinkRunner
         string $binary,
         string $configPath,
         bool $isFixMode,
-        bool $showDiffs = true
+        bool $showDiffs = true,
+        string $outputFormat = ConsoleOutputFormatter::NAME
     ): array {
         $arguments = [$binary, '--ecs-config', $configPath];
 
@@ -71,7 +78,20 @@ final readonly class BlinkRunner
             $arguments[] = '--no-diffs';
         }
 
+        if ($outputFormat !== ConsoleOutputFormatter::NAME) {
+            $arguments[] = '--output-format';
+            $arguments[] = $outputFormat;
+        }
+
         return $arguments;
+    }
+
+    /**
+     * ecs-go writes the console and JSON reports; other formatters need the PHP engine
+     */
+    public function supportsOutputFormat(string $outputFormat): bool
+    {
+        return in_array($outputFormat, [ConsoleOutputFormatter::NAME, JsonOutputFormatter::getName()], true);
     }
 
     /**
