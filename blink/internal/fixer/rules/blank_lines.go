@@ -143,12 +143,16 @@ func noExtraBlankLinesExtra(s *tokens.Stream) bool {
 // (throw honours the extra statement-boundary guard PHP-CS-Fixer applies).
 func noExtraBlankLinesKeyword(s *tokens.Stream, kw string) bool {
 	changed := false
+	var switchColons map[int]bool
+	if kw == "throw" {
+		switchColons = switchCaseColons(s)
+	}
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
 		if t.Kind != token.Keyword || !strings.EqualFold(t.Value, kw) {
 			continue
 		}
-		if kw == "throw" && !noExtraBlankLinesThrowPrevOK(s, i) {
+		if kw == "throw" && !noExtraBlankLinesThrowPrevOK(s, i, switchColons) {
 			continue
 		}
 		if noExtraBlankLinesFixAfter(s, i) {
@@ -160,7 +164,8 @@ func noExtraBlankLinesKeyword(s *tokens.Stream, kw string) bool {
 
 // noExtraBlankLinesThrowPrevOK reports whether the token before a throw marks a
 // statement start, so an expression throw ("$x = throw ...") is left untouched.
-func noExtraBlankLinesThrowPrevOK(s *tokens.Stream, index int) bool {
+// A ":" only counts when it ends a case label or opens a switch body.
+func noExtraBlankLinesThrowPrevOK(s *tokens.Stream, index int, switchColons map[int]bool) bool {
 	p := prevSignificantIndex(s, index)
 	if p < 0 {
 		return true
@@ -171,8 +176,10 @@ func noExtraBlankLinesThrowPrevOK(s *tokens.Stream, index int) bool {
 	}
 	if t.Kind == token.Punct {
 		switch t.Value {
-		case ";", "{", "}", ":":
+		case ";", "{", "}":
 			return true
+		case ":":
+			return switchColons[p]
 		}
 	}
 	return false
