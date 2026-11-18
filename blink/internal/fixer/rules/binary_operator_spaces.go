@@ -994,34 +994,7 @@ func bosIsPlainBrace(s *tokens.Stream, i int) bool {
 			}
 		}
 	}
-	return !bosIsPropertyHookBrace(s, i)
-}
-
-// bosIsPropertyHookBrace mirrors transformIntoPropertyHookBraces.
-func bosIsPropertyHookBrace(s *tokens.Stream, i int) bool {
-	n := sigNext(s, i)
-	for n >= 0 && s.At(n).Kind == token.AttributeStart {
-		n = sigNext(s, s.AttributeEnd(n))
-	}
-	if n < 0 || s.At(n).Kind != token.Ident {
-		return false
-	}
-	if v := strings.ToLower(s.At(n).Value); v != "get" && v != "set" {
-		return false
-	}
-	nn := sigNext(s, n)
-	switch {
-	case isPunctVal(s, nn, "{"), isPunctVal(s, nn, ";"), isPunctVal(s, nn, "=>"):
-		return true
-	case isPunctVal(s, nn, "("):
-		end := s.MatchForward(nn)
-		if end < 0 {
-			return false
-		}
-		a := sigNext(s, end)
-		return isPunctVal(s, a, "{") || isPunctVal(s, a, "=>")
-	}
-	return false
+	return !isPropertyHookBrace(s, i)
 }
 
 // bosIsClassInstantiationParen mirrors BraceClassInstantiationTransformer: the

@@ -59,12 +59,11 @@ func docIsHeaderComment(s *tokens.Stream, index int) bool {
 }
 
 // docNextTokenIndex mirrors CommentsAnalyzer::getNextTokenIndex - the next
-// meaningful token, skipping attributes (already comments here) and stepping
-// past a leading "(".
+// meaningful token, skipping attributes and any "(" (attributes again after each).
 func docNextTokenIndex(s *tokens.Stream, index int) int {
-	next := sigNext(s, index)
+	next := nextMeaningfulSkippingAttributes(s, index)
 	for next >= 0 && isPunctVal(s, next, "(") {
-		next = sigNext(s, next)
+		next = nextMeaningfulSkippingAttributes(s, next)
 	}
 	return next
 }

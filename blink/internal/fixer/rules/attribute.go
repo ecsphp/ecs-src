@@ -33,6 +33,21 @@ func prevMeaningfulSkippingAttributes(s *tokens.Stream, i int) int {
 	return p
 }
 
+// nextMeaningfulSkippingAttributes is nextMeaningfulIndex but also steps over
+// any attributes ("#[A] #[B] function" -> the "function"); -1 for an unclosed
+// attribute.
+func nextMeaningfulSkippingAttributes(s *tokens.Stream, i int) int {
+	n := nextMeaningfulIndex(s, i)
+	for n >= 0 && s.At(n).Kind == token.AttributeStart {
+		end := s.AttributeEnd(n)
+		if end < 0 {
+			return -1
+		}
+		n = nextMeaningfulIndex(s, end)
+	}
+	return n
+}
+
 // attributeText renders the attribute tokens [start..end] back to source text.
 func attributeText(s *tokens.Stream, start, end int) string {
 	var b strings.Builder

@@ -39,4 +39,18 @@ func TestPhpdocToComment(t *testing.T) {
 	if !changed || got != want {
 		t.Fatalf("echo: changed=%v got=%q", changed, got)
 	}
+
+	// attributes between the docblock and the element are skipped
+	for _, src := range []string{
+		"<?php\n$x = 1;\n/** @throws E */\n#[A('x')]\nfunction f() {}\n",
+		"<?php\n$x = 1;\n/** doc */\n#[A]\n#[B([1, 2])]\nfinal class C {}\n",
+		"<?php\n$x = 1;\n/** doc */\n#[A, B]\nclass C {}\n",
+		"<?php\nclass C {\n    /** @var int */\n    #[A]\n    private $p;\n}\n",
+		"<?php\nclass C {\n    /** @throws E */\n    #[A]\n    public function f() {}\n}\n",
+		"<?php\n$x = 1;\n/** @return int */\n(#[Pure] static fn () => 1)();\n",
+	} {
+		if _, changed := apply(t, f, src); changed {
+			t.Fatalf("docblock before an attributed element must stay a docblock: %q", src)
+		}
+	}
 }
