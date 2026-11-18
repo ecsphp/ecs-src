@@ -1,6 +1,6 @@
-// Package diff produces a unified text diff in the shape PHP-CS-Fixer emits
-// (an "--- Original / +++ New" header and "@@ Line N @@" hunks), so the reporter
-// can wrap it exactly like ECS.
+// Package diff produces a unified text diff in the shape PHP-CS-Fixer's
+// UnifiedDiffer emits (an "--- Original / +++ New" header and "@@ -a,b +c,d @@"
+// hunks), so the reporters can print it exactly like ECS.
 package diff
 
 import (
@@ -35,7 +35,7 @@ func Unified(before, after string) string {
 	var out strings.Builder
 	out.WriteString("--- Original\n+++ New\n")
 	for _, h := range hunks(ops) {
-		fmt.Fprintf(&out, "@@ Line %d @@\n", h.fromLine)
+		fmt.Fprintf(&out, "@@ -%s +%s @@\n", hunkRange(h.fromLine, h.fromCount), hunkRange(h.toLine, h.toCount))
 		for _, o := range h.ops {
 			switch o.kind {
 			case equal:
@@ -48,6 +48,15 @@ func Unified(before, after string) string {
 		}
 	}
 	return out.String()
+}
+
+// hunkRange writes a hunk's start and length, leaving out a length of one as
+// sebastian/diff does with collapseRanges.
+func hunkRange(start, count int) string {
+	if count == 1 {
+		return fmt.Sprint(start)
+	}
+	return fmt.Sprintf("%d,%d", start, count)
 }
 
 func splitLines(s string) []string {
@@ -104,11 +113,26 @@ func diffLines(a, b []string) []op {
 	return ops
 }
 
-// hunk is a change region plus the 1-based line number of its first line in the
-// original file, matching the `-N` start that PHP-CS-Fixer's unified diff emits.
+// hunk is a change region plus the 1-based line number of its first line and its
+// line count in the original and in the new file, matching the "-a,b +c,d" that
+// PHP-CS-Fixer's unified diff emits.
 type hunk struct {
-	fromLine int
-	ops      []op
+	fromLine, fromCount int
+	toLine, toCount     int
+	ops                 []op
+}
+
+func newHunk(fromLine, toLine int, ops []op) hunk {
+	h := hunk{fromLine: fromLine, toLine: toLine, ops: ops}
+	for _, o := range ops {
+		if o.kind != add {
+			h.fromCount++
+		}
+		if o.kind != del {
+			h.toCount++
+		}
+	}
+	return h
 }
 
 // hunks groups ops into change regions, each padded with up to `context` equal
@@ -143,24 +167,27 @@ func hunks(ops []op) []hunk {
 
 	var result []hunk
 	var cur []op
-	curFrom := 0
-	origLine := 1
+	curFrom, curTo := 0, 0
+	origLine, newLine := 1, 1
 	for i := range ops {
 		if keep[i] {
 			if len(cur) == 0 {
-				curFrom = origLine
+				curFrom, curTo = origLine, newLine
 			}
 			cur = append(cur, ops[i])
 		} else if len(cur) > 0 {
-			result = append(result, hunk{curFrom, cur})
+			result = append(result, newHunk(curFrom, curTo, cur))
 			cur = nil
 		}
 		if ops[i].kind != add {
 			origLine++
 		}
+		if ops[i].kind != del {
+			newLine++
+		}
 	}
 	if len(cur) > 0 {
-		result = append(result, hunk{curFrom, cur})
+		result = append(result, newHunk(curFrom, curTo, cur))
 	}
 	return result
 }

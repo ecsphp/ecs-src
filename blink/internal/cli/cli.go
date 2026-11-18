@@ -30,6 +30,7 @@ func run(args []string) int {
 	showDiffs := true
 	configPath := ""
 	ecsConfigPath := ""
+	outputFormat := "console"
 	var paths []string
 
 	for i := 0; i < len(args); i++ {
@@ -58,9 +59,21 @@ func run(args []string) int {
 			}
 		case len(a) > 13 && a[:13] == "--ecs-config=":
 			ecsConfigPath = a[13:]
+		case a == "--output-format":
+			if i+1 < len(args) {
+				outputFormat = args[i+1]
+				i++
+			}
+		case len(a) > 16 && a[:16] == "--output-format=":
+			outputFormat = a[16:]
 		default:
 			paths = append(paths, a)
 		}
+	}
+
+	if outputFormat != "console" && outputFormat != "json" {
+		fmt.Fprintf(os.Stderr, "error: unknown output format %q, use \"console\" or \"json\"\n", outputFormat)
+		return 2
 	}
 
 	var cfg *config.Config
@@ -82,7 +95,11 @@ func run(args []string) int {
 	cfg.WithPaths(paths...)
 
 	start := time.Now()
-	progress := reporter.NewProgress(os.Stderr, fix)
+	// JSON output stays parseable: no progress bar and no footer, as in ECS
+	var progress *reporter.Progress
+	if outputFormat == "console" {
+		progress = reporter.NewProgress(os.Stderr, fix)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -92,6 +109,10 @@ func run(args []string) int {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 2
+	}
+
+	if outputFormat == "json" {
+		return reporter.ReportJSON(os.Stdout, results, fix)
 	}
 
 	code := reporter.Report(os.Stdout, results, fix, showDiffs)
@@ -155,6 +176,7 @@ Usage:
   blink [paths...]            check paths (default: .)
   blink --fix [paths...]      fix paths in place
   blink --no-diffs [paths...] hide per-file diffs
+  blink --output-format json  report as ECS's JSON output (default: console)
   blink --config FILE ...     use a blink.json config
   blink --ecs-config FILE ... use an ECS dump-config JSON (blink mode)
   blink list-checkers         list registered fixers and deprecated names
