@@ -32,7 +32,7 @@ func trailingCommaCategory(s *tokens.Stream, sc *arrayNotationScan, open int) st
 		}
 		if s.At(p).Kind == token.Punct && s.At(p).Value == ")" {
 			if o := s.MatchBackward(p); o >= 0 {
-				if q := sigPrev(s, o); q >= 0 && strings.EqualFold(s.At(q).Value, "match") {
+				if q := sigPrev(s, o); q >= 0 && strings.EqualFold(s.At(q).Value, "match") && !isMemberNamedMatch(s, q) {
 					return "match"
 				}
 			}
@@ -66,6 +66,26 @@ func trailingCommaCategory(s *tokens.Stream, sc *arrayNotationScan, open int) st
 		}
 	}
 	return ""
+}
+
+// isMemberNamedMatch reports whether the "match" at i names a method or is called
+// as one, which the PHP-CS-Fixer tokenizer does not turn into T_MATCH.
+func isMemberNamedMatch(s *tokens.Stream, i int) bool {
+	p := sigPrev(s, i)
+	if p < 0 {
+		return false
+	}
+	if isPunctVal(s, p, "&") {
+		p = sigPrev(s, p)
+		if p < 0 {
+			return false
+		}
+	}
+	prev := s.At(p)
+	if prev.Kind == token.Punct {
+		return prev.Value == "->" || prev.Value == "?->" || prev.Value == "::"
+	}
+	return strings.EqualFold(prev.Value, "function")
 }
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/TrailingCommaInMultilineFixer.php
