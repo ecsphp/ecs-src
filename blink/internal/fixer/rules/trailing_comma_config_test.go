@@ -19,6 +19,8 @@ func TestTrailingCommaConfigCases(t *testing.T) {
 		{"multiline heredoc skipped", TrailingCommaInMultiline{}.WithConfig(map[string]any{"after_heredoc": false}).(fixerRule), "<?php $a = [\n    <<<EOT\nx\nEOT\n];", "<?php $a = [\n    <<<EOT\nx\nEOT\n];"},
 		{"multiline heredoc skipped by default", TrailingCommaInMultiline{}.WithConfig(map[string]any{"elements": []any{"arguments"}}).(fixerRule), "<?php foo(\n    $a,\n    <<<EOT\nx\nEOT\n);", "<?php foo(\n    $a,\n    <<<EOT\nx\nEOT\n);"},
 		{"multiline heredoc fixed", TrailingCommaInMultiline{}.WithConfig(map[string]any{"after_heredoc": true}).(fixerRule), "<?php $a = [\n    <<<EOT\nx\nEOT\n];", "<?php $a = [\n    <<<EOT\nx\nEOT,\n];"},
+		{"match method body is no match block", TrailingCommaInMultiline{}.WithConfig(map[string]any{"elements": []any{"match"}}).(fixerRule), "<?php class A {\n    public function match($a)\n    {\n        return $a;\n    }\n}", "<?php class A {\n    public function match($a)\n    {\n        return $a;\n    }\n}"},
+		{"match expression", TrailingCommaInMultiline{}.WithConfig(map[string]any{"elements": []any{"match"}}).(fixerRule), "<?php $r = match ($a) {\n    1 => 2\n};", "<?php $r = match ($a) {\n    1 => 2,\n};"},
 		{"single default", NoTrailingCommaInSingleline{}, "<?php foo($a, ); $b = [1,];", "<?php foo($a ); $b = [1];"},
 		{"single arguments only", NoTrailingCommaInSingleline{}.WithConfig(map[string]any{"elements": []any{"arguments"}}).(fixerRule), "<?php foo($a, ); $b = [1,];", "<?php foo($a); $b = [1,];"},
 		{"single array only", NoTrailingCommaInSingleline{}.WithConfig(map[string]any{"elements": []any{"array"}}).(fixerRule), "<?php foo($a,); $b = [1,];", "<?php foo($a,); $b = [1];"},
