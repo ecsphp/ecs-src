@@ -44,6 +44,7 @@ func TestPhpcsFixableSniffs(t *testing.T) {
 		t.Fatalf("expected the full fixable sniff list, got %d entries", len(lines))
 	}
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
 		if sniffRe.FindString(line) != line {
 			t.Errorf("not a sniff FQCN: %q", line)
 		}
