@@ -24,10 +24,10 @@ those expectations can differ from upstream's `.inc.fixed`. Regenerate them with
 |---|---:|---:|---:|
 | PHP-CS-Fixer | 282 | 282 | 100% |
 | Symplify | 34 | 34 | 100% |
-| PHP_CodeSniffer | 97 | 114 | 85% |
-| **total** | **413** | **430** | **96%** |
+| PHP_CodeSniffer | 101 | 114 | 88% |
+| **total** | **417** | **430** | **96%** |
 
-blink runs 456 rules in all, its own extras included.
+blink runs 460 rules in all, its own extras included.
 <!-- rule-counts:end -->
 
 ### slevomat sniffs
