@@ -22,8 +22,6 @@ func (EmbeddedPhp) SourceURL() string {
 	return "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/4.x/src/Standards/Squiz/Sniffs/PHP/EmbeddedPhpSniff.php"
 }
 
-const phpTrimChars = " \t\n\r\x00\x0B"
-
 type embeddedPhp struct {
 	f  *slvFile
 	sc *phpcsScope
