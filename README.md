@@ -26,3 +26,15 @@ Please make sure `composer lint` and `composer test` pass before sending a pull 
 | PHP_CodeSniffer (`phpcbf`, PSR-12) | 133.7 s | 26.7 s |
 
 If every rule in `ecs.php` is available in Go, a plain `vendor/bin/ecs check` runs blink instead of the PHP engine automatically - no `--blink` needed. Otherwise it falls back to PHP. Use `--no-blink` to force the PHP engine, e.g. to compare the speed.
+
+Rules blink runs natively, per source. Regenerate with `blink/bin/rule-counts.sh`; CI fails when the table is stale.
+
+<!-- parity-counts:start -->
+| source | in blink | rules | coverage |
+|---|---:|---:|---:|
+| PHP-CS-Fixer | 282 | 282 | 100% |
+| Symplify | 34 | 34 | 100% |
+| PHP_CodeSniffer | 9 | 114 | 7% |
+| slevomat | 5 | 132 | 3% |
+| **total** | **330** | **562** | **58%** |
+<!-- parity-counts:end -->
