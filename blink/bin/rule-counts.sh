@@ -6,17 +6,20 @@
 #   bin/rule-counts.sh          update README in place
 #   bin/rule-counts.sh --check  fail (exit 1) if README is out of date
 #
-# Both modes fail (exit 1) while any PHP-CS-Fixer fixer is missing in blink.
+# Both modes fail (exit 1) while any PHP-CS-Fixer fixer is missing in blink, or
+# a PHP_CodeSniffer sniff is missing that phpcs-not-ported.txt does not list.
+# That list is a ratchet: a sniff blink implements must be removed from it.
 #
 # Sources:
-#   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers plus the
-#              PHP_CodeSniffer sniffs ECS references from its sets or blink implements
+#   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers, all fixable
+#              PHP_CodeSniffer sniffs, plus the sniffs ECS references from its sets
 #   blink    - `blink list-checkers`
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 README="$ROOT/README.md"
 ALL_FIXERS="$ROOT/ecs-all-fixers.txt"
+NOT_PORTED="$ROOT/phpcs-not-ported.txt"
 START="<!-- rule-counts:start -->"
 END="<!-- rule-counts:end -->"
 
@@ -33,18 +36,41 @@ ecs=$(grep -c . /tmp/blink-universe.txt)
 sed 's/^[[:space:]]*-[[:space:]]*//' /tmp/blink-checkers.txt | LC_ALL=C sort -u > /tmp/blink-impl.txt
 missing=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | sed -E 's#.*\\##')
 missing_count=$(printf '%s' "$missing" | grep -c . || true)
-missing_phpcsfixer=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | grep '^PhpCsFixer\\' || true)
+# sniffs not ported yet are allowed only while phpcs-not-ported.txt lists them
+LC_ALL=C sort -u "$NOT_PORTED" > /tmp/blink-not-ported.txt
+missing_required=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt \
+    | grep -E '^(PhpCsFixer|PHP_CodeSniffer)\\' | LC_ALL=C comm -23 - /tmp/blink-not-ported.txt || true)
+# listed sniffs that blink now implements, or that left the universe
+stale_not_ported=$(LC_ALL=C comm -12 /tmp/blink-not-ported.txt /tmp/blink-impl.txt; \
+    LC_ALL=C comm -23 /tmp/blink-not-ported.txt <(LC_ALL=C sort -u /tmp/blink-universe.txt))
 
 # blink rules within the universe; blink's own extras never push parity past 100%
 implemented=$(( ecs - missing_count ))
 go_pct=$(( implemented * 100 / ecs ))
 
+# per-source coverage rows: universe rules with a given FQCN prefix vs those blink implements
+coverage_row() {
+    local label="$1" prefix="$2" total done
+    total=$(grep -c "^${prefix}" /tmp/blink-universe.txt || true)
+    done=$(LC_ALL=C comm -12 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | grep -c "^${prefix}" || true)
+    echo "| $label | $done | $total | $(( total > 0 ? done * 100 / total : 100 ))% |"
+}
+
+table=$(cat <<EOF
+| source | in blink | universe | coverage |
+|---|---:|---:|---:|
+$(coverage_row "PHP-CS-Fixer" 'PhpCsFixer\\')
+$(coverage_row "Symplify" 'Symplify\\')
+$(coverage_row "PHP_CodeSniffer" 'PHP_CodeSniffer\\')
+| **total** | **$implemented** | **$ecs** | **${go_pct}%** |
+EOF
+)
+
 block=$(cat <<EOF
 $START
-| tool | rules | coverage |
-|---|---:|---:|
-| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | $ecs | 100% |
-| blink | $go_count | ${go_pct}% |
+$table
+
+blink runs $go_count rules in all, its own extras included.
 $END
 EOF
 )
@@ -60,10 +86,7 @@ new=$(awk -v start="$START" -v end="$END" -v block="$block" '
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     {
         echo "### Rule coverage"
-        echo "| tool | rules | coverage |"
-        echo "|---|---:|---:|"
-        echo "| fixer universe | $ecs | 100% |"
-        echo "| blink | $go_count | ${go_pct}% |"
+        echo "$table"
         echo ""
         echo "### Missing in blink ($missing_count of $ecs universe fixers)"
         if [ -n "$missing" ]; then
@@ -78,12 +101,6 @@ fi
 echo "Missing in blink ($missing_count):"
 if [ -n "$missing" ]; then
     printf '  %s\n' $missing
-fi
-
-if [ -n "$missing_phpcsfixer" ]; then
-    echo "PHP-CS-Fixer fixers not implemented in blink:" >&2
-    printf '  %s\n' $missing_phpcsfixer >&2
-    exit 1
 fi
 
 if [ "${1:-}" = "--check" ]; then
@@ -102,4 +119,16 @@ else
     printf '%s\n' "$new" > "$README"
     cp /tmp/blink-universe.txt "$ALL_FIXERS"
     echo "Updated README and ecs-all-fixers.txt: universe $ecs, blink $go_count"
+fi
+
+if [ -n "$missing_required" ]; then
+    echo "PHP-CS-Fixer fixers and PHP_CodeSniffer sniffs not implemented in blink:" >&2
+    printf '  %s\n' $missing_required >&2
+    exit 1
+fi
+
+if [ -n "$stale_not_ported" ]; then
+    echo "Remove these from phpcs-not-ported.txt, blink implements them or they are gone:" >&2
+    printf '  %s\n' $stale_not_ported >&2
+    exit 1
 fi
