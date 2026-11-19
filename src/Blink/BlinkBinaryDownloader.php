@@ -13,7 +13,7 @@ use Symplify\EasyCodingStandard\Blink\Exception\EcsGoBinaryNotFoundException;
  */
 final readonly class BlinkBinaryDownloader
 {
-    private const int TIMEOUT_SECONDS = 30;
+    private const int TIMEOUT_SECONDS = 5;
 
     public function __construct(
         private string $releaseBaseUrl = 'https://github.com/ecsphp/ecs-src/releases/download',
