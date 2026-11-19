@@ -1,0 +1,39 @@
+4	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.Missing	Missing doc comment for class No_Comment
+15	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.WrongStyle	You must use "/**" style comments for a class comment
+51	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.EmptyVersionTag	Content missing for @version tag in class comment
+63	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.InvalidCategory	Category name "_wrong_category" is not valid; consider "Wrong_Category" instead
+65	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.DuplicatePackageTag	Only one @package tag is allowed in a class comment
+65	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.InvalidPackage	Package name "ADDITIONAL PACKAGE TAG" is not valid; consider "ADDITIONAL_PACKAGE_TAG" instead
+66	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.InvalidSubpackage	Subpackage name "SUBPACKAGE TAG" is not valid; consider "SUBPACKAGE_TAG" instead
+68	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.InvalidAuthors	Content of the @author tag must be in the form "Display Name <username@example.com>"
+70	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.EmptyAuthorTag	Content missing for @author tag in class comment
+71	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.CopyrightHyphen	A hyphen must be used between the earliest and latest year
+72	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.IncompleteLicense	@license tag must contain a URL and a license name
+74	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.EmptySeeTag	Content missing for @see tag in class comment
+74	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.LinkTagOrder	The tag in position 12 should be the @link tag
+75	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.EmptySeeTag	Content missing for @see tag in class comment
+76	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.SinceTagOrder	The tag in position 14 should be the @since tag
+77	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.DeprecatedTagOrder	The tag in position 15 should be the @deprecated tag
+85	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.Missing	Missing doc comment for class Sub_Class
+96	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingCategoryTag	Missing @category tag in class comment
+96	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingPackageTag	Missing @package tag in class comment
+96	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingAuthorTag	Missing @author tag in class comment
+96	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLicenseTag	Missing @license tag in class comment
+96	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLinkTag	Missing @link tag in class comment
+106	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingCategoryTag	Missing @category tag in class comment
+106	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingPackageTag	Missing @package tag in class comment
+106	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingAuthorTag	Missing @author tag in class comment
+106	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLicenseTag	Missing @license tag in class comment
+106	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLinkTag	Missing @link tag in class comment
+116	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingCategoryTag	Missing @category tag in class comment
+116	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingPackageTag	Missing @package tag in class comment
+116	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingAuthorTag	Missing @author tag in class comment
+116	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLicenseTag	Missing @license tag in class comment
+116	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLinkTag	Missing @link tag in class comment
+126	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingCategoryTag	Missing @category tag in class comment
+126	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingPackageTag	Missing @package tag in class comment
+126	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingAuthorTag	Missing @author tag in class comment
+126	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLicenseTag	Missing @license tag in class comment
+126	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.MissingLinkTag	Missing @link tag in class comment
+161	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.WrongStyle	You must use "/**" style comments for a class comment
+163	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff.Missing	Missing doc comment for class ReadonlyFinalWithoutDocblock

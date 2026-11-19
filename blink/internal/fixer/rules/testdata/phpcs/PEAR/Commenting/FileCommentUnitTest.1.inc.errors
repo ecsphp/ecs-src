@@ -1,0 +1,19 @@
+21	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.InvalidCategory	Category name "_wrong_category" is not valid; consider "Wrong_Category" instead
+23	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.DuplicatePackageTag	Only one @package tag is allowed in a file comment
+23	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.InvalidPackage	Package name "ADDITIONAL PACKAGE TAG" is not valid; consider "ADDITIONAL_PACKAGE_TAG" instead
+24	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.InvalidSubpackage	Subpackage name "SUBPACKAGE TAG" is not valid; consider "SUBPACKAGE_TAG" instead
+26	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.InvalidAuthors	Content of the @author tag must be in the form "Display Name <username@example.com>"
+28	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.EmptyAuthorTag	Content missing for @author tag in file comment
+29	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.CopyrightHyphen	A hyphen must be used between the earliest and latest year
+30	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.CopyrightHyphen	A hyphen must be used between the earliest and latest year
+31	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.IncompleteLicense	@license tag must contain a URL and a license name
+32	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.EmptySeeTag	Content missing for @see tag in file comment
+32	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.VersionTagOrder	The tag in position 12 should be the @version tag
+33	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.EmptySeeTag	Content missing for @see tag in file comment
+34	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.SinceTagOrder	The tag in position 14 should be the @since tag
+35	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.DeprecatedTagOrder	The tag in position 15 should be the @deprecated tag
+40	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.DuplicatePackageTag	Only one @package tag is allowed in a file comment
+40	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.InvalidPackageValue	Package name "''" is not valid
+41	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.DuplicateSubpackageTag	Only one @subpackage tag is allowed in a file comment
+41	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.InvalidSubpackage	Subpackage name "!!" is not valid; consider "!!" instead
+43	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FileCommentSniff.MissingLinkTag	Missing @link tag in file comment

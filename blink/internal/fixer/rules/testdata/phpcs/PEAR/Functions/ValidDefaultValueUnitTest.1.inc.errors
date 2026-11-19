@@ -1,0 +1,12 @@
+29	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+34	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+39	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+71	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+76	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+81	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+91	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+99	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+101	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+106	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+114	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list
+120	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\ValidDefaultValueSniff.NotAtEnd	Arguments with default values must be at the end of the argument list

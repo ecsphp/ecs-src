@@ -207,6 +207,8 @@ var fixerPriority = map[string]int{
 	"FunctionDeclarationArgumentSpacingSniff":     0,
 	"MultiLineFunctionDeclarationSniff":           0,
 	"ScopeIndentSniff":                            0,
+	"ValidDefaultValueSniff":                      0,
+	"MultiLineAssignmentSniff":                    0,
 	"MethodDeclarationSniff":                      0,
 	"UseDeclarationSniff":                         0,
 	"PropertyDeclarationSniff":                    0,
