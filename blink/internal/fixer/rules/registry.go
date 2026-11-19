@@ -327,7 +327,6 @@ func ConstructFixers() []fixer.Fixer {
 		SpaceAfterNot{Spacing: 1},
 		ClassInstantiation{},
 		IncrementDecrementSpacing{},
-		ClassInstantiation{},
 		MethodDeclaration{},
 		TraitUseDeclaration{},
 		PropertyDeclaration{},
