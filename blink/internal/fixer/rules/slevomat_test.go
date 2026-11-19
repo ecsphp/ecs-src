@@ -60,15 +60,6 @@ func TestSlevomatFixtures(t *testing.T) {
 	}
 }
 
-func readFixture(t *testing.T, path string) string {
-	t.Helper()
-	b, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(b)
-}
-
 // lineDiff lists the lines where got differs from want.
 func lineDiff(want, got string) string {
 	w, g := strings.Split(want, "\n"), strings.Split(got, "\n")

@@ -22,6 +22,9 @@ ALL_FIXERS="$ROOT/ecs-all-fixers.txt"
 NOT_PORTED="$ROOT/phpcs-not-ported.txt"
 START="<!-- rule-counts:start -->"
 END="<!-- rule-counts:end -->"
+SLEVOMAT="$ROOT/slevomat-fixable-sniffs.txt"
+SLEVOMAT_START="<!-- slevomat-counts:start -->"
+SLEVOMAT_END="<!-- slevomat-counts:end -->"
 
 go build -C "$ROOT" -o /tmp/blink-count . >&2
 /tmp/blink-count list-checkers > /tmp/blink-checkers.txt
@@ -75,10 +78,39 @@ $END
 EOF
 )
 
-# Write the block back into README between the markers.
-new=$(awk -v start="$START" -v end="$END" -v block="$block" '
+# slevomat sniffs are blink-only extras, measured on their own against every
+# fixable slevomat sniff (slevomat-fixable-sniffs.txt), per category
+slevomat_done=$(LC_ALL=C comm -12 <(LC_ALL=C sort -u "$SLEVOMAT") /tmp/blink-impl.txt)
+slevomat_total=$(grep -c . "$SLEVOMAT")
+slevomat_done_count=$(printf '%s' "$slevomat_done" | grep -c . || true)
+slevomat_rows=$(cut -d'\' -f3 "$SLEVOMAT" | LC_ALL=C sort -u | while read -r category; do
+    total=$(grep -cF "\\Sniffs\\${category}\\" "$SLEVOMAT")
+    done=$(printf '%s\n' "$slevomat_done" | grep -cF "\\Sniffs\\${category}\\" || true)
+    echo "| $category | $done | $total | $(( done * 100 / total ))% |"
+done)
+
+slevomat_table=$(cat <<EOF
+| slevomat category | in blink | fixable sniffs | coverage |
+|---|---:|---:|---:|
+$slevomat_rows
+| **total** | **$slevomat_done_count** | **$slevomat_total** | **$(( slevomat_done_count * 100 / slevomat_total ))%** |
+EOF
+)
+
+slevomat_block=$(cat <<EOF
+$SLEVOMAT_START
+$slevomat_table
+$SLEVOMAT_END
+EOF
+)
+
+# Write the blocks back into README between their markers.
+new=$(awk -v start="$START" -v end="$END" -v block="$block" \
+    -v sstart="$SLEVOMAT_START" -v send="$SLEVOMAT_END" -v sblock="$slevomat_block" '
   $0 ~ start {print block; skip=1; next}
   $0 ~ end {skip=0; next}
+  $0 ~ sstart {print sblock; skip=1; next}
+  $0 ~ send {skip=0; next}
   !skip {print}
 ' "$README")
 
@@ -87,6 +119,9 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     {
         echo "### Rule coverage"
         echo "$table"
+        echo ""
+        echo "### slevomat coverage"
+        echo "$slevomat_table"
         echo ""
         echo "### Missing in blink ($missing_count of $ecs universe fixers)"
         if [ -n "$missing" ]; then
