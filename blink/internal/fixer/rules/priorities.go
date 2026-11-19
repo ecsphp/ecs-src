@@ -117,6 +117,7 @@ var fixerPriority = map[string]int{
 	"SemicolonSpacingSniff":                       0,
 	"SingleLineArrayWhitespaceSniff":              0,
 	"SpaceAfterNotSniff":                          0,
+	"IncrementDecrementSpacingSniff":              0,
 	"SpreadOperatorSpacingSniff":                  0,
 	"StaticClosureSniff":                          0,
 	"TrailingArrayCommaSniff":                     0,

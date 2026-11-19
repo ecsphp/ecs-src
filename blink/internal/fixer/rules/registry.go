@@ -322,6 +322,7 @@ func ConstructFixers() []fixer.Fixer {
 		ArrayBracketSpacing{},
 		SemicolonSpacing{},
 		SpaceAfterNot{Spacing: 1},
+		IncrementDecrementSpacing{},
 		SlevomatArrowFunctionDeclaration{},
 		SlevomatDisallowTrailingCommaInCall{},
 		SlevomatDisallowTrailingCommaInClosureUse{},
