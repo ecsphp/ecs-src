@@ -131,6 +131,8 @@ var fixerPriority = map[string]int{
 	"SingleLineArrayWhitespaceSniff":              0,
 	"SpaceAfterNotSniff":                          0,
 	"ClassInstantiationSniff":                     0,
+	"ForEachLoopDeclarationSniff":                 0,
+	"ForLoopDeclarationSniff":                     0,
 	"IncrementDecrementSpacingSniff":              0,
 	"MethodDeclarationSniff":                      0,
 	"UseDeclarationSniff":                         0,
