@@ -67,7 +67,7 @@ func phpcsClassyOpener(f *slvFile, i int) int {
 	next := f.nextEffective(i+1, len(f.toks))
 	switch strings.ToLower(t.orig) {
 	case "class", "interface", "trait":
-		if f.is(next, ":") {
+		if f.is(next, ":") || phpcsIsAnonClassKeyword(f, i) {
 			return -1
 		}
 	case "enum":
@@ -95,6 +95,8 @@ func phpcsClassyOpener(f *slvFile, i int) int {
 				return -1
 			}
 			return j
+		case f.is(j, "(") && f.toks[j].closer > j:
+			j = f.toks[j].closer
 		case f.is(j, ";") || f.is(j, "(") || f.is(j, "}"):
 			return -1
 		case f.toks[j].kind == token.Keyword && j != i:

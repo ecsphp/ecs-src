@@ -140,6 +140,8 @@ var fixerPriority = map[string]int{
 	"DisallowTabIndentSniff":                      0,
 	"DisallowSpaceIndentSniff":                    0,
 	"ArrayIndentSniff":                            0,
+	"ClassDeclarationSniff":                       0,
+	"AnonClassDeclarationSniff":                   0,
 	"SpreadOperatorSpacingSniff":                  0,
 	"StaticClosureSniff":                          0,
 	"TrailingArrayCommaSniff":                     0,
