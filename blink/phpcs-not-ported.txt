@@ -1,4 +1,5 @@
 PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\ArrayIndentSniff
+PHP_CodeSniffer\Standards\Generic\Sniffs\Classes\OpeningBraceSameLineSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis\EmptyPHPStatementSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Classes\OpeningBraceSameLineSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff
@@ -17,6 +18,8 @@ PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\RequireStrictTypesSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryHeredocSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowSpaceIndentSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowTabIndentSniff
+PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\ArbitraryParenthesesSpacingSniff
+PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\ScopeIndentSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\SpreadOperatorSpacingAfterSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Classes\ClassDeclarationSniff
