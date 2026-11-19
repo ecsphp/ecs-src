@@ -388,6 +388,7 @@ func ConstructFixers() []fixer.Fixer {
 		BooleanOperatorPlacement{},
 		MultiLineCondition{Indent: 4},
 		PearScopeClosingBrace{Indent: 4},
+		SquizScopeClosingBrace{},
 		PSR2SwitchDeclaration{Indent: 4},
 		PearObjectOperatorIndent{Indent: 4},
 		SquizFunctionComment{},
