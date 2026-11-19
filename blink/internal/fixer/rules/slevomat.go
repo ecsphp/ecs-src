@@ -956,7 +956,12 @@ func (f *slvFile) arrowEnd(fn int) int {
 }
 
 // strnatcasecmp is PHP's strnatcasecmp (strnatcmp_ex with case folding).
-func strnatcasecmp(a, b string) int {
+func strnatcasecmp(a, b string) int { return strnatcmpEx(a, b, true) }
+
+// strnatcmp is PHP's strnatcmp.
+func strnatcmp(a, b string) int { return strnatcmpEx(a, b, false) }
+
+func strnatcmpEx(a, b string, fold bool) int {
 	if a == "" || b == "" {
 		switch {
 		case len(a) == len(b):
@@ -1020,7 +1025,9 @@ func strnatcasecmp(a, b string) int {
 			}
 			ca, cb = a[ap], b[bp]
 		}
-		ca, cb = upper(ca), upper(cb)
+		if fold {
+			ca, cb = upper(ca), upper(cb)
+		}
 		if ca < cb {
 			return -1
 		}
