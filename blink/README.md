@@ -13,10 +13,14 @@ while any PHP-CS-Fixer fixer or fixable sniff is missing. After bumping
 PHP_CodeSniffer, refresh the sniff list with `bin/phpcs-fixable-sniffs.sh`.
 
 <!-- rule-counts:start -->
-| tool | rules | coverage |
-|---|---:|---:|
-| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | 430 | 100% |
-| blink | 326 | 74% |
+| source | in blink | universe | coverage |
+|---|---:|---:|---:|
+| PHP-CS-Fixer | 282 | 282 | 100% |
+| Symplify | 34 | 34 | 100% |
+| PHP_CodeSniffer | 4 | 114 | 3% |
+| **total** | **320** | **430** | **74%** |
+
+blink runs 326 rules in all, its own extras included.
 <!-- rule-counts:end -->
 
 ## Build

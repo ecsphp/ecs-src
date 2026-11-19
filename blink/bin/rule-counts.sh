@@ -41,12 +41,29 @@ missing_required=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt)
 implemented=$(( ecs - missing_count ))
 go_pct=$(( implemented * 100 / ecs ))
 
+# per-source coverage rows: universe rules with a given FQCN prefix vs those blink implements
+coverage_row() {
+    local label="$1" prefix="$2" total done
+    total=$(grep -c "^${prefix}" /tmp/blink-universe.txt || true)
+    done=$(LC_ALL=C comm -12 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | grep -c "^${prefix}" || true)
+    echo "| $label | $done | $total | $(( total > 0 ? done * 100 / total : 100 ))% |"
+}
+
+table=$(cat <<EOF
+| source | in blink | universe | coverage |
+|---|---:|---:|---:|
+$(coverage_row "PHP-CS-Fixer" 'PhpCsFixer\\')
+$(coverage_row "Symplify" 'Symplify\\')
+$(coverage_row "PHP_CodeSniffer" 'PHP_CodeSniffer\\')
+| **total** | **$implemented** | **$ecs** | **${go_pct}%** |
+EOF
+)
+
 block=$(cat <<EOF
 $START
-| tool | rules | coverage |
-|---|---:|---:|
-| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | $ecs | 100% |
-| blink | $go_count | ${go_pct}% |
+$table
+
+blink runs $go_count rules in all, its own extras included.
 $END
 EOF
 )
@@ -62,10 +79,7 @@ new=$(awk -v start="$START" -v end="$END" -v block="$block" '
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     {
         echo "### Rule coverage"
-        echo "| tool | rules | coverage |"
-        echo "|---|---:|---:|"
-        echo "| fixer universe | $ecs | 100% |"
-        echo "| blink | $go_count | ${go_pct}% |"
+        echo "$table"
         echo ""
         echo "### Missing in blink ($missing_count of $ecs universe fixers)"
         if [ -n "$missing" ]; then
