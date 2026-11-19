@@ -93,6 +93,7 @@ jobs:
             # 5. copy repository metafiles, composer.json with PHP 7.2, Github Workflows
             -   run: |
                     cp -R build/target-repository/. ecs-prefixed-downgraded
+                    cp LICENSE ecs-prefixed-downgraded/
                     cp -R templates ecs-prefixed-downgraded/
 
             # 5b. publish blink binaries as a GitHub release keyed by the blink/ tree hash, instead of committing them;
@@ -141,8 +142,8 @@ jobs:
                     path: remote-repository
                     token: ${{ secrets.ACCESS_TOKEN }}
 
-            # remove remote files, to avoid piling up dead code in remote repository
-            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/packages remote-repository/src remote-repository/vendor remote-repository/bin/blink-*
+            # remove all remote files except git, so files dropped from the build never linger in the remote repository
+            -   run: find remote-repository -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
 
             # clear the dev files
             - run: cp -a ecs-prefixed-downgraded/. remote-repository
