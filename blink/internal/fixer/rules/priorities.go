@@ -146,6 +146,10 @@ var fixerPriority = map[string]int{
 	"LineEndingsSniff":                            0,
 	"UnnecessaryHeredocSniff":                     0,
 	"DoubleQuoteUsageSniff":                       0,
+	"SpreadOperatorSpacingAfterSniff":             0,
+	"ObjectOperatorSpacingSniff":                  0,
+	"ReturnTypeDeclarationSniff":                  0,
+	"OperatorSpacingSniff":                        0,
 	// getPriority() is 0 upstream; raised to run before blank_line_after_opening_tag
 	// so blink reaches the same output in a single pass (PHP-CS-Fixer loops to fixpoint)
 	"LinebreakAfterOpeningTagFixer":                   2,

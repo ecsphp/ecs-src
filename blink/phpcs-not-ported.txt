@@ -15,7 +15,6 @@ PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowSpaceIndentSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowTabIndentSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\ScopeIndentSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\SpreadOperatorSpacingAfterSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Classes\ClassDeclarationSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\ControlStructures\MultiLineConditionSniff
@@ -30,8 +29,6 @@ PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\BooleanOperatorPlacemen
 PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\FileHeaderSniff
-PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\ReturnTypeDeclarationSniff
-PHP_CodeSniffer\Standards\PSR12\Sniffs\Operators\OperatorSpacingSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff
@@ -66,7 +63,6 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionClosingBraceSpaceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\MemberVarSpacingSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ObjectOperatorSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ScopeClosingBraceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ScopeKeywordSpacingSniff
