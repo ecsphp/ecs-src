@@ -114,6 +114,7 @@ func newSlvFile(toks []token.Token) *slvFile {
 func slvSplit(toks []token.Token) []slvTok {
 	var out []slvTok
 	eol := slvRawEOL(toks)
+	toks = slvSplitYieldFrom(toks)
 	add := func(k token.Kind, v string, heredoc bool) {
 		for v != "" {
 			n := strings.IndexByte(v, '\n')
@@ -183,6 +184,41 @@ func slvSplit(toks []token.Token) []slvTok {
 		default:
 			add(t.Kind, t.Value, false)
 		}
+	}
+	return out
+}
+
+var slvYieldFromOneLine = regexp.MustCompile(`(?i)^yield[ \t]+from$`)
+
+// slvSplitYieldFrom splits a "yield from" holding a newline or a comment, which
+// PHP lexes as one T_YIELD_FROM, into "yield", the tokens between and "from",
+// like PHP_CodeSniffer's PHP tokenizer.
+func slvSplitYieldFrom(toks []token.Token) []token.Token {
+	var out []token.Token
+	for n, t := range toks {
+		v := t.Value
+		if t.Kind != token.Keyword || len(v) <= 9 || !strings.EqualFold(v[:5], "yield") || slvYieldFromOneLine.MatchString(v) {
+			if out != nil {
+				out = append(out, t)
+			}
+			continue
+		}
+		if out == nil {
+			out = append(out, toks[:n]...)
+		}
+		out = append(out, token.Token{Kind: token.Keyword, Value: v[:5]})
+		inner := lexer.Lex("<?php\n" + v[5:len(v)-4])[1:]
+		if len(inner) > 0 {
+			inner[0].Value = strings.TrimPrefix(inner[0].Value, "\n")
+			if inner[0].Value == "" {
+				inner = inner[1:]
+			}
+		}
+		out = append(out, inner...)
+		out = append(out, token.Token{Kind: token.Keyword, Value: v[len(v)-4:]})
+	}
+	if out == nil {
+		return toks
 	}
 	return out
 }

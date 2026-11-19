@@ -187,6 +187,7 @@ var fixerPriority = map[string]int{
 	"FileCommentSniff":                            0,
 	"LongConditionClosingCommentSniff":            0,
 	"VariableCommentSniff":                        0,
+	"BlockCommentSniff":                           0,
 	"DocCommentAlignmentSniff":                    0,
 	"UselessParenthesesSniff":                     0,
 	"UselessSemicolonSniff":                       0,

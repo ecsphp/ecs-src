@@ -375,6 +375,7 @@ func ConstructFixers() []fixer.Fixer {
 		LongConditionClosingComment{LineLimit: 20, CommentFormat: "//end %s"},
 		VariableComment{},
 		DocCommentAlignment{},
+		SquizBlockComment{},
 		PEARClassDeclaration{},
 		PSR2ClassDeclaration{Indent: 4},
 		SquizClassDeclaration{Indent: 4},
