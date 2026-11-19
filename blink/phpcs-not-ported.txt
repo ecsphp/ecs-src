@@ -16,6 +16,7 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\InlineIfDeclarationSnif
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\MultiLineFunctionDeclarationSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\EmbeddedPhpSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\LowercasePHPFunctionsSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\ConcatenationSpacingSniff

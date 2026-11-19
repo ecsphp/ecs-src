@@ -119,6 +119,29 @@ func phpcsSpacesAt(f *slvFile, i int) int {
 }
 
 func (d PEARFunctionDeclaration) process(f *slvFile, fn phpcsFn) {
+	d.processHead(f, fn)
+	if d.isMultiLine(f, fn) {
+		d.processMultiLine(f, fn)
+		return
+	}
+	pearSingleLineBrace(f, fn)
+}
+
+// pearSingleLineBrace is processSingleLineDeclaration: K&R braces for a
+// closure, BSD/Allman for a function.
+func pearSingleLineBrace(f *slvFile, fn phpcsFn) {
+	if fn.scopeOpener < 0 {
+		return
+	}
+	if fn.closure {
+		openingFunctionBraceKernighanRitchie(f, fn.scopeOpener)
+		return
+	}
+	openingFunctionBraceBsdAllman(f, fn.ptr, fn.closeParen, fn.scopeOpener)
+}
+
+// processHead is the part of process before the single/multi-line split.
+func (d PEARFunctionDeclaration) processHead(f *slvFile, fn phpcsFn) {
 	stackPtr := fn.ptr
 	if strings.ToLower(f.toks[stackPtr].orig) == "function" {
 		if spaces := phpcsSpacesAt(f, stackPtr+1); spaces != 1 {
@@ -166,18 +189,6 @@ func (d PEARFunctionDeclaration) process(f *slvFile, fn phpcsFn) {
 		}
 	}
 
-	if d.isMultiLine(f, fn) {
-		d.processMultiLine(f, fn)
-		return
-	}
-	if fn.scopeOpener < 0 {
-		return
-	}
-	if fn.closure {
-		openingFunctionBraceKernighanRitchie(f, fn.scopeOpener)
-		return
-	}
-	openingFunctionBraceBsdAllman(f, stackPtr, fn.closeParen, fn.scopeOpener)
 }
 
 func phpcsUseGap(f *slvFile, i int) int {
