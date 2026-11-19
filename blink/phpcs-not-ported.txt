@@ -5,8 +5,6 @@ PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Files\IncludingFileSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\FunctionCallSignatureSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\FunctionDeclarationSniff
-PHP_CodeSniffer\Standards\PEAR\Sniffs\WhiteSpace\ObjectOperatorIndentSniff
-PHP_CodeSniffer\Standards\PEAR\Sniffs\WhiteSpace\ScopeClosingBraceSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\AnonClassDeclarationSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\BooleanOperatorPlacementSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\ControlStructureSpacingSniff
@@ -21,6 +19,7 @@ PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff
+PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Namespaces\UseDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\ClassDeclarationSniff

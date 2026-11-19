@@ -364,7 +364,7 @@ func slvIsHeredoc(v string) bool {
 }
 
 func slvTabbed(k token.Kind) bool {
-	return k == token.Whitespace || k == token.Comment || k == token.DocComment || k == token.String
+	return k == token.Whitespace || k == token.Comment || k == token.DocComment || k == token.String || k == token.InlineHTML
 }
 
 // position sets line, column, length and content like PHP_CodeSniffer's
@@ -378,6 +378,11 @@ func (f *slvFile) position() {
 		if slvTabbed(t.kind) && strings.Contains(t.orig, "\t") {
 			t.content, t.length = slvReplaceTabs(t.orig, col)
 		}
+		if t.kind == token.Ident && slvKnownLength(t.orig) {
+			// PHP_CodeSniffer takes T_TRUE, T_FALSE and T_NULL at their known
+			// length, without the "\" of a fully qualified "\true"
+			t.length--
+		}
 		col += t.length
 		if strings.Contains(t.orig, "\n") {
 			line++
@@ -388,6 +393,14 @@ func (f *slvFile) position() {
 			}
 		}
 	}
+}
+
+func slvKnownLength(v string) bool {
+	switch strings.ToLower(v) {
+	case `\true`, `\false`, `\null`:
+		return true
+	}
+	return false
 }
 
 // slvReplaceTabs is PHP_CodeSniffer's Tokenizer::replaceTabsInToken.
