@@ -59,5 +59,17 @@
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UnusedInheritedVariablePassedToClosureSniff", "file": "Functions/unusedInheritedVariablePassedToClosureNoErrors.php"},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UnusedInheritedVariablePassedToClosureSniff", "file": "Functions/unusedInheritedVariablePassedToClosureErrors.php"},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UselessParameterDefaultValueSniff", "file": "Functions/uselessParameterDefaultValueNoErrors.php"},
-  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UselessParameterDefaultValueSniff", "file": "Functions/uselessParameterDefaultValueErrors.php"}
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UselessParameterDefaultValueSniff", "file": "Functions/uselessParameterDefaultValueErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\DisallowEqualOperatorsSniff", "file": "Operators/disallowEqualOperatorsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\DisallowEqualOperatorsSniff", "file": "Operators/disallowEqualOperatorsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingRequireSpaceNoErrors.php", "config": {"spacesCount": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingRequireSpaceErrors.php", "config": {"spacesCount": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\RequireCombinedAssignmentOperatorSniff", "file": "Operators/requireCombinedAssignmentOperatorNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\RequireCombinedAssignmentOperatorSniff", "file": "Operators/requireCombinedAssignmentOperatorErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingModifiedSettingsNoErrors.php", "config": {"spacesCountAfterOperator": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingModifiedSettingsErrors.php", "config": {"spacesCountAfterOperator": 2}}
 ]
