@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -61,8 +62,7 @@ func (DisallowMultipleStatements) Fix(s *tokens.Stream) bool {
 		return false
 	}
 	eol := phpcsEolChar(s)
-	for k := len(breaks) - 1; k >= 0; k-- {
-		p := breaks[k]
+	for _, p := range slices.Backward(breaks) {
 		if p+1 < s.Len() && s.At(p+1).Kind == token.Whitespace {
 			s.RemoveAt(p + 1)
 		}
