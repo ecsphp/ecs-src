@@ -17,7 +17,7 @@ composer lint.fix     # auto-fix rector + coding standard
 
 Please make sure `composer lint` and `composer test` pass before sending a pull request.
 
-[`--blink` mode](docs/blink.md) runs the bundled Go binary instead of the PHP engine - out of the box, no Go toolchain needed:
+[`--blink` mode](docs/blink.md) runs the blink Go binary instead of the PHP engine - downloaded on first run, no Go toolchain needed:
 
 | `--fix` on a fresh clone | Symfony `src` (13,103 files) | Laravel `src` (1,749 files) |
 | --- | ---: | ---: |
