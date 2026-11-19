@@ -142,6 +142,7 @@ var fixerPriority = map[string]int{
 	"OperatorBracketSniff":                        0,
 	"FunctionDeclarationArgumentSpacingSniff":     0,
 	"MultiLineFunctionDeclarationSniff":           0,
+	"ScopeIndentSniff":                            0,
 	"MethodDeclarationSniff":                      0,
 	"UseDeclarationSniff":                         0,
 	"PropertyDeclarationSniff":                    0,

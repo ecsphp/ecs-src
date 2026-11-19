@@ -346,6 +346,7 @@ func ConstructFixers() []fixer.Fixer {
 		OperatorBracket{},
 		FunctionDeclarationArgumentSpacing{},
 		MultiLineFunctionDeclaration{Indent: 4},
+		ScopeIndent{Indent: 4},
 		MethodDeclaration{},
 		TraitUseDeclaration{},
 		PropertyDeclaration{},
