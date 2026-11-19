@@ -1,0 +1,36 @@
+3	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+5	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "_varName" is not in valid camel caps format
+11	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.MemberVarNotCamelCaps	Member variable "var_name" is not in valid camel caps format
+13	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PublicHasUnderscore	Public member variable "_varName" must not contain a leading underscore
+17	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.MemberVarNotCamelCaps	Member variable "var_name" is not in valid camel caps format
+19	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PublicHasUnderscore	Public member variable "_varName" must not contain a leading underscore
+23	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.MemberVarNotCamelCaps	Member variable "var_name" is not in valid camel caps format
+25	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Protected member variable "varName" must contain a leading underscore
+29	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.MemberVarNotCamelCaps	Member variable "var_name" is not in valid camel caps format
+31	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Private member variable "varName" must contain a leading underscore
+36	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+38	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "_varName" is not in valid camel caps format
+42	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.StringVarNotCamelCaps	Variable "var_name" is not in valid camel caps format
+44	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.StringVarNotCamelCaps	Variable "_varName" is not in valid camel caps format
+48	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+50	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "_varName" is not in valid camel caps format
+61	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+67	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+72	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+74	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "object_name" is not in valid camel caps format
+75	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "object_name" is not in valid camel caps format
+76	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "object_name" is not in valid camel caps format
+79	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "one_two" is not in valid camel caps format
+96	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.StringVarNotCamelCaps	Variable "var_name" is not in valid camel caps format
+99	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+107	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Protected member variable "anonymous" must contain a leading underscore
+113	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "foo_bar" is not in valid camel caps format
+116	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "bar_foo" is not in valid camel caps format
+121	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "var_name" is not in valid camel caps format
+126	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "foo_bar" is not in valid camel caps format
+129	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.NotCamelCaps	Variable "bar_foo" is not in valid camel caps format
+135	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PublicHasUnderscore	Public member variable "_underscore" must not contain a leading underscore
+141	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PublicHasUnderscore	Public member variable "_asymPublicImplied" must not contain a leading underscore
+144	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Private member variable "asymPrivate" must contain a leading underscore
+148	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Protected member variable "asymProtectedPrivate" must contain a leading underscore
+149	PHP_CodeSniffer\Standards\Zend\Sniffs\NamingConventions\ValidVariableNameSniff.PublicHasUnderscore	Public member variable "_asymPrivatePublic" must not contain a leading underscore
