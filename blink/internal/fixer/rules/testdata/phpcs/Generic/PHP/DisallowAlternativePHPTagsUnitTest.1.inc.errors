@@ -1,0 +1,4 @@
+4	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\DisallowAlternativePHPTagsSniff.ScriptOpenTagFound	Script style opening tag used; expected "<?php" but found "<script language="php">\n"
+7	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\DisallowAlternativePHPTagsSniff.ScriptOpenTagFound	Script style opening tag used; expected "<?php" but found "<script language='php'>echo $var;</script>\n"
+8	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\DisallowAlternativePHPTagsSniff.ScriptOpenTagFound	Script style opening tag used; expected "<?php" but found "<script type="text/php" language="php">\n"
+11	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\DisallowAlternativePHPTagsSniff.ScriptOpenTagFound	Script style opening tag used; expected "<?php" but found "<script language='PHP' type='text/php'>\n"

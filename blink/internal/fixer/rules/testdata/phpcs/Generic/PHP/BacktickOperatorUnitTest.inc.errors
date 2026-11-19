@@ -1,0 +1,2 @@
+2	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\BacktickOperatorSniff.Found	Use of the backtick operator is forbidden
+2	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\BacktickOperatorSniff.Found	Use of the backtick operator is forbidden
