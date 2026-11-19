@@ -13,10 +13,8 @@ PHP_CodeSniffer\Standards\Generic\Sniffs\Functions\FunctionCallArgumentSpacingSn
 PHP_CodeSniffer\Standards\Generic\Sniffs\Functions\OpeningFunctionBraceBsdAllmanSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Functions\OpeningFunctionBraceKernighanRitchieSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\DisallowShortOpenTagSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\LowerCaseConstantSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\LowerCaseTypeSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\RequireStrictTypesSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\UpperCaseConstantSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryHeredocSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\ArbitraryParenthesesSpacingSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowSpaceIndentSniff
@@ -61,7 +59,6 @@ PHP_CodeSniffer\Standards\PSR2\Sniffs\Namespaces\UseDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayBracketSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\ClassDeclarationSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\LowercaseClassKeywordsSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\SelfMemberReferenceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClosingDeclarationCommentSniff
@@ -79,7 +76,6 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\InlineIfDeclarationSnif
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\LowercaseFunctionKeywordsSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\MultiLineFunctionDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\EmbeddedPhpSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\LowercasePHPFunctionsSniff
