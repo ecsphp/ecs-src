@@ -33,16 +33,18 @@ fixture() {
     local inputs
     mapfile -t inputs < <(find "$UPSTREAM/$dir" -maxdepth 1 -regex ".*/$base\(\.[0-9]+\)?\.inc" | LC_ALL=C sort)
     [ "${#inputs[@]}" -gt 0 ] || { echo "no fixtures for $fqcn" >&2; return 1; }
+    # one ECS run per input: PHP_CodeSniffer's fixer keeps state from file to file
     for f in "${inputs[@]}"; do
         cp "$f" "$out/"
-        cp "$f" "$tmp/$(basename "$f").php"
+        mkdir -p "$tmp/$(basename "$f")"
+        cp "$f" "$tmp/$(basename "$f")/$(basename "$f").php"
+        printf '<?php\nreturn Symplify\\EasyCodingStandard\\Config\\ECSConfig::configure()->withRules([%s::class])->withCache(%s)->withoutParallel();\n' \
+            "\\$fqcn" "'$tmp/$(basename "$f").cache'" > "$tmp/$(basename "$f").ecs.php"
+        "$ECS" check --fix --no-progress-bar --no-error-table --config "$tmp/$(basename "$f").ecs.php" "$tmp/$(basename "$f")" >/dev/null 2>&1 || true
     done
-    printf '<?php\nreturn Symplify\\EasyCodingStandard\\Config\\ECSConfig::configure()->withRules([%s::class])->withCache(%s)->withoutParallel();\n' \
-        "\\$fqcn" "'$tmp.cache'" > "$tmp.ecs.php"
-    "$ECS" check --fix --no-progress-bar --no-error-table --config "$tmp.ecs.php" "$tmp" >/dev/null 2>&1 || true
     for f in "${inputs[@]}"; do
         local name; name=$(basename "$f")
-        cmp -s "$f" "$tmp/$name.php" || cp "$tmp/$name.php" "$out/$name.fixed"
+        cmp -s "$f" "$tmp/$name/$name.php" || cp "$tmp/$name/$name.php" "$out/$name.fixed"
     done
 }
 export -f fixture
