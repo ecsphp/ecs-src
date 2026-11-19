@@ -192,7 +192,9 @@ var fixerPriority = map[string]int{
 	"DocCommentAlignmentSniff":                    0,
 	"EmbeddedPhpSniff":                            0,
 	"UselessParenthesesSniff":                     0,
-	"UselessSemicolonSniff":                       0,
+	// raised from 0 so an empty statement is gone before whitespace sniffs look
+	// past a closing brace, as NoEmptyStatementFixer (40) does
+	"UselessSemicolonSniff": 1,
 	// getPriority() is 0 upstream; raised to run before blank_line_after_opening_tag
 	// so blink reaches the same output in a single pass (PHP-CS-Fixer loops to fixpoint)
 	"LinebreakAfterOpeningTagFixer":                   2,

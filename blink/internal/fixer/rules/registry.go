@@ -392,6 +392,7 @@ func ConstructFixers() []fixer.Fixer {
 		PearObjectOperatorIndent{Indent: 4},
 		SquizFunctionComment{},
 		EmbeddedPhp{},
+		SquizControlStructureSpacing{},
 		SlevomatArrowFunctionDeclaration{},
 		SlevomatDisallowTrailingCommaInCall{},
 		SlevomatDisallowTrailingCommaInClosureUse{},
