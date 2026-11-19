@@ -1,0 +1,9 @@
+4	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+8	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer
+14	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+20	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+22	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer
+26	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+28	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+30	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer

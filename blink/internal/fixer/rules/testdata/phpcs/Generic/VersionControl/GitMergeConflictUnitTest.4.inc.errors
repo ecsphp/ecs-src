@@ -1,0 +1,15 @@
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+8	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+10	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer
+18	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+22	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+25	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer
+29	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+34	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+39	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer
+53	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+55	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+57	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer
+64	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.OpenerFound	Merge conflict boundary found; type: opener
+68	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.DelimiterFound	Merge conflict boundary found; type: delimiter
+71	PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl\GitMergeConflictSniff.CloserFound	Merge conflict boundary found; type: closer

@@ -1,0 +1,3 @@
+2	PHP_CodeSniffer\Standards\PSR1\Sniffs\Classes\ClassDeclarationSniff.MissingNamespace	Each class must be in a namespace of at least one level (a top-level vendor name)
+3	PHP_CodeSniffer\Standards\PSR1\Sniffs\Classes\ClassDeclarationSniff.MultipleClasses	Each class must be in a file by itself
+3	PHP_CodeSniffer\Standards\PSR1\Sniffs\Classes\ClassDeclarationSniff.MissingNamespace	Each class must be in a namespace of at least one level (a top-level vendor name)

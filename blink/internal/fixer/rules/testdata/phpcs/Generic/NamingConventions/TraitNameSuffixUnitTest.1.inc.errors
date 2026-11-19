@@ -1,0 +1,2 @@
+3	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\TraitNameSuffixSniff.Missing	Trait names must be suffixed with "Trait"; found "MissingTraitSuffix"
+9	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\TraitNameSuffixSniff.Missing	Trait names must be suffixed with "Trait"; found "AnotherInvalidTraitName"

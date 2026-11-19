@@ -1,0 +1,2 @@
+5	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\InterfaceNameSuffixSniff.Missing	Interface names must be suffixed with "Interface"; found "MissingInterfaceSuffix"
+9	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\InterfaceNameSuffixSniff.Missing	Interface names must be suffixed with "Interface"; found "InterfaceAnotherInvalidName"

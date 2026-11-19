@@ -1,0 +1,6 @@
+13	PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\ClosingBraceSniff.StatementAfter	Closing brace must not be followed by any comment or statement on the same line
+14	PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\ClosingBraceSniff.StatementAfter	Closing brace must not be followed by any comment or statement on the same line
+19	PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\ClosingBraceSniff.StatementAfter	Closing brace must not be followed by any comment or statement on the same line
+24	PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\ClosingBraceSniff.StatementAfter	Closing brace must not be followed by any comment or statement on the same line
+31	PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\ClosingBraceSniff.StatementAfter	Closing brace must not be followed by any comment or statement on the same line
+52	PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\ClosingBraceSniff.StatementAfter	Closing brace must not be followed by any comment or statement on the same line
