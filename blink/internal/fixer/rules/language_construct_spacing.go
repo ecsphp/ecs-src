@@ -48,6 +48,9 @@ func (LanguageConstructSpacing) Fix(s *tokens.Stream) bool {
 				changed = true
 			}
 		}
+		if !langConstructHasContent(s, i) {
+			continue
+		}
 		if langConstructSpaceAfter(s, i) {
 			changed = true
 		}
@@ -75,4 +78,23 @@ func langConstructSpaceAfter(s *tokens.Stream, idx int) bool {
 	}
 	s.InsertAt(idx+1, token.Token{Kind: token.Whitespace, Value: " "})
 	return true
+}
+
+// langConstructHasContent is false at end of file and for "namespace" used as
+// the namespace operator ("namespace /* c */ \Foo"), where the sniff stays out.
+func langConstructHasContent(s *tokens.Stream, idx int) bool {
+	next := idx + 1
+	for next < s.Len() && s.At(next).Kind == token.Whitespace {
+		next++
+	}
+	if next >= s.Len() {
+		return false
+	}
+	if !strings.EqualFold(s.At(idx).Value, "namespace") {
+		return true
+	}
+	for next < s.Len() && (s.At(next).Kind == token.Comment || s.At(next).Kind == token.DocComment || s.At(next).Kind == token.Whitespace) {
+		next++
+	}
+	return next >= s.Len() || s.At(next).Value != `\`
 }

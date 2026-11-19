@@ -1,5 +1,4 @@
 PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\ArrayIndentSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\DisallowLongArraySyntaxSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\DisallowShortArraySyntaxSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Classes\OpeningBraceSameLineSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis\EmptyPHPStatementSniff
@@ -10,7 +9,6 @@ PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNoNewlineSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Files\LineEndingsSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\DisallowMultipleStatementsSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\MultipleStatementAlignmentSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterCastSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterNotSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceBeforeCastSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Functions\FunctionCallArgumentSpacingSniff
@@ -18,7 +16,6 @@ PHP_CodeSniffer\Standards\Generic\Sniffs\Functions\OpeningFunctionBraceBsdAllman
 PHP_CodeSniffer\Standards\Generic\Sniffs\Functions\OpeningFunctionBraceKernighanRitchieSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\DisallowShortOpenTagSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\LowerCaseConstantSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\LowerCaseKeywordSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\LowerCaseTypeSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\RequireStrictTypesSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\UpperCaseConstantSniff
@@ -51,7 +48,6 @@ PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\ImportStatementSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\OpenTagSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\NullableTypeDeclarationSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\ReturnTypeDeclarationSniff
-PHP_CodeSniffer\Standards\PSR12\Sniffs\Keywords\ShortFormTypeKeywordsSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Operators\OperatorSpacingSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff
@@ -95,7 +91,6 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\LowercasePHPFunctionsSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\ConcatenationSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\EchoedStringsSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\CastSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionClosingBraceSpaceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionOpeningBraceSpaceSniff

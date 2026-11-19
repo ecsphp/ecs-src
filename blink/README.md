@@ -13,15 +13,21 @@ while any PHP-CS-Fixer fixer is missing, or a sniff that `phpcs-not-ported.txt`
 does not list. That list only shrinks: drop a sniff from it once blink has it. After bumping
 PHP_CodeSniffer, refresh the sniff list with `bin/phpcs-fixable-sniffs.sh`.
 
+Every sniff blink implements must pass PHP_CodeSniffer's own test files
+(`internal/fixer/rules/testdata/phpcs`): the upstream `.inc` inputs with the
+output ECS produces for each. ECS runs sniffs with `phpcs:` annotations off, so
+those expectations can differ from upstream's `.inc.fixed`. Regenerate them with
+`bin/phpcs-fixtures.sh <PHP_CodeSniffer checkout>`.
+
 <!-- rule-counts:start -->
 | source | in blink | universe | coverage |
 |---|---:|---:|---:|
 | PHP-CS-Fixer | 282 | 282 | 100% |
 | Symplify | 34 | 34 | 100% |
-| PHP_CodeSniffer | 4 | 114 | 3% |
-| **total** | **320** | **430** | **74%** |
+| PHP_CodeSniffer | 9 | 114 | 7% |
+| **total** | **325** | **430** | **75%** |
 
-blink runs 326 rules in all, its own extras included.
+blink runs 331 rules in all, its own extras included.
 <!-- rule-counts:end -->
 
 ## Build
