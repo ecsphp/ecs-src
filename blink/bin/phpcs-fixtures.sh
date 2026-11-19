@@ -16,12 +16,12 @@ ECS="$ROOT/../bin/ecs"
 OUT="$ROOT/internal/fixer/rules/testdata/phpcs"
 [ -d "$UPSTREAM" ] || { echo "no Standards dir in $UPSTREAM" >&2; exit 1; }
 
-go build -C "$ROOT" -o /tmp/blink-fixtures . >&2
-sniffs=$(/tmp/blink-fixtures list-checkers | sed -n 's/^[[:space:]]*- \(PHP_CodeSniffer\\.*\)$/\1/p' | LC_ALL=C sort -u)
-
-find "$OUT" -name "*.inc*" -delete 2>/dev/null || true
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
+go build -C "$ROOT" -o "$work/blink" . >&2
+sniffs=$("$work/blink" list-checkers | sed -n 's/^[[:space:]]*- \(PHP_CodeSniffer\\.*\)$/\1/p' | LC_ALL=C sort -u)
+
+find "$OUT" -name "*.inc*" -delete 2>/dev/null || true
 
 fixture() {
     local fqcn="$1" rel dir base out tmp
