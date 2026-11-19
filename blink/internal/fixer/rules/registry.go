@@ -282,6 +282,7 @@ func ConstructFixers() []fixer.Fixer {
 		PhpUnitExpectation{},
 		PhpUnitNoExpectationAnnotation{},
 		GlobalKeyword{},
+		ForbiddenFunctions{},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
 		PhpdocToComment{},

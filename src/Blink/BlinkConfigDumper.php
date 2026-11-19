@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\Blink;
 
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PhpCsFixer\Fixer\ConfigurableFixerInterface;
 use PhpCsFixer\Fixer\FixerInterface;
 use ReflectionProperty;
@@ -62,8 +63,7 @@ final readonly class BlinkConfigDumper
         foreach ($this->sniffFileProcessor->getCheckers() as $sniff) {
             $rules[] = [
                 'class' => $sniff::class,
-                // sniff properties are not extracted yet; ecs-go maps only config-less sniffs
-                'config' => new stdClass(),
+                'config' => $this->extractSniffConfiguration($sniff),
             ];
         }
 
@@ -124,6 +124,16 @@ final readonly class BlinkConfigDumper
         }
 
         return array_values(array_unique($checkerClasses));
+    }
+
+    /**
+     * @return object|array<string, mixed>
+     */
+    private function extractSniffConfiguration(Sniff $sniff): object|array
+    {
+        $configuration = $this->ecsConfig->getCheckerConfiguration()[$sniff::class] ?? [];
+
+        return $configuration === [] ? new stdClass() : $configuration;
     }
 
     /**
