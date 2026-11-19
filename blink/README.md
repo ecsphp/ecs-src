@@ -7,14 +7,16 @@ in the ECS repository and mirrors ECS's `psr12` + `common` output.
 ## Rule coverage
 
 Share of the fixer universe blink implements - every PHP-CS-Fixer and Symplify
-fixer plus the PHP_CodeSniffer sniffs ECS references from its sets. Regenerate
-with `bin/rule-counts.sh`; CI keeps it current.
+fixer, every fixable PHP_CodeSniffer sniff, plus the sniffs ECS references from
+its sets. Regenerate with `bin/rule-counts.sh`; CI keeps it current and fails
+while any PHP-CS-Fixer fixer or fixable sniff is missing. After bumping
+PHP_CodeSniffer, refresh the sniff list with `bin/phpcs-fixable-sniffs.sh`.
 
 <!-- rule-counts:start -->
 | tool | rules | coverage |
 |---|---:|---:|
-| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | 320 | 100% |
-| blink | 326 | 100% |
+| fixer universe (PHP-CS-Fixer + Symplify + sniffs) | 430 | 100% |
+| blink | 326 | 74% |
 <!-- rule-counts:end -->
 
 ## Build

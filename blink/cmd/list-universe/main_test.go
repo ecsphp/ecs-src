@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestFixerFQCN(t *testing.T) {
 	cases := []struct {
@@ -32,5 +35,17 @@ $x = SomeOtherSniff::class;`
 	}
 	if got[0] != `PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\LanguageConstructSpacingSniff` {
 		t.Errorf("unexpected first match: %q", got[0])
+	}
+}
+
+func TestPhpcsFixableSniffs(t *testing.T) {
+	lines := strings.Split(strings.TrimSpace(phpcsFixableSniffs), "\n")
+	if len(lines) < 100 {
+		t.Fatalf("expected the full fixable sniff list, got %d entries", len(lines))
+	}
+	for _, line := range lines {
+		if sniffRe.FindString(line) != line {
+			t.Errorf("not a sniff FQCN: %q", line)
+		}
 	}
 }
