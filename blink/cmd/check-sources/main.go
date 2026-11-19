@@ -37,6 +37,7 @@ var sourceBases = []string{
 	fixer.SymplifySourceBase,
 	fixer.EcsSrcSourceBase,
 	fixer.PhpCodeSnifferSourceBase,
+	fixer.SlevomatSourceBase,
 }
 
 // cache maps each source base URL to the set of file paths that exist under it,

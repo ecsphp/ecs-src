@@ -1,0 +1,14 @@
+[
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\AlphabeticallySortedByKeysSniff", "file": "Arrays/alphabeticallySortedByKeysErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\AlphabeticallySortedByKeysSniff", "file": "Arrays/alphabeticallySortedByKeysNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\ArrayAccessSniff", "file": "Arrays/arrayAccessErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\ArrayAccessSniff", "file": "Arrays/arrayAccessNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\MultiLineArrayEndBracketPlacementSniff", "file": "Arrays/multiLineArrayEndBracketPlacementErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\MultiLineArrayEndBracketPlacementSniff", "file": "Arrays/multiLineArrayEndBracketPlacementNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff", "file": "Arrays/singleLineArrayWhitespaceNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff", "file": "Arrays/singleLineArrayWhitespaceErrors.php", "config": {"enableEmptyArrayCheck": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff", "file": "Arrays/singleLineArrayWhitespaceRequireSpacesErrors.php", "config": {"spacesAroundBrackets": 1, "enableEmptyArrayCheck": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff", "file": "Arrays/trailingCommas.php", "config": {"enableAfterHeredoc": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff", "file": "Arrays/fixableTrailingCommas.php", "config": {"enableAfterHeredoc": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff", "file": "Arrays/trailingCommasDisabledAfterHeredoc.php", "config": {"enableAfterHeredoc": false}}
+]

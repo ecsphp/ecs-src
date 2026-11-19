@@ -23,6 +23,10 @@ const EcsSrcSourceBase = "https://github.com/ecsphp/ecs-src/blob/main/packages/c
 // ported from a PHP_CodeSniffer sniff rather than a PHP-CS-Fixer fixer.
 const PhpCodeSnifferSourceBase = "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/4.x/src/"
 
+// SlevomatSourceBase is the slevomat/coding-standard location, for the rules
+// ported from a slevomat sniff.
+const SlevomatSourceBase = "https://github.com/slevomat/coding-standard/blob/master/SlevomatCodingStandard/"
+
 // ecsSrcOnlyFixers are Symplify fixers sourced from ecsphp/ecs-src rather than
 // the split symplify/coding-standard repository.
 var ecsSrcOnlyFixers = map[string]bool{
@@ -90,6 +94,12 @@ func SourceURLFor(name string) string {
 	// onto "src/Standards/.../FooSniff.php" in the PHPCSStandards repo.
 	if rest, ok := strings.CutPrefix(name, `PHP_CodeSniffer\`); ok {
 		return PhpCodeSnifferSourceBase + strings.ReplaceAll(rest, `\`, "/") + ".php"
+	}
+
+	// a slevomat sniff: "SlevomatCodingStandard\Sniffs\...\FooSniff" maps onto
+	// "SlevomatCodingStandard/Sniffs/.../FooSniff.php"
+	if rest, ok := strings.CutPrefix(name, `SlevomatCodingStandard\`); ok {
+		return SlevomatSourceBase + strings.ReplaceAll(rest, `\`, "/") + ".php"
 	}
 
 	parts := strings.Split(name, `\`)
