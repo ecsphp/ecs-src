@@ -325,6 +325,7 @@ func ConstructFixers() []fixer.Fixer {
 		ArrayBracketSpacing{},
 		SemicolonSpacing{},
 		SpaceAfterNot{Spacing: 1},
+		ClassInstantiation{},
 		IncrementDecrementSpacing{},
 		OpeningBraceSameLine{},
 		OpeningFunctionBraceBsdAllman{},
