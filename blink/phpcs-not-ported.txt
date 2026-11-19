@@ -53,7 +53,6 @@ PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\ControlStructureSpacingSniff
-PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\ElseIfDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Files\ClosingTagSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Files\EndFileNewlineSniff
@@ -76,11 +75,9 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSni
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\PostStatementCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ElseIfDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ForEachLoopDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ForLoopDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\InlineIfDeclarationSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\LowercaseDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff
