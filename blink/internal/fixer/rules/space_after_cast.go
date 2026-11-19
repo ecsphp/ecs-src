@@ -1,8 +1,6 @@
 package rules
 
 import (
-	"strings"
-
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
@@ -36,42 +34,13 @@ func (f SpaceAfterCast) WithConfig(config map[string]any) fixer.Fixer {
 
 func (f SpaceAfterCast) Fix(s *tokens.Stream) bool {
 	changed := false
-	padding := strings.Repeat(" ", f.Spacing)
 	for i := 0; i < s.Len(); i++ {
 		closeIdx, _, ok := phpCastAt(s, i)
 		if !ok {
 			continue
 		}
 		i = closeIdx
-		next := closeIdx + 1
-		for next < s.Len() && isPhpcsEmpty(s.At(next)) {
-			next++
-		}
-		if next >= s.Len() {
-			continue
-		}
-		ws := closeIdx + 1
-		hasWS := s.At(ws).Kind == token.Whitespace
-		newline := hasWS && strings.Contains(s.At(ws).Value, "\n")
-		if f.IgnoreNewlines && newline {
-			continue
-		}
-		// a comment between the cast and its operand cannot be fixed
-		if next != ws && (!hasWS || next != ws+1) {
-			continue
-		}
-		switch {
-		case !hasWS:
-			if f.Spacing > 0 {
-				s.InsertAt(ws, token.Token{Kind: token.Whitespace, Value: padding})
-				changed = true
-			}
-		case s.At(ws).Value != padding:
-			if f.Spacing > 0 {
-				s.SetValue(ws, padding)
-			} else {
-				s.RemoveAt(ws)
-			}
+		if phpcsSpaceAfter(s, closeIdx, f.Spacing, f.IgnoreNewlines) {
 			changed = true
 		}
 	}
