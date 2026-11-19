@@ -8,6 +8,8 @@
 #
 # Covers only the sniffs blink implements; rerun after porting a sniff.
 # An input whose ECS output equals it gets no .fixed file.
+# Squiz FileComment fills a missing copyright year from the clock: after
+# regenerating in a new year, bump the year pinned in file_comment_clock_test.go.
 set -euo pipefail
 
 UPSTREAM="${1:?usage: bin/phpcs-fixtures.sh <PHP_CodeSniffer checkout>}/src/Standards"

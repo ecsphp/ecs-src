@@ -70,6 +70,9 @@ func newPhpcsOperatorContext(s *tokens.Stream) phpcsOperatorContext {
 					ternaries = append(ternaries, pending{depth})
 				}
 			case ":":
+				if o.returnTypeColon(s, i) {
+					continue
+				}
 				if n := len(ternaries); n > 0 && ternaries[n-1].depth == depth {
 					o.inlineElse[i] = true
 					ternaries = ternaries[:n-1]
@@ -130,6 +133,17 @@ func (o phpcsOperatorContext) markFunction(s *tokens.Stream, i int) {
 			return
 		}
 	}
+}
+
+// returnTypeColon reports whether the ":" at i starts the return type of a
+// function, closure or arrow function (after its parameters or use list).
+func (o phpcsOperatorContext) returnTypeColon(s *tokens.Stream, i int) bool {
+	p := phpcsPrevNonEmpty(s, i-1)
+	if p < 0 || s.At(p).Value != ")" {
+		return false
+	}
+	open := s.MatchBackward(p)
+	return open >= 0 && (o.paramParens[open] || o.useParens[open])
 }
 
 // markMatch records the arm arrows of the match expression at i.
