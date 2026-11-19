@@ -35,7 +35,6 @@ PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\BooleanOperatorPlacemen
 PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\FileHeaderSniff
-PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\NullableTypeDeclarationSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\ReturnTypeDeclarationSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Operators\OperatorSpacingSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff
@@ -45,7 +44,6 @@ PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\ControlStructureSpacingS
 PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Files\ClosingTagSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Files\EndFileNewlineSniff
-PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\FunctionClosingBraceSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Namespaces\NamespaceDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Namespaces\UseDeclarationSniff
@@ -74,10 +72,8 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\EmbeddedPhpSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\LowercasePHPFunctionsSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\ConcatenationSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\EchoedStringsSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionClosingBraceSpaceSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionOpeningBraceSpaceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\LogicalOperatorSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\MemberVarSpacingSniff
