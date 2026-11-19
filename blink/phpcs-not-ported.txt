@@ -5,11 +5,16 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\SelfMemberReferenceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\MultiLineFunctionDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\EmbeddedPhpSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\LowercasePHPFunctionsSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\ConcatenationSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ScopeClosingBraceSniff

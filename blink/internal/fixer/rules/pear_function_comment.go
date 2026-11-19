@@ -56,8 +56,17 @@ func pearIsMethodModifier(f *slvFile, i int) bool {
 }
 
 func pearFunctionComment(f *slvFile, ptr int) {
+	if commentEnd, tags, ok := pearFunctionCommentPreamble(f, ptr); ok {
+		pearProcessParams(f, commentEnd, tags)
+	}
+}
+
+// pearFunctionCommentPreamble is the part of PEAR's process() before the
+// processReturn/processThrows/processParams calls: it finds the docblock and
+// removes blank lines after it, returning its closer and tags.
+func pearFunctionCommentPreamble(f *slvFile, ptr int) (commentEnd int, tags []int, ok bool) {
 	ignored := func(i int) bool { return f.toks[i].kind == token.Whitespace || pearIsMethodModifier(f, i) }
-	commentEnd := ptr - 1
+	commentEnd = ptr - 1
 	for ; commentEnd >= 0; commentEnd-- {
 		if ignored(commentEnd) {
 			continue
@@ -69,7 +78,7 @@ func pearFunctionComment(f *slvFile, ptr int) {
 		break
 	}
 	if commentEnd < 0 {
-		return
+		return 0, nil, false
 	}
 	isComment := func(i int) bool { return f.toks[i].kind == token.Comment && !phpcsIsAnnotation(f, i) }
 	if isComment(commentEnd) {
@@ -82,7 +91,7 @@ func pearFunctionComment(f *slvFile, ptr int) {
 		}
 	}
 	if f.toks[commentEnd].doc != slvDocClose {
-		return
+		return 0, nil, false
 	}
 
 	if f.toks[commentEnd].line != f.toks[ptr].line-1 {
@@ -112,13 +121,12 @@ func pearFunctionComment(f *slvFile, ptr int) {
 	for commentStart > 0 && f.toks[commentStart].doc != slvDocOpen {
 		commentStart--
 	}
-	var tags []int
 	for i := commentStart + 1; i < commentEnd; i++ {
 		if f.toks[i].doc == slvDocTag {
 			tags = append(tags, i)
 		}
 	}
-	pearProcessParams(f, commentEnd, tags)
+	return commentEnd, tags, true
 }
 
 // phpcsAttributeCloser is the attribute_closer PHP_CodeSniffer gives every

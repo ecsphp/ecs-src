@@ -388,6 +388,8 @@ func ConstructFixers() []fixer.Fixer {
 		PearScopeClosingBrace{Indent: 4},
 		PSR2SwitchDeclaration{Indent: 4},
 		PearObjectOperatorIndent{Indent: 4},
+		SquizFunctionComment{},
+		EmbeddedPhp{},
 		SlevomatArrowFunctionDeclaration{},
 		SlevomatDisallowTrailingCommaInCall{},
 		SlevomatDisallowTrailingCommaInClosureUse{},

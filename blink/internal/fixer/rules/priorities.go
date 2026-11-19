@@ -189,6 +189,7 @@ var fixerPriority = map[string]int{
 	"VariableCommentSniff":                        0,
 	"BlockCommentSniff":                           0,
 	"DocCommentAlignmentSniff":                    0,
+	"EmbeddedPhpSniff":                            0,
 	"UselessParenthesesSniff":                     0,
 	"UselessSemicolonSniff":                       0,
 	// getPriority() is 0 upstream; raised to run before blank_line_after_opening_tag
