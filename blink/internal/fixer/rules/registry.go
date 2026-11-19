@@ -377,6 +377,8 @@ func ConstructFixers() []fixer.Fixer {
 		DocCommentAlignment{},
 		PEARClassDeclaration{},
 		PSR2ClassDeclaration{Indent: 4},
+		SquizClassDeclaration{Indent: 4},
+		SquizArrayDeclaration{},
 		PSR12AnonClassDeclaration{Indent: 4},
 		PSR2ControlStructureSpacing{},
 		PSR12ControlStructureSpacing{Indent: 4},

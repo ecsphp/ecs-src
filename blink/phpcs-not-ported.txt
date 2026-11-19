@@ -1,6 +1,7 @@
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\ScopeIndentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\ClassDeclarationSniff
+PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\SelfMemberReferenceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff

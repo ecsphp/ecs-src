@@ -160,6 +160,7 @@ var fixerPriority = map[string]int{
 	"DisallowSpaceIndentSniff":                    0,
 	"ArrayIndentSniff":                            0,
 	"ClassDeclarationSniff":                       0,
+	"ArrayDeclarationSniff":                       0,
 	"AnonClassDeclarationSniff":                   0,
 	"ScopeClosingBraceSniff":                      0,
 	"SwitchDeclarationSniff":                      0,
