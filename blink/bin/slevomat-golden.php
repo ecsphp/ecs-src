@@ -69,7 +69,7 @@ foreach ($processes as [$case, $workDir, $target, $process, $pipes]) {
     proc_close($process);
 
     $input = $dataDir . '/' . $case['file'];
-    $expected = preg_replace('~\.php$~', '.fixed.php', $input);
+    $expected = preg_replace('~\.php$~', (isset($case['variant']) ? '.' . $case['variant'] : '') . '.fixed.php', $input);
     $output = (string) file_get_contents($target);
     if ($stderr !== '' && $output === file_get_contents($input)) {
         fwrite(STDERR, $case['file'] . ': ' . $stderr . "\n");
