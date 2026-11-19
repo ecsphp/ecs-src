@@ -9,8 +9,7 @@ in the ECS repository and mirrors ECS's `psr12` + `common` output.
 Share of the fixer universe blink implements - every PHP-CS-Fixer and Symplify
 fixer, every fixable PHP_CodeSniffer sniff, plus the sniffs ECS references from
 its sets. Regenerate with `bin/rule-counts.sh`; CI keeps it current and fails
-while any PHP-CS-Fixer fixer is missing, or a sniff that `phpcs-not-ported.txt`
-does not list. That list only shrinks: drop a sniff from it once blink has it. After bumping
+while any PHP-CS-Fixer fixer or fixable sniff is missing. After bumping
 PHP_CodeSniffer, refresh the sniff list with `bin/phpcs-fixable-sniffs.sh`.
 
 Every sniff blink implements must pass PHP_CodeSniffer's own test files
