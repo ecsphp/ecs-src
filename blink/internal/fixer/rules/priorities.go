@@ -78,6 +78,10 @@ var fixerPriority = map[string]int{
 	"DisallowShortArraySyntaxSniff":            0,
 	"SpaceBeforeCastSniff":                     0,
 	"HereNowdocIdentifierSpacingSniff":         0,
+	"InlineCommentSniff":                       0,
+	"ImportStatementSniff":                     0,
+	"OpenTagSniff":                             0,
+	"OpeningBraceSpaceSniff":                   0,
 
 	// slevomat sniffs
 	"AlphabeticallySortedByKeysSniff":             0,
