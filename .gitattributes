@@ -7,3 +7,4 @@ phpunit.xml export-ignore
 /docs export-ignore
 # byte-exact PHP_CodeSniffer fixtures: never convert their line endings
 /blink/internal/fixer/rules/testdata/phpcs/** -text
+/blink/internal/fixer/rules/testdata/phpcs_operator/** -text

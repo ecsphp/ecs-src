@@ -91,8 +91,27 @@ func (o *obFile) markReferences() {
 			if phpcsTypeOperator(s, i) || t.Value == "&" && ctx.isReference(s, i) {
 				o.notOpRef[j] = true
 			}
+			if ctx.ternaryRefAmp[i] {
+				o.markTernaryFn(j)
+			}
 		}
 		off += len(t.Value)
+	}
+}
+
+// markTernaryFn retokenizes the "fn&(...):" PHPCS misreads inside a ternary,
+// with "&" at amp: "fn" is a plain name and the ":" an inline else.
+func (o *obFile) markTernaryFn(amp int) {
+	f := o.f
+	if fn := f.prevEffective(amp - 1); fn >= 0 {
+		o.code[fn] = "string"
+	}
+	open := f.nextNonWhitespace(amp+1, len(f.toks))
+	if open < 0 || f.toks[open].closer < 0 {
+		return
+	}
+	if colon := f.nextNonWhitespace(f.toks[open].closer+1, len(f.toks)); colon >= 0 && f.toks[colon].orig == ":" {
+		o.code[colon] = "inline_else"
 	}
 }
 
