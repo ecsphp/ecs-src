@@ -12,6 +12,10 @@ import (
 // the file is stable or 50 loops pass.
 const phpcsMaxLoops = 50
 
+// phpcsOnePass is a sniff whose Fix already runs ECS's fixer loop through to a
+// fixer conflict, where ECS stops; fixing its output again would go further.
+type phpcsOnePass interface{ phpcsOnePass() }
+
 // TestPhpcsUpstreamFixtures runs every blink sniff over PHP_CodeSniffer's own
 // test files (testdata/phpcs, copied from the 4.x Tests/ dirs): each .inc must
 // fix to its .inc.fixed, or stay unchanged when upstream ships no .fixed file.
@@ -49,6 +53,9 @@ func TestPhpcsUpstreamFixtures(t *testing.T) {
 						break
 					}
 					got = next
+					if _, ok := f.(phpcsOnePass); ok {
+						break
+					}
 				}
 				if got != want {
 					t.Errorf("%s: %s\n%s", f.Name(), in, firstDiff(got, want))

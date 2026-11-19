@@ -27,6 +27,7 @@ type slvTok struct {
 	column  int
 	length  int  // display length without the newline
 	heredoc bool // a line of a heredoc or nowdoc
+	interp  bool // a line of an interpolated string (T_DOUBLE_QUOTED_STRING)
 	closer  int  // the matching bracket of "(", "[", "{", "#[" and back, else -1
 	doc     slvDocKind
 }
@@ -154,7 +155,11 @@ func slvSplit(toks []token.Token) []slvTok {
 				}
 			}
 			v := b.String()
+			from := len(out)
 			add(token.String, v, slvIsHeredoc(v))
+			for n := from; n < len(out); n++ {
+				out[n].interp = true
+			}
 		case t.Kind == token.String:
 			add(token.String, t.Value, slvIsHeredoc(t.Value))
 		case (t.Kind == token.Comment && !strings.HasPrefix(t.Value, "/*") || t.Kind == token.CloseTag) &&
@@ -364,7 +369,7 @@ func slvIsHeredoc(v string) bool {
 }
 
 func slvTabbed(k token.Kind) bool {
-	return k == token.Whitespace || k == token.Comment || k == token.DocComment || k == token.String
+	return k == token.Whitespace || k == token.Comment || k == token.DocComment || k == token.String || k == token.InlineHTML
 }
 
 // position sets line, column, length and content like PHP_CodeSniffer's
@@ -378,6 +383,11 @@ func (f *slvFile) position() {
 		if slvTabbed(t.kind) && strings.Contains(t.orig, "\t") {
 			t.content, t.length = slvReplaceTabs(t.orig, col)
 		}
+		if t.kind == token.Ident && slvKnownLength(t.orig) {
+			// PHP_CodeSniffer takes T_TRUE, T_FALSE and T_NULL at their known
+			// length, without the "\" of a fully qualified "\true"
+			t.length--
+		}
 		col += t.length
 		if strings.Contains(t.orig, "\n") {
 			line++
@@ -388,6 +398,14 @@ func (f *slvFile) position() {
 			}
 		}
 	}
+}
+
+func slvKnownLength(v string) bool {
+	switch strings.ToLower(v) {
+	case `\true`, `\false`, `\null`:
+		return true
+	}
+	return false
 }
 
 // slvReplaceTabs is PHP_CodeSniffer's Tokenizer::replaceTabsInToken.
@@ -418,20 +436,40 @@ func slvReplaceTabs(v string, col int) (string, int) {
 	return b.String(), length
 }
 
+// matchBrackets pairs brackets like PHP_CodeSniffer's Tokenizer::createTokenMap:
+// each bracket type has its own stack, so an unclosed "(" does not swallow a "}".
 func (f *slvFile) matchBrackets() {
-	var stack []int
+	stacks := map[string][]int{}
 	for i, t := range f.toks {
+		var key string
+		open := false
 		switch {
-		case t.kind == token.AttributeStart || t.kind == token.Punct && (t.orig == "(" || t.orig == "[" || t.orig == "{"):
-			stack = append(stack, i)
-		case t.kind == token.AttributeEnd || t.kind == token.Punct && (t.orig == ")" || t.orig == "]" || t.orig == "}"):
-			if len(stack) == 0 {
-				continue
-			}
-			o := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-			f.toks[o].closer, f.toks[i].closer = i, o
+		case t.kind == token.AttributeStart:
+			key, open = "#[", true
+		case t.kind == token.AttributeEnd:
+			key = "#["
+		case t.kind == token.Punct && (t.orig == "(" || t.orig == "[" || t.orig == "{"):
+			key, open = t.orig, true
+		case t.kind == token.Punct && t.orig == ")":
+			key = "("
+		case t.kind == token.Punct && t.orig == "]":
+			key = "["
+		case t.kind == token.Punct && t.orig == "}":
+			key = "{"
+		default:
+			continue
 		}
+		if open {
+			stacks[key] = append(stacks[key], i)
+			continue
+		}
+		st := stacks[key]
+		if len(st) == 0 {
+			continue
+		}
+		o := st[len(st)-1]
+		stacks[key] = st[:len(st)-1]
+		f.toks[o].closer, f.toks[i].closer = i, o
 	}
 }
 
