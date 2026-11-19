@@ -25,6 +25,10 @@ END="<!-- rule-counts:end -->"
 SLEVOMAT="$ROOT/slevomat-fixable-sniffs.txt"
 SLEVOMAT_START="<!-- slevomat-counts:start -->"
 SLEVOMAT_END="<!-- slevomat-counts:end -->"
+# the repository README carries one combined parity table
+ROOT_README="$ROOT/../README.md"
+PARITY_START="<!-- parity-counts:start -->"
+PARITY_END="<!-- parity-counts:end -->"
 
 go build -C "$ROOT" -o /tmp/blink-count . >&2
 /tmp/blink-count list-checkers > /tmp/blink-checkers.txt
@@ -104,6 +108,26 @@ $SLEVOMAT_END
 EOF
 )
 
+all_done=$(( implemented + slevomat_done_count ))
+all_total=$(( ecs + slevomat_total ))
+parity_block=$(cat <<EOF
+$PARITY_START
+| source | in blink | rules | coverage |
+|---|---:|---:|---:|
+$(coverage_row "PHP-CS-Fixer" 'PhpCsFixer\\')
+$(coverage_row "Symplify" 'Symplify\\')
+$(coverage_row "PHP_CodeSniffer" 'PHP_CodeSniffer\\')
+| slevomat | $slevomat_done_count | $slevomat_total | $(( slevomat_done_count * 100 / slevomat_total ))% |
+| **total** | **$all_done** | **$all_total** | **$(( all_done * 100 / all_total ))%** |
+$PARITY_END
+EOF
+)
+new_root=$(awk -v start="$PARITY_START" -v end="$PARITY_END" -v block="$parity_block" '
+  $0 ~ start {print block; skip=1; next}
+  $0 ~ end {skip=0; next}
+  !skip {print}
+' "$ROOT_README")
+
 # Write the blocks back into README between their markers.
 new=$(awk -v start="$START" -v end="$END" -v block="$block" \
     -v sstart="$SLEVOMAT_START" -v send="$SLEVOMAT_END" -v sblock="$slevomat_block" '
@@ -144,6 +168,11 @@ if [ "${1:-}" = "--check" ]; then
         diff "$README" <(printf '%s\n' "$new") || true
         exit 1
     fi
+    if ! diff <(printf '%s\n' "$new_root") "$ROOT_README" >/dev/null; then
+        echo "Repository README parity table is stale. Run: bin/rule-counts.sh" >&2
+        diff "$ROOT_README" <(printf '%s\n' "$new_root") || true
+        exit 1
+    fi
     if ! diff "$ALL_FIXERS" /tmp/blink-universe.txt >/dev/null; then
         echo "ecs-all-fixers.txt is stale. Run: bin/rule-counts.sh" >&2
         diff "$ALL_FIXERS" /tmp/blink-universe.txt || true
@@ -152,6 +181,7 @@ if [ "${1:-}" = "--check" ]; then
     echo "Rule counts up to date: universe $ecs, blink $go_count"
 else
     printf '%s\n' "$new" > "$README"
+    printf '%s\n' "$new_root" > "$ROOT_README"
     cp /tmp/blink-universe.txt "$ALL_FIXERS"
     echo "Updated README and ecs-all-fixers.txt: universe $ecs, blink $go_count"
 fi
