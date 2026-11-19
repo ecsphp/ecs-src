@@ -1,0 +1,51 @@
+10	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "My_Class::parseMyDSN" is not in camel caps format
+11	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "My_Class::get_some_value" is not in camel caps format
+12	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "My_Class::GetSomeValue" is not in camel caps format
+13	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "My_Class::getSomeValue_Again" is not in camel caps format
+16	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Protected method name "My_Class::parseMyDSN" is not in camel caps format
+17	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Protected method name "My_Class::get_some_value" is not in camel caps format
+20	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Private method name "My_Class::parseMyDSN" is not in camel caps format
+21	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Private method name "My_Class::_get_some_value" is not in camel caps format
+24	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Method name "My_Class::parseMyDSN" is not in camel caps format
+25	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Method name "My_Class::get_some_value" is not in camel caps format
+30	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Function name "parseMyDSN" is not in camel caps format
+31	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Function name "get_some_value" is not in camel caps format
+50	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "Magic_Test::__autoload" is invalid; only PHP magic methods should be prefixed with a double underscore
+52	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "Magic_Test::__myFunction" is invalid; only PHP magic methods should be prefixed with a double underscore
+53	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "Magic_Test::__my_function" is invalid; only PHP magic methods should be prefixed with a double underscore
+53	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Method name "Magic_Test::__my_function" is not in camel caps format
+57	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__construct" is invalid; only PHP magic methods should be prefixed with a double underscore
+58	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__destruct" is invalid; only PHP magic methods should be prefixed with a double underscore
+59	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__call" is invalid; only PHP magic methods should be prefixed with a double underscore
+60	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__callStatic" is invalid; only PHP magic methods should be prefixed with a double underscore
+61	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__get" is invalid; only PHP magic methods should be prefixed with a double underscore
+62	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__set" is invalid; only PHP magic methods should be prefixed with a double underscore
+63	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__isset" is invalid; only PHP magic methods should be prefixed with a double underscore
+64	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__unset" is invalid; only PHP magic methods should be prefixed with a double underscore
+65	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__sleep" is invalid; only PHP magic methods should be prefixed with a double underscore
+66	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__wakeup" is invalid; only PHP magic methods should be prefixed with a double underscore
+67	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__toString" is invalid; only PHP magic methods should be prefixed with a double underscore
+68	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__set_state" is invalid; only PHP magic methods should be prefixed with a double underscore
+68	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Function name "__set_state" is not in camel caps format
+69	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__clone" is invalid; only PHP magic methods should be prefixed with a double underscore
+71	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__invoke" is invalid; only PHP magic methods should be prefixed with a double underscore
+72	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__myFunction" is invalid; only PHP magic methods should be prefixed with a double underscore
+73	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__my_function" is invalid; only PHP magic methods should be prefixed with a double underscore
+73	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Function name "__my_function" is not in camel caps format
+118	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.FunctionDoubleUnderscore	Function name "__debugInfo" is invalid; only PHP magic methods should be prefixed with a double underscore
+144	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "[Anonymous Class]::__autoload" is invalid; only PHP magic methods should be prefixed with a double underscore
+146	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "[Anonymous Class]::__myFunction" is invalid; only PHP magic methods should be prefixed with a double underscore
+147	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "[Anonymous Class]::__my_function" is invalid; only PHP magic methods should be prefixed with a double underscore
+147	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Method name "[Anonymous Class]::__my_function" is not in camel caps format
+158	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "[Anonymous Class]::nested_function" is not in camel caps format
+159	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "[Anonymous Class]::__something" is invalid; only PHP magic methods should be prefixed with a double underscore
+179	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "Suit::__myFunction" is invalid; only PHP magic methods should be prefixed with a double underscore
+180	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.MethodDoubleUnderscore	Method name "Suit::__my_function" is invalid; only PHP magic methods should be prefixed with a double underscore
+180	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Method name "Suit::__my_function" is not in camel caps format
+183	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "Suit::parseMyDSN" is not in camel caps format
+184	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "Suit::get_some_value" is not in camel caps format
+189	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.ScopeNotCamelCaps	Public method name "MyInterface::get_some_value" is not in camel caps format
+194	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Method name "MyClass::strictFOrmatDIsabled" is not in camel caps format
+197	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Method name "MyClass::strictFOrmatIsENabled" is not in camel caps format
+201	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Function name "strictFOrmatDIsabled" is not in camel caps format
+204	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\CamelCapsFunctionNameSniff.NotCamelCaps	Function name "strictFOrmatIsENabled" is not in camel caps format

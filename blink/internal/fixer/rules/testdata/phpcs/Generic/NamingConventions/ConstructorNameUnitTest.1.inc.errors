@@ -1,0 +1,12 @@
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+11	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+47	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyle	PHP4 style constructors are not allowed; use "__construct()" instead
+62	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+91	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyle	PHP4 style constructors are not allowed; use "__construct()" instead
+103	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+104	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+112	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+120	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+121	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+126	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead
+127	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\ConstructorNameSniff.OldStyleCall	PHP4 style calls to parent constructors are not allowed; use "parent::__construct()" instead

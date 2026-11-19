@@ -1,0 +1,10 @@
+6	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::My_Class" is not in camel caps format
+7	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::_My_Class" is not in camel caps format
+11	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::get_some_value" is not in camel caps format
+12	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::GetSomeValue" is not in camel caps format
+13	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::getSomeValue_Again" is not in camel caps format
+17	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::get_some_value" is not in camel caps format
+21	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::get_some_value" is not in camel caps format
+25	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::get_some_value" is not in camel caps format
+26	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "My_Class::o_toString" is not in camel caps format
+77	PHP_CodeSniffer\Standards\PSR1\Sniffs\Methods\CamelCapsMethodNameSniff.NotCamelCaps	Method name "[Anonymous Class]::nested_function" is not in camel caps format
