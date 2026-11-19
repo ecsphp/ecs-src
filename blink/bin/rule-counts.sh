@@ -6,9 +6,8 @@
 #   bin/rule-counts.sh          update README in place
 #   bin/rule-counts.sh --check  fail (exit 1) if README is out of date
 #
-# Both modes fail (exit 1) while any PHP-CS-Fixer fixer is missing in blink, or
-# a PHP_CodeSniffer sniff is missing that phpcs-not-ported.txt does not list.
-# That list is a ratchet: a sniff blink implements must be removed from it.
+# Both modes fail (exit 1) while any PHP-CS-Fixer fixer or fixable
+# PHP_CodeSniffer sniff is missing in blink.
 #
 # Sources:
 #   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers, all fixable
@@ -19,7 +18,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 README="$ROOT/README.md"
 ALL_FIXERS="$ROOT/ecs-all-fixers.txt"
-NOT_PORTED="$ROOT/phpcs-not-ported.txt"
 START="<!-- rule-counts:start -->"
 END="<!-- rule-counts:end -->"
 SLEVOMAT="$ROOT/slevomat-fixable-sniffs.txt"
@@ -43,13 +41,8 @@ ecs=$(grep -c . /tmp/blink-universe.txt)
 sed 's/^[[:space:]]*-[[:space:]]*//' /tmp/blink-checkers.txt | LC_ALL=C sort -u > /tmp/blink-impl.txt
 missing=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt | sed -E 's#.*\\##')
 missing_count=$(printf '%s' "$missing" | grep -c . || true)
-# sniffs not ported yet are allowed only while phpcs-not-ported.txt lists them
-LC_ALL=C sort -u "$NOT_PORTED" > /tmp/blink-not-ported.txt
 missing_required=$(LC_ALL=C comm -23 <(LC_ALL=C sort -u /tmp/blink-universe.txt) /tmp/blink-impl.txt \
-    | grep -E '^(PhpCsFixer|PHP_CodeSniffer)\\' | LC_ALL=C comm -23 - /tmp/blink-not-ported.txt || true)
-# listed sniffs that blink now implements, or that left the universe
-stale_not_ported=$(LC_ALL=C comm -12 /tmp/blink-not-ported.txt /tmp/blink-impl.txt; \
-    LC_ALL=C comm -23 /tmp/blink-not-ported.txt <(LC_ALL=C sort -u /tmp/blink-universe.txt))
+    | grep -E '^(PhpCsFixer|PHP_CodeSniffer)\\' || true)
 
 # blink rules within the universe; blink's own extras never push parity past 100%
 implemented=$(( ecs - missing_count ))
@@ -189,11 +182,5 @@ fi
 if [ -n "$missing_required" ]; then
     echo "PHP-CS-Fixer fixers and PHP_CodeSniffer sniffs not implemented in blink:" >&2
     printf '  %s\n' $missing_required >&2
-    exit 1
-fi
-
-if [ -n "$stale_not_ported" ]; then
-    echo "Remove these from phpcs-not-ported.txt, blink implements them or they are gone:" >&2
-    printf '  %s\n' $stale_not_ported >&2
     exit 1
 fi
