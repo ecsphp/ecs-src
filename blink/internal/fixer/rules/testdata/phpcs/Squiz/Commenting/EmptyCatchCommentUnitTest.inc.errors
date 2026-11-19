@@ -1,0 +1,6 @@
+13	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\EmptyCatchCommentSniff.Missing	Empty CATCH statement must have a comment to explain why the exception is not handled
+33	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\EmptyCatchCommentSniff.Missing	Empty CATCH statement must have a comment to explain why the exception is not handled
+49	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\EmptyCatchCommentSniff.Missing	Empty CATCH statement must have a comment to explain why the exception is not handled
+50	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\EmptyCatchCommentSniff.Missing	Empty CATCH statement must have a comment to explain why the exception is not handled
+51	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\EmptyCatchCommentSniff.Missing	Empty CATCH statement must have a comment to explain why the exception is not handled
+52	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\EmptyCatchCommentSniff.Missing	Empty CATCH statement must have a comment to explain why the exception is not handled

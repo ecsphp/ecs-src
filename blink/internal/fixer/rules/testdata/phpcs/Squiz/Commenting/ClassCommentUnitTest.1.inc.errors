@@ -1,0 +1,6 @@
+2	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClassCommentSniff.SpacingAfter	There must be no blank lines after the class comment
+15	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClassCommentSniff.WrongStyle	You must use "/**" style comments for a class comment
+31	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClassCommentSniff.SpacingAfter	There must be no blank lines after the class comment
+54	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClassCommentSniff.Missing	Missing doc comment for class Sub_Class
+143	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClassCommentSniff.WrongStyle	You must use "/**" style comments for a class comment
+145	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClassCommentSniff.Missing	Missing doc comment for class ReadonlyFinalWithoutDocblock

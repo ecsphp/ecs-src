@@ -1,0 +1,5 @@
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\Objects\ObjectInstantiationSniff.NotAssigned	New objects must be assigned to a variable
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\Objects\ObjectInstantiationSniff.NotAssigned	New objects must be assigned to a variable
+31	PHP_CodeSniffer\Standards\Squiz\Sniffs\Objects\ObjectInstantiationSniff.NotAssigned	New objects must be assigned to a variable
+39	PHP_CodeSniffer\Standards\Squiz\Sniffs\Objects\ObjectInstantiationSniff.NotAssigned	New objects must be assigned to a variable
+39	PHP_CodeSniffer\Standards\Squiz\Sniffs\Objects\ObjectInstantiationSniff.NotAssigned	New objects must be assigned to a variable

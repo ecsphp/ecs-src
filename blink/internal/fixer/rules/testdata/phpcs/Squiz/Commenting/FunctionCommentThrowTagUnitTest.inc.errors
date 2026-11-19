@@ -1,0 +1,14 @@
+9	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.Missing	Missing @throws tag in function comment
+21	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.WrongNumber	Expected 2 @throws tag(s) in function comment; 1 found
+35	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.WrongNumber	Expected 1 @throws tag(s) in function comment; 2 found
+47	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.Missing	Missing @throws tag for "PHP_Correct_Exception" exception
+61	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.Missing	Missing @throws tag for "PHP_Correct_Exception2" exception
+61	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.Missing	Missing @throws tag for "PHP_Correct_Exception3" exception
+106	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.WrongNumber	Expected 4 @throws tag(s) in function comment; 2 found
+123	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.Missing	Missing @throws tag in function comment
+200	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.WrongNumber	Expected 2 @throws tag(s) in function comment; 1 found
+219	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.WrongNumber	Expected 2 @throws tag(s) in function comment; 1 found
+287	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.Missing	Missing @throws tag for "\\Foo\\Bar\\FooBarException" exception
+397	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.WrongNumber	Expected 1 @throws tag(s) in function comment; 2 found
+519	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.WrongNumber	Expected 1 @throws tag(s) in function comment; 2 found
+530	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentThrowTagSniff.Missing	Missing @throws tag for "Right_Exception" exception

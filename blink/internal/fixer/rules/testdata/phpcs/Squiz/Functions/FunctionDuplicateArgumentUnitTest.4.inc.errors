@@ -1,0 +1,1 @@
+7	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDuplicateArgumentSniff.Found	Variable "$a" appears more than once in function declaration
