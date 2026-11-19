@@ -75,6 +75,7 @@ var fixerPriority = map[string]int{
 	"FunctionSpacingSniff":                     0,
 	"MemberVarSpacingSniff":                    0,
 	"SelfMemberReferenceSniff":                 0,
+	"ControlSignatureSniff":                    0,
 	"EmptyPHPStatementSniff":                   0,
 	"DisallowMultipleStatementsSniff":          0,
 	"InlineControlStructureSniff":              0,

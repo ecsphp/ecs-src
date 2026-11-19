@@ -306,6 +306,8 @@ func ConstructFixers() []fixer.Fixer {
 		EmptyPHPStatement{},
 		DisallowMultipleStatements{},
 		InlineControlStructure{},
+		SquizControlSignature{RequiredSpacesBeforeColon: 1},
+		SquizSwitchDeclaration{Indent: 4},
 		LowercaseDeclaration{},
 		EndFileNewline{},
 		EndFileNoNewline{},
