@@ -1,0 +1,7 @@
+2	PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryStringConcatSniff.Found	String concat is not required here; use a single string instead
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryStringConcatSniff.Found	String concat is not required here; use a single string instead
+9	PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryStringConcatSniff.Found	String concat is not required here; use a single string instead
+12	PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryStringConcatSniff.Found	String concat is not required here; use a single string instead
+19	PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryStringConcatSniff.Found	String concat is not required here; use a single string instead
+20	PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryStringConcatSniff.Found	String concat is not required here; use a single string instead
+29	PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryStringConcatSniff.Found	String concat is not required here; use a single string instead

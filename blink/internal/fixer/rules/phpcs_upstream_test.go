@@ -65,7 +65,7 @@ func TestPhpcsUpstreamErrors(t *testing.T) {
 	t.Parallel()
 	for _, f := range All() {
 		reporter, ok := f.(fixer.ErrorReporter)
-		if !ok {
+		if _, fs := f.(phpcsReadsFileSystem); !ok || fs {
 			continue
 		}
 		inputs, ok := phpcsUpstreamInputs(t, f)
@@ -96,6 +96,10 @@ func TestPhpcsUpstreamErrors(t *testing.T) {
 		}
 	}
 }
+
+// phpcsReadsFileSystem is a sniff that reports from the file on disk rather
+// than its contents, which TestPhpcsUpstreamErrors cannot reproduce.
+type phpcsReadsFileSystem interface{ phpcsReadsFileSystem() }
 
 // phpcsErrorRow formats an error as bin/phpcs-fixtures.sh writes it.
 func phpcsErrorRow(e fixer.CodingStandardError) string {

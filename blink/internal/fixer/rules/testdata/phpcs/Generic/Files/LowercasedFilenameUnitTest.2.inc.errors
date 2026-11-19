@@ -1,0 +1,1 @@
+1	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\LowercasedFilenameSniff.NotFound	Filename "LowercasedFilenameUnitTest.2.inc.php" doesn't match the expected filename "lowercasedfilenameunittest.2.inc.php"
