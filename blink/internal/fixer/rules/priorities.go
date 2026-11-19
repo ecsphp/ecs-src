@@ -124,6 +124,8 @@ var fixerPriority = map[string]int{
 	"OpeningBraceSameLineSniff":                   0,
 	"OpeningFunctionBraceBsdAllmanSniff":          0,
 	"OpeningFunctionBraceKernighanRitchieSniff":   0,
+	"DocCommentSniff":                             0,
+	"MultipleStatementAlignmentSniff":             0,
 	"SpreadOperatorSpacingSniff":                  0,
 	"StaticClosureSniff":                          0,
 	"TrailingArrayCommaSniff":                     0,

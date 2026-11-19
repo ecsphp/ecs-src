@@ -28,6 +28,7 @@ type slvTok struct {
 	length  int  // display length without the newline
 	heredoc bool // a line of a heredoc or nowdoc
 	closer  int  // the matching bracket of "(", "[", "{", "#[" and back, else -1
+	doc     slvDocKind
 }
 
 type slvFile struct {
@@ -171,11 +172,9 @@ func slvSplit(toks []token.Token) []slvTok {
 				i++
 				add(toks[i].Kind, ws[nl:], false)
 			}
-		case t.Kind == token.DocComment:
+		case slvIsDocBlock(t):
 			// PHP_CodeSniffer splits a docblock into its tags, stars and texts
-			for _, v := range slvDocTokens(t.Value, eol) {
-				out = append(out, slvTok{kind: token.DocComment, orig: v})
-			}
+			out = append(out, slvDocTokens(t.Value, eol)...)
 		default:
 			add(t.Kind, t.Value, false)
 		}
@@ -251,9 +250,25 @@ func slvRawEOL(toks []token.Token) string {
 	return "\n"
 }
 
+// slvDocKind is the PHP_CodeSniffer token type of a docblock piece.
+type slvDocKind uint8
+
+const (
+	slvDocNone slvDocKind = iota
+	slvDocOpen
+	slvDocClose
+	slvDocWhitespace
+	slvDocStar
+	slvDocTag
+	slvDocString
+)
+
 // slvDocTokens splits a docblock like PHP_CodeSniffer's Comment tokenizer.
-func slvDocTokens(comment, eol string) []string {
-	var out []string
+func slvDocTokens(comment, eol string) []slvTok {
+	var out []slvTok
+	add := func(v string, doc slvDocKind) {
+		out = append(out, slvTok{kind: token.DocComment, orig: v, doc: doc})
+	}
 	n := len(comment)
 	char := n - len(strings.TrimLeft(comment, "/*"))
 	last := ""
@@ -266,7 +281,7 @@ func slvDocTokens(comment, eol string) []string {
 	} else {
 		openTag, comment = comment[:char], strings.TrimLeft(comment, "/*")
 	}
-	out = append(out, openTag)
+	add(openTag, slvDocOpen)
 	closeTag := comment[len(strings.TrimRight(comment, "/*")):]
 	body := strings.TrimRight(comment, "/*")
 	ws := func(s string, start int) string {
@@ -283,7 +298,7 @@ func slvDocTokens(comment, eol string) []string {
 		}
 		c := 0
 		if sp := ws(line, 0); sp != "" {
-			out = append(out, sp)
+			add(sp, slvDocWhitespace)
 			c += len(sp)
 			if c == len(line) {
 				break
@@ -294,11 +309,11 @@ func slvDocTokens(comment, eol string) []string {
 		}
 		if ln > 0 && line[c] == '*' {
 			c++
-			out = append(out, "*")
+			add("*", slvDocStar)
 		}
 		// processLine
 		if sp := ws(line, c); sp != "" {
-			out = append(out, sp)
+			add(sp, slvDocWhitespace)
 			c += len(sp)
 		}
 		if c >= len(line) {
@@ -311,10 +326,10 @@ func slvDocTokens(comment, eol string) []string {
 			}
 			tag := line[c:e]
 			if !strings.HasPrefix(strings.ToLower(tag), "@phpcs:") {
-				out = append(out, tag)
+				add(tag, slvDocTag)
 				c = e
 				if sp := ws(line, c); sp != "" {
-					out = append(out, sp)
+					add(sp, slvDocWhitespace)
 					c += len(sp)
 				}
 			}
@@ -327,13 +342,20 @@ func slvDocTokens(comment, eol string) []string {
 			eolAt += c
 		}
 		if eolAt > c {
-			out = append(out, line[c:eolAt])
+			add(line[c:eolAt], slvDocString)
 		}
 		if eolAt != end {
-			out = append(out, line[eolAt:eolAt+len(eol)])
+			add(line[eolAt:eolAt+len(eol)], slvDocWhitespace)
 		}
 	}
-	return append(out, closeTag)
+	add(closeTag, slvDocClose)
+	return out
+}
+
+// slvIsDocBlock reports whether PHP_CodeSniffer tokenizes t as a docblock,
+// which includes a "/**" comment PHP lexes as a plain one ("/**text */").
+func slvIsDocBlock(t token.Token) bool {
+	return t.Kind == token.DocComment || t.Kind == token.Comment && strings.HasPrefix(t.Value, "/**") && t.Value != "/**/"
 }
 
 func slvIsHeredoc(v string) bool {

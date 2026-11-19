@@ -329,6 +329,8 @@ func ConstructFixers() []fixer.Fixer {
 		OpeningBraceSameLine{},
 		OpeningFunctionBraceBsdAllman{},
 		OpeningFunctionBraceKernighanRitchie{},
+		GenericDocComment{},
+		MultipleStatementAlignment{},
 		SlevomatArrowFunctionDeclaration{},
 		SlevomatDisallowTrailingCommaInCall{},
 		SlevomatDisallowTrailingCommaInClosureUse{},
