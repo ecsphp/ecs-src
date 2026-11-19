@@ -25,6 +25,12 @@ func (ZendClosingTag) Fix(s *tokens.Stream) bool {
 	if !phpcsHasOpenTag(s, false) {
 		return false
 	}
+	return phpcsRemoveFinalCloseTag(s)
+}
+
+// phpcsRemoveFinalCloseTag replaces a "?>" that is the file's last non-blank token
+// with a line ending, adding the ";" the statement before it needs.
+func phpcsRemoveFinalCloseTag(s *tokens.Stream) bool {
 	last := s.Len() - 1
 	for ; last > 0; last-- {
 		if strings.Trim(s.At(last).Value, " \t\n\r\x00\x0B") != "" {

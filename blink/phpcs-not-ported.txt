@@ -17,7 +17,6 @@ PHP_CodeSniffer\Standards\Generic\Sniffs\Strings\UnnecessaryHeredocSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\ArbitraryParenthesesSpacingSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowSpaceIndentSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowTabIndentSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\GotoTargetSpacingSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\ScopeIndentSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\SpreadOperatorSpacingAfterSniff
@@ -42,10 +41,7 @@ PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\ControlStructureSpacingSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff
-PHP_CodeSniffer\Standards\PSR2\Sniffs\Files\ClosingTagSniff
-PHP_CodeSniffer\Standards\PSR2\Sniffs\Files\EndFileNewlineSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff
-PHP_CodeSniffer\Standards\PSR2\Sniffs\Namespaces\NamespaceDeclarationSniff
 PHP_CodeSniffer\Standards\PSR2\Sniffs\Namespaces\UseDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayBracketSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff

@@ -75,6 +75,8 @@ var fixerPriority = map[string]int{
 	"EndFileNewlineSniff":                      0,
 	"EndFileNoNewlineSniff":                    0,
 	"ClosingTagSniff":                          0,
+	"GotoTargetSpacingSniff":                   0,
+	"NamespaceDeclarationSniff":                0,
 	"LowercaseFunctionKeywordsSniff":           0,
 	"LowercaseClassKeywordsSniff":              0,
 	"LowerCaseConstantSniff":                   0,
