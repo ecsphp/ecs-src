@@ -103,7 +103,7 @@ func newSlvFile(toks []token.Token) *slvFile {
 	for i, t := range f.toks {
 		f.fixed[i] = t.orig
 	}
-	f.eol = slvDetectEOL(f.toks)
+	f.eol = slvRawEOL(toks)
 	return f
 }
 
@@ -111,6 +111,7 @@ func newSlvFile(toks []token.Token) *slvFile {
 // one token, and every token holding a newline is split after each of them.
 func slvSplit(toks []token.Token) []slvTok {
 	var out []slvTok
+	eol := slvRawEOL(toks)
 	add := func(k token.Kind, v string, heredoc bool) {
 		for v != "" {
 			n := strings.IndexByte(v, '\n')
@@ -124,6 +125,15 @@ func slvSplit(toks []token.Token) []slvTok {
 	}
 	for i := 0; i < len(toks); i++ {
 		t := toks[i]
+		if end := slvNameEnd(toks, i); end > i {
+			var b strings.Builder
+			for ; i <= end; i++ {
+				b.WriteString(toks[i].Value)
+			}
+			i = end
+			out = append(out, slvTok{kind: token.Ident, orig: b.String()})
+			continue
+		}
 		if end := slvCastEnd(toks, i); end > i {
 			var b strings.Builder
 			for ; i <= end; i++ {
@@ -146,8 +156,9 @@ func slvSplit(toks []token.Token) []slvTok {
 			add(token.String, v, slvIsHeredoc(v))
 		case t.Kind == token.String:
 			add(token.String, t.Value, slvIsHeredoc(t.Value))
-		case t.Kind == token.Comment && !strings.HasPrefix(t.Value, "/*") && i+1 < len(toks) && toks[i+1].Kind == token.Whitespace:
-			// PHP ends a line comment with its newline
+		case (t.Kind == token.Comment && !strings.HasPrefix(t.Value, "/*") || t.Kind == token.CloseTag) &&
+			i+1 < len(toks) && (toks[i+1].Kind == token.Whitespace || toks[i+1].Kind == token.InlineHTML):
+			// PHP ends a line comment and a closing tag with the newline after it
 			ws := toks[i+1].Value
 			nl := 0
 			if strings.HasPrefix(ws, "\r\n") {
@@ -155,10 +166,15 @@ func slvSplit(toks []token.Token) []slvTok {
 			} else if strings.HasPrefix(ws, "\n") {
 				nl = 1
 			}
-			out = append(out, slvTok{kind: token.Comment, orig: t.Value + ws[:nl]})
+			out = append(out, slvTok{kind: t.Kind, orig: t.Value + ws[:nl]})
 			if nl > 0 {
 				i++
-				add(token.Whitespace, ws[nl:], false)
+				add(toks[i].Kind, ws[nl:], false)
+			}
+		case t.Kind == token.DocComment:
+			// PHP_CodeSniffer splits a docblock into its tags, stars and texts
+			for _, v := range slvDocTokens(t.Value, eol) {
+				out = append(out, slvTok{kind: token.DocComment, orig: v})
 			}
 		default:
 			add(t.Kind, t.Value, false)
@@ -167,20 +183,26 @@ func slvSplit(toks []token.Token) []slvTok {
 	return out
 }
 
-// slvDetectEOL is PHP_CodeSniffer's Common::detectLineEndings.
-func slvDetectEOL(toks []slvTok) string {
-	for _, t := range toks {
-		if n := strings.IndexAny(t.orig, "\r\n"); n >= 0 {
-			if t.orig[n] == '\n' {
-				return "\n"
-			}
-			if n+1 < len(t.orig) && t.orig[n+1] == '\n' {
-				return "\r\n"
-			}
-			return "\r"
-		}
+// slvNameEnd returns the last token of a qualified name starting at i
+// ("Foo\Bar", "\Foo", "namespace\Foo"), which PHP lexes as one token, or -1.
+func slvNameEnd(toks []token.Token, i int) int {
+	isSep := func(j int) bool { return j < len(toks) && toks[j].Kind == token.Punct && toks[j].Value == "\\" }
+	isName := func(j int) bool {
+		return j < len(toks) && (toks[j].Kind == token.Ident || toks[j].Kind == token.Keyword)
 	}
-	return "\n"
+	j := i
+	if !isSep(j) {
+		if !isName(j) || !isSep(j+1) {
+			return -1
+		}
+		j++
+	}
+	end := -1
+	for isSep(j) && isName(j+1) {
+		end = j + 1
+		j += 2
+	}
+	return end
 }
 
 // slvCastEnd returns the ")" of a cast starting at "(" at i, which PHP lexes as
@@ -211,6 +233,107 @@ func slvCastEnd(toks []token.Token, i int) int {
 		return j
 	}
 	return -1
+}
+
+// slvRawEOL is PHP_CodeSniffer's Common::detectLineEndings.
+func slvRawEOL(toks []token.Token) string {
+	for _, t := range toks {
+		if n := strings.IndexAny(t.Value, "\r\n"); n >= 0 {
+			if t.Value[n] == '\n' {
+				return "\n"
+			}
+			if n+1 < len(t.Value) && t.Value[n+1] == '\n' {
+				return "\r\n"
+			}
+			return "\r"
+		}
+	}
+	return "\n"
+}
+
+// slvDocTokens splits a docblock like PHP_CodeSniffer's Comment tokenizer.
+func slvDocTokens(comment, eol string) []string {
+	var out []string
+	n := len(comment)
+	char := n - len(strings.TrimLeft(comment, "/*"))
+	last := ""
+	if n >= 2 {
+		last = comment[n-2:]
+	}
+	var openTag string
+	if char == n && last == "*/" {
+		openTag, comment = comment[:n-2], last
+	} else {
+		openTag, comment = comment[:char], strings.TrimLeft(comment, "/*")
+	}
+	out = append(out, openTag)
+	closeTag := comment[len(strings.TrimRight(comment, "/*")):]
+	body := strings.TrimRight(comment, "/*")
+	ws := func(s string, start int) string {
+		e := start
+		for e < len(s) && (s[e] == ' ' || s[e] == '\t') {
+			e++
+		}
+		return s[start:e]
+	}
+	lines := strings.Split(body, eol)
+	for ln, line := range lines {
+		if ln != len(lines)-1 {
+			line += eol
+		}
+		c := 0
+		if sp := ws(line, 0); sp != "" {
+			out = append(out, sp)
+			c += len(sp)
+			if c == len(line) {
+				break
+			}
+		}
+		if line == "" {
+			continue
+		}
+		if ln > 0 && line[c] == '*' {
+			c++
+			out = append(out, "*")
+		}
+		// processLine
+		if sp := ws(line, c); sp != "" {
+			out = append(out, sp)
+			c += len(sp)
+		}
+		if c >= len(line) {
+			continue
+		}
+		if line[c] == '@' {
+			e := c + 1
+			for e < len(line) && !strings.ContainsRune(" \t\n\r\v\f", rune(line[e])) {
+				e++
+			}
+			tag := line[c:e]
+			if !strings.HasPrefix(strings.ToLower(tag), "@phpcs:") {
+				out = append(out, tag)
+				c = e
+				if sp := ws(line, c); sp != "" {
+					out = append(out, sp)
+					c += len(sp)
+				}
+			}
+		}
+		end := len(line)
+		eolAt := strings.Index(line[c:], eol)
+		if eolAt < 0 {
+			eolAt = end
+		} else {
+			eolAt += c
+		}
+		if eolAt > c {
+			out = append(out, line[c:eolAt])
+		}
+		if eolAt != end {
+			out = append(out, line[eolAt:eolAt+len(eol)])
+		}
+	}
+	return append(out, closeTag)
 }
 
 func slvIsHeredoc(v string) bool {

@@ -15,6 +15,16 @@ type slevomatCase struct {
 	Sniff  string         `json:"sniff"`
 	File   string         `json:"file"`
 	Config map[string]any `json:"config"`
+	// Variant names the expected output of a fixture that runs with several configs.
+	Variant string `json:"variant"`
+}
+
+func (c slevomatCase) expectedFile() string {
+	name := strings.TrimSuffix(c.File, ".php")
+	if c.Variant != "" {
+		name += "." + c.Variant
+	}
+	return name + ".fixed.php"
 }
 
 // TestSlevomatFixtures runs every slevomat sniff port on the upstream test
@@ -32,7 +42,7 @@ func TestSlevomatFixtures(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, c := range cases {
-		t.Run(c.File, func(t *testing.T) {
+		t.Run(strings.TrimSuffix(c.expectedFile(), ".fixed.php"), func(t *testing.T) {
 			t.Parallel()
 			f, ok := ByName(c.Sniff)
 			if !ok {
@@ -43,7 +53,7 @@ func TestSlevomatFixtures(t *testing.T) {
 			}
 			input := readFixture(t, filepath.Join(dir, c.File))
 			expected := input
-			if fixed, err := os.ReadFile(filepath.Join(dir, strings.TrimSuffix(c.File, ".php")+".fixed.php")); err == nil {
+			if fixed, err := os.ReadFile(filepath.Join(dir, c.expectedFile())); err == nil {
 				expected = string(fixed)
 			}
 			got, changed := apply(t, f, input)

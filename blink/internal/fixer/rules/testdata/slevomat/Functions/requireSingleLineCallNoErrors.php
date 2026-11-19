@@ -1,0 +1,82 @@
+<?php
+
+class Whatever
+{
+	public function __construct()
+	{
+		$this->doAnything('true', false);
+
+		$this->doAnything(
+			Nothing::class,
+			'true',
+			false,
+			'very looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong parameter'
+		);
+
+		$this->doAnything([
+			true,
+			false
+		]);
+
+		sprintf(
+			'%s',
+			'something' // Inline comment
+		);
+
+		self::doNothing([
+			true,
+			false,
+		]);
+
+		self::doWhatever(
+			self::doAnything(true, false)
+		);
+
+		self::doWithHeredoc(<<<'CODE'
+			Anything
+CODE
+);
+
+		self::doWithNewLines("
+			Anything
+		");
+		$table = 'aaa';
+		$this->query("
+			INSERT INTO {$table} (id)
+			VALUES (1), (2), (3)
+		");
+	}
+}
+
+doSomething(function () {
+	interface WithReference
+	{
+		public function &doInterfaceReference(
+			$parameter
+		);
+	}
+});
+
+class WithReferenceMethod
+{
+	public function &doReference(
+		$parameter
+	) {
+		return $parameter;
+	}
+}
+
+interface WithReferenceInterfaceMethod
+{
+	public function &doInterfaceReference(
+		$parameter
+	);
+}
+
+doSomething(new class {
+	public function &doReference(
+		$parameter
+	) {
+		return $parameter;
+	}
+});
