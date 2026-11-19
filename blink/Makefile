@@ -3,7 +3,7 @@
 BINARY := blink
 
 build:
-	go build -o $(BINARY) .
+	go build -ldflags="-s -w" -o $(BINARY) .
 
 check: build
 	./$(BINARY) .
