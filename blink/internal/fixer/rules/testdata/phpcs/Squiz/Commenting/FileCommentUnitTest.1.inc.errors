@@ -1,0 +1,11 @@
+1	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.SpacingAfterOpen	There must be no blank lines before the file comment
+22	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.DuplicatePackageTag	Only one @package tag is allowed in a file comment
+22	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.SubpackageTagOrder	The tag in position 2 should be the @subpackage tag
+23	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.AuthorTagOrder	The tag in position 3 should be the @author tag
+24	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.CopyrightTagOrder	The tag in position 4 should be the @copyright tag
+25	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.DuplicateAuthorTag	Only one @author tag is allowed in a file comment
+25	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.EmptyAuthorTag	Content missing for @author tag in file comment
+27	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.DuplicateCopyrightTag	Only one @copyright tag is allowed in a file comment
+28	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.DuplicateCopyrightTag	Only one @copyright tag is allowed in a file comment
+32	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.SpacingAfterComment	There must be exactly one blank line after the file comment
+32	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff.MissingSubpackageTag	Missing @subpackage tag in file comment

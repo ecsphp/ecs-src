@@ -1,0 +1,25 @@
+14	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.ShortNotCapital	Doc comment short description must start with a capital letter
+16	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.LongNotCapital	Doc comment long description must start with a capital letter
+49	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.ParamNotFirst	Parameter tags must be defined first in a doc comment
+58	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.NonParamGroup	Tag @tag cannot be grouped with parameter tags in a doc comment
+66	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.ParamGroup	Parameter tags must be grouped together in a doc comment
+77	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.ParamGroup	Parameter tags must be grouped together in a doc comment
+77	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.TagsNotGrouped	Tags must be grouped together in a doc comment
+151	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.TagsNotGrouped	Tags must be grouped together in a doc comment
+153	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.TagsNotGrouped	Tags must be grouped together in a doc comment
+165	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.MissingShort	Missing short description in doc comment
+168	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.MissingShort	Missing short description in doc comment
+183	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.ShortNotCapital	Doc comment short description must start with a capital letter
+185	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.NonParamGroup	Tag @author cannot be grouped with parameter tags in a doc comment
+187	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.NonParamGroup	Tag @return cannot be grouped with parameter tags in a doc comment
+188	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.TagsNotGrouped	Tags must be grouped together in a doc comment
+194	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.NonParamGroup	Tag @tag cannot be grouped with parameter tags in a doc comment
+197	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.NonParamGroup	Tag @return cannot be grouped with parameter tags in a doc comment
+200	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.MissingShort	Missing short description in doc comment
+204	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.NonParamGroup	Tag @return cannot be grouped with parameter tags in a doc comment
+207	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.MissingShort	Missing short description in doc comment
+212	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.ShortNotCapital	Doc comment short description must start with a capital letter
+216	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.ShortNotCapital	Doc comment short description must start with a capital letter
+224	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.NonParamGroup	Tag @tag cannot be grouped with parameter tags in a doc comment
+268	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.Empty	Doc comment is empty
+271	PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff.Empty	Doc comment is empty

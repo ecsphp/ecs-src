@@ -1,0 +1,9 @@
+32	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.InvalidEndChar	Inline comments must end in full-stops, exclamation marks, or question marks
+40	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.InvalidEndChar	Inline comments must end in full-stops, exclamation marks, or question marks
+61	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.DocBlock	Inline doc block comments are not allowed; use "/* Comment */" or "// Comment" instead
+91	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.InvalidEndChar	Inline comments must end in full-stops, exclamation marks, or question marks
+119	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.NotCapital	Inline comments must start with a capital letter
+119	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.InvalidEndChar	Inline comments must end in full-stops, exclamation marks, or question marks
+123	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.NotCapital	Inline comments must start with a capital letter
+123	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.InvalidEndChar	Inline comments must end in full-stops, exclamation marks, or question marks
+142	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff.NotCapital	Inline comments must start with a capital letter

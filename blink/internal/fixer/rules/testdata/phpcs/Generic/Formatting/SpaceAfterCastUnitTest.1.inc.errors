@@ -1,0 +1,6 @@
+53	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterCastSniff.CommentFound	Expected 1 space after cast statement; comment found
+57	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterCastSniff.CommentFound	Expected 1 space after cast statement; comment found
+64	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterCastSniff.CommentFound	Expected 1 space after cast statement; comment found
+74	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterCastSniff.CommentFound	Expected 1 space after cast statement; comment found
+83	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterCastSniff.CommentFound	Expected 1 space after cast statement; comment found
+92	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterCastSniff.CommentFound	Expected 1 space after cast statement; comment found

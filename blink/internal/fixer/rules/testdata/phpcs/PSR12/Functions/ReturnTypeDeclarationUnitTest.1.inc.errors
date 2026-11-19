@@ -1,0 +1,3 @@
+49	PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\ReturnTypeDeclarationSniff.SpaceBeforeColon	There must not be a space before the colon in a return type declaration
+52	PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\ReturnTypeDeclarationSniff.SpaceBeforeColon	There must not be a space before the colon in a return type declaration
+53	PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\ReturnTypeDeclarationSniff.SpaceBeforeReturnType	There must be a single space between the colon and type in a return type declaration

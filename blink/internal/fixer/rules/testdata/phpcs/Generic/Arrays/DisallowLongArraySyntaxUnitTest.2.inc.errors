@@ -1,0 +1,1 @@
+9	PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\DisallowLongArraySyntaxSniff.Found	Short array syntax must be used to define arrays

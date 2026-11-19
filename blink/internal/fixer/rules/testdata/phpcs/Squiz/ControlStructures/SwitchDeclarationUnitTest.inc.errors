@@ -1,0 +1,27 @@
+44	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.MissingDefault	All SWITCH statements must contain a DEFAULT case
+48	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.CloseBraceAlign	Closing brace of SWITCH statement must be aligned with SWITCH keyword
+82	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.DefaultNoBreak	DEFAULT case must have a breaking statement
+98	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.DefaultNoBreak	DEFAULT case must have a breaking statement
+102	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.CloseBraceAlign	Closing brace of SWITCH statement must be aligned with SWITCH keyword
+119	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.EmptyDefault	Comment required for empty DEFAULT case
+125	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingAfterCase	Blank lines are not allowed after CASE statements
+130	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingBeforeBreak	Blank lines are not allowed before case breaking statements
+136	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingBeforeBreak	Blank lines are not allowed before case breaking statements
+138	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingAfterDefault	Blank lines are not allowed after DEFAULT statements
+141	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingAfterDefaultBreak	Blank lines are not allowed after the DEFAULT case's breaking statement
+146	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.EmptyCase	Empty CASE statements are not allowed
+147	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.EmptyCase	Empty CASE statements are not allowed
+150	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.EmptyCase	Empty CASE statements are not allowed
+168	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingBeforeBreak	Blank lines are not allowed before case breaking statements
+175	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.MissingDefault	All SWITCH statements must contain a DEFAULT case
+230	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.MissingCase	SWITCH statements must contain at least one CASE statement
+289	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.MissingDefault	All SWITCH statements must contain a DEFAULT case
+330	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.EmptyCase	Empty CASE statements are not allowed
+337	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.EmptyDefault	Comment required for empty DEFAULT case
+370	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.CloseBraceAlign	Closing brace of SWITCH statement must be aligned with SWITCH keyword
+383	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingAfterCase	Blank lines are not allowed after CASE statements
+389	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingBeforeBreak	Blank lines are not allowed before case breaking statements
+392	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingAfterCase	Blank lines are not allowed after CASE statements
+398	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingBeforeBreak	Blank lines are not allowed before case breaking statements
+401	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingAfterDefault	Blank lines are not allowed after DEFAULT statements
+404	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\SwitchDeclarationSniff.SpacingAfterDefaultBreak	Blank lines are not allowed after the DEFAULT case's breaking statement

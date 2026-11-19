@@ -1,0 +1,2 @@
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\GlobalKeywordSniff.NotAllowed	Use of the "global" keyword is forbidden; use "$GLOBALS['var']" instead
+9	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\GlobalKeywordSniff.NotAllowed	Use of the "global" keyword is forbidden; use "$GLOBALS['var']" instead

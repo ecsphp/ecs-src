@@ -1,0 +1,4 @@
+4	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\InlineIfDeclarationSniff.NoBrackets	Inline shorthand IF statement requires brackets around comparison
+13	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\InlineIfDeclarationSniff.NotSingleLine	Inline shorthand IF statement must be declared on a single line
+20	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\InlineIfDeclarationSniff.NoBrackets	Inline shorthand IF statement requires brackets around comparison
+47	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\InlineIfDeclarationSniff.NotSingleLine	Inline shorthand IF statement must be declared on a single line

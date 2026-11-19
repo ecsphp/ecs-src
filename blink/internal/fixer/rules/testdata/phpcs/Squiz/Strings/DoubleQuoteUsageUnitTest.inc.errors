@@ -1,0 +1,6 @@
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff.ContainsVar	Variable "$there" not allowed in double quoted string; use concatenation instead
+6	PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff.ContainsVar	Variable "$there" not allowed in double quoted string; use concatenation instead
+14	PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff.ContainsVar	Variable "$class" not allowed in double quoted string; use concatenation instead
+15	PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff.ContainsVar	Variable "$var" not allowed in double quoted string; use concatenation instead
+19	PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff.ContainsVar	Variable "$z" not allowed in double quoted string; use concatenation instead
+20	PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings\DoubleQuoteUsageSniff.ContainsVar	Variable "$x" not allowed in double quoted string; use concatenation instead

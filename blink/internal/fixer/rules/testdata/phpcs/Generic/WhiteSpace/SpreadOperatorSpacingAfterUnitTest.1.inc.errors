@@ -1,0 +1,4 @@
+17	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\SpreadOperatorSpacingAfterSniff.CommentFound	Expected 0 spaces after the spread operator; comment found
+41	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\SpreadOperatorSpacingAfterSniff.CommentFound	Expected 0 spaces after the spread operator; comment found
+60	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\SpreadOperatorSpacingAfterSniff.CommentFound	Expected 0 spaces after the spread operator; comment found
+72	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\SpreadOperatorSpacingAfterSniff.CommentFound	Expected 0 spaces after the spread operator; comment found

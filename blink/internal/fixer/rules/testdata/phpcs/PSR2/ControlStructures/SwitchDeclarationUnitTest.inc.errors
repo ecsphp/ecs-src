@@ -1,0 +1,16 @@
+20	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+37	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.WrongOpener	CASE statements must not use a braced block after the colon
+144	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.WrongOpener	DEFAULT statements must not use a braced block after the colon
+175	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+197	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+227	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+239	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+263	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.WrongOpener	DEFAULT statements must not use a braced block after the colon
+303	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+314	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+379	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+523	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+536	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+553	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+570	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.TerminatingComment	There must be a comment when fall-through is intentional in a non-empty case body
+647	PHP_CodeSniffer\Standards\PSR2\Sniffs\ControlStructures\SwitchDeclarationSniff.WrongOpener	CASE statements must not use a braced block after the colon

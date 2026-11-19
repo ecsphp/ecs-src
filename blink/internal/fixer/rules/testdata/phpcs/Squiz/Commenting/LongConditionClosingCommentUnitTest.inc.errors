@@ -1,0 +1,7 @@
+261	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff.SpacingBefore	Space found before closing comment; expected "//end if"
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff.SpacingBefore	Space found before closing comment; expected "//end if"
+309	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff.SpacingBefore	Space found before closing comment; expected "//end foreach"
+332	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff.SpacingBefore	Space found before closing comment; expected "//end for"
+355	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff.SpacingBefore	Space found before closing comment; expected "//end while"
+540	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff.SpacingBefore	Space found before closing comment; expected "//end if"
+985	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff.SpacingBefore	Space found before closing comment; expected "//end match"

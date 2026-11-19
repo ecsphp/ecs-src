@@ -6,11 +6,11 @@
 #   bin/rule-counts.sh          update README in place
 #   bin/rule-counts.sh --check  fail (exit 1) if README is out of date
 #
-# Both modes fail (exit 1) while any PHP-CS-Fixer fixer or fixable
+# Both modes fail (exit 1) while any PHP-CS-Fixer fixer or
 # PHP_CodeSniffer sniff is missing in blink.
 #
 # Sources:
-#   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers, all fixable
+#   universe - `list-universe`: all PHP-CS-Fixer + Symplify fixers, all
 #              PHP_CodeSniffer sniffs, plus the sniffs ECS references from its sets
 #   blink    - `blink list-checkers`
 set -euo pipefail

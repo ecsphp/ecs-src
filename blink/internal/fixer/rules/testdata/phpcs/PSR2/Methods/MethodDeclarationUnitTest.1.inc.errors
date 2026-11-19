@@ -1,0 +1,6 @@
+5	PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff.Underscore	Method name "_myFunction" should not be prefixed with an underscore to indicate visibility
+21	PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff.Underscore	Method name "_myFunction" should not be prefixed with an underscore to indicate visibility
+30	PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff.Underscore	Method name "_myFunction" should not be prefixed with an underscore to indicate visibility
+46	PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff.Underscore	Method name "_myFunction" should not be prefixed with an underscore to indicate visibility
+63	PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff.Underscore	Method name "_nested_function" should not be prefixed with an underscore to indicate visibility
+70	PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff.Underscore	Method name "_myFunction" should not be prefixed with an underscore to indicate visibility

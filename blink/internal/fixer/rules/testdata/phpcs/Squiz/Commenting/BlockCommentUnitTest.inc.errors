@@ -1,0 +1,19 @@
+3	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.HasEmptyLineBefore	Empty line not required before block comment
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoCapital	Block comments must start with a capital letter
+40	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoEmptyLineAfter	Empty line required after block comment
+62	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoEmptyLineBefore	Empty line required before block comment
+64	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.CloserSameLine	Comment closer must be on a new line
+77	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoCapital	Block comments must start with a capital letter
+86	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoEmptyLineBefore	Empty line required before block comment
+87	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoCapital	Block comments must start with a capital letter
+89	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoEmptyLineAfter	Empty line required after block comment
+91	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoEmptyLineBefore	Empty line required before block comment
+113	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.HasEmptyLineBefore	Empty line not required before block comment
+161	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.HasEmptyLineBefore	Empty line not required before block comment
+187	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.CloserSameLine	Comment closer must be on a new line
+191	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoEmptyLineAfter	Empty line required after block comment
+234	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.SingleLine	Single line block comment not allowed; use inline ("// text") comment instead
+235	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.SingleLine	Single line block comment not allowed; use inline ("// text") comment instead
+258	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.HasEmptyLineBefore	Empty line not required before block comment
+273	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.HasEmptyLineBefore	Empty line not required before block comment
+275	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff.NoEmptyLineAfter	Empty line required after block comment

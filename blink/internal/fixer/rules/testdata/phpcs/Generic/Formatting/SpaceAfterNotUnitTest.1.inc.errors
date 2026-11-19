@@ -1,0 +1,6 @@
+8	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterNotSniff.CommentFound	Expected 1 space after NOT operator; comment found
+19	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterNotSniff.CommentFound	Expected 1 space after NOT operator; comment found
+29	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterNotSniff.CommentFound	Expected 1 space after NOT operator; comment found
+56	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterNotSniff.CommentFound	Expected 1 space after NOT operator; comment found
+67	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterNotSniff.CommentFound	Expected 1 space after NOT operator; comment found
+77	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\SpaceAfterNotSniff.CommentFound	Expected 1 space after NOT operator; comment found

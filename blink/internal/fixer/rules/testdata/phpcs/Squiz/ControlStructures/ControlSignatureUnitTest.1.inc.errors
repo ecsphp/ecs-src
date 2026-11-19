@@ -1,0 +1,6 @@
+263	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff.SpaceAfterCloseBrace	Expected 1 space after closing brace; newline found
+266	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff.SpaceAfterCloseBrace	Expected 1 space after closing brace; newline found
+271	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff.SpaceAfterCloseBrace	Expected 1 space after closing brace; newline found
+273	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff.SpaceAfterCloseBrace	Expected 1 space after closing brace; newline found
+280	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff.SpaceAfterCloseBrace	Expected 1 space after closing brace; newline found
+283	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff.SpaceAfterCloseBrace	Expected 1 space after closing brace; newline found

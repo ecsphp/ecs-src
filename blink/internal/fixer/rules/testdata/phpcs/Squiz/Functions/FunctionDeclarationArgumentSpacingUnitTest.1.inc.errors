@@ -1,0 +1,4 @@
+140	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff.SpaceBeforeEquals	Incorrect spacing between argument "$param" and equals sign; expected 0 but found 3
+140	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff.SpaceAfterEquals	Incorrect spacing between default value and equals sign for argument "$param"; expected 0 but found 3
+148	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff.SpaceBeforeEquals	Incorrect spacing between argument "$param" and equals sign; expected 0 but found newline
+148	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationArgumentSpacingSniff.SpaceAfterEquals	Incorrect spacing between default value and equals sign for argument "$param"; expected 0 but found newline

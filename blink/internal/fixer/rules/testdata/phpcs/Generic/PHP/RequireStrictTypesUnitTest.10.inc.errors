@@ -1,0 +1,1 @@
+1	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\RequireStrictTypesSniff.MissingDeclaration	Missing required strict_types declaration

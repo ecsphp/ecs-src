@@ -1,0 +1,155 @@
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$depth" missing
+10	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentFullStop	Parameter comment must end with a full stop
+12	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $detph does not match actual variable name $depth
+13	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentFullStop	Parameter comment must end with a full stop
+14	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+15	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.InvalidThrows	Exception type and comment missing for @throws tag in function comment
+17	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "bool" missing for $stackPtr
+17	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $detph
+17	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $index
+28	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.WrongStyle	You must use "/**" style comments for a function comment
+43	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.InvalidReturnVoid	Function return type is void, but function contains return statement
+76	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+87	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+103	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function missingComment()
+109	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$one" missing
+112	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+122	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+123	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamComment	Missing parameter comment
+124	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamComment	Missing parameter comment
+124	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ExtraParamComment	Superfluous parameter comment
+125	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamName	Missing parameter name
+126	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamType	Missing parameter type
+128	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $threeSpaces
+137	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentNotCapital	Parameter comment must start with a capital letter
+137	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentFullStop	Parameter comment must end with a full stop
+138	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentNotCapital	Parameter comment must start with a capital letter
+138	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentFullStop	Parameter comment must end with a full stop
+139	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentNotCapital	Parameter comment must start with a capital letter
+139	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentFullStop	Parameter comment must end with a full stop
+143	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $one
+143	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $two
+143	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "MyClas"; found "MyClass" for $three
+155	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentFullStop	Parameter comment must end with a full stop
+159	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.DuplicateReturn	Only 1 @return tag is allowed in a function comment
+161	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$str
+161	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $foo
+166	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function missingCommentOutsideClass()
+173	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function tagBeforeComment()
+183	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+190	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$two" missing
+190	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$three" missing
+193	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentNotCapital	Parameter comment must start with a capital letter
+193	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamCommentFullStop	Parameter comment must end with a full stop
+196	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.EmptySees	Content missing for @see tag in function comment
+199	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ThrowsNotCapital	@throws tag comment must start with a capital letter
+199	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ThrowsNoFullStop	@throws tag comment must end with a full stop
+201	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $one
+210	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.EmptyThrows	Comment missing for @throws tag in function comment
+211	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+230	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.InvalidNoReturn	Function return type is not void, but function has no return statement
+232	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $a1
+232	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "bool" missing for $a2
+232	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $a3
+232	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "array"; found "arRay" for $a4
+232	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "float" missing for $a5
+232	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "float" missing for $a6
+232	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "Myclass"; found "myclas" for $a7
+248	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "array"; found "MyClass" for $a1
+248	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $a2
+248	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "MyClass"; found "myclass" for $a3
+248	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "MyClass" missing for $a4
+265	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "mixed" missing for $a2
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $a1
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $a2
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $a4
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $a5
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $a6
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "array" missing for $a7
+286	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "string"; found "unknownTypeHint" for $a8
+294	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+302	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+312	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+363	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $varrr1
+363	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $vr2
+363	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $var3
+377	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $id
+387	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.InvalidNoReturn	Function return type is not void, but function has no return statement
+407	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.InvalidReturnNotVoid	Function return type is not void, but function is returning void here
+441	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function myFunction()
+459	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "mixed" missing for $test
+500	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "item"; found "\\other\\ns\\item" for $test
+526	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "\\first\\item"; found "\\first\\ns\\item" for $test
+548	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+575	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $a1
+575	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $a2
+627	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "object" missing for $tokenizer
+627	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $eolChar
+641	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.IncorrectTypeHint	Expected type hint "\\OtherVendor\\Package\\SomeClass2"; found "SomeClass3" for $someclass3
+669	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.EmptyThrows	Comment missing for @throws tag in function comment
+688	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.InvalidReturnVoid	Function return type is void, but function contains return statement
+744	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "...$name2" missing
+748	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $name2 does not match actual variable name ...$name2
+789	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$bar" missing
+792	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamType	Missing parameter type
+794	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamName	Missing parameter name
+797	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+893	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "mixed" missing for $src
+893	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "mixed" missing for $unsupportedMessage
+893	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.TypeHintMissing	Type hint "mixed" missing for $attributes
+1002	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $foo
+1004	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$a" missing
+1004	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$b" missing
+1006	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+1011	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$a" missing
+1011	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$b" missing
+1013	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+1038	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+1058	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$CASE1" missing
+1058	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$case2" missing
+1069	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameUnexpectedAmpersandPrefix	Doc comment for parameter $qux is prefixed with "&" but parameter is not passed by reference
+1070	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoCaseMatch	Doc comment for parameter $case1 does not match case of actual variable name $CASE1
+1071	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoCaseMatch	Doc comment for parameter $CASE2 does not match case of actual variable name $case2
+1075	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $foo
+1075	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$bar
+1075	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $baz
+1075	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$qux
+1075	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$case1
+1075	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$CASE2
+1080	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$bra" missing
+1080	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$BAZ" missing
+1083	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameUnexpectedAmpersandPrefix	Doc comment for parameter $foo is prefixed with "&" but parameter is not passed by reference
+1084	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $bar does not match actual variable name $bra
+1085	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoCaseMatch	Doc comment for parameter $baz does not match case of actual variable name $BAZ
+1089	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$foo
+1089	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$bar
+1089	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for &$baz
+1093	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$garply" missing
+1093	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$Waldo" missing
+1093	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$FRED" missing
+1093	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$PluGh" missing
+1100	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoCaseMatch	Doc comment for parameter $GARPLY does not match case of actual variable name $garply
+1101	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoCaseMatch	Doc comment for parameter $waldo does not match case of actual variable name $Waldo
+1102	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoCaseMatch	Doc comment for parameter $freD does not match case of actual variable name $FRED
+1103	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoCaseMatch	Doc comment for parameter $PLUGH does not match case of actual variable name $PluGh
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $foo
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $BAR
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $BazQux
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $corgeGrault
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $GARPLY
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $waldo
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $freD
+1107	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $PLUGH
+1123	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $foo does not match actual variable name $bar
+1124	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $bar does not match actual variable name $baz
+1125	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $baz does not match actual variable name $foo
+1129	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $foo
+1129	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $bar
+1129	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "string" missing for $baz
+1138	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$noTypeNoComment" missing
+1139	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamType	Missing parameter type
+1144	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$noTypeWithComment" missing
+1145	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamType	Missing parameter type
+1151	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingParamComment	Missing parameter comment
+1154	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $hasTypeNoComment
+1160	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.ScalarTypeHintMissing	Type hint "int" missing for $hasTypehasComment

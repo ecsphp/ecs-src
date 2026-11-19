@@ -1,0 +1,9 @@
+95	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.NoKeySpecified	No key specified for array entry; first entry specifies key
+101	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.NoKeySpecified	No key specified for array entry; first entry specifies key
+106	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.KeySpecified	Key specified for array entry; first entry has no key
+398	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.MultiLineNotAllowed	Multi-line array contains a single value; use single-line array instead
+490	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.SpaceBeforeComma	Expected 0 spaces before comma; 1 found
+533	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.NoKeySpecified	No key specified for array entry; first entry specifies key
+539	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.KeySpecified	Key specified for array entry; first entry has no key
+546	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.NoKeySpecified	No key specified for array entry; first entry specifies key
+553	PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff.KeySpecified	Key specified for array entry; first entry has no key

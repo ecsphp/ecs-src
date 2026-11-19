@@ -1,0 +1,2 @@
+21	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\DisallowMultipleStatementsSniff.SameLine	Each PHP statement must be on a line by itself
+21	PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\DisallowMultipleStatementsSniff.SameLine	Each PHP statement must be on a line by itself

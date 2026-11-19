@@ -1,0 +1,2 @@
+49	PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\NullableTypeDeclarationSniff.UnexpectedCharactersFound	There must not be a space between the question mark and the type in nullable type declarations
+50	PHP_CodeSniffer\Standards\PSR12\Sniffs\Functions\NullableTypeDeclarationSniff.UnexpectedCharactersFound	There must not be a space between the question mark and the type in nullable type declarations

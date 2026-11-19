@@ -1,0 +1,25 @@
+7	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$var"
+9	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.VarUsed	The var keyword must not be used to declare a property
+9	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$var"
+10	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$var"
+11	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.VarUsed	The var keyword must not be used to declare a property
+13	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Underscore	Property name "$_var" should not be prefixed with an underscore to indicate visibility
+14	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Underscore	Property name "$_var" should not be prefixed with an underscore to indicate visibility
+15	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Underscore	Property name "$_var" should not be prefixed with an underscore to indicate visibility
+17	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+18	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+23	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+49	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.VarUsed	The var keyword must not be used to declare a property
+49	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$var"
+50	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$var"
+52	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Underscore	Property name "$_var" should not be prefixed with an underscore to indicate visibility
+54	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+55	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+60	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+73	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+79	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$foo"
+87	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+92	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$foo"
+99	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Underscore	Property name "$_underscore" should not be prefixed with an underscore to indicate visibility
+103	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.Multiple	There must not be more than one property declared per statement
+135	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff.ScopeMissing	Visibility must be declared on property "$foo"

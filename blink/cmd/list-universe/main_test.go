@@ -38,10 +38,10 @@ $x = SomeOtherSniff::class;`
 	}
 }
 
-func TestPhpcsFixableSniffs(t *testing.T) {
-	lines := strings.Split(strings.TrimSpace(phpcsFixableSniffs), "\n")
-	if len(lines) < 100 {
-		t.Fatalf("expected the full fixable sniff list, got %d entries", len(lines))
+func TestPhpcsSniffs(t *testing.T) {
+	lines := strings.Split(strings.TrimSpace(phpcsSniffs), "\n")
+	if len(lines) < 200 {
+		t.Fatalf("expected the full sniff list, got %d entries", len(lines))
 	}
 	for _, line := range lines {
 		line = strings.TrimSpace(line)

@@ -1,0 +1,2 @@
+7	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowSpaceIndentSniff.SpacesUsedHeredocCloser	Tabs must be used to indent lines; spaces are not allowed
+13	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\DisallowSpaceIndentSniff.SpacesUsedHeredocCloser	Tabs must be used to indent lines; spaces are not allowed
