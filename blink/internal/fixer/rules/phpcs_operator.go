@@ -27,6 +27,11 @@ type phpcsOperatorContext struct {
 	paramParens map[int]bool // "(" opening function/closure/fn parameters
 	useParens   map[int]bool // "(" opening a closure use list
 	declare     map[int]int  // declare keyword -> its ")" (or -1 when unclosed)
+	// a by-reference closure or arrow function inside a ternary, which PHPCS
+	// misreads: its return type ":" is taken for T_INLINE_ELSE, and the "&" of
+	// "fn&" for a bitwise operator
+	ternaryRefParens map[int]bool
+	ternaryRefAmp    map[int]bool
 }
 
 func newPhpcsOperatorContext(s *tokens.Stream) phpcsOperatorContext {
@@ -36,6 +41,9 @@ func newPhpcsOperatorContext(s *tokens.Stream) phpcsOperatorContext {
 		paramParens: map[int]bool{},
 		useParens:   map[int]bool{},
 		declare:     map[int]int{},
+
+		ternaryRefParens: map[int]bool{},
+		ternaryRefAmp:    map[int]bool{},
 	}
 	type pending struct{ depth int }
 	var ternaries []pending
@@ -53,6 +61,9 @@ func newPhpcsOperatorContext(s *tokens.Stream) phpcsOperatorContext {
 				}
 			case "function", "fn":
 				o.markFunction(s, i)
+				if len(ternaries) > 0 {
+					o.markTernaryRef(s, i)
+				}
 			case "match":
 				o.markMatch(s, i)
 			}
@@ -70,6 +81,13 @@ func newPhpcsOperatorContext(s *tokens.Stream) phpcsOperatorContext {
 					ternaries = append(ternaries, pending{depth})
 				}
 			case ":":
+				if o.ternaryRefColon(s, i) {
+					o.inlineElse[i] = true
+					if n := len(ternaries); ternaries[n-1].depth == depth {
+						ternaries = ternaries[:n-1]
+					}
+					continue
+				}
 				if o.returnTypeColon(s, i) {
 					continue
 				}
@@ -133,6 +151,34 @@ func (o phpcsOperatorContext) markFunction(s *tokens.Stream, i int) {
 			return
 		}
 	}
+}
+
+// markTernaryRef records a "function &(...)" without a use list, or a
+// "fn&(...)", at i.
+func (o phpcsOperatorContext) markTernaryRef(s *tokens.Stream, i int) {
+	amp := phpcsNextNonEmpty(s, i+1)
+	if amp >= s.Len() || s.At(amp).Value != "&" {
+		return
+	}
+	open := phpcsNextNonEmpty(s, amp+1)
+	if open >= s.Len() || s.At(open).Value != "(" {
+		return
+	}
+	if strings.EqualFold(s.At(i).Value, "fn") {
+		o.ternaryRefAmp[amp] = true
+	} else if closeIdx := s.MatchForward(open); closeIdx >= 0 {
+		if next := phpcsNextNonEmpty(s, closeIdx+1); next < s.Len() && strings.EqualFold(s.At(next).Value, "use") {
+			return
+		}
+	}
+	o.ternaryRefParens[open] = true
+}
+
+// ternaryRefColon reports whether the ":" at i follows the parameters of a
+// closure markTernaryRef recorded.
+func (o phpcsOperatorContext) ternaryRefColon(s *tokens.Stream, i int) bool {
+	p := phpcsPrevNonEmpty(s, i-1)
+	return p >= 0 && s.At(p).Value == ")" && o.ternaryRefParens[s.MatchBackward(p)]
 }
 
 // returnTypeColon reports whether the ":" at i starts the return type of a
@@ -239,6 +285,9 @@ func (o phpcsOperatorContext) isOperator(s *tokens.Stream, i int) bool {
 
 // isReference ports File::isReference for the "&" at i.
 func (o phpcsOperatorContext) isReference(s *tokens.Stream, i int) bool {
+	if o.ternaryRefAmp[i] {
+		return false
+	}
 	before := phpcsPrevNonEmpty(s, i-1)
 	if before < 0 {
 		return false
@@ -461,9 +510,15 @@ loop:
 		break
 	}
 	if !confirmed && suspected == "param" {
-		if open := phpcsInnermostParen(s, i); open >= 0 {
-			if p := phpcsPrevNonEmpty(s, open-1); p >= 0 && phpcsOwnsParams(s, p) {
+		// step out of DNF groups such as the second "(D&E)" in "(A&B)|C $x, (D&E)|null $y"
+		for open := phpcsInnermostParen(s, i); open >= 0; open = phpcsInnermostParen(s, open) {
+			p := phpcsPrevNonEmpty(s, open-1)
+			if p >= 0 && phpcsOwnsParams(s, p) {
 				confirmed = true
+				break
+			}
+			if p < 0 || s.At(p).Kind != token.Punct || (s.At(p).Value != "," && s.At(p).Value != "(" && s.At(p).Value != "|") {
+				break
 			}
 		}
 	}
