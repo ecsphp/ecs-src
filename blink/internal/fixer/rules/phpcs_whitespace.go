@@ -81,3 +81,18 @@ func phpcsSpaceAfter(s *tokens.Stream, op, spacing int, ignoreNewlines bool) boo
 	}
 	return true
 }
+
+// isPhpcsAnnotationComment reports whether PHP_CodeSniffer's tokenizer turns
+// the comment v into a T_PHPCS_* token (phpcs:set, :ignoreFile, :disable,
+// :enable, :ignore, optionally "@"-prefixed). It does so even with annotations
+// off, as ECS runs, so such comments are never T_COMMENT to a sniff.
+func isPhpcsAnnotationComment(v string) bool {
+	text := strings.ToLower(strings.TrimRight(strings.TrimLeft(v, " \t/*#"), " */\t\r\n"))
+	text = strings.TrimPrefix(text, "@")
+	for _, p := range []string{"phpcs:set", "phpcs:ignorefile", "phpcs:disable", "phpcs:enable", "phpcs:ignore"} {
+		if strings.HasPrefix(text, p) {
+			return true
+		}
+	}
+	return false
+}

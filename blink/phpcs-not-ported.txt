@@ -40,13 +40,10 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\ClassDeclarationSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Classes\SelfMemberReferenceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\BlockCommentSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\ClosingDeclarationCommentSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\DocCommentAlignmentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FileCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff
-PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\PostStatementCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ForEachLoopDeclarationSniff
