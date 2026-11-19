@@ -49,7 +49,11 @@ func TestSlevomatFixtures(t *testing.T) {
 				t.Fatalf("%s is not registered", c.Sniff)
 			}
 			if c.Config != nil {
-				f = f.(fixer.ConfigurableFixer).WithConfig(c.Config)
+				configurable, ok := f.(fixer.ConfigurableFixer)
+				if !ok {
+					t.Fatalf("%s takes no configuration", c.Sniff)
+				}
+				f = configurable.WithConfig(c.Config)
 			}
 			input := readFixture(t, filepath.Join(dir, c.File))
 			expected := input

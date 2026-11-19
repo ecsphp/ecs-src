@@ -763,14 +763,17 @@ func (f *slvFile) enclosingScope(i int) int {
 func (f *slvFile) braceOwner(open int) int {
 	for j := open - 1; j >= 0; j-- {
 		t := f.toks[j]
+		if t.kind == token.Variable {
+			return -1
+		}
 		if t.kind == token.Punct {
 			switch t.orig {
-			case ")", "]", "}":
+			case ")", "]":
 				if t.closer >= 0 {
 					j = t.closer
 					continue
 				}
-			case ";", "{", "(", "[":
+			case ";", "{", "}", "(", "[", "->", "?->", "::", "=":
 				return -1
 			}
 		}
@@ -784,6 +787,40 @@ func (f *slvFile) braceOwner(open int) int {
 		}
 	}
 	return -1
+}
+
+// isTraitUseBlock tells the "{" of a trait use's block.
+func (f *slvFile) isTraitUseBlock(open int) bool {
+	for j := open - 1; j >= 0; j-- {
+		switch {
+		case f.isEmpty(j), f.isName(j), f.is(j, ","):
+			continue
+		case f.isKeyword(j, "use"):
+			return true
+		}
+		return false
+	}
+	return false
+}
+
+// scopeCondition is PHP_CodeSniffer's scope_condition: it returns the owner of the brace at i: "use" for a
+// trait use block, else the keyword braceOwner finds, or -1.
+func (f *slvFile) scopeCondition(i int) int {
+	open := i
+	if f.is(i, "}") {
+		open = f.toks[i].closer
+	}
+	if open < 0 {
+		return -1
+	}
+	if f.isTraitUseBlock(open) {
+		for j := open - 1; j >= 0; j-- {
+			if f.isKeyword(j, "use") {
+				return j
+			}
+		}
+	}
+	return f.braceOwner(open)
 }
 
 // isClosure tells a closure's "function" from a named function's.
