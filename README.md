@@ -34,7 +34,7 @@ Rules blink runs natively, per source. Regenerate with `blink/bin/rule-counts.sh
 |---|---:|---:|---:|
 | PHP-CS-Fixer | 282 | 282 | 100% |
 | Symplify | 34 | 34 | 100% |
-| PHP_CodeSniffer | 9 | 114 | 7% |
+| PHP_CodeSniffer | 22 | 114 | 19% |
 | slevomat | 5 | 132 | 3% |
-| **total** | **330** | **562** | **58%** |
+| **total** | **343** | **562** | **61%** |
 <!-- parity-counts:end -->
