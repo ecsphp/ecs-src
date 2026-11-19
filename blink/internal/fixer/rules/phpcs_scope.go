@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
@@ -20,6 +21,10 @@ type phpcsScope struct {
 	pOwner  []int // parenthesis_owner of a "("
 	nested  []int // the innermost "(" holding the token
 	scopes  []phpcsScopeRange
+	// the scope map as createLevelMap sees it, before processAdditional
+	preCond, preOpener, preCloser []int
+	// CASE/DEFAULT statements fixCases gave a braced body: case, new closer, old closer
+	caseFixes [][3]int
 }
 
 // phpcsScopeRange is a scope the level map counts: the tokens strictly
@@ -94,6 +99,7 @@ func newPhpcsScope(f *slvFile) *phpcsScope {
 			i = sc.recurse(i, 1, &ignore)
 		}
 	}
+	sc.preCond, sc.preOpener, sc.preCloser = slices.Clone(sc.cond), slices.Clone(sc.opener), slices.Clone(sc.closer)
 	sc.fixCases()
 	for i := range n {
 		if sc.cond[i] == i && sc.opener[i] > i && sc.closer[i] > sc.opener[i] {
@@ -163,7 +169,13 @@ func (sc *phpcsScope) isEnd(i int) bool {
 
 // startOfStatement is File::findStartOfStatement.
 func (sc *phpcsScope) startOfStatement(start int) int {
+	return sc.startOfStatementIgnoring(start)
+}
+
+// startOfStatementIgnoring is File::findStartOfStatement with its $ignore codes.
+func (sc *phpcsScope) startOfStatementIgnoring(start int, ignore ...string) int {
 	f := sc.f
+	isEnd := func(i int) bool { return sc.isEnd(i) && !slices.Contains(ignore, sc.code[i]) }
 	if conds := sc.conditions(start); len(conds) > 0 {
 		match := conds[len(conds)-1]
 		if sc.code[match] == "match" && sc.nested[match] == sc.nested[start] {
@@ -172,7 +184,7 @@ func (sc *phpcsScope) startOfStatement(start int) int {
 			}
 		}
 	}
-	for sc.isEnd(start) || sc.cond[start] >= 0 && start == sc.closer[start] {
+	for isEnd(start) || sc.cond[start] >= 0 && start == sc.closer[start] {
 		if sc.cond[start] >= 0 {
 			start = sc.cond[start]
 		} else {
@@ -183,9 +195,11 @@ func (sc *phpcsScope) startOfStatement(start int) int {
 	for i := start; i >= 0; i-- {
 		switch sc.code[i] {
 		case "{", "[", "(", "open_tag":
-			return lastNotEmpty
+			if !slices.Contains(ignore, sc.code[i]) {
+				return lastNotEmpty
+			}
 		}
-		if sc.isEnd(i) {
+		if isEnd(i) {
 			return lastNotEmpty
 		}
 		if sc.opener[i] >= 0 && i == sc.closer[i] {
@@ -667,6 +681,7 @@ func (sc *phpcsScope) fixCases() {
 			continue
 		}
 		newCloser := f.toks[x].closer
+		sc.caseFixes = append(sc.caseFixes, [3]int{i, newCloser, scopeCloser})
 		for _, idx := range []int{i, x, newCloser} {
 			sc.set(idx, i, x, newCloser)
 		}
@@ -683,4 +698,130 @@ func (sc *phpcsScope) fixCases() {
 			}
 		}
 	}
+}
+
+func phpcsFirstEnd(code string) string {
+	switch code {
+	case "case", "default":
+		return "break"
+	case "start_heredoc":
+		return "end_heredoc"
+	}
+	return "}"
+}
+
+// phpcsCond is one entry of a token's conditions: the scope condition's
+// token, or, with caseIndex, the entry PHP::processAdditional appends to the
+// old closer of a CASE it gives a braced body, which holds the CASE's index
+// instead of its code.
+type phpcsCond struct {
+	key       int
+	caseIndex bool
+}
+
+// levelMap is Tokenizer::createLevelMap plus the condition fixes of
+// PHP::processAdditional: each token's conditions, outermost first, and level,
+// which a shared closer can leave apart from len(conditions).
+func (sc *phpcsScope) levelMap() (conds [][]phpcsCond, levels []int) {
+	n := len(sc.code)
+	conds, levels = make([][]phpcsCond, n), make([]int, n)
+	nextFree := make([]int, n)
+	remove := func(list []phpcsCond, key int) []phpcsCond {
+		out := list[:0:0]
+		for _, c := range list {
+			if c.key != key || c.caseIndex {
+				out = append(out, c)
+			}
+		}
+		return out
+	}
+	level, free := 0, 0
+	var conditions []phpcsCond
+	var openers []int
+	lastOpener := -1
+	for i := range n {
+		levels[i], conds[i], nextFree[i] = level, conditions, free
+		if sc.preCond[i] < 0 {
+			continue
+		}
+		if sc.preOpener[i] == i {
+			stackPtr := sc.preCond[i]
+			if lastOpener >= 0 && sc.preCloser[lastOpener] == sc.preCloser[i] {
+				thisType := sc.code[sc.preCond[i]]
+				opener := sc.preCond[lastOpener]
+				isShared := phpcsScopeOpeners[thisType].with[sc.code[opener]]
+				if isShared && phpcsFirstEnd(thisType) == phpcsFirstEnd(sc.code[opener]) {
+					for x := sc.preCond[i]; x <= i; x++ {
+						levels[x]--
+						conds[x] = remove(conds[x], opener)
+					}
+					conditions = remove(conditions, opener)
+					if k := slices.Index(openers, lastOpener); k >= 0 {
+						openers = slices.Delete(openers, k, k+1)
+					}
+					level--
+				}
+			}
+			level++
+			if !slices.Contains(conditions, phpcsCond{key: stackPtr}) {
+				conditions = append(slices.Clone(conditions), phpcsCond{key: stackPtr})
+				free = max(free, stackPtr+1)
+			}
+			lastOpener = sc.preOpener[i]
+			if !slices.Contains(openers, lastOpener) {
+				openers = append(openers, lastOpener)
+			}
+			continue
+		}
+		if lastOpener < 0 || sc.preCloser[lastOpener] != i {
+			continue
+		}
+		reversed := slices.Clone(openers)
+		slices.Reverse(reversed)
+		for _, opener := range reversed {
+			if sc.preCloser[opener] != i {
+				continue
+			}
+			oldOpener := openers[len(openers)-1]
+			openers = openers[:len(openers)-1]
+			lastOpener = -1
+			if len(openers) > 0 {
+				lastOpener = openers[len(openers)-1]
+			}
+			oldCondition := ""
+			if len(conditions) > 0 {
+				last := conditions[len(conditions)-1]
+				oldCondition = sc.code[last.key]
+				if last.key == free-1 {
+					free--
+				}
+				conditions = slices.Clone(conditions[:len(conditions)-1])
+			}
+			condition := sc.code[sc.preCond[i]]
+			if condition != oldCondition && !phpcsScopeOpeners[oldCondition].with[condition] {
+				badToken := sc.preCond[oldOpener]
+				for x := oldOpener + 1; x <= i; x++ {
+					levels[x]--
+					conds[x] = remove(conds[x], badToken)
+				}
+			}
+			level--
+			levels[i], conds[i], nextFree[i] = level, conditions, free
+		}
+	}
+	for _, fix := range sc.caseFixes {
+		i, newCloser, scopeCloser := fix[0], fix[1], fix[2]
+		conds[scopeCloser] = append(slices.Clone(conds[scopeCloser]), phpcsCond{key: nextFree[scopeCloser], caseIndex: true})
+		nextFree[scopeCloser]++
+		for x := newCloser; x < scopeCloser; x++ {
+			out := conds[x][:0:0]
+			for _, c := range conds[x] {
+				if c.caseIndex || sc.code[c.key] != sc.code[i] {
+					out = append(out, c)
+				}
+			}
+			conds[x] = out
+		}
+	}
+	return conds, levels
 }

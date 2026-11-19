@@ -75,6 +75,7 @@ var fixerPriority = map[string]int{
 	"FunctionSpacingSniff":                     0,
 	"MemberVarSpacingSniff":                    0,
 	"SelfMemberReferenceSniff":                 0,
+	"ControlSignatureSniff":                    0,
 	"EmptyPHPStatementSniff":                   0,
 	"DisallowMultipleStatementsSniff":          0,
 	"InlineControlStructureSniff":              0,
@@ -138,6 +139,10 @@ var fixerPriority = map[string]int{
 	"ConcatenationSpacingSniff":                   0,
 	"InlineIfDeclarationSniff":                    0,
 	"IncrementDecrementSpacingSniff":              0,
+	"OperatorBracketSniff":                        0,
+	"FunctionDeclarationArgumentSpacingSniff":     0,
+	"MultiLineFunctionDeclarationSniff":           0,
+	"ScopeIndentSniff":                            0,
 	"MethodDeclarationSniff":                      0,
 	"UseDeclarationSniff":                         0,
 	"PropertyDeclarationSniff":                    0,
@@ -160,6 +165,7 @@ var fixerPriority = map[string]int{
 	"DisallowSpaceIndentSniff":                    0,
 	"ArrayIndentSniff":                            0,
 	"ClassDeclarationSniff":                       0,
+	"ArrayDeclarationSniff":                       0,
 	"AnonClassDeclarationSniff":                   0,
 	"ScopeClosingBraceSniff":                      0,
 	"SwitchDeclarationSniff":                      0,
@@ -186,9 +192,13 @@ var fixerPriority = map[string]int{
 	"FileCommentSniff":                            0,
 	"LongConditionClosingCommentSniff":            0,
 	"VariableCommentSniff":                        0,
+	"BlockCommentSniff":                           0,
 	"DocCommentAlignmentSniff":                    0,
+	"EmbeddedPhpSniff":                            0,
 	"UselessParenthesesSniff":                     0,
-	"UselessSemicolonSniff":                       0,
+	// raised from 0 so an empty statement is gone before whitespace sniffs look
+	// past a closing brace, as NoEmptyStatementFixer (40) does
+	"UselessSemicolonSniff": 1,
 	// getPriority() is 0 upstream; raised to run before blank_line_after_opening_tag
 	// so blink reaches the same output in a single pass (PHP-CS-Fixer loops to fixpoint)
 	"LinebreakAfterOpeningTagFixer":                   2,
