@@ -43,7 +43,7 @@ func (f *slvFile) innermostClassScope(i int) int {
 		}
 		switch {
 		case f.isKeyword(owner, "class"):
-			if f.isAnonClass(owner) {
+			if f.isAnonClassKeyword(owner) {
 				return -1
 			}
 			return owner
@@ -54,8 +54,8 @@ func (f *slvFile) innermostClassScope(i int) int {
 	return -1
 }
 
-// isAnonClass tells "new class" from a class declaration.
-func (f *slvFile) isAnonClass(class int) bool {
+// isAnonClassKeyword tells "new class" from a class declaration.
+func (f *slvFile) isAnonClassKeyword(class int) bool {
 	n := f.nextEffective(class+1, len(f.toks))
 	return n < 0 || f.toks[n].kind != token.Ident
 }

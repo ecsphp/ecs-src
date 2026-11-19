@@ -126,8 +126,8 @@ func (f *slvFile) attributeCloser(i int) int {
 	return -1
 }
 
-// docOpener is the comment_opener of the docblock closer at i.
-func (f *slvFile) docOpener(i int) int {
+// docBlockOpener is the comment_opener of the docblock closer at i.
+func (f *slvFile) docBlockOpener(i int) int {
 	for j := i; j >= 0; j-- {
 		if f.toks[j].doc == slvDocOpen {
 			return j
@@ -241,7 +241,7 @@ func (m MemberVarSpacing) process(f *slvFile, v int) int {
 			}
 		}
 	case f.isDocClose(start):
-		first = f.docOpener(start)
+		first = f.docBlockOpener(start)
 	default:
 		first = f.prevEffective(start-1) + 1
 		for ; first < len(toks); first++ {

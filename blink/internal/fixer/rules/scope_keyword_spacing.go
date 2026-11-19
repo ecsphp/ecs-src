@@ -23,15 +23,15 @@ func (ScopeKeywordSpacing) SourceURL() string {
 
 func (ScopeKeywordSpacing) Fix(s *tokens.Stream) bool {
 	return slvRun(s, func(f *slvFile) {
-		f.eachToken(f.isScopeKeyword, func(i int) int {
+		f.eachToken(f.isScopeOrMethodModifier, func(i int) int {
 			f.scopeKeywordSpacing(i)
 			return 0
 		})
 	})
 }
 
-// isScopeKeyword matches Tokens::METHOD_MODIFIERS + SCOPE_MODIFIERS + T_READONLY.
-func (f *slvFile) isScopeKeyword(i int) bool {
+// isScopeOrMethodModifier matches Tokens::METHOD_MODIFIERS + SCOPE_MODIFIERS + T_READONLY.
+func (f *slvFile) isScopeOrMethodModifier(i int) bool {
 	t := f.toks[i]
 	if t.kind != token.Keyword {
 		return false

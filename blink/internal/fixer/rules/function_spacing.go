@@ -109,7 +109,7 @@ func (fs FunctionSpacing) process(f *slvFile, fn int) {
 				continue
 			}
 			if !seenDocblock && f.isDocClose(prev) {
-				prev = f.docOpener(prev)
+				prev = f.docBlockOpener(prev)
 				seenDocblock = true
 				continue
 			}
