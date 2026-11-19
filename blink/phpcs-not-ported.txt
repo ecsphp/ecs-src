@@ -5,6 +5,9 @@ PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Files\IncludingFileSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\FunctionCallSignatureSniff
 PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\FunctionDeclarationSniff
+PHP_CodeSniffer\Standards\PEAR\Sniffs\ControlStructures\MultiLineConditionSniff
+PHP_CodeSniffer\Standards\PEAR\Sniffs\WhiteSpace\ObjectOperatorIndentSniff
+PHP_CodeSniffer\Standards\PEAR\Sniffs\WhiteSpace\ScopeClosingBraceSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\Classes\AnonClassDeclarationSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\BooleanOperatorPlacementSniff
 PHP_CodeSniffer\Standards\PSR12\Sniffs\ControlStructures\ControlStructureSpacingSniff
