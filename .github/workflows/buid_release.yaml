@@ -12,6 +12,10 @@ jobs:
     build_release:
         runs-on: ubuntu-latest
 
+        # creates the blink binaries release
+        permissions:
+            contents: write
+
         steps:
             -   uses: "actions/checkout@v4"
                 with:
@@ -91,26 +95,41 @@ jobs:
                     cp -R build/target-repository/. ecs-prefixed-downgraded
                     cp -R templates ecs-prefixed-downgraded/
 
-            # 5b. bundle blink binaries for --blink, built from the local blink/ module,
-            # so it works without a Go toolchain
+            # 5b. publish blink binaries as a GitHub release keyed by the blink/ tree hash, instead of committing them;
+            # EcsGoBinaryLocator downloads the one matching "bin/blink.version" on first run
             -
                 uses: actions/setup-go@v5
                 with:
                     go-version: "1.26.11"
 
-            -   run: sudo apt-get update && sudo apt-get install -y upx-ucl
+            -
+                env:
+                    GH_TOKEN: ${{ github.token }}
+                run: |
+                    blink_tag="blink-$(git rev-parse --short=12 HEAD:blink)"
+                    echo "$blink_tag" > ecs-prefixed-downgraded/bin/blink.version
 
-            -   run: |
+                    if gh release view "$blink_tag" --repo ecsphp/ecs-src > /dev/null 2>&1; then
+                        echo "Release $blink_tag already exists"
+                        exit 0
+                    fi
+
+                    sudo apt-get update && sudo apt-get install -y upx-ucl
+                    mkdir blink-dist
+
                     for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
                         suffix=""
                         if [ "${target%/*}" = "windows" ]; then suffix=".exe"; fi
-                        (cd blink && CGO_ENABLED=0 GOOS=${target%/*} GOARCH=${target#*/} go build -trimpath -ldflags="-s -w" -o "$GITHUB_WORKSPACE/ecs-prefixed-downgraded/bin/blink-${target%/*}-${target#*/}${suffix}" .)
+                        (cd blink && CGO_ENABLED=0 GOOS=${target%/*} GOARCH=${target#*/} go build -trimpath -ldflags="-s -w" -o "$GITHUB_WORKSPACE/blink-dist/blink-${target%/*}-${target#*/}${suffix}" .)
                     done
 
                     # compress Linux binaries only; UPX is reliable there, but breaks code-signing on macOS and trips antivirus on Windows
-                    upx --best --lzma ecs-prefixed-downgraded/bin/blink-linux-amd64 ecs-prefixed-downgraded/bin/blink-linux-arm64
+                    upx --best --lzma blink-dist/blink-linux-amd64 blink-dist/blink-linux-arm64
 
-                    chmod 755 ecs-prefixed-downgraded/bin/blink-*
+                    (cd blink-dist && sha256sum blink-* > checksums.txt)
+
+                    gh release create "$blink_tag" blink-dist/* --repo ecsphp/ecs-src --target "$GITHUB_SHA" \
+                        --prerelease --latest=false --title "$blink_tag" --notes "blink binaries, downloaded by ECS on first --blink run"
 
             # 6. clone remote repository, so we can push it
             -
@@ -123,7 +142,7 @@ jobs:
                     token: ${{ secrets.ACCESS_TOKEN }}
 
             # remove remote files, to avoid piling up dead code in remote repository
-            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/packages remote-repository/src remote-repository/vendor
+            -   run: rm -rf remote-repository/.github remote-repository/docs remote-repository/config remote-repository/packages remote-repository/src remote-repository/vendor remote-repository/bin/blink-*
 
             # clear the dev files
             - run: cp -a ecs-prefixed-downgraded/. remote-repository

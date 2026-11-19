@@ -8,6 +8,7 @@ use PhpCsFixer\Fixer\ArrayNotation\ArraySyntaxFixer;
 use PhpCsFixer\Fixer\Casing\LowercaseKeywordsFixer;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Symplify\EasyCodingStandard\Blink\BlinkBinaryDownloader;
 use Symplify\EasyCodingStandard\Blink\BlinkSupportResolver;
 use Symplify\EasyCodingStandard\Blink\EcsGoBinaryLocator;
 use Symplify\EasyCodingStandard\DependencyInjection\SimpleParameterProvider;
@@ -26,7 +27,7 @@ final class BlinkSupportResolverTest extends TestCase
         SimpleParameterProvider::setParameter(Option::LINE_ENDING, "\n");
 
         $this->blinkSupportResolver = new BlinkSupportResolver(
-            new EcsGoBinaryLocator(),
+            new EcsGoBinaryLocator(new BlinkBinaryDownloader()),
             new WhitespacesFixerConfigFactory()
         );
     }

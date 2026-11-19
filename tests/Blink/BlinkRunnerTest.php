@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Symplify\EasyCodingStandard\Tests\Blink;
 
 use PHPUnit\Framework\TestCase;
+use Symplify\EasyCodingStandard\Blink\BlinkBinaryDownloader;
 use Symplify\EasyCodingStandard\Blink\BlinkRunner;
 use Symplify\EasyCodingStandard\Blink\EcsGoBinaryLocator;
 
@@ -14,7 +15,7 @@ final class BlinkRunnerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->blinkRunner = new BlinkRunner(new EcsGoBinaryLocator());
+        $this->blinkRunner = new BlinkRunner(new EcsGoBinaryLocator(new BlinkBinaryDownloader()));
     }
 
     public function testCreateArgumentsInCheckModeReportsOnly(): void

@@ -1,6 +1,6 @@
 # Blink mode
 
-`--blink` runs your `ecs.php` rules with the bundled Go binary instead of the PHP engine:
+`--blink` runs your `ecs.php` rules with the blink Go binary instead of the PHP engine:
 
 ```bash
 vendor/bin/ecs check --blink          # report
@@ -25,10 +25,10 @@ vendor/bin/ecs dump-config
 
 ## Binary
 
-The binary ships in `bin/` as `blink-<platform>` for Linux, macOS and Windows, so no Go toolchain is needed. Lookup order:
+No Go toolchain is needed. On first run, ECS downloads the binary for your platform (Linux, macOS, Windows) from the [ecs-src GitHub releases](https://github.com/ecsphp/ecs-src/releases), verifies its SHA-256 checksum and caches it in `bin/`. Lookup order:
 
 1. `ECS_BLINK_BIN` environment variable
-2. bundled `bin/blink-<platform>`
+2. downloaded `bin/blink-<hash>-<platform>`
 3. `vendor/bin/ecs-go`
 4. `ecs-go` on the `PATH`
 
