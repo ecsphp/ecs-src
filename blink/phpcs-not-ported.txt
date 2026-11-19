@@ -4,8 +4,6 @@ PHP_CodeSniffer\Standards\Generic\Sniffs\Classes\OpeningBraceSameLineSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis\EmptyPHPStatementSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\ControlStructures\InlineControlStructureSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNewlineSniff
-PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNoNewlineSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Files\LineEndingsSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\DisallowMultipleStatementsSniff
 PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\MultipleStatementAlignmentSniff
@@ -99,4 +97,3 @@ PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ScopeClosingBraceSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ScopeKeywordSpacingSniff
 PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\SemicolonSpacingSniff
-PHP_CodeSniffer\Standards\Zend\Sniffs\Files\ClosingTagSniff

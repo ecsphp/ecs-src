@@ -73,6 +73,9 @@ var fixerPriority = map[string]int{
 	"TrailingArrayCommaSniff":                  0,
 	"ElseIfDeclarationSniff":                   0,
 	"LowercaseDeclarationSniff":                0,
+	"EndFileNewlineSniff":                      0,
+	"EndFileNoNewlineSniff":                    0,
+	"ClosingTagSniff":                          0,
 	// getPriority() is 0 upstream; raised to run before blank_line_after_opening_tag
 	// so blink reaches the same output in a single pass (PHP-CS-Fixer loops to fixpoint)
 	"LinebreakAfterOpeningTagFixer":                   2,
