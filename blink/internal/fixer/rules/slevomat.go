@@ -55,32 +55,33 @@ type slvHistory struct {
 	loop       int
 }
 
-const slvMaxLoops = 50
+const slvMaxLoops = 100
 
 // slvRun runs process over the stream's PHP_CodeSniffer file until a pass fixes
 // nothing, relexing the stream after every pass that did.
 func slvRun(s *tokens.Stream, process func(f *slvFile)) bool {
-	changed := false
-	src := s.Render()
+	original := s.Render()
+	src := original
 	history := map[int]*slvHistory{}
 	for loop := range slvMaxLoops {
 		f := newSlvFile(lexer.Lex(src))
 		f.loop, f.history = loop, history
 		process(f)
-		if f.numFixes == 0 {
-			break
+		next := src
+		if f.numFixes > 0 {
+			next = f.contents()
 		}
-		next := f.contents()
 		if next == src {
-			break
+			if src == original {
+				return false
+			}
+			s.ReplaceRange(0, s.Len()-1, lexer.Lex(src))
+			return true
 		}
 		src = next
-		changed = true
 	}
-	if changed {
-		s.ReplaceRange(0, s.Len()-1, lexer.Lex(src))
-	}
-	return changed
+	// ECS gives up on a file whose fixes never settle and leaves it unchanged
+	return false
 }
 
 // slvEachToken calls process for every token match accepts, skipping the tokens

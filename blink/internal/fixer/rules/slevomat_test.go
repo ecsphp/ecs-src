@@ -17,6 +17,8 @@ type slevomatCase struct {
 	Config map[string]any `json:"config"`
 	// Variant names the expected output of a fixture that runs with several configs.
 	Variant string `json:"variant"`
+	// Unstable marks a fixture where a second ECS run changes the output further.
+	Unstable bool `json:"unstable"`
 }
 
 func (c slevomatCase) expectedFile() string {
@@ -66,6 +68,9 @@ func TestSlevomatFixtures(t *testing.T) {
 			}
 			if changed != (input != expected) {
 				t.Errorf("changed=%v, want %v", changed, input != expected)
+			}
+			if c.Unstable {
+				return
 			}
 			if again, changed := apply(t, f, expected); changed || again != expected {
 				t.Errorf("expected output is not stable:\n%s", lineDiff(expected, again))
