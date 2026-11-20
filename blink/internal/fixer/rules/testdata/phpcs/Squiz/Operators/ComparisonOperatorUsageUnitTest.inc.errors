@@ -1,0 +1,40 @@
+6	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+7	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+10	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+11	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator ! prohibited; use === FALSE instead
+18	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+19	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+22	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+23	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator ! prohibited; use === FALSE instead
+29	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+29	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+32	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+32	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator ! prohibited; use === FALSE instead
+38	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+38	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+38	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator ! prohibited; use === FALSE instead
+38	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+47	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+47	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+69	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+72	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+75	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+78	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+80	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+82	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+83	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator ! prohibited; use === FALSE instead
+89	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+92	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+100	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+106	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+112	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+123	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+127	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+131	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead
+135	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+145	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+146	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+147	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+148	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.ImplicitTrue	Implicit true comparisons prohibited; use === TRUE instead
+156	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator ! prohibited; use === FALSE instead
+156	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ComparisonOperatorUsageSniff.NotAllowed	Operator == prohibited; use === instead

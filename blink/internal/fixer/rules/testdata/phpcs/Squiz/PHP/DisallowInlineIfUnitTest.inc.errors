@@ -1,0 +1,2 @@
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowInlineIfSniff.Found	Inline IF statements are not allowed
+18	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowInlineIfSniff.Found	Inline IF statements are not allowed

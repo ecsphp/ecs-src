@@ -1,0 +1,4 @@
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ValidLogicalOperatorsSniff.NotAllowed	Logical operator "or" is prohibited; use "||" instead
+11	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ValidLogicalOperatorsSniff.NotAllowed	Logical operator "and" is prohibited; use "&&" instead
+17	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ValidLogicalOperatorsSniff.NotAllowed	Logical operator "and" is prohibited; use "&&" instead
+17	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\ValidLogicalOperatorsSniff.NotAllowed	Logical operator "or" is prohibited; use "||" instead
