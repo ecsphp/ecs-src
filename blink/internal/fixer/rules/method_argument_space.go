@@ -100,7 +100,16 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 			changed = true
 		}
 	}
+	// the kinds of the "[" in stream order: the edits below only touch
+	// whitespace, so the n-th "[" stays the n-th
+	var squares []uint8
+	for i, k := range bosSquareKinds(s) {
+		if isPunctVal(s, i, "[") {
+			squares = append(squares, k)
+		}
+	}
 	var stack []string
+	inArguments := func() bool { return len(stack) > 0 && stack[len(stack)-1] == "(" }
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
 		if t.Kind != token.Punct {
@@ -116,8 +125,24 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 				stack = append(stack, "a")
 			}
 			continue
-		case "[", "{":
-			stack = append(stack, t.Value)
+		case "[":
+			// php-cs-fixer's scan of an argument list skips only arrays, "(...)"
+			// and "{...}" blocks: it spaces the commas of a destructuring in it
+			// too, and walks through a "->{" or "${"
+			kind := squares[0]
+			squares = squares[1:]
+			if kind != bosSquareArray && inArguments() {
+				stack = append(stack, "(")
+			} else {
+				stack = append(stack, "[")
+			}
+			continue
+		case "{":
+			if inArguments() && bosIsDynamicBraceOpen(s, i) {
+				stack = append(stack, "(")
+			} else {
+				stack = append(stack, "{")
+			}
 			continue
 		case ")", "]", "}":
 			if len(stack) > 0 {
