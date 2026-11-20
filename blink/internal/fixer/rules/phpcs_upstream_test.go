@@ -3,6 +3,7 @@ package rules
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -74,6 +75,11 @@ func TestPhpcsUpstreamErrors(t *testing.T) {
 		}
 		for _, in := range inputs {
 			t.Run(filepath.Base(in), func(t *testing.T) {
+				if _, ok := f.(PHPSyntax); ok {
+					if _, err := exec.LookPath("php"); err != nil {
+						t.Skip("Generic Syntax runs php -l, no php on PATH")
+					}
+				}
 				var want []string
 				if _, err := os.Stat(in + ".errors"); err == nil {
 					want = strings.Split(strings.TrimSuffix(readFixture(t, in+".errors"), "\n"), "\n")
