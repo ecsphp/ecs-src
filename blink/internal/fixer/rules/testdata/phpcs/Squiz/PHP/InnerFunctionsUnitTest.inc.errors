@@ -1,0 +1,4 @@
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\InnerFunctionsSniff.NotAllowed	The use of inner functions is forbidden
+46	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\InnerFunctionsSniff.NotAllowed	The use of inner functions is forbidden
+55	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\InnerFunctionsSniff.NotAllowed	The use of inner functions is forbidden
+83	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\InnerFunctionsSniff.NotAllowed	The use of inner functions is forbidden

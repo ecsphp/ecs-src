@@ -1,0 +1,6 @@
+2	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff.SpaceFoundAfterDeclare	Expected no space between declare keyword and opening parenthesis in a declare statement
+10	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff.SpaceFoundBeforeSemicolon	Expected no space between the closing parenthesis and the semicolon in a declare statement
+11	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff.SpaceFoundBeforeDirective	Expected no space between opening parenthesis and directive in a declare statement
+12	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff.SpaceFoundBeforeDirective	Expected no space between opening parenthesis and directive in a declare statement
+12	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff.SpaceFoundAfterDirective	Expected no space between directive and the equals sign in a declare statement
+35	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\DeclareStatementSniff.SpaceFoundAfterDirective	Expected no space between directive and the equals sign in a declare statement

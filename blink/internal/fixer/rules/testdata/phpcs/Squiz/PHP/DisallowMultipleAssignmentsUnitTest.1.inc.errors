@@ -1,0 +1,10 @@
+4	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.Found	Assignments must be the first block of code on a line
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.Found	Assignments must be the first block of code on a line
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.Found	Assignments must be the first block of code on a line
+7	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.FoundInControlStructure	Assignments must be the first block of code on a line
+9	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.Found	Assignments must be the first block of code on a line
+12	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.FoundInControlStructure	Assignments must be the first block of code on a line
+14	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.Found	Assignments must be the first block of code on a line
+15	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.Found	Assignments must be the first block of code on a line
+79	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.FoundInControlStructure	Assignments must be the first block of code on a line
+85	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowMultipleAssignmentsSniff.FoundInControlStructure	Assignments must be the first block of code on a line

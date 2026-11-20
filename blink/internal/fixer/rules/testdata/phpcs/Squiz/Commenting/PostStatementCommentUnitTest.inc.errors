@@ -1,0 +1,4 @@
+62	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\PostStatementCommentSniff.AnnotationFound	Annotations may not appear after statements
+63	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\PostStatementCommentSniff.AnnotationFound	Annotations may not appear after statements
+64	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\PostStatementCommentSniff.AnnotationFound	Annotations may not appear after statements
+65	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\PostStatementCommentSniff.AnnotationFound	Annotations may not appear after statements

@@ -7,10 +7,10 @@ in the ECS repository and mirrors ECS's `psr12` + `common` output.
 ## Rule coverage
 
 Share of the fixer universe blink implements - every PHP-CS-Fixer and Symplify
-fixer, every fixable PHP_CodeSniffer sniff, plus the sniffs ECS references from
+fixer, every PHP_CodeSniffer sniff (fixable or report-only), plus the sniffs ECS references from
 its sets. Regenerate with `bin/rule-counts.sh`; CI keeps it current and fails
-while any PHP-CS-Fixer fixer or fixable sniff is missing. After bumping
-PHP_CodeSniffer, refresh the sniff list with `bin/phpcs-fixable-sniffs.sh`.
+while any PHP-CS-Fixer fixer or PHP_CodeSniffer sniff is missing. After bumping
+PHP_CodeSniffer, refresh the sniff list with `bin/phpcs-sniffs.sh`.
 
 Every sniff blink implements must pass PHP_CodeSniffer's own test files
 (`internal/fixer/rules/testdata/phpcs`): the upstream `.inc` inputs with the
@@ -23,10 +23,10 @@ those expectations can differ from upstream's `.inc.fixed`. Regenerate them with
 |---|---:|---:|---:|
 | PHP-CS-Fixer | 282 | 282 | 100% |
 | Symplify | 34 | 34 | 100% |
-| PHP_CodeSniffer | 114 | 114 | 100% |
-| **total** | **430** | **430** | **100%** |
+| PHP_CodeSniffer | 203 | 203 | 100% |
+| **total** | **519** | **519** | **100%** |
 
-blink runs 486 rules in all, its own extras included.
+blink runs 575 rules in all, its own extras included.
 <!-- rule-counts:end -->
 
 ### slevomat sniffs

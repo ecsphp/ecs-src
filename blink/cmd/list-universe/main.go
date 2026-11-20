@@ -1,13 +1,13 @@
 // Command list-universe prints the full set of fixers blink is measured
 // against, one FQCN per line. It is the denominator for the README parity
 // counter: every PHP-CS-Fixer fixer, every Symplify coding-standard fixer, every
-// fixable PHP_CodeSniffer sniff, and the sniffs ECS references from its sets or
+// PHP_CodeSniffer sniff, and the sniffs ECS references from its sets or
 // blink implements.
 // blink is a subset of this universe, so coverage never exceeds 100%.
 //
 // The fixer lists come from the committed GitHub source-tree cache
-// (cmd/check-sources/sources_cache.json); the fixable sniffs from the committed
-// phpcs_fixable_sniffs.txt (bin/phpcs-fixable-sniffs.sh); the referenced sniffs
+// (cmd/check-sources/sources_cache.json); the sniffs from the committed
+// phpcs_sniffs.txt (bin/phpcs-sniffs.sh); the referenced sniffs
 // are scraped from the ECS set definitions in the surrounding monorepo.
 package main
 
@@ -50,7 +50,7 @@ func main() {
 		}
 	}
 
-	for line := range strings.SplitSeq(phpcsFixableSniffs, "\n") {
+	for line := range strings.SplitSeq(phpcsSniffs, "\n") {
 		if fqcn := strings.TrimSpace(line); fqcn != "" {
 			universe[fqcn] = true
 		}
@@ -80,8 +80,8 @@ func main() {
 	}
 }
 
-//go:embed phpcs_fixable_sniffs.txt
-var phpcsFixableSniffs string
+//go:embed phpcs_sniffs.txt
+var phpcsSniffs string
 
 // deprecatedFixers are PHP-CS-Fixer fixers implementing DeprecatedFixerInterface;
 // each is superseded by another fixer, so they are not rules of their own

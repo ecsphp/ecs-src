@@ -1,0 +1,4 @@
+3	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowBooleanStatementSniff.Found	Boolean operators are not allowed outside of control structure conditions
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowBooleanStatementSniff.Found	Boolean operators are not allowed outside of control structure conditions
+13	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowBooleanStatementSniff.Found	Boolean operators are not allowed outside of control structure conditions
+15	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowBooleanStatementSniff.Found	Boolean operators are not allowed outside of control structure conditions

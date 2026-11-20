@@ -1,0 +1,1 @@
+9	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ClosingPHPTagSniff.NotFound	The PHP open tag does not have a corresponding PHP close tag

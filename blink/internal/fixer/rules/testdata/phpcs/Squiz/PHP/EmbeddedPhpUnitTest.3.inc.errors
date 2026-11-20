@@ -1,0 +1,2 @@
+24	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\EmbeddedPhpSniff.MultipleStatements	Inline PHP statement must contain a single statement; 2 found
+25	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\EmbeddedPhpSniff.MultipleStatements	Inline PHP statement must contain a single statement; 2 found

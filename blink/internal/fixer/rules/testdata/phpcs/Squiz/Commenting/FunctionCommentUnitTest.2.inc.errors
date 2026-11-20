@@ -1,0 +1,1 @@
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment

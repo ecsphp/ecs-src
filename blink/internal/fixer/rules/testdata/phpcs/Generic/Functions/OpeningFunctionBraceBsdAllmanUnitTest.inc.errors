@@ -1,0 +1,1 @@
+273	PHP_CodeSniffer\Standards\Generic\Sniffs\Functions\OpeningFunctionBraceBsdAllmanSniff.BraceSpacing	Opening brace should be on the line after the declaration; found 1 blank line(s)

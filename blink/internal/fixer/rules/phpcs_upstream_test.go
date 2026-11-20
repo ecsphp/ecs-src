@@ -3,9 +3,16 @@ package rules
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
 // phpcsMaxLoops mirrors PHP_CodeSniffer's Fixer, which re-runs the sniff until
@@ -22,21 +29,8 @@ type phpcsOnePass interface{ phpcsOnePass() }
 func TestPhpcsUpstreamFixtures(t *testing.T) {
 	t.Parallel()
 	for _, f := range All() {
-		rest, ok := strings.CutPrefix(f.Name(), `PHP_CodeSniffer\Standards\`)
+		inputs, ok := phpcsUpstreamInputs(t, f)
 		if !ok {
-			continue
-		}
-		// Generic\Sniffs\WhiteSpace\LanguageConstructSpacingSniff -> Generic/WhiteSpace/LanguageConstructSpacingUnitTest
-		parts := strings.Split(strings.TrimSuffix(rest, "Sniff"), `\`)
-		if len(parts) != 4 {
-			t.Fatalf("unexpected sniff name %s", f.Name())
-		}
-		base := filepath.Join("testdata", "phpcs", parts[0], parts[2], parts[3]+"UnitTest")
-		inputs, _ := filepath.Glob(base + ".inc")
-		more, _ := filepath.Glob(base + ".*.inc")
-		inputs = append(inputs, more...)
-		if len(inputs) == 0 {
-			t.Errorf("%s: no upstream fixtures at %s*.inc", f.Name(), base)
 			continue
 		}
 		for _, in := range inputs {
@@ -63,6 +57,84 @@ func TestPhpcsUpstreamFixtures(t *testing.T) {
 			})
 		}
 	}
+}
+
+// TestPhpcsUpstreamErrors holds every blink sniff that reports errors to the
+// errors ECS reports on PHP_CodeSniffer's own test files: each .inc must report
+// exactly the rows of its .inc.errors, or none when there is no such file.
+func TestPhpcsUpstreamErrors(t *testing.T) {
+	t.Parallel()
+	for _, f := range All() {
+		reporter, ok := f.(fixer.ErrorReporter)
+		if _, fs := f.(phpcsReadsFileSystem); !ok || fs {
+			continue
+		}
+		inputs, ok := phpcsUpstreamInputs(t, f)
+		if !ok {
+			continue
+		}
+		for _, in := range inputs {
+			t.Run(filepath.Base(in), func(t *testing.T) {
+				if _, ok := f.(PHPSyntax); ok {
+					if _, err := exec.LookPath("php"); err != nil {
+						t.Skip("Generic Syntax runs php -l, no php on PATH")
+					}
+				}
+				var want []string
+				if _, err := os.Stat(in + ".errors"); err == nil {
+					want = strings.Split(strings.TrimSuffix(readFixture(t, in+".errors"), "\n"), "\n")
+				}
+				s := tokens.New(lexer.Lex(readFixture(t, in)))
+				// bin/phpcs-fixtures.sh hands each input to ECS as <name>.inc.php
+				s.SetPath(filepath.Base(in) + ".php")
+				var got []string
+				if c, ok := f.(fixer.Candidate); !ok || c.IsCandidate(s) {
+					for _, e := range reporter.Errors(s) {
+						got = append(got, phpcsErrorRow(e))
+					}
+				}
+				slices.Sort(got)
+				slices.Sort(want)
+				if !slices.Equal(got, want) {
+					t.Errorf("%s: %s\n got: %q\nwant: %q", f.Name(), in, got, want)
+				}
+			})
+		}
+	}
+}
+
+// phpcsReadsFileSystem is a sniff that reports from the file on disk rather
+// than its contents, which TestPhpcsUpstreamErrors cannot reproduce.
+type phpcsReadsFileSystem interface{ phpcsReadsFileSystem() }
+
+// phpcsErrorRow formats an error as bin/phpcs-fixtures.sh writes it.
+func phpcsErrorRow(e fixer.CodingStandardError) string {
+	msg := strings.NewReplacer(`\`, `\\`, "\n", `\n`, "\t", `\t`).Replace(e.Message)
+	return strconv.Itoa(e.Line) + "\t" + e.Checker + "\t" + msg
+}
+
+// phpcsUpstreamInputs lists the upstream test inputs of a blink sniff; ok is
+// false for a rule that is no PHP_CodeSniffer sniff.
+func phpcsUpstreamInputs(t *testing.T, f fixer.Fixer) ([]string, bool) {
+	t.Helper()
+	rest, ok := strings.CutPrefix(f.Name(), `PHP_CodeSniffer\Standards\`)
+	if !ok {
+		return nil, false
+	}
+	// Generic\Sniffs\WhiteSpace\LanguageConstructSpacingSniff -> Generic/WhiteSpace/LanguageConstructSpacingUnitTest
+	parts := strings.Split(strings.TrimSuffix(rest, "Sniff"), `\`)
+	if len(parts) != 4 {
+		t.Fatalf("unexpected sniff name %s", f.Name())
+	}
+	base := filepath.Join("testdata", "phpcs", parts[0], parts[2], parts[3]+"UnitTest")
+	inputs, _ := filepath.Glob(base + ".inc")
+	more, _ := filepath.Glob(base + ".*.inc")
+	inputs = append(inputs, more...)
+	if len(inputs) == 0 {
+		t.Errorf("%s: no upstream fixtures at %s*.inc", f.Name(), base)
+		return nil, false
+	}
+	return inputs, true
 }
 
 func readFixture(t *testing.T, path string) string {

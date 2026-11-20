@@ -1,0 +1,4 @@
+6	PHP_CodeSniffer\Standards\Squiz\Sniffs\Scope\MethodScopeSniff.Missing	Visibility must be declared on method "func1"
+30	PHP_CodeSniffer\Standards\Squiz\Sniffs\Scope\MethodScopeSniff.Missing	Visibility must be declared on method "func1"
+39	PHP_CodeSniffer\Standards\Squiz\Sniffs\Scope\MethodScopeSniff.Missing	Visibility must be declared on method "__something"
+46	PHP_CodeSniffer\Standards\Squiz\Sniffs\Scope\MethodScopeSniff.Missing	Visibility must be declared on method "func1"

@@ -1,0 +1,15 @@
+21	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.WrongStyle	You must use "/**" style comments for a member variable comment
+24	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.Missing	Missing member variable doc comment
+56	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.DuplicateVar	Only one @var tag is allowed in a member variable comment
+64	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.MissingVar	Missing @var tag in member variable comment
+73	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.EmptyVar	Content missing for @var tag in member variable comment
+84	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.EmptySees	Content missing for @see tag in member variable comment
+130	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.MissingVar	Missing @var tag in member variable comment
+290	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.Missing	Missing member variable doc comment
+311	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.Missing	Missing member variable doc comment
+336	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.Missing	Missing member variable doc comment
+361	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.WrongStyle	You must use "/**" style comments for a member variable comment
+364	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.Missing	Missing member variable doc comment
+399	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.EmptyVar	Content missing for @var tag in member variable comment
+403	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.Missing	Missing member variable doc comment
+457	PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\VariableCommentSniff.Missing	Missing member variable doc comment

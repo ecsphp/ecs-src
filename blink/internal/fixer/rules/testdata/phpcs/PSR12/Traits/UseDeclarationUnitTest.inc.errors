@@ -1,0 +1,8 @@
+68	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.ConflictSameLine	Each trait conflict resolution statement must be on a line by itself
+70	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.SpaceBeforeInsteadof	Expected 1 space before INSTEADOF in trait import statement; newline found
+70	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.SpaceAfterInsteadof	Expected 1 space after INSTEADOF in trait import statement; 5 found
+73	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.SpaceBeforeAs	Expected 1 space before AS in trait import statement; newline found
+127	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.UseAfterBrace	The first trait import statement must be declared on the first non-comment line after the class opening brace
+152	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.NotGrouped	Imported traits must be grouped together
+160	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.NotGrouped	Imported traits must be grouped together
+202	PHP_CodeSniffer\Standards\PSR12\Sniffs\Traits\UseDeclarationSniff.UseAfterBrace	The first trait import statement must be declared on the first non-comment line after the class opening brace

@@ -1,0 +1,19 @@
+2	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Increment operators should be used where possible; found "$var  = ($var + 1)" but expected "++$var"
+6	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Increment operators should be used where possible; found "$var += 1;" but expected "++$var"
+12	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Decrement operators should be used where possible; found "$var  = ($var - 1)" but expected "--$var"
+16	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Decrement operators should be used where possible; found "$var -= 1;" but expected "--$var"
+25	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.NotAllowed	Increment and decrement operators cannot be used in an arithmetic operation
+26	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.NotAllowed	Increment and decrement operators cannot be used in an arithmetic operation
+27	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.NotAllowed	Increment and decrement operators cannot be used in an arithmetic operation
+29	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.NoBrackets	Increment and decrement operators must be bracketed when used in string concatenation
+31	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.NoBrackets	Increment and decrement operators must be bracketed when used in string concatenation
+41	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.NoBrackets	Increment and decrement operators must be bracketed when used in string concatenation
+42	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.NotAllowed	Increment and decrement operators cannot be used in an arithmetic operation
+44	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Increment operators should be used where possible; found "$var+=1;" but expected "++$var"
+45	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Decrement operators should be used where possible; found "$var-=1;" but expected "--$var"
+47	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Increment operators should be used where possible; found "$var=$var+1;" but expected "++$var"
+48	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Decrement operators should be used where possible; found "$var=$var-1;" but expected "--$var"
+50	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Increment operators should be used where possible; found "$var /*comment*/ +=1;" but expected "++$var"
+53	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Decrement operators should be used where possible; found "$var\n    // phpcs:ignore Something\n    -=1;" but expected "--$var"
+55	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Increment operators should be used where possible; found "$var += /*comment*/ 1;" but expected "++$var"
+56	PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators\IncrementDecrementUsageSniff.Found	Decrement operators should be used where possible; found "$var = ( $var /*comment*/ - 1 /*comment*/)" but expected "--$var"

@@ -1,0 +1,14 @@
+8	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected 'INVALIDNAME' but found 'invalidName'
+10	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected "INVALIDNAME" but found "invalidName"
+12	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected 'bar\\foo\\baz\\INVALIDNAMEWITHNAMESPACE' but found 'bar\\foo\\baz\\invalidNameWithNamespace'
+14	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected "bar\\foo\\baz\\INVALIDNAMEWITHNAMESPACE" but found "bar\\foo\\baz\\invalidNameWithNamespace"
+19	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ClassConstantNotUpperCase	Class constants must be uppercase; expected CONST1 but found const1
+28	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ClassConstantNotUpperCase	Class constants must be uppercase; expected ABC but found abc
+30	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ClassConstantNotUpperCase	Class constants must be uppercase; expected SOME_CONSTANT but found some_constant
+40	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ClassConstantNotUpperCase	Class constants must be uppercase; expected INVALID_NAME but found invalid_name
+41	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ClassConstantNotUpperCase	Class constants must be uppercase; expected FALSE but found false
+45	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected 'COMMENTSINUNCONVENTIONALPLACES' but found 'CommentsInUnconventionalPlaces'
+51	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected 'COMMENTSINUNCONVENTIONALPLACES' but found 'CommentsInUnconventionalPlaces'
+71	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ClassConstantNotUpperCase	Class constants must be uppercase; expected MIXEDCASE but found MixedCase
+73	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected 'LOWER_CASE_NAME' but found 'lower_case_name'
+94	PHP_CodeSniffer\Standards\Generic\Sniffs\NamingConventions\UpperCaseConstantNameSniff.ConstantNotUpperCase	Constants must be uppercase; expected 'INVALIDNAME' but found 'invalidName'

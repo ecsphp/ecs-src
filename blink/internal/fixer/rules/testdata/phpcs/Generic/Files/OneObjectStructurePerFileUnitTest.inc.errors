@@ -1,0 +1,5 @@
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\OneObjectStructurePerFileSniff.MultipleFound	Only one object structure is allowed in a file
+10	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\OneObjectStructurePerFileSniff.MultipleFound	Only one object structure is allowed in a file
+14	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\OneObjectStructurePerFileSniff.MultipleFound	Only one object structure is allowed in a file
+18	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\OneObjectStructurePerFileSniff.MultipleFound	Only one object structure is allowed in a file
+22	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\OneObjectStructurePerFileSniff.MultipleFound	Only one object structure is allowed in a file

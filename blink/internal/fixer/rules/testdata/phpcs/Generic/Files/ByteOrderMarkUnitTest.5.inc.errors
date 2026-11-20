@@ -1,0 +1,1 @@
+1	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\ByteOrderMarkSniff.Found	File contains UTF-16 (BE) byte order mark, which may corrupt your application

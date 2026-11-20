@@ -1,0 +1,4 @@
+2	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ForbiddenFunctionsSniff.FoundWithAlternative	The use of function sizeof() is forbidden; use count() instead
+4	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ForbiddenFunctionsSniff.FoundWithAlternative	The use of function delete() is forbidden; use unset() instead
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ForbiddenFunctionsSniff.FoundWithAlternative	The use of function sizeof() is forbidden; use count() instead
+62	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ForbiddenFunctionsSniff.FoundWithAlternative	The use of function sizeof() is forbidden; use count() instead

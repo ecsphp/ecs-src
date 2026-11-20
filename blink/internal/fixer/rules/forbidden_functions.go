@@ -92,6 +92,24 @@ func (f ForbiddenFunctions) forbiddenFunctions() map[string]*string {
 }
 
 func (f ForbiddenFunctions) Errors(s *tokens.Stream) []fixer.CodingStandardError {
+	return f.errors(s, func(function string, alternative *string) (string, string) {
+		message, code := f.message(function, alternative)
+		return message, f.Name() + code
+	})
+}
+
+// message is the sniff's error for a forbidden call, and its ".<code>" suffix.
+func (ForbiddenFunctions) message(function string, alternative *string) (message, code string) {
+	message = fmt.Sprintf("The use of function %s() is forbidden", function)
+	if alternative == nil {
+		return message, ".Found"
+	}
+	return message + fmt.Sprintf("; use %s() instead", *alternative), ".FoundWithAlternative"
+}
+
+// errors finds the forbidden calls; report gives each one's message and
+// checker, as subclasses override the sniff's addError.
+func (f ForbiddenFunctions) errors(s *tokens.Stream, report func(function string, alternative *string) (message, checker string)) []fixer.CodingStandardError {
 	forbidden := f.forbiddenFunctions()
 	if f.warning || len(forbidden) == 0 {
 		return nil
@@ -138,16 +156,11 @@ func (f ForbiddenFunctions) Errors(s *tokens.Stream) []fixer.CodingStandardError
 		for ; lineAt < start; lineAt++ {
 			line += strings.Count(s.At(lineAt).Value, "\n")
 		}
-		message := fmt.Sprintf("The use of function %s() is forbidden", function)
-		code := "Found"
-		if alternative != nil {
-			message += fmt.Sprintf("; use %s() instead", *alternative)
-			code = "FoundWithAlternative"
-		}
+		message, checker := report(function, alternative)
 		errs = append(errs, fixer.CodingStandardError{
 			Line:    line,
 			Message: message,
-			Checker: f.Name() + "." + code,
+			Checker: checker,
 		})
 	}
 	return errs

@@ -1,0 +1,2 @@
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\OneClassPerFileSniff.MultipleFound	Only one class is allowed in a file
+10	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\OneClassPerFileSniff.MultipleFound	Only one class is allowed in a file

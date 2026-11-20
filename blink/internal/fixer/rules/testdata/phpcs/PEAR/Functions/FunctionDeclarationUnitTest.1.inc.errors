@@ -1,0 +1,2 @@
+480	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\FunctionDeclarationSniff.NewlineBeforeOpenBrace	The closing parenthesis and the opening brace of a multi-line function declaration must be on the same line
+487	PHP_CodeSniffer\Standards\PEAR\Sniffs\Functions\FunctionDeclarationSniff.NewlineBeforeOpenBrace	The closing parenthesis and the opening brace of a multi-line function declaration must be on the same line

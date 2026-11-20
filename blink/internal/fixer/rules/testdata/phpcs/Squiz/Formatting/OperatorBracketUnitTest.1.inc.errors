@@ -1,0 +1,5 @@
+25	PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff.SpacingAfterMinus	No space allowed between minus sign and number
+109	PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff.SpacingAfterMinus	No space allowed between minus sign and number
+130	PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff.SpacingAfterMinus	No space allowed between minus sign and number
+163	PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff.MissingBrackets	Operation must be bracketed
+163	PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting\OperatorBracketSniff.MissingBrackets	Operation must be bracketed

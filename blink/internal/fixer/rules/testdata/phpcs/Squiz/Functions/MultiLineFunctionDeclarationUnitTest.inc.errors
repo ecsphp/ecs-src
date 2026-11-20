@@ -1,0 +1,2 @@
+198	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\MultiLineFunctionDeclarationSniff.CloseBracketNewLine	There must not be a newline before the closing parenthesis of a single-line function declaration
+203	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\MultiLineFunctionDeclarationSniff.CloseBracketNewLine	There must not be a newline before the closing parenthesis of a single-line function declaration

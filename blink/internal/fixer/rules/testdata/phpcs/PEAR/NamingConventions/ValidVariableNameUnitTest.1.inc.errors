@@ -1,0 +1,11 @@
+12	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Public member variable "_varName" must not be prefixed with an underscore
+17	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Protected member variable "_varName" must not be prefixed with an underscore
+22	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Private member variable "varName" must be prefixed with an underscore
+92	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Protected member variable "_sheet" must not be prefixed with an underscore
+93	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Protected member variable "_FieldParser" must not be prefixed with an underscore
+94	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Protected member variable "_key" must not be prefixed with an underscore
+99	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Private member variable "varName" must be prefixed with an underscore
+105	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Public member variable "_underscore" must not be prefixed with an underscore
+111	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Public member variable "_asymPublicImplied" must not be prefixed with an underscore
+114	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PrivateNoUnderscore	Private member variable "asymPrivate" must be prefixed with an underscore
+119	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidVariableNameSniff.PublicUnderscore	Protected member variable "_asymPrivateProtected" must not be prefixed with an underscore

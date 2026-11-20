@@ -1,0 +1,2 @@
+236	PHP_CodeSniffer\Standards\PEAR\Sniffs\ControlStructures\MultiLineConditionSniff.StartWithBoolean	Each line in a multi-line IF statement must begin with a boolean operator
+244	PHP_CodeSniffer\Standards\PEAR\Sniffs\ControlStructures\MultiLineConditionSniff.StartWithBoolean	Each line in a multi-line IF statement must begin with a boolean operator

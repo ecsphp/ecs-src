@@ -1,0 +1,11 @@
+4	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.NotCamelCaps	Function name "get_some_value" is not in camel caps format
+5	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.NotCamelCaps	Function name "getSomeValue_Again" is not in camel caps format
+6	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.NotCamelCaps	Function name "_getSomeValue" is not in camel caps format
+7	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.NotCamelCaps	Function name "_parseMyDSN" is not in camel caps format
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.NotCamelCaps	Function name "_get_some_value" is not in camel caps format
+9	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.NotCamelCaps	Function name "_getSomeValue_Again" is not in camel caps format
+11	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.DoubleUnderscore	Function name "__construct" is invalid; only PHP magic methods should be prefixed with a double underscore
+12	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.DoubleUnderscore	Function name "__destruct" is invalid; only PHP magic methods should be prefixed with a double underscore
+13	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.DoubleUnderscore	Function name "__myFunction" is invalid; only PHP magic methods should be prefixed with a double underscore
+14	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.DoubleUnderscore	Function name "__my_function" is invalid; only PHP magic methods should be prefixed with a double underscore
+14	PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions\ValidFunctionNameSniff.NotCamelCaps	Function name "__my_function" is not in camel caps format

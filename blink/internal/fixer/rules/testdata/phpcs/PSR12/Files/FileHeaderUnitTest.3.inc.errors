@@ -1,0 +1,2 @@
+9	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\FileHeaderSniff.IncorrectOrder	The declare statements must follow the file-level docblock in the file header
+18	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\FileHeaderSniff.IncorrectOrder	The function-based use imports must follow the class-based use imports in the file header

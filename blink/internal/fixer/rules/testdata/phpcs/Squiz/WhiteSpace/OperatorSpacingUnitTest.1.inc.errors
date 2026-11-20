@@ -1,0 +1,8 @@
+227	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingAfter	Expected 1 space after "="; newline found
+234	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingAfter	Expected 1 space after "="; newline found
+479	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingBefore	Expected 1 space before "?"; newline found
+480	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingBefore	Expected 1 space before ":"; newline found
+485	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingBefore	Expected 1 space before "?"; newline found
+490	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingBefore	Expected 1 space before ":"; newline found
+494	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingBefore	Expected 1 space before "?"; newline found
+495	PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\OperatorSpacingSniff.SpacingBefore	Expected 1 space before ":"; newline found

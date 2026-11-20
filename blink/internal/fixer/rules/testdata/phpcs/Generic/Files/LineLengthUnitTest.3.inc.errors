@@ -1,0 +1,2 @@
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\LineLengthSniff.MaxExceeded	Line exceeds maximum limit of 100 characters; contains 143 characters
+7	PHP_CodeSniffer\Standards\Generic\Sniffs\Files\LineLengthSniff.MaxExceeded	Line exceeds maximum limit of 100 characters; contains 166 characters

@@ -1,0 +1,1 @@
+5	PHP_CodeSniffer\Standards\PSR12\Sniffs\Files\FileHeaderSniff.IncorrectOrder	The declare statements must follow the opening PHP tag in the file header

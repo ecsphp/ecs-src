@@ -1,0 +1,1 @@
+73	PHP_CodeSniffer\Standards\Generic\Sniffs\Metrics\NestingLevelSniff.MaxExceeded	Function's nesting level (11) exceeds allowed maximum of 10

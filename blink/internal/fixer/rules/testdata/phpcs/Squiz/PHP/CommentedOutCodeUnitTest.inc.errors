@@ -1,0 +1,12 @@
+6	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 80% valid code; is this commented out code?
+8	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 46% valid code; is this commented out code?
+15	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 78% valid code; is this commented out code?
+19	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 78% valid code; is this commented out code?
+87	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 75% valid code; is this commented out code?
+91	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 43% valid code; is this commented out code?
+97	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 47% valid code; is this commented out code?
+109	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 36% valid code; is this commented out code?
+116	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 42% valid code; is this commented out code?
+128	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 43% valid code; is this commented out code?
+147	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 55% valid code; is this commented out code?
+158	PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\CommentedOutCodeSniff.Found	This comment is 67% valid code; is this commented out code?

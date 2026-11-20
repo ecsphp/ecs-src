@@ -1,0 +1,5 @@
+262	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff.SpaceBeforeKeyword	Expected 1 space between final and class keywords; 0 found
+265	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff.SpaceBeforeKeyword	Expected 1 space between abstract and class keywords; 2 found
+271	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff.NewlineBeforeKeyword	Expected 1 space between readonly and class keywords; newline found
+314	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff.CloseBraceSameLine	Closing class brace must be on a line by itself
+334	PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\ClassDeclarationSniff.CloseBraceSameLine	Closing enum brace must be on a line by itself

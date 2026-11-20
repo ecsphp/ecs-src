@@ -18,6 +18,9 @@ type PEARFunctionCallSignature struct {
 	AllowMultipleArguments    bool
 	RequiredSpacesAfterOpen   int
 	RequiredSpacesBeforeClose int
+	// psr2MultiLine swaps in PSR2's isMultiLineCall: a call is multi-line once
+	// any argument or the closing parenthesis starts a new line.
+	psr2MultiLine bool
 }
 
 func (PEARFunctionCallSignature) Name() string {
@@ -147,11 +150,35 @@ func (c PEARFunctionCallSignature) process(f *slvFile, stackPtr int) {
 		f.endChangeset()
 	}
 
-	if f.toks[openBracket].line != f.toks[closeBracket].line {
+	if c.isMultiLineCall(f, stackPtr, openBracket) {
 		c.processMultiLine(f, stackPtr, openBracket)
 		return
 	}
 	c.processSingleLine(f, openBracket)
+}
+
+func (c PEARFunctionCallSignature) isMultiLineCall(f *slvFile, stackPtr, openBracket int) bool {
+	closeBracket := f.toks[openBracket].closer
+	if !c.psr2MultiLine {
+		return f.toks[openBracket].line != f.toks[closeBracket].line
+	}
+	next := f.nextEffective(openBracket+1, len(f.toks))
+	if f.toks[next].line != f.toks[stackPtr].line {
+		return true
+	}
+	end := phpcsEndOfStatement(f, openBracket+1)
+	for f.is(end, ",") {
+		next = f.nextEffective(end+1, closeBracket)
+		if next < 0 {
+			return false
+		}
+		if f.toks[next].line != f.toks[end].line {
+			return true
+		}
+		end = phpcsEndOfStatement(f, next)
+	}
+	next = f.nextEffective(end+1, closeBracket)
+	return next >= 0 && f.toks[next].line != f.toks[end].line
 }
 
 func (c PEARFunctionCallSignature) processSingleLine(f *slvFile, openBracket int) {

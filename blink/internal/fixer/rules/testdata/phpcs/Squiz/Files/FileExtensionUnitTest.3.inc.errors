@@ -1,0 +1,1 @@
+1	PHP_CodeSniffer\Standards\Squiz\Sniffs\Files\FileExtensionSniff.ClassFound	Interface found in ".php" file; use ".inc" extension instead

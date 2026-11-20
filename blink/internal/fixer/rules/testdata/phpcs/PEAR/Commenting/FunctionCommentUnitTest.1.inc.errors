@@ -1,0 +1,36 @@
+5	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$depth" missing
+12	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $detph does not match actual variable name $depth
+14	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+15	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.InvalidThrows	Exception type missing for @throws tag in function comment
+28	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.WrongStyle	You must use "/**" style comments for a function comment
+76	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+87	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+103	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function missingComment()
+109	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$one" missing
+112	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+122	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+123	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamComment	Missing parameter comment
+124	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamComment	Missing parameter comment
+124	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.ExtraParamComment	Superfluous parameter comment
+125	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamName	Missing parameter name
+126	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamType	Missing parameter type
+152	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$str" missing
+155	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter &$str does not match actual variable name $str
+165	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function missingCommentOutsideClass()
+172	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function tagBeforeComment()
+183	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+190	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$two" missing
+190	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "$three" missing
+206	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+234	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function myFunction()
+272	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment
+313	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamTag	Doc comment for parameter "...$name2" missing
+317	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.ParamNameNoMatch	Doc comment for parameter $name2 does not match actual variable name ...$name2
+327	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamComment	Missing parameter comment
+329	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingParamName	Missing parameter name
+332	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+386	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function setTranslator2()
+392	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function setTranslator3()
+397	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.Missing	Missing doc comment for function setTranslator4()
+406	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturnType	Return type missing for @return tag in function comment
+426	PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\FunctionCommentSniff.MissingReturn	Missing @return tag in function comment

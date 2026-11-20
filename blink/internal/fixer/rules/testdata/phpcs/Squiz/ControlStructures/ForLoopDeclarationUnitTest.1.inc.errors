@@ -1,0 +1,1 @@
+69	PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ForLoopDeclarationSniff.SpacingBeforeClose	Whitespace found before closing bracket of FOR loop

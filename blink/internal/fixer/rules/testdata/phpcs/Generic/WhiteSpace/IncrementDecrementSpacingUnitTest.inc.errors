@@ -1,0 +1,5 @@
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff.SpaceAfterDecrement	Expected no spaces between the decrement operator and $i; comment found
+9	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff.SpaceAfterIncrement	Expected no spaces between the increment operator and $i; comment found
+13	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff.SpaceAfterDecrement	Expected no spaces between $i and the decrement operator; comment found
+16	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff.SpaceAfterIncrement	Expected no spaces between $i and the increment operator; comment found
+55	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\IncrementDecrementSpacingSniff.SpaceAfterDecrement	Expected no spaces between the decrement operator and namespace\\Relative\\ClassName; comment found

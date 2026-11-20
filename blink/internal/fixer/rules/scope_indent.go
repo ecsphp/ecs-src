@@ -18,6 +18,9 @@ type ScopeIndent struct {
 	Indent    int
 	Exact     bool
 	TabIndent bool
+	// SwitchNotIndented leaves switch bodies unindented, as PEAR's subclass
+	// sets $nonIndentingScopes = [T_SWITCH].
+	SwitchNotIndented bool
 }
 
 func (ScopeIndent) Name() string {
@@ -40,6 +43,10 @@ func (r ScopeIndent) WithConfig(config map[string]any) fixer.Fixer {
 }
 
 func (ScopeIndent) phpcsOnePass() {}
+
+func (r ScopeIndent) nonIndenting(code string) bool {
+	return r.SwitchNotIndented && code == "switch"
+}
 
 func (r ScopeIndent) Fix(s *tokens.Stream) bool {
 	return slvRun(s, func(f *slvFile) {
@@ -473,7 +480,7 @@ func (r ScopeIndent) process(m *siModel, stackPtr int) {
 			}
 		}
 
-		if checkToken >= 0 && siScopeOpeners[code[checkToken]] && sc.opener[checkToken] >= 0 {
+		if checkToken >= 0 && siScopeOpeners[code[checkToken]] && !r.nonIndenting(code[checkToken]) && sc.opener[checkToken] >= 0 {
 			exact = true
 			if disableExactEnd > checkToken {
 				for end := range disableExactStack {
@@ -658,7 +665,7 @@ func (r ScopeIndent) process(m *siModel, stackPtr int) {
 				i = closer
 				continue
 			}
-			if siScopeOpeners[code[sc.cond[i]]] {
+			if siScopeOpeners[code[sc.cond[i]]] && !r.nonIndenting(code[sc.cond[i]]) {
 				currentIndent += r.Indent
 				setIndents[i] = currentIndent
 				openScopes.set(closer, sc.cond[i])

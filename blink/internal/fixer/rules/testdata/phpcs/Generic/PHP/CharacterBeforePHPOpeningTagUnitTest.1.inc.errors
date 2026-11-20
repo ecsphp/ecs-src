@@ -1,0 +1,1 @@
+2	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\CharacterBeforePHPOpeningTagSniff.Found	The opening PHP tag must be the first content in the file

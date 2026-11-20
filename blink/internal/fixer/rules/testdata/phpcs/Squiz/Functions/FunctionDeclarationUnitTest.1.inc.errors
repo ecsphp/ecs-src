@@ -1,0 +1,2 @@
+55	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationSniff.Found	Expected "function abc(...);"; found "function abc(...) ;"
+68	PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationSniff.Found	Expected "function abc(...)"; found "function abc (...)"

@@ -1,0 +1,2 @@
+2	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\SAPIUsageSniff.FunctionFound	Use the PHP_SAPI constant instead of calling php_sapi_name()
+6	PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\SAPIUsageSniff.FunctionFound	Use the PHP_SAPI constant instead of calling php_sapi_name()

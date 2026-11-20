@@ -1,0 +1,1 @@
+118	PHP_CodeSniffer\Standards\Generic\Sniffs\Metrics\CyclomaticComplexitySniff.MaxExceeded	Function's cyclomatic complexity (21) exceeds allowed maximum of 20

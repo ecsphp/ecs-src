@@ -1,0 +1,1 @@
+2	PHP_CodeSniffer\Standards\PSR2\Sniffs\Namespaces\UseDeclarationSniff.MultipleDeclarations	There must be one USE keyword per declaration

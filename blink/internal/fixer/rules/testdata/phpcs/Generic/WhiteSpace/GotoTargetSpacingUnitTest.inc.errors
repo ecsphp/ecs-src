@@ -1,0 +1,1 @@
+30	PHP_CodeSniffer\Standards\Generic\Sniffs\WhiteSpace\GotoTargetSpacingSniff.CommentFound	There should be no space between goto label "TooMuchSpacePlusComment" and the colon following it. Found: comment

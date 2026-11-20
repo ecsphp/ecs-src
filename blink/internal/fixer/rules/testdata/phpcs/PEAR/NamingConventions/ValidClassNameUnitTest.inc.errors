@@ -1,0 +1,32 @@
+5	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Class name must begin with a capital letter
+7	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Class name must begin with a capital letter
+7	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Class name is not valid; consider Invalid_Name instead
+9	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Class name is not valid; consider Invalid_Name instead
+19	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Class name must begin with a capital letter
+24	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Interface name must begin with a capital letter
+26	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Interface name must begin with a capital letter
+26	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Interface name is not valid; consider Invalid_Name instead
+28	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Interface name is not valid; consider Invalid_Name instead
+38	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Interface name must begin with a capital letter
+40	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Class name must begin with a capital letter
+40	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Class name is not valid
+42	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Interface name must begin with a capital letter
+42	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Interface name is not valid
+44	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Class name is not valid; consider Invalid_Name instead
+46	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Interface name is not valid; consider Invalid_Name instead
+50	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Trait name must begin with a capital letter
+52	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Trait name must begin with a capital letter
+52	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Trait name is not valid; consider Invalid_Name instead
+54	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Trait name is not valid; consider Invalid_Name instead
+64	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Trait name must begin with a capital letter
+66	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Trait name must begin with a capital letter
+66	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Trait name is not valid
+68	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Trait name is not valid; consider Invalid_Name instead
+72	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Enum name must begin with a capital letter
+74	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Enum name must begin with a capital letter
+74	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Enum name is not valid; consider Invalid_Name instead
+76	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Enum name is not valid; consider Invalid_Name instead
+86	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Enum name must begin with a capital letter
+88	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.StartWithCapital	Enum name must begin with a capital letter
+88	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Enum name is not valid
+90	PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidClassNameSniff.Invalid	Enum name is not valid; consider Invalid_Name instead
