@@ -26,7 +26,7 @@ those expectations can differ from upstream's `.inc.fixed`. Regenerate them with
 | PHP_CodeSniffer | 203 | 203 | 100% |
 | **total** | **519** | **519** | **100%** |
 
-blink runs 602 rules in all, its own extras included.
+blink runs 617 rules in all, its own extras included.
 <!-- rule-counts:end -->
 
 ### slevomat sniffs
@@ -50,10 +50,10 @@ measured against every fixable slevomat sniff in `slevomat-fixable-sniffs.txt`
 | Numbers | 1 | 1 | 100% |
 | Operators | 4 | 4 | 100% |
 | PHP | 9 | 9 | 100% |
-| TypeHints | 0 | 15 | 0% |
+| TypeHints | 15 | 15 | 100% |
 | Variables | 1 | 1 | 100% |
 | Whitespaces | 1 | 1 | 100% |
-| **total** | **77** | **132** | **58%** |
+| **total** | **92** | **132** | **69%** |
 <!-- slevomat-counts:end -->
 
 ## Build

@@ -1,10 +1,14 @@
 package rules
 
 import (
+	"fmt"
+	"maps"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 )
@@ -12,8 +16,7 @@ import (
 // This file ports what slevomat's annotation helpers use of
 // phpstan/phpdoc-parser 2.4.1: its Lexer, TokenIterator, PhpDocParser,
 // TypeParser and ConstExprParser with the "lines" and "indexes" attributes,
-// the node traversal, and the format preserving printer for a fix that swaps
-// one node for another of the same class.
+// the node traversal, and its Printer.
 
 type pdTokType uint8
 
@@ -545,14 +548,6 @@ func (it *pdIter) push()     { it.saves = append(it.saves, it.i) }
 func (it *pdIter) drop()     { it.saves = it.saves[:len(it.saves)-1] }
 func (it *pdIter) rollback() { it.i = it.saves[len(it.saves)-1]; it.drop() }
 
-func (it *pdIter) content(start, end int) string {
-	var b strings.Builder
-	for i := max(start, 0); i < end && i < len(it.toks); i++ {
-		b.WriteString(it.toks[i].v)
-	}
-	return b.String()
-}
-
 // pdTry runs fn, reporting false on a ParserException.
 func pdTry(fn func()) (ok bool) {
 	defer func() {
@@ -580,7 +575,26 @@ type pdNode struct {
 	name string
 	// className is ConstFetchNode::$className, importedAs TypeAliasImportTagValueNode::$importedAs.
 	className, importedAs string
+	// text is what a ConstExprNode prints as, ArrayShapeNode::$kind,
+	// CallableTypeParameterNode::$parameterName and ConditionalTypeForParameterNode::$parameterName.
+	text      string
+	flags     pdFlags
+	variances []string // GenericTypeNode::$variances
+	// orig is the Attribute::ORIGINAL_NODE of a clone.
+	orig *pdNode
 }
+
+type pdFlags uint8
+
+const (
+	pdFlagNegated pdFlags = 1 << iota
+	pdFlagOptional
+	pdFlagReference
+	pdFlagVariadic
+	pdFlagUnsealed
+)
+
+func (n *pdNode) has(f pdFlags) bool { return n.flags&f != 0 }
 
 type pdField struct {
 	node   *pdNode
@@ -609,14 +623,15 @@ func (p *pdParser) enrich(n *pdNode, start int) *pdNode {
 	return n
 }
 
-// pdParse is PhpDocParser::parse of a doc comment, or nil when it throws.
-func pdParse(doc string) (root *pdNode, toks []pdToken) {
+// pdParseWithNewline is PhpDocParser::parse of a doc comment, or nil when it
+// throws, with the newline its TokenIterator detects.
+func pdParseWithNewline(doc string) (root *pdNode, toks []pdToken, newline string) {
 	toks = pdLex(doc)
 	p := &pdParser{it: newPdIter(toks)}
 	if !pdTry(func() { root = p.parse() }) {
-		return nil, toks
+		return nil, toks, p.it.newline
 	}
-	return root, toks
+	return root, toks, p.it.newline
 }
 
 func (p *pdParser) parse() *pdNode {
@@ -819,10 +834,13 @@ func (p *pdParser) parseTagValueBody(tag string) *pdNode {
 		}
 		it.tryConsume(pdReference)
 		it.tryConsume(pdVariadic)
+		name := it.cur().v
 		it.consume(pdVariable)
 		p.parseOptionalDescription(false)
 		if t != nil {
-			return pdNew("ParamTagValueNode", pdF(t))
+			n := pdNew("ParamTagValueNode", pdF(t))
+			n.text = name
+			return n
 		}
 		return pdNew("TypelessParamTagValueNode")
 	case "@param-immediately-invoked-callable", "@phpstan-param-immediately-invoked-callable",
@@ -1359,13 +1377,17 @@ func pdIsShapeKind(name string) bool {
 
 func (p *pdParser) parseConditional(subject *pdNode) *pdNode {
 	it := p.it
+	param := ""
 	if subject == nil {
+		param = it.cur().v
 		it.consume(pdVariable)
 		it.consumeValue(pdIdentifier, "is")
 	} else {
 		it.consume(pdIdentifier)
 	}
+	var flags pdFlags
 	if it.isValue("not") {
+		flags = pdFlagNegated
 		it.consume(pdIdentifier)
 	}
 	target := p.parseType()
@@ -1377,10 +1399,15 @@ func (p *pdParser) parseConditional(subject *pdNode) *pdNode {
 	it.consume(pdColon)
 	it.skipNewLinesAndComments()
 	elseType := p.subParse()
+	var n *pdNode
 	if subject == nil {
-		return pdNew("ConditionalTypeForParameterNode", pdF(target), pdF(ifType), pdF(elseType))
+		n = pdNew("ConditionalTypeForParameterNode", pdF(target), pdF(ifType), pdF(elseType))
+		n.text = param
+	} else {
+		n = pdNew("ConditionalTypeNode", pdF(subject), pdF(target), pdF(ifType), pdF(elseType))
 	}
-	return pdNew("ConditionalTypeNode", pdF(subject), pdF(target), pdF(ifType), pdF(elseType))
+	n.flags = flags
+	return n
 }
 
 func (p *pdParser) parseNullable() *pdNode {
@@ -1435,6 +1462,7 @@ func (p *pdParser) parseGeneric(base *pdNode) *pdNode {
 	it.consume(pdOpenAngleBracket)
 	it.skipNewLinesAndComments()
 	var types []*pdNode
+	var variances []string
 	first := true
 	for first || it.tryConsume(pdComma) {
 		it.skipNewLinesAndComments()
@@ -1442,10 +1470,13 @@ func (p *pdParser) parseGeneric(base *pdNode) *pdNode {
 			break
 		}
 		first = false
-		types = append(types, p.parseGenericTypeArgument())
+		t, variance := p.parseGenericTypeArgument()
+		types = append(types, t)
+		variances = append(variances, variance)
 		it.skipNewLinesAndComments()
 	}
 	t := pdNew("GenericTypeNode", pdF(base), pdL(types))
+	t.variances = variances
 	if base.start >= 0 {
 		p.enrich(t, base.start)
 	}
@@ -1453,16 +1484,19 @@ func (p *pdParser) parseGeneric(base *pdNode) *pdNode {
 	return t
 }
 
-func (p *pdParser) parseGenericTypeArgument() *pdNode {
+func (p *pdParser) parseGenericTypeArgument() (*pdNode, string) {
 	it := p.it
 	start := it.i
 	if it.tryConsume(pdWildcard) {
-		return p.enrich(pdIdent("mixed"), start)
+		return p.enrich(pdIdent("mixed"), start), "bivariant"
 	}
-	if !it.tryConsumeValue("contravariant") {
-		it.tryConsumeValue("covariant")
+	variance := "invariant"
+	if it.tryConsumeValue("contravariant") {
+		variance = "contravariant"
+	} else if it.tryConsumeValue("covariant") {
+		variance = "covariant"
 	}
-	return p.parseType()
+	return p.parseType(), variance
 }
 
 func (p *pdParser) parseTemplateTagValue(description bool) *pdNode {
@@ -1542,13 +1576,21 @@ func (p *pdParser) parseCallableParameter() *pdNode {
 	it := p.it
 	start := it.i
 	t := p.parseType()
-	it.tryConsume(pdReference)
-	it.tryConsume(pdVariadic)
+	n := pdNew("CallableTypeParameterNode", pdF(t))
+	if it.tryConsume(pdReference) {
+		n.flags |= pdFlagReference
+	}
+	if it.tryConsume(pdVariadic) {
+		n.flags |= pdFlagVariadic
+	}
 	if it.is(pdVariable) {
+		n.text = it.cur().v
 		it.consume(pdVariable)
 	}
-	it.tryConsume(pdEqual)
-	return p.enrich(pdNew("CallableTypeParameterNode", pdF(t)), start)
+	if it.tryConsume(pdEqual) {
+		n.flags |= pdFlagOptional
+	}
+	return p.enrich(n, start)
 }
 
 func (p *pdParser) parseCallableReturnType() *pdNode {
@@ -1646,12 +1688,16 @@ func (p *pdParser) parseArrayShape(kind string) *pdNode {
 	it.consume(pdOpenCurlyBracket)
 	var items []*pdNode
 	var unsealed *pdNode
+	sealed := true
 	for done := false; !done; {
 		it.skipNewLinesAndComments()
 		if it.tryConsume(pdCloseCurlyBracket) {
-			return pdNew("ArrayShapeNode", pdL(items), pdF(nil))
+			n := pdNew("ArrayShapeNode", pdL(items), pdF(nil))
+			n.text = kind
+			return n
 		}
 		if it.tryConsume(pdVariadic) {
+			sealed = false
 			it.skipNewLinesAndComments()
 			if it.is(pdOpenAngleBracket) {
 				unsealed = p.parseUnsealedType(kind == "array")
@@ -1671,7 +1717,12 @@ func (p *pdParser) parseArrayShape(kind string) *pdNode {
 	}
 	it.skipNewLinesAndComments()
 	it.consume(pdCloseCurlyBracket)
-	return pdNew("ArrayShapeNode", pdL(items), pdF(unsealed))
+	n := pdNew("ArrayShapeNode", pdL(items), pdF(unsealed))
+	n.text = kind
+	if !sealed {
+		n.flags = pdFlagUnsealed
+	}
+	return n
 }
 
 func (p *pdParser) parseUnsealedType(withKey bool) *pdNode {
@@ -1703,17 +1754,24 @@ func (p *pdParser) parseShapeItem(array bool) *pdNode {
 	}
 	if !array {
 		key := p.parseShapeKey(false)
-		it.tryConsume(pdNullable)
+		optional := it.tryConsume(pdNullable)
 		it.consume(pdColon)
-		return p.enrich(pdNew(kind, pdF(key), pdF(p.parseType())), start)
+		n := pdNew(kind, pdF(key), pdF(p.parseType()))
+		if optional {
+			n.flags = pdFlagOptional
+		}
+		return p.enrich(n, start)
 	}
 	var n *pdNode
 	it.push()
 	if pdTry(func() {
 		key := p.parseShapeKey(true)
-		it.tryConsume(pdNullable)
+		optional := it.tryConsume(pdNullable)
 		it.consume(pdColon)
 		n = pdNew(kind, pdF(key), pdF(p.parseType()))
+		if optional {
+			n.flags = pdFlagOptional
+		}
 	}) {
 		it.drop()
 		return p.enrich(n, start)
@@ -1729,9 +1787,11 @@ func (p *pdParser) parseShapeKey(array bool) *pdNode {
 	switch {
 	case array && it.is(pdInteger):
 		key = pdNew("ConstExprIntegerNode")
+		key.text = strings.ReplaceAll(it.cur().v, "_", "")
 		it.next()
 	case it.is(pdSingleQuotedString, pdDoubleQuotedString):
 		key = pdNew("ConstExprStringNode")
+		key.text = pdStringText(it.cur())
 		it.next()
 	default:
 		identifier := it.cur().v
@@ -1774,11 +1834,15 @@ func (p *pdParser) parseConstExpr(doctrine bool) *pdNode {
 	start := it.i
 	switch {
 	case it.is(pdFloat):
+		n := pdNew("ConstExprFloatNode")
+		n.text = strings.ReplaceAll(it.cur().v, "_", "")
 		it.next()
-		return p.enrich(pdNew("ConstExprFloatNode"), start)
+		return p.enrich(n, start)
 	case it.is(pdInteger):
+		n := pdNew("ConstExprIntegerNode")
+		n.text = strings.ReplaceAll(it.cur().v, "_", "")
 		it.next()
-		return p.enrich(pdNew("ConstExprIntegerNode"), start)
+		return p.enrich(n, start)
 	case doctrine && it.is(pdDoctrineAnnotationString):
 		it.next()
 		return p.enrich(pdNew("DoctrineConstExprStringNode"), start)
@@ -1791,14 +1855,18 @@ func (p *pdParser) parseConstExpr(doctrine bool) *pdNode {
 			p.parseDoctrineString()
 			return p.enrich(pdNew("DoctrineConstExprStringNode"), start)
 		}
+		n := pdNew("ConstExprStringNode")
+		n.text = pdStringText(it.cur())
 		it.next()
-		return p.enrich(pdNew("ConstExprStringNode"), start)
+		return p.enrich(n, start)
 	case it.is(pdIdentifier):
 		identifier := it.cur().v
 		it.next()
 		switch strings.ToLower(identifier) {
 		case "true", "false", "null":
-			return p.enrich(pdNew("ConstExprScalarNode"), start)
+			n := pdNew("ConstExprScalarNode")
+			n.text = strings.ToLower(identifier)
+			return p.enrich(n, start)
 		case "array":
 			it.consume(pdOpenParentheses)
 			return p.parseConstArray(pdCloseParentheses, start, doctrine)
@@ -1903,73 +1971,1012 @@ func pdNodesByType(n *pdNode, kind string) []*pdNode {
 // pdPrintError is a LogicException of the printer.
 type pdPrintError struct{}
 
-// pdFix is AnnotationHelper::fixAnnotation: the format preserving print of the
-// doc comment with target printed as replacement. It is false where the
-// printer throws.
-func pdFix(root *pdNode, toks []pdToken, target *pdNode, replacement string) (out string, ok bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, is := r.(pdPrintError); !is {
-				panic(r)
-			}
-			ok = false
+func pdThrow() { panic(pdPrintError{}) }
+
+// pdCatch turns a LogicException of the printer into ok being false.
+func pdCatch(ok *bool) {
+	if r := recover(); r != nil {
+		if _, is := r.(pdPrintError); !is {
+			panic(r)
 		}
-	}()
-	it := &pdIter{toks: toks}
-	pr := &pdPrinter{it: it, target: target, replacement: replacement}
-	idx := 0
-	res := pr.list(root.fields[0].list, &idx)
-	return res + it.content(idx, len(toks)), true
+		*ok = false
+	}
+}
+
+// pdClone is PhpDocParserHelper::cloneNode: a deep copy whose every node has
+// the node it copies as its original.
+func pdClone(n *pdNode) *pdNode {
+	if n == nil {
+		return nil
+	}
+	c := *n
+	c.orig = n
+	c.fields = make([]pdField, len(n.fields))
+	for i, f := range n.fields {
+		if !f.isList {
+			c.fields[i] = pdField{node: pdClone(f.node)}
+			continue
+		}
+		list := make([]*pdNode, len(f.list))
+		for j, item := range f.list {
+			list[j] = pdClone(item)
+		}
+		c.fields[i] = pdField{list: list, isList: true}
+	}
+	return &c
+}
+
+// pdReplaceIn swaps, below the clone n, the clone of target for fixed, like
+// the visitor of AnnotationHelper::changeAnnotationNode.
+func pdReplaceIn(n, target, fixed *pdNode) {
+	swap := func(c *pdNode) *pdNode {
+		if c != nil && c.orig == target {
+			if want, typed := pdTypedSlots[n.kind]; typed && c == n.fields[0].node && fixed.kind != want {
+				// a TypeError of the typed property in PHP
+				pdThrow()
+			}
+			return fixed
+		}
+		if c != nil {
+			pdReplaceIn(c, target, fixed)
+		}
+		return c
+	}
+	for i, f := range n.fields {
+		if !f.isList {
+			n.fields[i].node = swap(f.node)
+			continue
+		}
+		for j, item := range f.list {
+			f.list[j] = swap(item)
+		}
+	}
+}
+
+// pdTypedSlots are the nodes whose first sub-node is a property typed as one
+// node class in PHP.
+var pdTypedSlots = map[string]string{
+	"DoctrineArgument":    "IdentifierTypeNode",
+	"ExtendsTagValueNode": "GenericTypeNode",
+}
+
+func pdContains(n, target *pdNode) bool {
+	found := false
+	pdWalk(n, func(c *pdNode) {
+		if c == target {
+			found = true
+		}
+	})
+	return found
+}
+
+// pdFixAnnotation is AnnotationHelper::fixAnnotation: the format preserving
+// print of the doc comment root, parsed from toks, with target swapped for
+// fixed. It is false where the printer throws.
+func pdFixAnnotation(root *pdNode, toks []pdToken, newline string, target, fixed *pdNode) (out string, ok bool) {
+	ok = true
+	defer pdCatch(&ok)
+	clone := pdClone(root)
+	for _, tag := range clone.fields[0].list {
+		if tag.kind == "PhpDocTagNode" && pdContains(tag.orig, target) {
+			pdReplaceIn(tag, target, fixed)
+			break
+		}
+	}
+	return pdPrintFormatPreserving(clone, root, toks, newline)
+}
+
+// pdFix is pdFixAnnotation with target, an identifier or a constant fetch,
+// swapped for a node of its class named replacement.
+func pdFix(root *pdNode, toks []pdToken, target *pdNode, replacement string) (string, bool) {
+	switch target.kind {
+	case "IdentifierTypeNode", "ConstFetchNode":
+	default:
+		return "", false
+	}
+	fixed := pdNew(target.kind)
+	fixed.name = replacement
+	return pdFixAnnotation(root, toks, pdFirstNewline(toks), target, fixed)
+}
+
+// pdFirstNewline is the newline of the first end of line of a doc comment,
+// what the parser's TokenIterator detects as its newline.
+func pdFirstNewline(toks []pdToken) string {
+	for _, t := range toks {
+		if t.t != pdPhpdocEOL {
+			continue
+		}
+		if strings.HasPrefix(t.v, "\r\n") {
+			return "\r\n"
+		}
+		if strings.HasPrefix(t.v, "\n") {
+			return "\n"
+		}
+	}
+	return ""
+}
+
+// pdPrint is Printer::print, as AnnotationTypeHelper::print uses it; it is
+// false for a node the port cannot print.
+func pdPrint(n *pdNode) (out string, ok bool) {
+	ok = true
+	defer pdCatch(&ok)
+	pr := &pdPrinter{lineStart: "\n *"}
+	return pr.print(n), true
+}
+
+// pdPrintFormatPreserving is Printer::printFormatPreserving of the clone node
+// of the doc comment orig, parsed from toks with newline detected.
+func pdPrintFormatPreserving(node, orig *pdNode, toks []pdToken, newline string) (out string, ok bool) {
+	ok = true
+	defer pdCatch(&ok)
+	pr := &pdPrinter{toks: toks, newline: newline}
+	pr.lineStart = pr.detectLineStart()
+	index := 0
+	if res, done := pr.array(node.fields[0].list, orig.fields[0].list, &index, "PhpDocNode", 0); done {
+		return res + pr.content(index, len(toks)), true
+	}
+	return pr.print(node), true
 }
 
 type pdPrinter struct {
-	it          *pdIter
-	target      *pdNode
-	replacement string
+	toks      []pdToken
+	newline   string
+	lineStart string
 }
 
-func (pr *pdPrinter) list(items []*pdNode, idx *int) string {
+func (pr *pdPrinter) nl() string {
+	if pr.newline == "" {
+		return "\n"
+	}
+	return pr.newline
+}
+
+// content is TokenIterator::getContentBetween.
+func (pr *pdPrinter) content(start, end int) string {
+	if start < 0 || end > len(pr.toks) {
+		pdThrow()
+	}
 	var b strings.Builder
-	for _, item := range items {
-		if item.start < 0 || item.end < 0 || item.start < *idx {
-			panic(pdPrintError{})
-		}
-		b.WriteString(pr.it.content(*idx, item.start))
-		b.WriteString(pr.node(item))
-		*idx = item.end + 1
+	for i := start; i < end; i++ {
+		b.WriteString(pr.toks[i].v)
 	}
 	return b.String()
 }
 
-func (pr *pdPrinter) node(n *pdNode) string {
-	if n == pr.target {
-		return pr.replacement
+// hasParentheses is TokenIterator::hasParentheses.
+func (pr *pdPrinter) hasParentheses(start, end int) bool {
+	ws := func(t pdTokType) bool { return t == pdHorizontalWS || t == pdPhpdocEOL }
+	before := false
+	for i := start - 1; i >= 0; i-- {
+		if pr.toks[i].t == pdOpenParentheses {
+			before = true
+			break
+		}
+		if !ws(pr.toks[i].t) {
+			break
+		}
 	}
-	if n.start < 0 || n.end < 0 {
-		panic(pdPrintError{})
+	if !before {
+		return false
+	}
+	for i := end + 1; i < len(pr.toks); i++ {
+		if pr.toks[i].t == pdCloseParentheses {
+			return true
+		}
+		if !ws(pr.toks[i].t) {
+			break
+		}
+	}
+	return false
+}
+
+func (pr *pdPrinter) detectLineStart() string {
+	for _, t := range pr.toks {
+		if t.t != pdPhpdocEOL {
+			continue
+		}
+		if p := strings.IndexByte(t.v, '*'); p >= 0 {
+			return t.v[:p+1]
+		}
+	}
+	return pr.nl() + " *"
+}
+
+// pdFieldNames names the sub-nodes the printer's maps refer to, by position.
+var pdFieldNames = map[string][]string{
+	"PhpDocNode":           {"children"},
+	"UnionTypeNode":        {"types"},
+	"IntersectionTypeNode": {"types"},
+	"ArrayShapeNode":       {"items", "unsealedType"},
+	"ObjectShapeNode":      {"items"},
+	"CallableTypeNode":     {"identifier", "templateTypes", "parameters", "returnType"},
+	"GenericTypeNode":      {"type", "genericTypes"},
+	"ConstExprArrayNode":   {"items"},
+	"MethodTagValueNode":   {"returnType", "templateTypes", "parameters"},
+	"DoctrineArray":        {"items"},
+	"DoctrineAnnotation":   {"arguments"},
+	"ArrayTypeNode":        {"type"},
+	"OffsetAccessTypeNode": {"type", "offset"},
+	"NullableTypeNode":     {"type"},
+	"ConditionalTypeNode":  {"subjectType", "targetType", "if", "else"},
+}
+
+func pdMapKey(kind string, field int) string {
+	if names := pdFieldNames[kind]; field < len(names) {
+		return kind + "->" + names[field]
+	}
+	return kind + "->"
+}
+
+var pdListInsertion = map[string]string{
+	"PhpDocNode->children":            "\n * ",
+	"UnionTypeNode->types":            "|",
+	"IntersectionTypeNode->types":     "&",
+	"ArrayShapeNode->items":           ", ",
+	"ObjectShapeNode->items":          ", ",
+	"CallableTypeNode->parameters":    ", ",
+	"CallableTypeNode->templateTypes": ", ",
+	"GenericTypeNode->genericTypes":   ", ",
+	"ConstExprArrayNode->items":       ", ",
+	"MethodTagValueNode->parameters":  ", ",
+	"DoctrineArray->items":            ", ",
+	"DoctrineAnnotation->arguments":   ", ",
+}
+
+var pdEmptyListInsertion = map[string]string{
+	"CallableTypeNode->parameters":  "(",
+	"ArrayShapeNode->items":         "{",
+	"ObjectShapeNode->items":        "{",
+	"DoctrineArray->items":          "{",
+	"DoctrineAnnotation->arguments": "(",
+}
+
+var pdParentheses = map[string][]string{
+	"CallableTypeNode->returnType":     {"CallableTypeNode", "UnionTypeNode", "IntersectionTypeNode"},
+	"ArrayTypeNode->type":              {"CallableTypeNode", "UnionTypeNode", "IntersectionTypeNode", "ConstTypeNode", "NullableTypeNode"},
+	"OffsetAccessTypeNode->type":       {"CallableTypeNode", "UnionTypeNode", "IntersectionTypeNode", "NullableTypeNode"},
+	"NullableTypeNode->type":           {"UnionTypeNode", "IntersectionTypeNode", "NullableTypeNode"},
+	"ConditionalTypeNode->subjectType": {"UnionTypeNode", "IntersectionTypeNode", "NullableTypeNode"},
+}
+
+var pdParenthesesList = map[string][]string{
+	"IntersectionTypeNode->types": {"IntersectionTypeNode", "UnionTypeNode", "NullableTypeNode"},
+	"UnionTypeNode->types":        {"IntersectionTypeNode", "UnionTypeNode", "NullableTypeNode"},
+}
+
+// node is Printer::printNodeFormatPreserving.
+func (pr *pdPrinter) node(n *pdNode) string {
+	o := n.orig
+	if o == nil {
+		return pr.replacement(n)
+	}
+	if n.kind != o.kind || o.start < 0 || o.end < 0 {
+		pdThrow()
 	}
 	var b strings.Builder
-	pos := n.start
-	for _, f := range n.fields {
+	pos := o.start
+	for i, f := range n.fields {
+		of := o.fields[i]
 		if f.isList {
-			b.WriteString(pr.list(f.list, &pos))
+			if pdSameList(f.list, of.list) {
+				continue
+			}
+			res, ok := pr.array(f.list, of.list, &pos, n.kind, i)
+			if !ok {
+				return pr.replacement(n)
+			}
+			b.WriteString(res)
 			continue
 		}
-		sub := f.node
+		sub, osub := f.node, of.node
+		if osub == nil {
+			if sub == nil {
+				continue
+			}
+			return pr.replacement(n)
+		}
+		if osub.start < 0 || osub.end < 0 {
+			pdThrow()
+		}
+		if osub.end < osub.start {
+			// the original sub-node has no tokens, e.g. a Doctrine annotation without arguments
+			if sub != nil && (sub.orig == osub || pr.print(sub) == pr.print(osub)) {
+				continue
+			}
+			return pr.replacement(n)
+		}
 		if sub == nil {
-			continue
+			return pr.replacement(n)
 		}
-		if sub.start < 0 || sub.end < 0 {
-			panic(pdPrintError{})
+		b.WriteString(pr.content(pos, osub.start))
+		key := pdMapKey(n.kind, i)
+		need := slices.Contains(pdParentheses[key], sub.kind)
+		if sub.orig != nil {
+			need = need && !slices.Contains(pdParentheses[key], sub.orig.kind)
 		}
-		if sub.end < sub.start {
-			continue
+		add := need && !pr.hasParentheses(osub.start, osub.end)
+		if add {
+			b.WriteString("(")
 		}
-		b.WriteString(pr.it.content(pos, sub.start))
 		b.WriteString(pr.node(sub))
-		pos = sub.end + 1
+		if add {
+			b.WriteString(")")
+		}
+		pos = osub.end + 1
 	}
-	b.WriteString(pr.it.content(pos, n.end+1))
+	b.WriteString(pr.content(pos, o.end+1))
+	return b.String()
+}
+
+// pdSameList is PHP's === of two lists of nodes.
+func pdSameList(a, b []*pdNode) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// array is Printer::printArrayFormatPreserving; it is false where upstream
+// returns null.
+func (pr *pdPrinter) array(nodes, orig []*pdNode, index *int, parent string, field int) (string, bool) {
+	diff := pdDiff(orig, nodes)
+	key := pdMapKey(parent, field)
+	insert, hasInsert := pdListInsertion[key]
+	var result strings.Builder
+	beforeFirstKeepOrReplace := true
+	skipRemovedNode := false
+	var delayed []*pdNode
+	insertNewline := false
+	multiline, before, after := pr.isMultiline(*index, orig)
+	if hasInsert && insert == "\n * " {
+		if b, a, ok := pr.detectLastChildIndent(orig); ok {
+			before, after = b, a
+		}
+		insert = pr.nl() + before + "*" + after
+	}
+	lineBreak := func() string { return pr.nl() + before + "*" + after }
+	parens := func(kind string) bool { return slices.Contains(pdParenthesesList[key], kind) }
+	for i, d := range diff {
+		switch d.typ {
+		case pdKeep, pdReplace:
+			beforeFirstKeepOrReplace = false
+			item, o := d.new, d.old
+			if o.start < 0 || o.end < 0 || o.start < *index {
+				pdThrow()
+			}
+			if skipRemovedNode {
+				// the separator after the removed first item belongs to it
+				skipRemovedNode = false
+			} else {
+				result.WriteString(pr.content(*index, o.start))
+			}
+			for _, add := range delayed {
+				if parens(add.kind) {
+					result.WriteString("(")
+				}
+				pr.appendNode(&result, pr.node(add), after)
+				if parens(add.kind) {
+					result.WriteString(")")
+				}
+				result.WriteString(insert)
+				if insertNewline {
+					result.WriteString(lineBreak())
+				}
+			}
+			delayed = nil
+			add := parens(item.kind) && !parens(o.kind) && !pr.hasParentheses(o.start, o.end)
+			if add {
+				result.WriteString("(")
+			}
+			result.WriteString(pr.node(item))
+			if add {
+				result.WriteString(")")
+			}
+			*index = o.end + 1
+		case pdAdd:
+			if !hasInsert {
+				return "", false
+			}
+			item := d.new
+			if insert == ", " && multiline {
+				insert = ","
+				insertNewline = true
+			}
+			if beforeFirstKeepOrReplace {
+				// will be inserted at the next "replace" or "keep" element
+				delayed = append(delayed, item)
+				continue
+			}
+			end := *index - 1
+			result.WriteString(insert)
+			if insertNewline {
+				result.WriteString(lineBreak())
+			}
+			if parens(item.kind) {
+				result.WriteString("(")
+			}
+			pr.appendNode(&result, pr.node(item), after)
+			if parens(item.kind) {
+				result.WriteString(")")
+			}
+			*index = end + 1
+		case pdRemove:
+			o := d.old
+			if o.start < 0 || o.end < 0 {
+				pdThrow()
+			}
+			if i == 0 {
+				// removing from the start keeps the tokens before the node and drops those after it
+				if key == "PhpDocNode->children" {
+					// the line of the removed child is dropped, the next child keeps its own line
+					for j := *index; j < o.start; j++ {
+						if pr.toks[j].t == pdPhpdocEOL {
+							break
+						}
+						result.WriteString(pr.toks[j].v)
+					}
+				} else {
+					result.WriteString(pr.content(*index, o.start))
+					skipRemovedNode = true
+				}
+			}
+			*index = o.end + 1
+		}
+	}
+	if len(delayed) > 0 {
+		find, ok := pdEmptyListInsertion[key]
+		if !ok {
+			return "", false
+		}
+		for ; *index < len(pr.toks); *index++ {
+			result.WriteString(pr.toks[*index].v)
+			if pr.toks[*index].v == find {
+				*index++
+				break
+			}
+		}
+		for j, add := range delayed {
+			if j > 0 {
+				result.WriteString(insert)
+				if insertNewline {
+					result.WriteString(lineBreak())
+				}
+			}
+			pr.appendNode(&result, pr.node(add), after)
+		}
+	}
+	return result.String(), true
+}
+
+type pdDiffType uint8
+
+const (
+	pdKeep pdDiffType = iota
+	pdRemove
+	pdAdd
+	pdReplace
+)
+
+type pdDiffElem struct {
+	typ      pdDiffType
+	old, new *pdNode
+}
+
+// pdDiff is Differ::diffWithReplacements from old to new, where a new node
+// equals the old one it is a clone of.
+func pdDiff(old, new []*pdNode) []pdDiffElem {
+	equal := func(a, b *pdNode) bool { return a != nil && b != nil && b.orig == a }
+	n, m := len(old), len(new)
+	v := map[int]int{1: 0}
+	var trace []map[int]int
+	x, y := 0, 0
+	for d := 0; d <= n+m; d++ {
+		trace = append(trace, maps.Clone(v))
+		done := false
+		for k := -d; k <= d; k += 2 {
+			if k == -d || k != d && v[k-1] < v[k+1] {
+				x = v[k+1]
+			} else {
+				x = v[k-1] + 1
+			}
+			y = x - k
+			for x < n && y < m && equal(old[x], new[y]) {
+				x++
+				y++
+			}
+			v[k] = x
+			if x >= n && y >= m {
+				done = true
+				break
+			}
+		}
+		if done {
+			break
+		}
+	}
+	var result []pdDiffElem
+	for d := len(trace) - 1; d >= 0; d-- {
+		v := trace[d]
+		k := x - y
+		prevK := k - 1
+		if k == -d || k != d && v[k-1] < v[k+1] {
+			prevK = k + 1
+		}
+		prevX := v[prevK]
+		prevY := prevX - prevK
+		for x > prevX && y > prevY {
+			result = append(result, pdDiffElem{pdKeep, old[x-1], new[y-1]})
+			x--
+			y--
+		}
+		if d == 0 {
+			break
+		}
+		for x > prevX {
+			result = append(result, pdDiffElem{pdRemove, old[x-1], nil})
+			x--
+		}
+		for y > prevY {
+			result = append(result, pdDiffElem{pdAdd, nil, new[y-1]})
+			y--
+		}
+	}
+	slices.Reverse(result)
+	// coalesce equal-length sequences of remove+add into replace
+	var out []pdDiffElem
+	for i := 0; i < len(result); i++ {
+		if result[i].typ != pdRemove {
+			out = append(out, result[i])
+			continue
+		}
+		j := i
+		for j < len(result) && result[j].typ == pdRemove {
+			j++
+		}
+		k := j
+		for k < len(result) && result[k].typ == pdAdd {
+			k++
+		}
+		if j-i == k-j {
+			for l := range j - i {
+				out = append(out, pdDiffElem{pdReplace, result[i+l].old, result[j+l].new})
+			}
+		} else {
+			out = append(out, result[i:k]...)
+		}
+		i = k - 1
+	}
+	return out
+}
+
+// appendNode writes a printed node; a new empty line in a docblock is " *",
+// without the space after the asterisk.
+func (pr *pdPrinter) appendNode(result *strings.Builder, printed, after string) {
+	lineStart := "*" + after
+	s := result.String()
+	if printed != "" || after == "" || !strings.HasSuffix(s, lineStart) {
+		result.WriteString(printed)
+		return
+	}
+	result.Reset()
+	result.WriteString(s[:len(s)-len(after)])
+}
+
+var pdIndentRe = regexp.MustCompile(`\n([\t ]*)\*( *)`)
+
+func (pr *pdPrinter) isMultiline(initial int, nodes []*pdNode) (bool, string, string) {
+	multiline := len(nodes) > 1
+	pos := initial
+	var all strings.Builder
+	for _, n := range nodes {
+		if n == nil {
+			continue
+		}
+		end := n.end + 1
+		text := pr.content(pos, end)
+		all.WriteString(text)
+		if !strings.Contains(text, "\n") {
+			// a newline is required between every item
+			multiline = false
+		}
+		pos = end
+	}
+	matches := pdIndentRe.FindAllStringSubmatch(all.String(), -1)
+	if len(matches) == 0 {
+		return multiline, " ", "  "
+	}
+	before, after := "", ""
+	for _, m := range matches {
+		if len(m[1]) > len(before) {
+			before = m[1]
+		}
+		if len(m[2]) > len(after) {
+			after = m[2]
+		}
+	}
+	if before == "" {
+		before = " "
+	}
+	if after == "" {
+		after = "  "
+	}
+	return multiline, before, after
+}
+
+var pdLastIndentRe = regexp.MustCompile(`\n([\t ]*)\*([\t ]*)$`)
+
+// detectLastChildIndent is the indentation around the asterisk on the line
+// where the last child of a doc comment starts.
+func (pr *pdPrinter) detectLastChildIndent(nodes []*pdNode) (string, string, bool) {
+	for i := len(nodes) - 1; i >= 0; i-- {
+		index := nodes[i].start - 1
+		lineStart := ""
+		for index >= 0 && index < len(pr.toks) && pr.toks[index].t == pdHorizontalWS {
+			lineStart = pr.toks[index].v + lineStart
+			index--
+		}
+		if index < 0 || index >= len(pr.toks) || pr.toks[index].t != pdPhpdocEOL {
+			continue
+		}
+		lineStart = pr.toks[index].v + lineStart
+		if m := pdLastIndentRe.FindStringSubmatch(lineStart); m != nil {
+			return m[1], m[2], true
+		}
+	}
+	return "", "", false
+}
+
+// replacement is Printer::printReplacement.
+func (pr *pdPrinter) replacement(n *pdNode) string {
+	if n.kind == "DoctrineTagValueNode" {
+		pdThrow()
+	}
+	return pr.addLineStarts(pr.print(n))
+}
+
+// addLineStarts puts back the asterisk the parser removes at the start of each
+// line of a text.
+func (pr *pdPrinter) addLineStarts(s string) string {
+	if !strings.Contains(s, "\n") {
+		return s
+	}
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\r' && i+1 < len(s) && s[i+1] == '\n' {
+			i++
+		} else if s[i] != '\n' {
+			b.WriteByte(s[i])
+			continue
+		}
+		b.WriteString(pr.lineStart)
+		if i+1 < len(s) && s[i+1] != '\r' && s[i+1] != '\n' {
+			b.WriteByte(' ')
+		}
+	}
+	return b.String()
+}
+
+// print is Printer::print for the nodes of types; the others throw.
+func (pr *pdPrinter) print(n *pdNode) string {
+	switch n.kind {
+	case "CallableTypeParameterNode":
+		s := pr.print(n.fields[0].node) + " "
+		if n.has(pdFlagReference) {
+			s += "&"
+		}
+		if n.has(pdFlagVariadic) {
+			s += "..."
+		}
+		s = pdTrim(s + n.text)
+		if n.has(pdFlagOptional) {
+			s += "="
+		}
+		return s
+	case "ArrayShapeUnsealedTypeNode":
+		if key := n.fields[1].node; key != nil {
+			return "<" + pr.printType(key) + ", " + pr.printType(n.fields[0].node) + ">"
+		}
+		return "<" + pr.printType(n.fields[0].node) + ">"
+	case "ArrayShapeItemNode", "ObjectShapeItemNode":
+		key := n.fields[0].node
+		if key == nil {
+			return pr.printType(n.fields[1].node)
+		}
+		optional := ""
+		if n.has(pdFlagOptional) {
+			optional = "?"
+		}
+		return pr.print(key) + optional + ": " + pr.printType(n.fields[1].node)
+	case "TemplateTagValueNode":
+		s := n.name
+		if bound := n.fields[0].node; bound != nil {
+			s += " of " + pr.printType(bound)
+		}
+		if lower := n.fields[2].node; lower != nil {
+			s += " super " + pr.printType(lower)
+		}
+		if def := n.fields[1].node; def != nil {
+			s += " = " + pr.printType(def)
+		}
+		return pdTrim(s + " ")
+	}
+	if strings.HasPrefix(n.kind, "ConstExpr") || n.kind == "ConstFetchNode" {
+		return pdConstExpr(n)
+	}
+	return pr.printType(n)
+}
+
+func (pr *pdPrinter) printType(n *pdNode) string {
+	switch n.kind {
+	case "ArrayShapeNode":
+		var items []string
+		for _, item := range n.fields[0].list {
+			items = append(items, pr.print(item))
+		}
+		if n.has(pdFlagUnsealed) {
+			unsealed := ""
+			if u := n.fields[1].node; u != nil {
+				unsealed = pr.print(u)
+			}
+			items = append(items, "..."+unsealed)
+		}
+		return n.text + "{" + strings.Join(items, ", ") + "}"
+	case "ArrayTypeNode":
+		return pr.offsetAccessType(n.fields[0].node) + "[]"
+	case "CallableTypeNode":
+		ret := n.fields[3].node
+		var returnType string
+		switch ret.kind {
+		case "CallableTypeNode", "UnionTypeNode", "IntersectionTypeNode":
+			returnType = "(" + pr.printType(ret) + ")"
+		default:
+			returnType = pr.printType(ret)
+		}
+		template := ""
+		if templates := n.fields[1].list; len(templates) > 0 {
+			var parts []string
+			for _, t := range templates {
+				parts = append(parts, pr.print(t))
+			}
+			template = "<" + strings.Join(parts, ", ") + ">"
+		}
+		var params []string
+		for _, p := range n.fields[2].list {
+			params = append(params, pr.print(p))
+		}
+		return pr.printType(n.fields[0].node) + template + "(" + strings.Join(params, ", ") + "): " + returnType
+	case "ConditionalTypeForParameterNode":
+		return "(" + n.text + " " + pdIs(n) + " " + pr.printType(n.fields[0].node) + " ? " +
+			pr.printType(n.fields[1].node) + " : " + pr.printType(n.fields[2].node) + ")"
+	case "ConditionalTypeNode":
+		subject := n.fields[0].node
+		s := pr.printType(subject)
+		switch subject.kind {
+		case "UnionTypeNode", "IntersectionTypeNode", "NullableTypeNode":
+			s = "(" + s + ")"
+		}
+		return "(" + s + " " + pdIs(n) + " " + pr.printType(n.fields[1].node) + " ? " +
+			pr.printType(n.fields[2].node) + " : " + pr.printType(n.fields[3].node) + ")"
+	case "ConstTypeNode":
+		return pdConstExpr(n.fields[0].node)
+	case "GenericTypeNode":
+		var types []string
+		for i, t := range n.fields[1].list {
+			variance := "invariant"
+			if i < len(n.variances) {
+				variance = n.variances[i]
+			}
+			switch variance {
+			case "invariant":
+				types = append(types, pr.printType(t))
+			case "bivariant":
+				types = append(types, "*")
+			default:
+				types = append(types, variance+" "+pr.print(t))
+			}
+		}
+		return pr.printType(n.fields[0].node) + "<" + strings.Join(types, ", ") + ">"
+	case "IdentifierTypeNode":
+		return n.name
+	case "IntersectionTypeNode", "UnionTypeNode":
+		var items []string
+		for _, t := range n.fields[0].list {
+			switch t.kind {
+			case "IntersectionTypeNode", "UnionTypeNode", "NullableTypeNode":
+				items = append(items, "("+pr.printType(t)+")")
+			default:
+				items = append(items, pr.printType(t))
+			}
+		}
+		if n.kind == "IntersectionTypeNode" {
+			return strings.Join(items, "&")
+		}
+		return strings.Join(items, "|")
+	case "InvalidTypeNode":
+		return "*Invalid type*"
+	case "NullableTypeNode":
+		inner := n.fields[0].node
+		switch inner.kind {
+		case "IntersectionTypeNode", "UnionTypeNode", "NullableTypeNode":
+			return "?(" + pr.printType(inner) + ")"
+		}
+		return "?" + pr.printType(inner)
+	case "ObjectShapeNode":
+		var items []string
+		for _, item := range n.fields[0].list {
+			items = append(items, pr.print(item))
+		}
+		return "object{" + strings.Join(items, ", ") + "}"
+	case "OffsetAccessTypeNode":
+		return pr.offsetAccessType(n.fields[0].node) + "[" + pr.printType(n.fields[1].node) + "]"
+	case "ThisTypeNode":
+		return "$this"
+	}
+	pdThrow()
+	return ""
+}
+
+func (pr *pdPrinter) offsetAccessType(n *pdNode) string {
+	switch n.kind {
+	case "CallableTypeNode", "UnionTypeNode", "IntersectionTypeNode", "NullableTypeNode":
+		return "(" + pr.printType(n) + ")"
+	}
+	return pr.printType(n)
+}
+
+func pdIs(n *pdNode) string {
+	if n.has(pdFlagNegated) {
+		return "is not"
+	}
+	return "is"
+}
+
+// pdConstExpr is the __toString of a ConstExprNode.
+func pdConstExpr(n *pdNode) string {
+	switch n.kind {
+	case "ConstExprIntegerNode", "ConstExprFloatNode", "ConstExprStringNode", "ConstExprScalarNode":
+		return n.text
+	case "ConstFetchNode":
+		if n.className == "" {
+			return n.name
+		}
+		return n.className + "::" + n.name
+	case "ConstExprArrayNode":
+		var items []string
+		for _, item := range n.fields[0].list {
+			items = append(items, pdConstExpr(item))
+		}
+		return "[" + strings.Join(items, ", ") + "]"
+	case "ConstExprArrayItemNode":
+		if key := n.fields[0].node; key != nil {
+			return pdConstExpr(key) + " => " + pdConstExpr(n.fields[1].node)
+		}
+		return pdConstExpr(n.fields[1].node)
+	}
+	pdThrow()
+	return ""
+}
+
+// pdTrim is PHP's trim.
+func pdTrim(s string) string { return strings.Trim(s, " \t\n\r\x00\x0B") }
+
+// pdStringText is what the ConstExprStringNode of a quoted string token
+// prints as: StringUnescaper::unescapeString, then ConstExprStringNode::__toString.
+func pdStringText(t pdToken) string {
+	raw := t.v[1 : len(t.v)-1]
+	if t.t == pdSingleQuotedString {
+		value := strings.ReplaceAll(strings.ReplaceAll(raw, `\\`, `\`), `\'`, `'`)
+		return "'" + pdAddcslashes(value, `'\`) + "'"
+	}
+	value := pdUnescapeDouble(strings.ReplaceAll(raw, `\"`, `"`))
+	return `"` + pdEscapeDouble(value) + `"`
+}
+
+func pdAddcslashes(s, chars string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if strings.IndexByte(chars, s[i]) >= 0 {
+			b.WriteByte('\\')
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
+}
+
+var pdEscapeRe = regexp.MustCompile(`\\([\\nrtfve]|[xX][0-9a-fA-F]{1,2}|[0-7]{1,3}|u\{([0-9a-fA-F]+)\})`)
+
+func pdUnescapeDouble(s string) string {
+	return pdEscapeRe.ReplaceAllStringFunc(s, func(m string) string {
+		seq := m[1:]
+		switch seq {
+		case `\`:
+			return `\`
+		case "n":
+			return "\n"
+		case "r":
+			return "\r"
+		case "t":
+			return "\t"
+		case "f":
+			return "\f"
+		case "v":
+			return "\v"
+		case "e":
+			return "\x1B"
+		}
+		switch seq[0] {
+		case 'x', 'X':
+			v, _ := strconv.ParseUint(seq[1:], 16, 8)
+			return string([]byte{byte(v)})
+		case 'u':
+			v, _ := strconv.ParseUint(seq[2:len(seq)-1], 16, 64)
+			return pdCodePointToUtf8(v)
+		}
+		v, _ := strconv.ParseUint(seq, 8, 16)
+		return string([]byte{byte(v)})
+	})
+}
+
+func pdCodePointToUtf8(n uint64) string {
+	switch {
+	case n <= 0x7F:
+		return string([]byte{byte(n)})
+	case n <= 0x7FF:
+		return string([]byte{byte(n>>6 + 0xC0), byte(n&0x3F + 0x80)})
+	case n <= 0xFFFF:
+		return string([]byte{byte(n>>12 + 0xE0), byte(n>>6&0x3F + 0x80), byte(n&0x3F + 0x80)})
+	case n <= 0x1FFFFF:
+		return string([]byte{byte(n>>18 + 0xF0), byte(n>>12&0x3F + 0x80), byte(n>>6&0x3F + 0x80), byte(n&0x3F + 0x80)})
+	}
+	return "\xef\xbf\xbd"
+}
+
+// pdEscapeDouble is ConstExprStringNode::escapeDoubleQuotedString.
+func pdEscapeDouble(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); {
+		c := s[i]
+		switch c {
+		case '\n':
+			b.WriteString(`\n`)
+		case '\r':
+			b.WriteString(`\r`)
+		case '\t':
+			b.WriteString(`\t`)
+		case '\f':
+			b.WriteString(`\f`)
+		case '\v':
+			b.WriteString(`\v`)
+		case '$', '"', '\\':
+			b.WriteByte('\\')
+			b.WriteByte(c)
+		default:
+			if c < 0x80 {
+				if c <= 0x08 || c >= 0x0E && c <= 0x1F {
+					fmt.Fprintf(&b, `\x%02x`, c)
+				} else {
+					b.WriteByte(c)
+				}
+				break
+			}
+			r, size := utf8.DecodeRuneInString(s[i:])
+			if r == utf8.RuneError && size <= 1 {
+				fmt.Fprintf(&b, `\x%02x`, c)
+				i++
+				continue
+			}
+			b.WriteString(s[i : i+size])
+			i += size
+			continue
+		}
+		i++
+	}
 	return b.String()
 }
 
@@ -1986,6 +2993,7 @@ type slvParsedDoc struct {
 	open, close int
 	root        *pdNode
 	toks        []pdToken
+	newline     string
 	annotations []slvAnnotation
 }
 
@@ -2018,10 +3026,10 @@ func (d *slvDocs) parse(open int) *slvParsedDoc {
 		return p
 	}
 	closeIdx := d.f.docCloser(open)
-	root, toks := pdParse(strings.TrimSpace(d.f.content(open, closeIdx)))
+	root, toks, newline := pdParseWithNewline(strings.TrimSpace(d.f.content(open, closeIdx)))
 	var p *slvParsedDoc
 	if root != nil {
-		p = &slvParsedDoc{open: open, close: closeIdx, root: root, toks: toks}
+		p = &slvParsedDoc{open: open, close: closeIdx, root: root, toks: toks, newline: newline}
 		for _, c := range root.fields[0].list {
 			if c.kind == "PhpDocTagNode" {
 				p.annotations = append(p.annotations, slvAnnotation{node: c, name: c.name})
@@ -2055,8 +3063,21 @@ func (d *slvDocs) annotations(open int, name string) []slvAnnotation {
 // do with AnnotationHelper::fixAnnotation and FixerHelper::change; it is false
 // where the printer throws, which aborts the whole file in ECS.
 func (d *slvDocs) fix(open int, target *pdNode, replacement string) bool {
+	switch target.kind {
+	case "IdentifierTypeNode", "ConstFetchNode":
+	default:
+		return false
+	}
+	fixed := pdNew(target.kind)
+	fixed.name = replacement
+	return d.fixNode(open, target, fixed)
+}
+
+// fixNode is fix with target swapped for the node fixed, which may hold nodes
+// of the parsed doc comment.
+func (d *slvDocs) fixNode(open int, target, fixed *pdNode) bool {
 	p := d.parse(open)
-	out, ok := pdFix(p.root, p.toks, target, replacement)
+	out, ok := pdFixAnnotation(p.root, p.toks, p.newline, target, fixed)
 	if !ok {
 		return false
 	}
