@@ -2086,5 +2086,37 @@
   {
     "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
     "file": "ControlStructures/jumpStatementsThrowExpressionNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowContinueWithoutIntegerOperandInSwitchSniff",
+    "file": "ControlStructures/disallowContinueWithoutIntegerOperandInSwitchNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowContinueWithoutIntegerOperandInSwitchSniff",
+    "file": "ControlStructures/disallowContinueWithoutIntegerOperandInSwitchErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\LanguageConstructWithParenthesesSniff",
+    "file": "ControlStructures/languageConstructWithParenthesesNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\LanguageConstructWithParenthesesSniff",
+    "file": "ControlStructures/languageConstructWithParenthesesErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithParenthesesSniff",
+    "file": "ControlStructures/newWithParenthesesNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithParenthesesSniff",
+    "file": "ControlStructures/newWithParenthesesErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithoutParenthesesSniff",
+    "file": "ControlStructures/newWithoutParenthesesNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithoutParenthesesSniff",
+    "file": "ControlStructures/newWithoutParenthesesErrors.php"
   }
 ]
