@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
@@ -90,9 +91,12 @@ func (ClassAttributesSeparation) SourceURL() string {
 	return "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ClassNotation/ClassAttributesSeparationFixer.php"
 }
 
-// Fix only ever ADJUSTS the newline count inside an existing whitespace token
-// between two classified members; it never inserts, removes or moves code. It
-// covers two gap shapes and skips everything else:
+// Fix only ever ADJUSTS the newline count of the whitespace around classified
+// members, inserting a newline where none separates a member from the docblock
+// or attribute above it; it never removes or moves code. It covers three shapes
+// and skips everything else:
+//   - a member right below a docblock or an attribute: exactly one line break
+//     between them, also for the first member;
 //   - a plain whitespace gap (already spanning a line) between two members;
 //   - a member whose leading trivia is only docblocks/attributes: the blank line
 //     is placed above that block, leaving the block attached.
@@ -110,13 +114,39 @@ func (f ClassAttributesSeparation) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		starts := classMemberStarts(s, i)
-		for k := 0; k+1 < len(starts); k++ {
-			if f.fixMemberGap(s, starts[k], starts[k+1]) {
+		// last member first, as PHP-CS-Fixer does: a newline inserted above a
+		// member only moves the members below it
+		for k, m := range slices.Backward(starts) {
+			start, fixed := f.fixMetaLineBreak(s, m)
+			if fixed {
+				changed = true
+			}
+			if k > 0 && f.fixMemberGap(s, starts[k-1], start) {
 				changed = true
 			}
 		}
 	}
 	return changed
+}
+
+// fixMetaLineBreak leaves exactly one line break between the member at start and
+// a docblock or attribute right above it, and returns the member's new start.
+func (f ClassAttributesSeparation) fixMetaLineBreak(s *tokens.Stream, start int) (int, bool) {
+	above := start - 1
+	if above >= 0 && s.At(above).Kind == token.Whitespace {
+		above--
+	}
+	if above < 0 || s.At(above).Kind != token.DocComment && s.At(above).Kind != token.AttributeEnd {
+		return start, false
+	}
+	if _, ok := f.classSepSpacingFor(classSepMemberType(s, start)); !ok {
+		return start, false
+	}
+	if above+1 == start {
+		s.InsertAt(start, token.Token{Kind: token.Whitespace, Value: "\n"})
+		return start + 1, true
+	}
+	return start, setNewlineCount(s, above+1, 1)
 }
 
 // fixMemberGap normalizes the whitespace separating the member at prevStart from
@@ -177,8 +207,9 @@ func (f ClassAttributesSeparation) fixMemberGap(s *tokens.Stream, prevStart, nex
 
 	// docblock/attribute block leading the next member: blank line goes above it.
 	// Require exactly one whitespace token (ws0) between prevEnd and the block, and
-	// the block itself contiguous (single-newline whitespace throughout) so it is
-	// unambiguously attached to nextStart.
+	// the block itself attached to nextStart as PHP-CS-Fixer's findCommentBlockStart
+	// walks it: no blank line between its items (whatever an attribute holds), and
+	// one line break right above nextStart.
 	if firstTrivia != prevEnd+2 {
 		return false
 	}
@@ -186,9 +217,17 @@ func (f ClassAttributesSeparation) fixMemberGap(s *tokens.Stream, prevStart, nex
 	if s.At(ws0).Kind != token.Whitespace || !hasNewline(s.At(ws0).Value) {
 		return false
 	}
-	for j := firstTrivia + 1; j < nextStart; j++ {
-		if t := s.At(j); t.Kind == token.Whitespace && strings.Count(t.Value, "\n") != 1 {
-			return false
+	for j := firstTrivia; j < nextStart; j++ {
+		t := s.At(j)
+		switch t.Kind {
+		case token.AttributeStart:
+			if end := s.AttributeEnd(j); end > j {
+				j = end
+			}
+		case token.Whitespace:
+			if n := strings.Count(t.Value, "\n"); n > 1 || n == 0 && j == nextStart-1 {
+				return false
+			}
 		}
 	}
 	return setNewlineCount(s, ws0, 2)
