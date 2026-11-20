@@ -11,9 +11,9 @@ import (
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/StringNotation/SingleQuoteFixer.php
 //
 // SingleQuote converts a double-quoted string to single quotes when it is safe:
-// no variables ($), no escape sequences (\), and no single quote in the content.
-// WithSingleQuotes (strings_containing_single_quote_chars) also converts strings
-// containing single quotes, escaping them.
+// no interpolation, no escape sequence other than \\, \" and \$, and no single
+// quote in the content. WithSingleQuotes (strings_containing_single_quote_chars)
+// also converts strings containing single quotes, escaping them.
 type SingleQuote struct {
 	WithSingleQuotes bool
 }
@@ -37,20 +37,38 @@ func (f SingleQuote) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := range s.Len() {
 		t := s.At(i)
-		if !t.IsLiteral() {
+		if !aliasIsConstantString(t) {
 			continue
 		}
 		prefix, v := token.SplitBinaryPrefix(t.Value) // b"x" keeps its prefix
-		if len(v) < 2 || v[0] != '"' || v[len(v)-1] != '"' {
-			continue // not a plain double-quoted string (e.g. heredoc)
+		if v[0] != '"' {
+			continue
 		}
 		content := v[1 : len(v)-1]
-		if strings.ContainsAny(content, "$\\") || (!f.WithSingleQuotes && strings.Contains(content, "'")) {
-			continue // interpolation, escape, or a quote that would need escaping
+		if singleQuoteKeepsEscape(content) || (!f.WithSingleQuotes && strings.Contains(content, "'")) {
+			continue // an escape sequence single quotes lack, or a quote that would need escaping
 		}
-		content = strings.ReplaceAll(content, "'", `\'`)
+		content = strings.NewReplacer(`\"`, `"`, `\$`, `$`, `'`, `\'`).Replace(content)
 		s.SetValue(i, prefix+"'"+content+"'")
 		changed = true
 	}
 	return changed
+}
+
+// singleQuoteKeepsEscape reports whether a double-quoted string body has a
+// backslash that escapes none of \, " and $: PHP-CS-Fixer's
+// /(?<!\\)(?:\\{2})*\\(?!["$\\])/. A backslash ending the body escapes the
+// closing quote of an unterminated literal, which PHP never makes a
+// T_CONSTANT_ENCAPSED_STRING.
+func singleQuoteKeepsEscape(content string) bool {
+	for i := 0; i < len(content); i++ {
+		if content[i] != '\\' {
+			continue
+		}
+		i++
+		if i == len(content) || strings.IndexByte(`\"$`, content[i]) < 0 {
+			return true
+		}
+	}
+	return false
 }
