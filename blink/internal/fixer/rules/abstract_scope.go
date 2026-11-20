@@ -17,7 +17,6 @@ type abstractScopeFile struct {
 	sc     *phpcsScope
 	sniff  string
 	errors []fixer.CodingStandardError
-	levels []int
 }
 
 func abstractScopeLoad(s *tokens.Stream, sniff string) *abstractScopeFile {
@@ -69,24 +68,6 @@ func (a *abstractScopeFile) run(scopes, listen map[string]bool, within func(i, s
 			outside(i)
 		}
 	}
-}
-
-// level is a token's level: the number of scope conditions holding it.
-func (a *abstractScopeFile) level(i int) int {
-	if a.levels == nil {
-		delta := make([]int, len(a.f.toks)+1)
-		for _, r := range a.sc.scopes {
-			delta[r.opener+1]++
-			delta[r.closer]--
-		}
-		a.levels = make([]int, len(a.f.toks))
-		depth := 0
-		for j := range a.levels {
-			depth += delta[j]
-			a.levels[j] = depth
-		}
-	}
-	return a.levels[i]
 }
 
 // deepest reports whether scope is the innermost condition holding i.

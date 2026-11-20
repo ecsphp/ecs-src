@@ -43,3 +43,31 @@ jobs:
 
             - name: "Parity ${{ matrix.corpus }}"
               run: blink/parity/run.sh "blink/parity/corpora/${{ matrix.corpus }}.json"
+
+    # every report-only rule in check mode: blink must report the same errors
+    # and exit with the same code as the PHP ECS engine
+    errors-parity:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                corpus:
+                    - rector-src
+                    - mautic
+        name: "report-only errors parity: ${{ matrix.corpus }}"
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.11"
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.4"
+                  coverage: none
+
+            - uses: "ramsey/composer-install@v4"
+
+            - name: "Report-only errors parity ${{ matrix.corpus }}"
+              run: blink/parity/errors.sh "blink/parity/corpora/${{ matrix.corpus }}.json"

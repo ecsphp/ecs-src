@@ -91,7 +91,7 @@ func (DisallowMultipleAssignments) process(f *slvFile, sc *phpcsScope, report fu
 			p--
 		}
 		p = max(p, 0)
-		if p < start && !f.is(p, "(") && !f.is(p, "[") {
+		if p < start && !f.is(p, "(") && (!f.is(p, "[") || f.isShortArrayOpen(p)) {
 			p = start
 		}
 		if f.is(p, "(") && f.isKeyword(squizReportParenOwner(f, sc, p), "for") {
