@@ -421,6 +421,11 @@ func (sc *phpcsScope) inlineElses() {
 	}
 }
 
+// phpcsMagicConstants are lexed as names by blink but have their own token in
+// PHP (T_DIR, T_FILE, ...), so they are no type name after a "?".
+var phpcsMagicConstants = phpcsSet("__dir__", "__file__", "__line__", "__class__", "__function__",
+	"__method__", "__namespace__", "__trait__", "__property__")
+
 func (sc *phpcsScope) isInlineThen(i int) bool {
 	f := sc.f
 	named := false
@@ -429,7 +434,7 @@ func (sc *phpcsScope) isInlineThen(i int) bool {
 			continue
 		}
 		t := f.toks[j]
-		if t.kind == token.Ident || f.isKeyword(j, "array") || f.isKeyword(j, "namespace") || f.is(j, `\`) {
+		if t.kind == token.Ident && !phpcsMagicConstants[strings.ToLower(t.orig)] || f.isKeyword(j, "array") || f.isKeyword(j, "namespace") || f.is(j, `\`) {
 			named = true
 			continue
 		}
