@@ -303,6 +303,10 @@ var fixerPriority = map[string]int{
 	"RequireMultiLineConditionSniff":                     0,
 	"RequireMultiLineTernaryOperatorSniff":               0,
 	"RequireSingleLineConditionSniff":                    0,
+	"EarlyExitSniff":                                     0,
+	"RequireNullCoalesceEqualOperatorSniff":              0,
+	"RequireNullCoalesceOperatorSniff":                   0,
+	"RequireNullSafeObjectOperatorSniff":                 0,
 
 	// raised from 0 so an empty statement is gone before whitespace sniffs look
 	// past a closing brace, as NoEmptyStatementFixer (40) does
