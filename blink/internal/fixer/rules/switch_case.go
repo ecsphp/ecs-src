@@ -75,9 +75,7 @@ func (SwitchCaseSemicolonToColon) Fix(s *tokens.Stream) bool {
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/SwitchCaseSpaceFixer.php
 //
 // SwitchCaseSpace removes whitespace between a case/default label and its colon
-// ("case 1 :" -> "case 1:"), newlines included. Like PHP-CS-Fixer, it skips a
-// whole switch whose "default" is not directly followed by whitespace and ":"
-// or ";", even a tidy "default:".
+// ("case 1 :" -> "case 1:"), newlines included.
 type SwitchCaseSpace struct{}
 
 func (SwitchCaseSpace) Name() string {
@@ -94,25 +92,20 @@ func (SwitchCaseSpace) IsCandidate(s *tokens.Stream) bool {
 }
 
 func (SwitchCaseSpace) Fix(s *tokens.Stream) bool {
+	switches, ok := switchAnalyses(s)
+	if !ok {
+		// the analyzer throws there, so PHP-CS-Fixer leaves the file as it is
+		return false
+	}
 	changed := false
 	// tokens are cleared in place (compacted at the end) so indices stay valid
-	for i := 0; i < s.Len(); i++ {
-		if !kwIs(s.At(i), "switch") {
-			continue
-		}
-		cases, def, ok := switchLabels(s, i)
-		if !ok {
-			continue
-		}
-		if def >= 0 {
-			if def+2 >= s.Len() || s.At(def+1).Kind != token.Whitespace ||
-				(!isPunctVal(s, def+2, ":") && !isPunctVal(s, def+2, ";")) {
-				continue
-			}
+	for _, sw := range switches {
+		if def := sw.def; def >= 0 && def+2 < s.Len() && s.At(def+1).Kind == token.Whitespace &&
+			(isPunctVal(s, def+2, ":") || isPunctVal(s, def+2, ";")) {
 			clearTokenAt(s, def+1)
 			changed = true
 		}
-		for _, c := range cases {
+		for _, c := range sw.cases {
 			colon := switchCaseColon(s, c)
 			if colon < 0 {
 				continue
@@ -134,89 +127,108 @@ func (SwitchCaseSpace) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
-// switchLabels returns the "case" keywords and the "default" keyword (-1 when
-// none) of the switch at sw, skipping nested switch and match constructs, like
-// PHP-CS-Fixer's ControlCaseStructuresAnalyzer.
-func switchLabels(s *tokens.Stream, sw int) (cases []int, def int, ok bool) {
-	def = -1
-	open, end, ok := switchBody(s, sw)
-	if !ok {
-		return nil, -1, false
-	}
-	for k := open + 1; k < end; k++ {
-		t := s.At(k)
-		if t.Kind != token.Keyword {
-			continue
-		}
-		switch strings.ToLower(t.Value) {
-		case "switch":
-			if _, e, ok := switchBody(s, k); ok {
-				k = e
-			}
-		case "match":
-			if p := sigNext(s, k); isPunctVal(s, p, "(") {
-				if c := s.MatchForward(p); c >= 0 {
-					if b := sigNext(s, c); isPunctVal(s, b, "{") {
-						if e := s.MatchForward(b); e >= 0 {
-							k = e
-						}
-					}
-				}
-			}
-		case "case":
-			cases = append(cases, k)
-		case "default":
-			if def < 0 {
-				def = k
-			}
-		}
-	}
-	return cases, def, true
+// switchAnalysis is a switch as ControlCaseStructuresAnalyzer reports it: its
+// "case" keywords and its "default" keyword (-1 when none).
+type switchAnalysis struct {
+	cases []int
+	def   int
 }
 
-// switchBody returns the index of the "{" or ":" opening the body of the switch
-// at sw and of its "}" or "endswitch".
-func switchBody(s *tokens.Stream, sw int) (open, end int, ok bool) {
-	p := sigNext(s, sw)
-	if !isPunctVal(s, p, "(") {
-		return 0, 0, false
+// switchAnalyses ports ControlCaseStructuresAnalyzer::findControlStructures for
+// T_SWITCH: a switch, match or enum level ends once the braces analyzerBrace
+// accepts balance out (endswitch for the alternative syntax), so a switch with
+// one in its subject ends there and hands its labels to the enclosing level. ok
+// is false where the analyzer throws, as on a second default.
+func switchAnalyses(s *tokens.Stream) (switches []switchAnalysis, ok bool) {
+	type level struct {
+		kind   string
+		braces int
+		alt    bool
+		switchAnalysis
 	}
-	c := s.MatchForward(p)
-	if c < 0 {
-		return 0, 0, false
-	}
-	open = sigNext(s, c)
-	switch {
-	case isPunctVal(s, open, "{"):
-		if end = s.MatchForward(open); end < 0 {
-			return 0, 0, false
+	var stack []*level
+	for i := 0; i < s.Len(); i++ {
+		kw := ""
+		if t := s.At(i); t.Kind == token.Keyword {
+			kw = strings.ToLower(t.Value)
 		}
-		return open, end, true
-	case isPunctVal(s, open, ":"):
-		depth := 0
-		for k := open + 1; k < s.Len(); k++ {
-			switch {
-			case kwIs(s.At(k), "switch"):
-				// a nested braced switch is skipped whole; an alternative one nests
-				if _, e, ok := switchBody(s, k); ok && !kwIs(s.At(e), "endswitch") {
-					k = e
-				} else {
-					depth++
+		if kw == "switch" || kw == "match" || kw == "enum" {
+			l := &level{kind: kw, switchAnalysis: switchAnalysis{def: -1}}
+			if kw != "enum" {
+				c := -1
+				if p := sigNext(s, i); isPunctVal(s, p, "(") {
+					c = s.MatchForward(p)
 				}
-			case kwIs(s.At(k), "endswitch"):
-				if depth == 0 {
-					return open, k, true
+				if c < 0 {
+					return nil, false
 				}
-				depth--
+				l.alt = kw == "switch" && isPunctVal(s, sigNext(s, c), ":")
 			}
+			stack = append(stack, l)
+			continue
+		}
+		if len(stack) == 0 {
+			continue
+		}
+		top := stack[len(stack)-1]
+		switch {
+		case isPunctVal(s, i, "{") && analyzerBrace(s, i):
+			top.braces++
+			continue
+		case isPunctVal(s, i, "}") && analyzerBrace(s, s.MatchBackward(i)):
+			if top.braces--; top.braces != 0 || top.alt {
+				continue
+			}
+		case kw == "endswitch":
+			if !top.alt || top.kind != "switch" || top.braces != 0 {
+				return nil, false
+			}
+		default:
+			if top.kind != "switch" {
+				continue
+			}
+			switch kw {
+			case "case":
+				top.cases = append(top.cases, i)
+			case "default":
+				if top.def >= 0 {
+					return nil, false
+				}
+				top.def = i
+			}
+			continue
+		}
+		if top.kind == "switch" {
+			switches = append(switches, top.switchAnalysis)
+		}
+		stack = stack[:len(stack)-1]
+	}
+	return switches, true
+}
+
+// analyzerBrace reports whether the "{" at i is still a "{" for PHP-CS-Fixer's
+// analyzers: BraceTransformer retags a dynamic brace and one after "::" whose
+// "}" is followed by ";", "?>" or "::". The braces of an interpolation are part
+// of their string token here.
+func analyzerBrace(s *tokens.Stream, i int) bool {
+	if bosIsDynamicBraceOpen(s, i) {
+		return false
+	}
+	p := sigPrev(s, i)
+	if isPunctVal(s, p, "::") {
+		if e := s.MatchForward(i); e >= 0 {
+			n := sigNext(s, e)
+			return !isPunctVal(s, n, ";") && !isPunctVal(s, n, "::") && (n < 0 || s.At(n).Kind != token.CloseTag)
 		}
 	}
-	return 0, 0, false
+	return true
 }
 
 // switchCaseColon mirrors ControlCaseStructuresAnalyzer::findCaseOpen: from the
 // "case" keyword, skip parenthesised and braced blocks, pair each "?" with the
-// next ":" or ";", and return the first unpaired ":" or ";".
+// next ":" or ";", and return the first unpaired ":" or ";". A nullable type "?"
+// and a return type ":" do not count, as PHP-CS-Fixer retags them
+// (CT::T_NULLABLE_TYPE, CT::T_TYPE_COLON).
 func switchCaseColon(s *tokens.Stream, c int) int {
 	ternaries := 0
 	for k := c; k < s.Len(); k++ {
@@ -232,8 +244,13 @@ func switchCaseColon(s *tokens.Stream, c int) int {
 			}
 			return -1
 		case "?":
-			ternaries++
+			if !isNullableType(s, k) {
+				ternaries++
+			}
 		case ":", ";":
+			if isTypeColon(s, k) {
+				continue
+			}
 			if ternaries == 0 {
 				return k
 			}
