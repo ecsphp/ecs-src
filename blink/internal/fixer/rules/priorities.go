@@ -174,6 +174,12 @@ var fixerPriority = map[string]int{
 	"OpeningBraceSpaceSniff":                        0,
 
 	// slevomat sniffs
+	"DuplicateSpacesSniff":                               0,
+	"UselessVariableSniff":                               0,
+	"DisallowNumericLiteralSeparatorSniff":               0,
+	"RequireNonCapturingCatchSniff":                      0,
+	"ReferenceThrowableOnlySniff":                        0,
+	"CatchExceptionsOrderSniff":                          0,
 	"ReferenceUsedNamesOnlySniff":                        0,
 	"UnusedUsesSniff":                                    0,
 	"FullyQualifiedClassNameInAnnotationSniff":           0,
