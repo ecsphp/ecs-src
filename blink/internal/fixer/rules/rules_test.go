@@ -398,10 +398,18 @@ func TestAllFixersIdempotent(t *testing.T) {
 	}
 }
 
+// runAllSkipped never settle next to another rule, as in ECS: DisallowCommentAfterCode
+// moves the comment ClosingDeclarationComment adds after a closing brace.
+var runAllSkipped = map[string]bool{
+	SlevomatDisallowCommentAfterCode{}.Name(): true,
+}
+
 func runAll(src string) string {
 	s := tokens.New(lexer.Lex(src))
 	for _, f := range All() {
-		f.Fix(s)
+		if !runAllSkipped[f.Name()] {
+			f.Fix(s)
+		}
 	}
 	return s.Render()
 }
