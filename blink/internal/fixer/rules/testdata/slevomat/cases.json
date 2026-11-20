@@ -2118,5 +2118,77 @@
   {
     "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithoutParenthesesSniff",
     "file": "ControlStructures/newWithoutParenthesesErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff",
+    "file": "ControlStructures/disallowShortTernaryOperatorNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff",
+    "file": "ControlStructures/disallowShortTernaryOperatorErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff",
+    "file": "ControlStructures/disallowShortTernaryOperatorErrorsFixableDisabled.php",
+    "config": {
+      "fixable": false
+    }
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff",
+    "file": "ControlStructures/requireShortTernaryOperatorNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff",
+    "file": "ControlStructures/requireShortTernaryOperatorErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff",
+    "file": "ControlStructures/requireShortTernaryOperatorCloseTag.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff",
+    "file": "ControlStructures/uselessTernaryOperatorNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff",
+    "file": "ControlStructures/uselessTernaryOperatorErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff",
+    "file": "ControlStructures/uselessTernaryOperatorErrorsWithAssumeAllConditionExpressionsAreAlreadyBooleanEnabled.php",
+    "config": {
+      "assumeAllConditionExpressionsAreAlreadyBoolean": true
+    }
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
+    "file": "ControlStructures/requireTernaryOperatorNoErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
+    "file": "ControlStructures/requireTernaryOperatorErrors.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
+    "file": "ControlStructures/requireTernaryOperatorWithIgnoredMultiLineNoErrors.php",
+    "config": {
+      "ignoreMultiLine": true
+    }
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
+    "file": "ControlStructures/requireTernaryOperatorWithIgnoredMultiLineErrors.php",
+    "config": {
+      "ignoreMultiLine": true
+    }
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
+    "file": "ControlStructures/requireTernaryOperatorIfWithoutCurlyBraces.php"
+  },
+  {
+    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
+    "file": "ControlStructures/requireTernaryOperatorElseWithoutCurlyBraces.php"
   }
 ]

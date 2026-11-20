@@ -390,6 +390,10 @@ var fixerPriority = map[string]int{
 	"DocCommentAlignmentSniff":                           0,
 	"EmbeddedPhpSniff":                                   0,
 	"UselessParenthesesSniff":                            0,
+	"DisallowShortTernaryOperatorSniff":           0,
+	"RequireShortTernaryOperatorSniff":            0,
+	"UselessTernaryOperatorSniff":                 0,
+	"RequireTernaryOperatorSniff":                 0,
 	// raised from 0 so an empty statement is gone before whitespace sniffs look
 	// past a closing brace, as NoEmptyStatementFixer (40) does
 	"UselessSemicolonSniff": 1,
