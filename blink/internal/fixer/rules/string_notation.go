@@ -8,6 +8,8 @@ import (
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
+var singleQuoteReplacer = strings.NewReplacer(`\"`, `"`, `\$`, `$`, `'`, `\'`)
+
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/StringNotation/SingleQuoteFixer.php
 //
 // SingleQuote converts a double-quoted string to single quotes when it is safe:
@@ -48,7 +50,7 @@ func (f SingleQuote) Fix(s *tokens.Stream) bool {
 		if singleQuoteKeepsEscape(content) || (!f.WithSingleQuotes && strings.Contains(content, "'")) {
 			continue // an escape sequence single quotes lack, or a quote that would need escaping
 		}
-		content = strings.NewReplacer(`\"`, `"`, `\$`, `$`, `'`, `\'`).Replace(content)
+		content = singleQuoteReplacer.Replace(content)
 		s.SetValue(i, prefix+"'"+content+"'")
 		changed = true
 	}
