@@ -353,12 +353,26 @@ func (f *slvFile) lineCallIsName(i int) bool {
 	if t.kind != token.Ident {
 		return false
 	}
-	if !slvlNotNames[strings.ToLower(t.orig)] {
+	lc := strings.ToLower(t.orig)
+	switch lc {
+	case `\true`, `\false`, `\null`, `\exit`, `\die`:
+		// PHP_CodeSniffer keeps these keyword tokens even when fully qualified
+		return false
+	}
+	if !slvlNotNames[lc] {
 		return true
 	}
 	// a member or declared name is T_STRING whatever it is called ($o->eval())
 	p := f.prevEffective(i - 1)
-	return f.is(p, "->") || f.is(p, "?->") || f.is(p, "::") || f.isKeyword(p, "function") || f.isKeyword(p, "const")
+	if f.is(p, "->") || f.is(p, "?->") || f.is(p, "::") || f.isKeyword(p, "function") || f.isKeyword(p, "const") {
+		return true
+	}
+	switch lc {
+	case "true", "false", "null":
+		next := f.nextEffective(i+1, len(f.toks))
+		return f.is(next, "(") || f.is(next, "::")
+	}
+	return false
 }
 
 // lineCallIsPlainString tells a T_STRING from a qualified name.

@@ -98,6 +98,18 @@ var fixerPriority = map[string]int{
 	"OpeningBraceSpaceSniff":                   0,
 
 	// slevomat sniffs
+	"ReferenceUsedNamesOnlySniff":                 0,
+	"UnusedUsesSniff":                             0,
+	"FullyQualifiedClassNameInAnnotationSniff":    0,
+	"FullyQualifiedGlobalFunctionsSniff":          0,
+	"FullyQualifiedGlobalConstantsSniff":          0,
+	"FullyQualifiedExceptionsSniff":               0,
+	"UselessAliasSniff":                           0,
+	"UseSpacingSniff":                             0,
+	"UseFromSameNamespaceSniff":                   0,
+	"UseDoesNotStartWithBackslashSniff":           0,
+	"NamespaceSpacingSniff":                       0,
+	"AlphabeticallySortedUsesSniff":               0,
 	"AlphabeticallySortedByKeysSniff":             0,
 	"ArrayAccessSniff":                            0,
 	"ArrayBracketSpacingSniff":                    0,
