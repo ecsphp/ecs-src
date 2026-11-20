@@ -1,2194 +1,360 @@
 [
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\AlphabeticallySortedByKeysSniff",
-    "file": "Arrays/alphabeticallySortedByKeysErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\AlphabeticallySortedByKeysSniff",
-    "file": "Arrays/alphabeticallySortedByKeysNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\ArrayAccessSniff",
-    "file": "Arrays/arrayAccessErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\ArrayAccessSniff",
-    "file": "Arrays/arrayAccessNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\MultiLineArrayEndBracketPlacementSniff",
-    "file": "Arrays/multiLineArrayEndBracketPlacementErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\MultiLineArrayEndBracketPlacementSniff",
-    "file": "Arrays/multiLineArrayEndBracketPlacementNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff",
-    "file": "Arrays/singleLineArrayWhitespaceNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff",
-    "file": "Arrays/singleLineArrayWhitespaceErrors.php",
-    "config": {
-      "enableEmptyArrayCheck": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff",
-    "file": "Arrays/singleLineArrayWhitespaceRequireSpacesErrors.php",
-    "config": {
-      "spacesAroundBrackets": 1,
-      "enableEmptyArrayCheck": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff",
-    "file": "Arrays/trailingCommas.php",
-    "config": {
-      "enableAfterHeredoc": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff",
-    "file": "Arrays/fixableTrailingCommas.php",
-    "config": {
-      "enableAfterHeredoc": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff",
-    "file": "Arrays/trailingCommasDisabledAfterHeredoc.php",
-    "config": {
-      "enableAfterHeredoc": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff",
-    "file": "Functions/arrowFunctionDeclarationDefaultSettingsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff",
-    "file": "Functions/arrowFunctionDeclarationDefaultSettingsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff",
-    "file": "Functions/arrowFunctionDeclarationModifiedSettingsNoErrors.php",
-    "config": {
-      "spacesCountAfterKeyword": 0,
-      "spacesCountBeforeArrow": 2,
-      "spacesCountAfterArrow": 3,
-      "allowMultiLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff",
-    "file": "Functions/arrowFunctionDeclarationModifiedSettingsErrors.php",
-    "config": {
-      "spacesCountAfterKeyword": 0,
-      "spacesCountBeforeArrow": 2,
-      "spacesCountAfterArrow": 3,
-      "allowMultiLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff",
-    "file": "Functions/arrowFunctionDeclarationDisallowReturnTypeHintErrors.php",
-    "config": {
-      "disallowReturnTypeHint": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInCallSniff",
-    "file": "Functions/disallowTrailingCommaInCallNoErrors.php",
-    "config": {
-      "onlySingleLine": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInCallSniff",
-    "file": "Functions/disallowTrailingCommaInCallErrors.php",
-    "config": {
-      "onlySingleLine": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInCallSniff",
-    "file": "Functions/disallowTrailingCommaInCallWithOnlySingleLineEnabledErrors.php",
-    "config": {
-      "onlySingleLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInClosureUseSniff",
-    "file": "Functions/disallowTrailingCommaInClosureUseNoErrors.php",
-    "config": {
-      "onlySingleLine": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInClosureUseSniff",
-    "file": "Functions/disallowTrailingCommaInClosureUseErrors.php",
-    "config": {
-      "onlySingleLine": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInClosureUseSniff",
-    "file": "Functions/disallowTrailingCommaInClosureUseWithOnlySingleLineEnabledErrors.php",
-    "config": {
-      "onlySingleLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInDeclarationSniff",
-    "file": "Functions/disallowTrailingCommaInDeclarationNoErrors.php",
-    "config": {
-      "onlySingleLine": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInDeclarationSniff",
-    "file": "Functions/disallowTrailingCommaInDeclarationErrors.php",
-    "config": {
-      "onlySingleLine": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInDeclarationSniff",
-    "file": "Functions/disallowTrailingCommaInDeclarationWithOnlySingleLineEnabledErrors.php",
-    "config": {
-      "onlySingleLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\NamedArgumentSpacingSniff",
-    "file": "Functions/namedArgumentSpacingNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\NamedArgumentSpacingSniff",
-    "file": "Functions/namedArgumentSpacingErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff",
-    "file": "Functions/requireArrowFunctionDisallowNestedNoErrors.php",
-    "config": {
-      "allowNested": false,
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff",
-    "file": "Functions/requireArrowFunctionDisallowNestedErrors.php",
-    "config": {
-      "allowNested": false,
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff",
-    "file": "Functions/requireArrowFunctionAllowNestedNoErrors.php",
-    "config": {
-      "allowNested": true,
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff",
-    "file": "Functions/requireArrowFunctionAllowNestedErrors.php",
-    "config": {
-      "allowNested": true,
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff",
-    "file": "Functions/requireArrowFunctionAllowNestedErrors.php",
-    "config": {
-      "allowNested": true,
-      "enable": false
-    },
-    "variant": "allowNested-no-enable"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallUnicodeLineLength.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallAllCallsNoErrors.php",
-    "config": {
-      "minLineLength": 0
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallAllCallsErrors.php",
-    "config": {
-      "minLineLength": 0
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallAllCallsNoErrors.php",
-    "config": {
-      "minLineLength": 100,
-      "minParametersCount": 2
-    },
-    "variant": "minLineLength-100-minParametersCount-2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallParamCountErrors.php",
-    "config": {
-      "minParametersCount": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff",
-    "file": "Functions/requireMultiLineCallExcludedCallsErrors.php",
-    "config": {
-      "minLineLength": 0,
-      "excludedCallPatterns": [
-        "/dontReportError/"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff",
-    "file": "Functions/requireSingleLineCallNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff",
-    "file": "Functions/requireSingleLineCallErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff",
-    "file": "Functions/requireSingleLineCallAllCallsErrors.php",
-    "config": {
-      "maxLineLength": 0
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff",
-    "file": "Functions/requireSingleLineCallWithComplexParametersEnabledErrors.php",
-    "config": {
-      "ignoreWithComplexParameter": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff",
-    "file": "Functions/requireSingleLineCallEnclosingStructuresErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInCallSniff",
-    "file": "Functions/requireTrailingCommaInCallNoErrors.php",
-    "config": {
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInCallSniff",
-    "file": "Functions/requireTrailingCommaInCallErrors.php",
-    "config": {
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInCallSniff",
-    "file": "Functions/requireTrailingCommaInCallErrors.php",
-    "config": {
-      "enable": false
-    },
-    "variant": "no-enable"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInClosureUseSniff",
-    "file": "Functions/requireTrailingCommaInClosureUseNoErrors.php",
-    "config": {
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInClosureUseSniff",
-    "file": "Functions/requireTrailingCommaInClosureUseErrors.php",
-    "config": {
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInClosureUseSniff",
-    "file": "Functions/requireTrailingCommaInClosureUseErrors.php",
-    "config": {
-      "enable": false
-    },
-    "variant": "no-enable"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInDeclarationSniff",
-    "file": "Functions/requireTrailingCommaInDeclarationNoErrors.php",
-    "config": {
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInDeclarationSniff",
-    "file": "Functions/requireTrailingCommaInDeclarationErrors.php",
-    "config": {
-      "enable": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInDeclarationSniff",
-    "file": "Functions/requireTrailingCommaInDeclarationErrors.php",
-    "config": {
-      "enable": false
-    },
-    "variant": "no-enable"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\StaticClosureSniff",
-    "file": "Functions/staticClosureNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\StaticClosureSniff",
-    "file": "Functions/staticClosureErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UnusedInheritedVariablePassedToClosureSniff",
-    "file": "Functions/unusedInheritedVariablePassedToClosureNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UnusedInheritedVariablePassedToClosureSniff",
-    "file": "Functions/unusedInheritedVariablePassedToClosureErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UselessParameterDefaultValueSniff",
-    "file": "Functions/uselessParameterDefaultValueNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UselessParameterDefaultValueSniff",
-    "file": "Functions/uselessParameterDefaultValueErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\DisallowEqualOperatorsSniff",
-    "file": "Operators/disallowEqualOperatorsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\DisallowEqualOperatorsSniff",
-    "file": "Operators/disallowEqualOperatorsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff",
-    "file": "Operators/negationOperatorSpacingNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff",
-    "file": "Operators/negationOperatorSpacingErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff",
-    "file": "Operators/negationOperatorSpacingRequireSpaceNoErrors.php",
-    "config": {
-      "spacesCount": 1
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff",
-    "file": "Operators/negationOperatorSpacingRequireSpaceErrors.php",
-    "config": {
-      "spacesCount": 1
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\RequireCombinedAssignmentOperatorSniff",
-    "file": "Operators/requireCombinedAssignmentOperatorNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\RequireCombinedAssignmentOperatorSniff",
-    "file": "Operators/requireCombinedAssignmentOperatorErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff",
-    "file": "Operators/spreadOperatorSpacingDefaultSettingsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff",
-    "file": "Operators/spreadOperatorSpacingDefaultSettingsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff",
-    "file": "Operators/spreadOperatorSpacingModifiedSettingsNoErrors.php",
-    "config": {
-      "spacesCountAfterOperator": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff",
-    "file": "Operators/spreadOperatorSpacingModifiedSettingsErrors.php",
-    "config": {
-      "spacesCountAfterOperator": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff",
-    "file": "Attributes/attributeAndTargetSpacingNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff",
-    "file": "Attributes/attributeAndTargetSpacingErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff",
-    "file": "Attributes/attributeAndTargetSpacingModifiedSettingsNoErrors.php",
-    "config": {
-      "linesCount": 1
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff",
-    "file": "Attributes/attributeAndTargetSpacingModifiedSettingsErrors.php",
-    "config": {
-      "linesCount": 1
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff",
-    "file": "Attributes/attributeAndTargetSpacingAllowOnSameLineNoErrors.php",
-    "config": {
-      "allowOnSameLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff",
-    "file": "Attributes/attributeAndTargetSpacingAllowOnSameLineErrors.php",
-    "config": {
-      "allowOnSameLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff",
-    "file": "Attributes/attributeAndTargetSpacingInvalidAttribute.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff",
-    "file": "Attributes/attributesOrderNoErrors.php",
-    "config": {
-      "order": [
-        "Attribute1",
-        "Attribute2",
-        "Attribute3",
-        "Group\\Attribute1",
-        "Group\\Attribute2",
-        "Group\\",
-        "AppAssert*"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff",
-    "file": "Attributes/attributesOrderErrors.php",
-    "config": {
-      "order": [
-        "Attribute1",
-        "Attribute2",
-        "Attribute3",
-        "Group\\Attribute1",
-        "Group\\Attribute2",
-        "Group\\",
-        "AppAssert*"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff",
-    "file": "Attributes/attributesOrderAlphabeticallyNoErrors.php",
-    "config": {
-      "orderAlphabetically": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff",
-    "file": "Attributes/attributesOrderAlphabeticallyErrors.php",
-    "config": {
-      "orderAlphabetically": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff",
-    "file": "Attributes/attributesOrderInvalidAttribute.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowAttributesJoiningSniff",
-    "file": "Attributes/disallowedAttributesJoiningNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowAttributesJoiningSniff",
-    "file": "Attributes/disallowedAttributesJoiningInvalidAttribute.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowAttributesJoiningSniff",
-    "file": "Attributes/disallowedAttributesJoiningErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowMultipleAttributesPerLineSniff",
-    "file": "Attributes/disallowedMultipleAttributesPerLineNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowMultipleAttributesPerLineSniff",
-    "file": "Attributes/disallowedMultipleAttributesPerLineErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowMultipleAttributesPerLineSniff",
-    "file": "Attributes/disallowedMultipleAttributesPerLinesInvalidAttribute.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\RequireAttributeAfterDocCommentSniff",
-    "file": "Attributes/requireAttributeAfterDocCommentNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\RequireAttributeAfterDocCommentSniff",
-    "file": "Attributes/requireAttributeAfterDocCommentErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\RequireAttributeAfterDocCommentSniff",
-    "file": "Attributes/requireAttributeAfterDocCommentInvalidAttribute.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\DisallowDirectMagicInvokeCallSniff",
-    "file": "PHP/disallowDirectMagicInvokeCallNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\DisallowDirectMagicInvokeCallSniff",
-    "file": "PHP/disallowDirectMagicInvokeCallErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ForbiddenClassesSniff",
-    "file": "PHP/forbiddenClasses.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ForbiddenClassesSniff",
-    "file": "PHP/forbiddenClasses.php",
-    "config": {
-      "forbiddenClasses": {
-        "\\UserModel": "\\MyApp\\Models\\User",
-        "\\DB": "\\TypeORM\\DB",
-        "\\SomeClass": "NULL",
-        "\\FullyQualified\\Nested\\SomeClass": "\\FullyQualified\\SomeClass"
-      },
-      "forbiddenExtends": {
-        "\\FooNamespace\\ForbiddenExtendedClass": "\\BarNamespace\\BaseClass"
-      },
-      "forbiddenInterfaces": {
-        "\\FooNamespace\\SecondImplementedInterface": "\\BarNamespace\\SecondImplementedInterface",
-        "\\SecondImplementedInterface": null,
-        "\\ThirdImplementedInterface": ""
-      },
-      "forbiddenTraits": {
-        "\\SomeTraitB": "\\TotallyDifferentTrait",
-        "\\FullyQualified\\SometTotallyDifferentTrait": "\\DatabaseTrait"
-      }
-    },
-    "variant": "configured"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff",
-    "file": "PHP/referenceSpacingDefaultSettingsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff",
-    "file": "PHP/referenceSpacingDefaultSettingsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff",
-    "file": "PHP/referenceSpacingModifiedSettingsNoErrors.php",
-    "config": {
-      "spacesCountAfterReference": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff",
-    "file": "PHP/referenceSpacingModifiedSettingsErrors.php",
-    "config": {
-      "spacesCountAfterReference": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff",
-    "file": "PHP/requireExplicitAssertionNoErrors.php",
-    "config": {
-      "enableIntegerRanges": false,
-      "enableAdvancedStringTypes": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff",
-    "file": "PHP/requireExplicitAssertionErrors.php",
-    "config": {
-      "enableIntegerRanges": false,
-      "enableAdvancedStringTypes": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff",
-    "file": "PHP/requireExplicitAssertionIntegerRangesNoErrors.php",
-    "config": {
-      "enableIntegerRanges": true,
-      "enableAdvancedStringTypes": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff",
-    "file": "PHP/requireExplicitAssertionIntegerRangesErrors.php",
-    "config": {
-      "enableIntegerRanges": true,
-      "enableAdvancedStringTypes": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff",
-    "file": "PHP/requireExplicitAssertionAdvancedStringTypesErrors.php",
-    "config": {
-      "enableIntegerRanges": false,
-      "enableAdvancedStringTypes": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireNowdocSniff",
-    "file": "PHP/requireNowdocNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireNowdocSniff",
-    "file": "PHP/requireNowdocErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ShortListSniff",
-    "file": "PHP/shortListNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ShortListSniff",
-    "file": "PHP/shortListErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\TypeCastSniff",
-    "file": "PHP/typeCastNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\TypeCastSniff",
-    "file": "PHP/typeCastErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff",
-    "file": "PHP/uselessParenthesesNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff",
-    "file": "PHP/uselessParenthesesErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff",
-    "file": "PHP/uselessParenthesesCheckAroundNewErrors.php",
-    "config": {
-      "enableCheckAroundNew": false
-    },
-    "variant": "disabled"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff",
-    "file": "PHP/uselessParenthesesCheckAroundNewErrors.php",
-    "config": {
-      "enableCheckAroundNew": true
-    },
-    "variant": "enabled"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff",
-    "file": "PHP/uselessParenthesesNoErrorsWithIgnoredComplexTernaryConditions.php",
-    "config": {
-      "ignoreComplexTernaryConditions": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff",
-    "file": "PHP/uselessParenthesesLiveCoding.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessSemicolonSniff",
-    "file": "PHP/uselessSemicolonNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessSemicolonSniff",
-    "file": "PHP/uselessSemicolonErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/incorrectOrder.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/incorrectOrderIntertwinedWithClasses.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/correctOrder.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/correctOrderSimilarNamespaces.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/correctOrderSimilarNamespacesCaseSensitive.php",
-    "config": {
-      "caseSensitive": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/incorrectOrderSimilarNamespaces.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/alphabeticalPatrik.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/alphabeticalMultiPartUseNotFixable.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/alphabeticalGroupUseNotFixable.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/fixableAlphabeticalSortedUses.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/fixableAlphabeticalSortedUsesWithCommentBeforeFirst.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/fixableAlphabeticalSortedUsesWithDocComment.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff",
-    "file": "Namespaces/fixableAlphabeticalSortedUsesNotPsr12Compatible.php",
-    "config": {
-      "psr12Compatible": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedClassNameInAnnotationSniff",
-    "file": "Namespaces/fullyQualifiedClassNameInAnnotationNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedClassNameInAnnotationSniff",
-    "file": "Namespaces/fullyQualifiedClassNameInAnnotationErrors.php",
-    "unstable": true
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedClassNameInAnnotationSniff",
-    "file": "Namespaces/fullyQualifiedClassNameInAnnotationErrors.php",
-    "config": {
-      "ignoredAnnotationNames": [
-        "@return",
-        "@param",
-        "@var"
-      ]
-    },
-    "variant": "c2",
-    "unstable": true
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff",
-    "file": "Namespaces/fullyQualifiedExceptionNames.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff",
-    "file": "Namespaces/ignoredNames.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff",
-    "file": "Namespaces/ignoredNames.php",
-    "config": {
-      "ignoredNames": [
-        "LibXMLError",
-        "LibXMLException"
-      ]
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff",
-    "file": "Namespaces/ignoredNamesInNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff",
-    "file": "Namespaces/ignoredNamesInNamespace.php",
-    "config": {
-      "ignoredNames": [
-        "IgnoredNames\\LibXMLException"
-      ]
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff",
-    "file": "Namespaces/fixableFullyQualifiedExceptions.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff",
-    "file": "Namespaces/fullyQualifiedSpecialExceptionNames.php",
-    "config": {
-      "specialExceptionNames": [
-        "Foo\\SomeError",
-        "Lorem\\Ipsum\\SomeOtherError"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsFileWithoutNamespaceNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsIncludeExcludeErrors.php",
-    "config": {
-      "exclude": [
-        "PHP_VERSION"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsIncludeExcludeErrors.php",
-    "config": {
-      "include": [
-        "PHP_OS"
-      ]
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsIgnoreGroupUse.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsGetSetErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsPropertyHooks.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsFileWithoutNamespaceNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeExcludeErrors.php",
-    "config": {
-      "exclude": [
-        "min"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeExcludeErrors.php",
-    "config": {
-      "include": [
-        "max"
-      ]
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeSpecialNoErrors.php",
-    "config": {
-      "includeSpecialFunctions": true,
-      "include": [
-        "max"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeSpecialErrors.php",
-    "config": {
-      "includeSpecialFunctions": true,
-      "include": [
-        "max"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff",
-    "file": "Namespaces/namespaceDeclarationInvalidWhitespaceAfterNamespaceNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff",
-    "file": "Namespaces/namespaceDeclarationInvalidWhitespaceAfterNamespaceErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff",
-    "file": "Namespaces/namespaceDeclarationDisallowedContentBetweenNamespaceNameAndSemicolonNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff",
-    "file": "Namespaces/namespaceDeclarationDisallowedContentBetweenNamespaceNameAndSemicolonErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff",
-    "file": "Namespaces/namespaceDeclarationDisallowedBracketedSyntaxNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff",
-    "file": "Namespaces/namespaceDeclarationDisallowedBracketedSyntaxErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingNoNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingNamespaceWithCurlyBraces.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingWithDefaultSettingsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingWithDefaultSettingsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingAfterOpenTagNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingAfterOpenTagErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingAfterLineCommentNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingAfterLineCommentErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingWithModifiedSettingsNoErrors.php",
-    "config": {
-      "linesCountBeforeNamespace": 0,
-      "linesCountAfterNamespace": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingWithModifiedSettingsErrors.php",
-    "config": {
-      "linesCountBeforeNamespace": 0,
-      "linesCountAfterNamespace": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingNoLineBeforeNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingNoLineAfterNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingNoCodeAfterNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingWithPhpcsCommentBefore.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingFileCommentBefore.php",
-    "config": {
-      "linesCountBeforeNamespace": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingInvalidFileCommentBeforeNoErrors.php",
-    "config": {
-      "linesCountBeforeNamespace": 1
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff",
-    "file": "Namespaces/namespaceSpacingInvalidFileCommentBefore.php",
-    "config": {
-      "linesCountBeforeNamespace": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatement.php",
-    "config": {
-      "ignoredNames": []
-    },
-    "variant": "p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatement.php",
-    "config": {
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatement.php",
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatement.php",
-    "config": {
-      "allowFallbackGlobalFunctions": false
-    },
-    "variant": "c3"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referencingDefinedFunction.php",
-    "config": {
-      "allowFallbackGlobalFunctions": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatement.php",
-    "config": {
-      "allowFallbackGlobalConstants": false
-    },
-    "variant": "c4"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referencingDefinedConstant.php",
-    "config": {
-      "allowFallbackGlobalConstants": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatement.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true,
-      "specialExceptionNames": [
-        "Foo\\SomeError"
-      ],
-      "ignoredNames": []
-    },
-    "variant": "c5.p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatement.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true,
-      "specialExceptionNames": [
-        "Foo\\SomeError"
-      ],
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "c5.p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedExtends.php",
-    "config": {
-      "ignoredNames": []
-    },
-    "variant": "p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedExtends.php",
-    "config": {
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedImplements.php",
-    "config": {
-      "ignoredNames": []
-    },
-    "variant": "p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedImplements.php",
-    "config": {
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedExceptionNames.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true,
-      "ignoredNames": []
-    },
-    "variant": "c2.p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedExceptionNames.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true,
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "c2.p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedExceptionNames.php",
-    "config": {
-      "allowFullyQualifiedExceptions": false,
-      "ignoredNames": []
-    },
-    "variant": "c3.p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedExceptionNames.php",
-    "config": {
-      "allowFullyQualifiedExceptions": false,
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "c3.p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUses.php",
-    "config": {
-      "allowPartialUses": false,
-      "ignoredNames": []
-    },
-    "variant": "p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUses.php",
-    "config": {
-      "allowPartialUses": false,
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUses.php",
-    "config": {
-      "allowPartialUses": true,
-      "ignoredNames": []
-    },
-    "variant": "c2.p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUses.php",
-    "config": {
-      "allowPartialUses": true,
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "c2.p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUsesWithoutNamespace.php",
-    "config": {
-      "allowPartialUses": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUsesAllowedNamespaces.php",
-    "config": {
-      "allowPartialUses": false,
-      "namespacesAllowedToUsePartially": [
-        "Some\\SubNamespace as SubNamespace"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUsesAllowedNamespaces.php",
-    "config": {
-      "allowPartialUses": false,
-      "namespacesAllowedToUsePartially": [
-        "Some\\SubNamespace"
-      ]
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/whitelistedNamespaces.php",
-    "config": {
-      "namespacesRequiredToUse": [
-        "Foo"
-      ],
-      "ignoredNames": []
-    },
-    "variant": "p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/whitelistedNamespaces.php",
-    "config": {
-      "namespacesRequiredToUse": [
-        "Foo"
-      ],
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/multipleFullyQualifiedImplements.php",
-    "config": {
-      "ignoredNames": []
-    },
-    "variant": "p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/multipleFullyQualifiedImplements.php",
-    "config": {
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referencingFullyQualifiedNameInFileWithoutNamespace.php",
-    "config": {
-      "ignoredNames": []
-    },
-    "variant": "p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referencingFullyQualifiedNameInFileWithoutNamespace.php",
-    "config": {
-      "ignoredNames": [
-        "LibXMLError"
-      ]
-    },
-    "variant": "p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/ignoredNames.php",
-    "config": {
-      "allowFullyQualifiedExceptions": false,
-      "ignoredNames": []
-    },
-    "variant": "c3.p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/ignoredNames.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true,
-      "ignoredNames": [
-        "LibXMLError",
-        "LibXMLException"
-      ]
-    },
-    "variant": "c3.p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/ignoredNames.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true
-    },
-    "variant": "c4"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/ignoredNamesInNamespace.php",
-    "config": {
-      "allowFullyQualifiedExceptions": false,
-      "ignoredNames": []
-    },
-    "variant": "c3.p1"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/ignoredNamesInNamespace.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true,
-      "ignoredNames": [
-        "LibXMLError",
-        "LibXMLException"
-      ]
-    },
-    "variant": "c3.p2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/ignoredNamesInNamespace.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true
-    },
-    "variant": "c4"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedGlobalClassesInNamespace.php",
-    "config": {
-      "allowFullyQualifiedGlobalClasses": true,
-      "allowFullyQualifiedGlobalFunctions": false,
-      "allowFullyQualifiedGlobalConstants": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedGlobalFunctionsInNamespace.php",
-    "config": {
-      "allowFullyQualifiedGlobalClasses": false,
-      "allowFullyQualifiedGlobalFunctions": true,
-      "allowFullyQualifiedGlobalConstants": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fullyQualifiedGlobalConstantsInNamespace.php",
-    "config": {
-      "allowFullyQualifiedGlobalClasses": false,
-      "allowFullyQualifiedGlobalFunctions": false,
-      "allowFullyQualifiedGlobalConstants": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fixableReferenceViaFullyQualifiedName.php",
-    "config": {
-      "allowFullyQualifiedExceptions": true,
-      "allowFallbackGlobalFunctions": false,
-      "allowFallbackGlobalConstants": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/notFixableReferenceViaFullyQualifiedName.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partlyFixableReferenceViaFullyQualifiedName.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fixableReferenceViaFullyQualifiedNameWithoutNamespace.php",
-    "config": {
-      "allowFullyQualifiedExceptions": false,
-      "specialExceptionNames": [
-        "BarErrorX"
-      ],
-      "searchAnnotations": true
-    },
-    "unstable": true
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameDifferentNamespaces.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingClasses": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameDifferentNamespaces.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingClasses": false
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameDifferentNamespacesMoreClasses.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingClasses": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameDifferentNamespacesMoreClasses.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingClasses": false
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameWithExistingAlias.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingClasses": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameWithExistingAliasInAnnotation.php",
-    "config": {
-      "searchAnnotations": true,
-      "allowFullyQualifiedNameForCollidingClasses": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/fixableWhenCollidingClassNames.php",
-    "config": {
-      "searchAnnotations": true,
-      "allowFullyQualifiedNameForCollidingClasses": true,
-      "allowFullyQualifiedGlobalClasses": true,
-      "allowFullyQualifiedGlobalFunctions": true,
-      "allowFullyQualifiedGlobalConstants": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameExtends.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingClasses": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingClassNameExtends.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingClasses": false
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingFullyQualifiedFunctionNames.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingFunctions": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingFullyQualifiedFunctionNames.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingFunctions": false
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingFullyQualifiedConstantNames.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingConstants": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/collidingFullyQualifiedConstantNames.php",
-    "config": {
-      "allowFullyQualifiedNameForCollidingConstants": false
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referencingGlobalFunctionViaFallbackErrorsWithMoreComplexSettings.php",
-    "config": {
-      "allowFallbackGlobalFunctions": false,
-      "allowFullyQualifiedNameForCollidingFunctions": true,
-      "allowFullyQualifiedGlobalFunctions": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referencingGlobalFunctionViaFullyQualifiedWithMoreComplexSettings.php",
-    "config": {
-      "allowFallbackGlobalFunctions": false,
-      "allowFullyQualifiedNameForCollidingFunctions": true,
-      "allowFullyQualifiedGlobalFunctions": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatementSearchingInAnnotations.php",
-    "config": {
-      "searchAnnotations": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/shouldBeInUseStatementSearchingInAnnotations.php",
-    "config": {
-      "searchAnnotations": true,
-      "allowPartialUses": false,
-      "allowFullyQualifiedGlobalClasses": true,
-      "allowFullyQualifiedNameForCollidingClasses": true,
-      "allowFullyQualifiedExceptions": false,
-      "namespacesRequiredToUse": [
-        "Foo"
-      ]
-    },
-    "variant": "c2",
-    "unstable": true
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referencingGlobalTypesInGlobalNamespace.php",
-    "config": {
-      "allowFallbackGlobalFunctions": false,
-      "allowFallbackGlobalConstants": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithFileComment.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithFileCommentAndDeclare.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithFileCommentBelowDeclare.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithInlineFileComment.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithClassComment.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithCollision.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithExistingAlias.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyInAttributes.php",
-    "config": {
-      "allowFallbackGlobalConstants": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithSubNamespaces.php",
-    "config": {
-      "searchAnnotations": true,
-      "allowPartialUses": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithSubNamespacesRequiredPartial.php",
-    "config": {
-      "searchAnnotations": true,
-      "allowPartialUses": false,
-      "namespacesRequiredToUsePartially": [
-        "Some\\SubNamespace as SubNamespace"
-      ]
-    },
-    "unstable": true
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/partialUsesAllowedNamespaces.php",
-    "config": {
-      "allowPartialUses": false,
-      "namespacesAllowedToUsePartially": [
-        "Some\\SubNamespace as SubNamespace"
-      ],
-      "namespacesRequiredToUsePartially": [
-        "Some\\SubNamespace as SubNamespace"
-      ]
-    },
-    "variant": "c3"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithSubNamespacesRequiredPartial.php",
-    "config": {
-      "searchAnnotations": true,
-      "allowPartialUses": false,
-      "namespacesRequiredToUsePartially": [
-        "Other\\Namespace as OtherNamespace",
-        "Some\\SubNamespace as SubNamespace"
-      ]
-    },
-    "variant": "c2",
-    "unstable": true
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithRequiredPartialExact.php",
-    "config": {
-      "allowPartialUses": false,
-      "namespacesRequiredToUsePartially": [
-        "Some\\SubNamespace"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyWithRequiredPartialAlias.php",
-    "config": {
-      "allowPartialUses": false,
-      "namespacesRequiredToUsePartially": [
-        "Some\\SubNamespace as SubNamespace"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesReservedWord.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff",
-    "file": "Namespaces/referenceUsedNamesOnlyDisabledWhenNoNamespace.php",
-    "config": {
-      "allowWhenNoNamespace": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUses.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesMultipleNamespaces.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesNoNamespaceNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesInAnnotation.php",
-    "config": {
-      "searchAnnotations": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesInAnnotation.php",
-    "config": {
-      "searchAnnotations": true
-    },
-    "variant": "c2"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/caseInsensitiveUse.php",
-    "config": {
-      "searchAnnotations": true,
-      "ignoredAnnotationNames": [
-        "@ignore"
-      ],
-      "ignoredAnnotations": [
-        "@group"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/usedTrait.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesAnnotationUnderscores.php",
-    "config": {
-      "searchAnnotations": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/matchingCaseOfUseAndClassConstant.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/matchingCaseOfUseAndPhpFunction.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/fixableUnusedUses.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/noUses.php",
-    "config": {
-      "searchAnnotations": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesUseAfterOpen.php",
-    "config": {
-      "searchAnnotations": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/usesInAttributes.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesNamespaceOperatorNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesPropertyHooks.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesTypedClassConstants.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff",
-    "file": "Namespaces/unusedUsesPropertyHookNamesInMethod.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseDoesNotStartWithBackslashSniff",
-    "file": "Namespaces/useDoesNotStartWithBackslashNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseDoesNotStartWithBackslashSniff",
-    "file": "Namespaces/useDoesNotStartWithBackslashErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseDoesNotStartWithBackslashSniff",
-    "file": "Namespaces/fixableUseDoesNotStartWithBackslash.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseFromSameNamespaceSniff",
-    "file": "Namespaces/useFromSameNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseFromSameNamespaceSniff",
-    "file": "Namespaces/fixableUseFromSameNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseFromSameNamespaceSniff",
-    "file": "Namespaces/useFromRootNamespaceWithoutNamespace.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingNoUse.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingOneUse.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithDefaultSettingsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithDefaultSettingsWithCommentsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithDefaultSettingsWithCommentsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithDefaultSettingsWithComments2Errors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithDefaultSettingsWithInlineCommentsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithDefaultSettingsWithInlineCommentsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithDefaultSettingsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingAfterOpenTagNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingAfterOpenTagErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithModifiedSettingsNoErrors.php",
-    "config": {
-      "linesCountBeforeFirstUse": 0,
-      "linesCountBetweenUseTypes": 1,
-      "linesCountAfterLastUse": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingWithModifiedSettingsErrors.php",
-    "config": {
-      "linesCountBeforeFirstUse": 0,
-      "linesCountBetweenUseTypes": 1,
-      "linesCountAfterLastUse": 2
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingMultipleUseTypesErrors.php",
-    "config": {
-      "linesCountBeforeFirstUse": 1,
-      "linesCountBetweenUseTypes": 1,
-      "linesCountAfterLastUse": 1
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingNoLineBeforeUse.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingNoLineAfterUse.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingNoCodeAfterUse.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingSameUseTypesErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff",
-    "file": "Namespaces/useSpacingMoreNamespacesErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UselessAliasSniff",
-    "file": "Namespaces/uselessAliasNoUses.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UselessAliasSniff",
-    "file": "Namespaces/uselessAliasNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UselessAliasSniff",
-    "file": "Namespaces/uselessAliasErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingWithDefaultSettingsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingWithDefaultSettingsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingWithModifiedSettingsNoErrors.php",
-    "config": {
-      "linesCountBefore": 0,
-      "linesCountBeforeFirst": 1,
-      "linesCountAfter": 0,
-      "linesCountAfterLast": 3,
-      "controlStructures": [
-        "do",
-        "while",
-        "for",
-        "foreach",
-        "switch",
-        "try"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingWithModifiedSettingsErrors.php",
-    "config": {
-      "linesCountBefore": 0,
-      "linesCountBeforeFirst": 1,
-      "linesCountAfter": 0,
-      "linesCountAfterLast": 3,
-      "controlStructures": [
-        "do",
-        "while",
-        "for",
-        "foreach",
-        "switch",
-        "try"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingSwitchErrors.php",
-    "config": {
-      "controlStructures": [
-        "case",
-        "default"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingIfWithoutCurlyBraces.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingElseWithoutCurlyBraces.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingIfWithAlternativeSyntax.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff",
-    "file": "ControlStructures/blockControlStructureSpacingAtTheEndOfFile.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsSpacingWithDefaultSettingsNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsSpacingWithDefaultSettingsErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsSpacingWithModifiedSettingsNoErrors.php",
-    "config": {
-      "linesCountBefore": 0,
-      "linesCountBeforeFirst": 1,
-      "linesCountAfter": 0,
-      "linesCountAfterLast": 3,
-      "jumpStatements": [
-        "break",
-        "continue",
-        "return",
-        "throw",
-        "yield",
-        "yield_from"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsSpacingWithModifiedSettingsErrors.php",
-    "config": {
-      "linesCountBefore": 0,
-      "linesCountBeforeFirst": 1,
-      "linesCountAfter": 0,
-      "linesCountAfterLast": 3,
-      "jumpStatements": [
-        "break",
-        "continue",
-        "return",
-        "throw",
-        "yield",
-        "yield_from"
-      ]
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsSpacingAtTheBeginningOfFile.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsSpacingAtTheEndOfFile.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsWhenInCaseOrDefaultNoErrors.php",
-    "config": {
-      "linesCountBeforeWhenFirstInCaseOrDefault": 0,
-      "linesCountAfterWhenLastInCaseOrDefault": 1,
-      "linesCountAfterWhenLastInLastCaseOrDefault": 0
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsWhenInCaseOrDefaultErrors.php",
-    "config": {
-      "linesCountBeforeWhenFirstInCaseOrDefault": 0,
-      "linesCountAfterWhenLastInCaseOrDefault": 1,
-      "linesCountAfterWhenLastInLastCaseOrDefault": 0
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff",
-    "file": "ControlStructures/jumpStatementsThrowExpressionNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowContinueWithoutIntegerOperandInSwitchSniff",
-    "file": "ControlStructures/disallowContinueWithoutIntegerOperandInSwitchNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowContinueWithoutIntegerOperandInSwitchSniff",
-    "file": "ControlStructures/disallowContinueWithoutIntegerOperandInSwitchErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\LanguageConstructWithParenthesesSniff",
-    "file": "ControlStructures/languageConstructWithParenthesesNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\LanguageConstructWithParenthesesSniff",
-    "file": "ControlStructures/languageConstructWithParenthesesErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithParenthesesSniff",
-    "file": "ControlStructures/newWithParenthesesNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithParenthesesSniff",
-    "file": "ControlStructures/newWithParenthesesErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithoutParenthesesSniff",
-    "file": "ControlStructures/newWithoutParenthesesNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithoutParenthesesSniff",
-    "file": "ControlStructures/newWithoutParenthesesErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff",
-    "file": "ControlStructures/disallowShortTernaryOperatorNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff",
-    "file": "ControlStructures/disallowShortTernaryOperatorErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff",
-    "file": "ControlStructures/disallowShortTernaryOperatorErrorsFixableDisabled.php",
-    "config": {
-      "fixable": false
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff",
-    "file": "ControlStructures/requireShortTernaryOperatorNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff",
-    "file": "ControlStructures/requireShortTernaryOperatorErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff",
-    "file": "ControlStructures/requireShortTernaryOperatorCloseTag.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff",
-    "file": "ControlStructures/uselessTernaryOperatorNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff",
-    "file": "ControlStructures/uselessTernaryOperatorErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff",
-    "file": "ControlStructures/uselessTernaryOperatorErrorsWithAssumeAllConditionExpressionsAreAlreadyBooleanEnabled.php",
-    "config": {
-      "assumeAllConditionExpressionsAreAlreadyBoolean": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
-    "file": "ControlStructures/requireTernaryOperatorNoErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
-    "file": "ControlStructures/requireTernaryOperatorErrors.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
-    "file": "ControlStructures/requireTernaryOperatorWithIgnoredMultiLineNoErrors.php",
-    "config": {
-      "ignoreMultiLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
-    "file": "ControlStructures/requireTernaryOperatorWithIgnoredMultiLineErrors.php",
-    "config": {
-      "ignoreMultiLine": true
-    }
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
-    "file": "ControlStructures/requireTernaryOperatorIfWithoutCurlyBraces.php"
-  },
-  {
-    "sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff",
-    "file": "ControlStructures/requireTernaryOperatorElseWithoutCurlyBraces.php"
-  }
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\AlphabeticallySortedByKeysSniff", "file": "Arrays/alphabeticallySortedByKeysErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\AlphabeticallySortedByKeysSniff", "file": "Arrays/alphabeticallySortedByKeysNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\ArrayAccessSniff", "file": "Arrays/arrayAccessErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\ArrayAccessSniff", "file": "Arrays/arrayAccessNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\MultiLineArrayEndBracketPlacementSniff", "file": "Arrays/multiLineArrayEndBracketPlacementErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\MultiLineArrayEndBracketPlacementSniff", "file": "Arrays/multiLineArrayEndBracketPlacementNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff", "file": "Arrays/singleLineArrayWhitespaceNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff", "file": "Arrays/singleLineArrayWhitespaceErrors.php", "config": {"enableEmptyArrayCheck": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\SingleLineArrayWhitespaceSniff", "file": "Arrays/singleLineArrayWhitespaceRequireSpacesErrors.php", "config": {"spacesAroundBrackets": 1, "enableEmptyArrayCheck": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff", "file": "Arrays/trailingCommas.php", "config": {"enableAfterHeredoc": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff", "file": "Arrays/fixableTrailingCommas.php", "config": {"enableAfterHeredoc": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Arrays\\TrailingArrayCommaSniff", "file": "Arrays/trailingCommasDisabledAfterHeredoc.php", "config": {"enableAfterHeredoc": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff", "file": "Functions/arrowFunctionDeclarationDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff", "file": "Functions/arrowFunctionDeclarationDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff", "file": "Functions/arrowFunctionDeclarationModifiedSettingsNoErrors.php", "config": {"spacesCountAfterKeyword": 0, "spacesCountBeforeArrow": 2, "spacesCountAfterArrow": 3, "allowMultiLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff", "file": "Functions/arrowFunctionDeclarationModifiedSettingsErrors.php", "config": {"spacesCountAfterKeyword": 0, "spacesCountBeforeArrow": 2, "spacesCountAfterArrow": 3, "allowMultiLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\ArrowFunctionDeclarationSniff", "file": "Functions/arrowFunctionDeclarationDisallowReturnTypeHintErrors.php", "config": {"disallowReturnTypeHint": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInCallSniff", "file": "Functions/disallowTrailingCommaInCallNoErrors.php", "config": {"onlySingleLine": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInCallSniff", "file": "Functions/disallowTrailingCommaInCallErrors.php", "config": {"onlySingleLine": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInCallSniff", "file": "Functions/disallowTrailingCommaInCallWithOnlySingleLineEnabledErrors.php", "config": {"onlySingleLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInClosureUseSniff", "file": "Functions/disallowTrailingCommaInClosureUseNoErrors.php", "config": {"onlySingleLine": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInClosureUseSniff", "file": "Functions/disallowTrailingCommaInClosureUseErrors.php", "config": {"onlySingleLine": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInClosureUseSniff", "file": "Functions/disallowTrailingCommaInClosureUseWithOnlySingleLineEnabledErrors.php", "config": {"onlySingleLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInDeclarationSniff", "file": "Functions/disallowTrailingCommaInDeclarationNoErrors.php", "config": {"onlySingleLine": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInDeclarationSniff", "file": "Functions/disallowTrailingCommaInDeclarationErrors.php", "config": {"onlySingleLine": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\DisallowTrailingCommaInDeclarationSniff", "file": "Functions/disallowTrailingCommaInDeclarationWithOnlySingleLineEnabledErrors.php", "config": {"onlySingleLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\NamedArgumentSpacingSniff", "file": "Functions/namedArgumentSpacingNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\NamedArgumentSpacingSniff", "file": "Functions/namedArgumentSpacingErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff", "file": "Functions/requireArrowFunctionDisallowNestedNoErrors.php", "config": {"allowNested": false, "enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff", "file": "Functions/requireArrowFunctionDisallowNestedErrors.php", "config": {"allowNested": false, "enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff", "file": "Functions/requireArrowFunctionAllowNestedNoErrors.php", "config": {"allowNested": true, "enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff", "file": "Functions/requireArrowFunctionAllowNestedErrors.php", "config": {"allowNested": true, "enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireArrowFunctionSniff", "file": "Functions/requireArrowFunctionAllowNestedErrors.php", "config": {"allowNested": true, "enable": false}, "variant": "allowNested-no-enable"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallUnicodeLineLength.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallAllCallsNoErrors.php", "config": {"minLineLength": 0}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallAllCallsErrors.php", "config": {"minLineLength": 0}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallAllCallsNoErrors.php", "config": {"minLineLength": 100, "minParametersCount": 2}, "variant": "minLineLength-100-minParametersCount-2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallParamCountErrors.php", "config": {"minParametersCount": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireMultiLineCallSniff", "file": "Functions/requireMultiLineCallExcludedCallsErrors.php", "config": {"minLineLength": 0, "excludedCallPatterns": ["/dontReportError/"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff", "file": "Functions/requireSingleLineCallNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff", "file": "Functions/requireSingleLineCallErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff", "file": "Functions/requireSingleLineCallAllCallsErrors.php", "config": {"maxLineLength": 0}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff", "file": "Functions/requireSingleLineCallWithComplexParametersEnabledErrors.php", "config": {"ignoreWithComplexParameter": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireSingleLineCallSniff", "file": "Functions/requireSingleLineCallEnclosingStructuresErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInCallSniff", "file": "Functions/requireTrailingCommaInCallNoErrors.php", "config": {"enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInCallSniff", "file": "Functions/requireTrailingCommaInCallErrors.php", "config": {"enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInCallSniff", "file": "Functions/requireTrailingCommaInCallErrors.php", "config": {"enable": false}, "variant": "no-enable"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInClosureUseSniff", "file": "Functions/requireTrailingCommaInClosureUseNoErrors.php", "config": {"enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInClosureUseSniff", "file": "Functions/requireTrailingCommaInClosureUseErrors.php", "config": {"enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInClosureUseSniff", "file": "Functions/requireTrailingCommaInClosureUseErrors.php", "config": {"enable": false}, "variant": "no-enable"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInDeclarationSniff", "file": "Functions/requireTrailingCommaInDeclarationNoErrors.php", "config": {"enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInDeclarationSniff", "file": "Functions/requireTrailingCommaInDeclarationErrors.php", "config": {"enable": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\RequireTrailingCommaInDeclarationSniff", "file": "Functions/requireTrailingCommaInDeclarationErrors.php", "config": {"enable": false}, "variant": "no-enable"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\StaticClosureSniff", "file": "Functions/staticClosureNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\StaticClosureSniff", "file": "Functions/staticClosureErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UnusedInheritedVariablePassedToClosureSniff", "file": "Functions/unusedInheritedVariablePassedToClosureNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UnusedInheritedVariablePassedToClosureSniff", "file": "Functions/unusedInheritedVariablePassedToClosureErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UselessParameterDefaultValueSniff", "file": "Functions/uselessParameterDefaultValueNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Functions\\UselessParameterDefaultValueSniff", "file": "Functions/uselessParameterDefaultValueErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\DisallowEqualOperatorsSniff", "file": "Operators/disallowEqualOperatorsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\DisallowEqualOperatorsSniff", "file": "Operators/disallowEqualOperatorsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingRequireSpaceNoErrors.php", "config": {"spacesCount": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\NegationOperatorSpacingSniff", "file": "Operators/negationOperatorSpacingRequireSpaceErrors.php", "config": {"spacesCount": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\RequireCombinedAssignmentOperatorSniff", "file": "Operators/requireCombinedAssignmentOperatorNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\RequireCombinedAssignmentOperatorSniff", "file": "Operators/requireCombinedAssignmentOperatorErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingModifiedSettingsNoErrors.php", "config": {"spacesCountAfterOperator": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Operators\\SpreadOperatorSpacingSniff", "file": "Operators/spreadOperatorSpacingModifiedSettingsErrors.php", "config": {"spacesCountAfterOperator": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff", "file": "Attributes/attributeAndTargetSpacingNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff", "file": "Attributes/attributeAndTargetSpacingErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff", "file": "Attributes/attributeAndTargetSpacingModifiedSettingsNoErrors.php", "config": {"linesCount": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff", "file": "Attributes/attributeAndTargetSpacingModifiedSettingsErrors.php", "config": {"linesCount": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff", "file": "Attributes/attributeAndTargetSpacingAllowOnSameLineNoErrors.php", "config": {"allowOnSameLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff", "file": "Attributes/attributeAndTargetSpacingAllowOnSameLineErrors.php", "config": {"allowOnSameLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributeAndTargetSpacingSniff", "file": "Attributes/attributeAndTargetSpacingInvalidAttribute.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff", "file": "Attributes/attributesOrderNoErrors.php", "config": {"order": ["Attribute1", "Attribute2", "Attribute3", "Group\\Attribute1", "Group\\Attribute2", "Group\\", "AppAssert*"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff", "file": "Attributes/attributesOrderErrors.php", "config": {"order": ["Attribute1", "Attribute2", "Attribute3", "Group\\Attribute1", "Group\\Attribute2", "Group\\", "AppAssert*"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff", "file": "Attributes/attributesOrderAlphabeticallyNoErrors.php", "config": {"orderAlphabetically": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff", "file": "Attributes/attributesOrderAlphabeticallyErrors.php", "config": {"orderAlphabetically": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\AttributesOrderSniff", "file": "Attributes/attributesOrderInvalidAttribute.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowAttributesJoiningSniff", "file": "Attributes/disallowedAttributesJoiningNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowAttributesJoiningSniff", "file": "Attributes/disallowedAttributesJoiningInvalidAttribute.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowAttributesJoiningSniff", "file": "Attributes/disallowedAttributesJoiningErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowMultipleAttributesPerLineSniff", "file": "Attributes/disallowedMultipleAttributesPerLineNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowMultipleAttributesPerLineSniff", "file": "Attributes/disallowedMultipleAttributesPerLineErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\DisallowMultipleAttributesPerLineSniff", "file": "Attributes/disallowedMultipleAttributesPerLinesInvalidAttribute.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\RequireAttributeAfterDocCommentSniff", "file": "Attributes/requireAttributeAfterDocCommentNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\RequireAttributeAfterDocCommentSniff", "file": "Attributes/requireAttributeAfterDocCommentErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Attributes\\RequireAttributeAfterDocCommentSniff", "file": "Attributes/requireAttributeAfterDocCommentInvalidAttribute.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\DisallowDirectMagicInvokeCallSniff", "file": "PHP/disallowDirectMagicInvokeCallNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\DisallowDirectMagicInvokeCallSniff", "file": "PHP/disallowDirectMagicInvokeCallErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ForbiddenClassesSniff", "file": "PHP/forbiddenClasses.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ForbiddenClassesSniff", "file": "PHP/forbiddenClasses.php", "config": {"forbiddenClasses": {"\\UserModel": "\\MyApp\\Models\\User", "\\DB": "\\TypeORM\\DB", "\\SomeClass": "NULL", "\\FullyQualified\\Nested\\SomeClass": "\\FullyQualified\\SomeClass"}, "forbiddenExtends": {"\\FooNamespace\\ForbiddenExtendedClass": "\\BarNamespace\\BaseClass"}, "forbiddenInterfaces": {"\\FooNamespace\\SecondImplementedInterface": "\\BarNamespace\\SecondImplementedInterface", "\\SecondImplementedInterface": null, "\\ThirdImplementedInterface": ""}, "forbiddenTraits": {"\\SomeTraitB": "\\TotallyDifferentTrait", "\\FullyQualified\\SometTotallyDifferentTrait": "\\DatabaseTrait"}}, "variant": "configured"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff", "file": "PHP/referenceSpacingDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff", "file": "PHP/referenceSpacingDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff", "file": "PHP/referenceSpacingModifiedSettingsNoErrors.php", "config": {"spacesCountAfterReference": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ReferenceSpacingSniff", "file": "PHP/referenceSpacingModifiedSettingsErrors.php", "config": {"spacesCountAfterReference": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff", "file": "PHP/requireExplicitAssertionNoErrors.php", "config": {"enableIntegerRanges": false, "enableAdvancedStringTypes": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff", "file": "PHP/requireExplicitAssertionErrors.php", "config": {"enableIntegerRanges": false, "enableAdvancedStringTypes": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff", "file": "PHP/requireExplicitAssertionIntegerRangesNoErrors.php", "config": {"enableIntegerRanges": true, "enableAdvancedStringTypes": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff", "file": "PHP/requireExplicitAssertionIntegerRangesErrors.php", "config": {"enableIntegerRanges": true, "enableAdvancedStringTypes": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireExplicitAssertionSniff", "file": "PHP/requireExplicitAssertionAdvancedStringTypesErrors.php", "config": {"enableIntegerRanges": false, "enableAdvancedStringTypes": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireNowdocSniff", "file": "PHP/requireNowdocNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\RequireNowdocSniff", "file": "PHP/requireNowdocErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ShortListSniff", "file": "PHP/shortListNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\ShortListSniff", "file": "PHP/shortListErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\TypeCastSniff", "file": "PHP/typeCastNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\TypeCastSniff", "file": "PHP/typeCastErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff", "file": "PHP/uselessParenthesesNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff", "file": "PHP/uselessParenthesesErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff", "file": "PHP/uselessParenthesesCheckAroundNewErrors.php", "config": {"enableCheckAroundNew": false}, "variant": "disabled"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff", "file": "PHP/uselessParenthesesCheckAroundNewErrors.php", "config": {"enableCheckAroundNew": true}, "variant": "enabled"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff", "file": "PHP/uselessParenthesesNoErrorsWithIgnoredComplexTernaryConditions.php", "config": {"ignoreComplexTernaryConditions": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessParenthesesSniff", "file": "PHP/uselessParenthesesLiveCoding.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessSemicolonSniff", "file": "PHP/uselessSemicolonNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\PHP\\UselessSemicolonSniff", "file": "PHP/uselessSemicolonErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/incorrectOrder.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/incorrectOrderIntertwinedWithClasses.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/correctOrder.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/correctOrderSimilarNamespaces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/correctOrderSimilarNamespacesCaseSensitive.php", "config": {"caseSensitive": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/incorrectOrderSimilarNamespaces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/alphabeticalPatrik.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/alphabeticalMultiPartUseNotFixable.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/alphabeticalGroupUseNotFixable.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/fixableAlphabeticalSortedUses.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/fixableAlphabeticalSortedUsesWithCommentBeforeFirst.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/fixableAlphabeticalSortedUsesWithDocComment.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\AlphabeticallySortedUsesSniff", "file": "Namespaces/fixableAlphabeticalSortedUsesNotPsr12Compatible.php", "config": {"psr12Compatible": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedClassNameInAnnotationSniff", "file": "Namespaces/fullyQualifiedClassNameInAnnotationNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedClassNameInAnnotationSniff", "file": "Namespaces/fullyQualifiedClassNameInAnnotationErrors.php", "unstable": true},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedClassNameInAnnotationSniff", "file": "Namespaces/fullyQualifiedClassNameInAnnotationErrors.php", "config": {"ignoredAnnotationNames": ["@return", "@param", "@var"]}, "variant": "c2", "unstable": true},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff", "file": "Namespaces/fullyQualifiedExceptionNames.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff", "file": "Namespaces/ignoredNames.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff", "file": "Namespaces/ignoredNames.php", "config": {"ignoredNames": ["LibXMLError", "LibXMLException"]}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff", "file": "Namespaces/ignoredNamesInNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff", "file": "Namespaces/ignoredNamesInNamespace.php", "config": {"ignoredNames": ["IgnoredNames\\LibXMLException"]}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff", "file": "Namespaces/fixableFullyQualifiedExceptions.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedExceptionsSniff", "file": "Namespaces/fullyQualifiedSpecialExceptionNames.php", "config": {"specialExceptionNames": ["Foo\\SomeError", "Lorem\\Ipsum\\SomeOtherError"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsFileWithoutNamespaceNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsIncludeExcludeErrors.php", "config": {"exclude": ["PHP_VERSION"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsIncludeExcludeErrors.php", "config": {"include": ["PHP_OS"]}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsIgnoreGroupUse.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsGetSetErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalConstantsSniff", "file": "Namespaces/fullyQualifiedGlobalConstantsPropertyHooks.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsFileWithoutNamespaceNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeExcludeErrors.php", "config": {"exclude": ["min"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeExcludeErrors.php", "config": {"include": ["max"]}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeSpecialNoErrors.php", "config": {"includeSpecialFunctions": true, "include": ["max"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\FullyQualifiedGlobalFunctionsSniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsIncludeSpecialErrors.php", "config": {"includeSpecialFunctions": true, "include": ["max"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff", "file": "Namespaces/namespaceDeclarationInvalidWhitespaceAfterNamespaceNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff", "file": "Namespaces/namespaceDeclarationInvalidWhitespaceAfterNamespaceErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff", "file": "Namespaces/namespaceDeclarationDisallowedContentBetweenNamespaceNameAndSemicolonNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff", "file": "Namespaces/namespaceDeclarationDisallowedContentBetweenNamespaceNameAndSemicolonErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff", "file": "Namespaces/namespaceDeclarationDisallowedBracketedSyntaxNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceDeclarationSniff", "file": "Namespaces/namespaceDeclarationDisallowedBracketedSyntaxErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingNoNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingNamespaceWithCurlyBraces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingWithDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingWithDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingAfterOpenTagNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingAfterOpenTagErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingAfterLineCommentNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingAfterLineCommentErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingWithModifiedSettingsNoErrors.php", "config": {"linesCountBeforeNamespace": 0, "linesCountAfterNamespace": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingWithModifiedSettingsErrors.php", "config": {"linesCountBeforeNamespace": 0, "linesCountAfterNamespace": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingNoLineBeforeNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingNoLineAfterNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingNoCodeAfterNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingWithPhpcsCommentBefore.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingFileCommentBefore.php", "config": {"linesCountBeforeNamespace": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingInvalidFileCommentBeforeNoErrors.php", "config": {"linesCountBeforeNamespace": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\NamespaceSpacingSniff", "file": "Namespaces/namespaceSpacingInvalidFileCommentBefore.php", "config": {"linesCountBeforeNamespace": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatement.php", "config": {"ignoredNames": []}, "variant": "p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatement.php", "config": {"ignoredNames": ["LibXMLError"]}, "variant": "p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatement.php", "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatement.php", "config": {"allowFallbackGlobalFunctions": false}, "variant": "c3"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referencingDefinedFunction.php", "config": {"allowFallbackGlobalFunctions": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatement.php", "config": {"allowFallbackGlobalConstants": false}, "variant": "c4"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referencingDefinedConstant.php", "config": {"allowFallbackGlobalConstants": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatement.php", "config": {"allowFullyQualifiedExceptions": true, "specialExceptionNames": ["Foo\\SomeError"], "ignoredNames": []}, "variant": "c5.p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatement.php", "config": {"allowFullyQualifiedExceptions": true, "specialExceptionNames": ["Foo\\SomeError"], "ignoredNames": ["LibXMLError"]}, "variant": "c5.p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedExtends.php", "config": {"ignoredNames": []}, "variant": "p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedExtends.php", "config": {"ignoredNames": ["LibXMLError"]}, "variant": "p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedImplements.php", "config": {"ignoredNames": []}, "variant": "p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedImplements.php", "config": {"ignoredNames": ["LibXMLError"]}, "variant": "p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedExceptionNames.php", "config": {"allowFullyQualifiedExceptions": true, "ignoredNames": []}, "variant": "c2.p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedExceptionNames.php", "config": {"allowFullyQualifiedExceptions": true, "ignoredNames": ["LibXMLError"]}, "variant": "c2.p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedExceptionNames.php", "config": {"allowFullyQualifiedExceptions": false, "ignoredNames": []}, "variant": "c3.p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedExceptionNames.php", "config": {"allowFullyQualifiedExceptions": false, "ignoredNames": ["LibXMLError"]}, "variant": "c3.p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUses.php", "config": {"allowPartialUses": false, "ignoredNames": []}, "variant": "p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUses.php", "config": {"allowPartialUses": false, "ignoredNames": ["LibXMLError"]}, "variant": "p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUses.php", "config": {"allowPartialUses": true, "ignoredNames": []}, "variant": "c2.p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUses.php", "config": {"allowPartialUses": true, "ignoredNames": ["LibXMLError"]}, "variant": "c2.p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUsesWithoutNamespace.php", "config": {"allowPartialUses": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUsesAllowedNamespaces.php", "config": {"allowPartialUses": false, "namespacesAllowedToUsePartially": ["Some\\SubNamespace as SubNamespace"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUsesAllowedNamespaces.php", "config": {"allowPartialUses": false, "namespacesAllowedToUsePartially": ["Some\\SubNamespace"]}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/whitelistedNamespaces.php", "config": {"namespacesRequiredToUse": ["Foo"], "ignoredNames": []}, "variant": "p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/whitelistedNamespaces.php", "config": {"namespacesRequiredToUse": ["Foo"], "ignoredNames": ["LibXMLError"]}, "variant": "p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/multipleFullyQualifiedImplements.php", "config": {"ignoredNames": []}, "variant": "p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/multipleFullyQualifiedImplements.php", "config": {"ignoredNames": ["LibXMLError"]}, "variant": "p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referencingFullyQualifiedNameInFileWithoutNamespace.php", "config": {"ignoredNames": []}, "variant": "p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referencingFullyQualifiedNameInFileWithoutNamespace.php", "config": {"ignoredNames": ["LibXMLError"]}, "variant": "p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/ignoredNames.php", "config": {"allowFullyQualifiedExceptions": false, "ignoredNames": []}, "variant": "c3.p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/ignoredNames.php", "config": {"allowFullyQualifiedExceptions": true, "ignoredNames": ["LibXMLError", "LibXMLException"]}, "variant": "c3.p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/ignoredNames.php", "config": {"allowFullyQualifiedExceptions": true}, "variant": "c4"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/ignoredNamesInNamespace.php", "config": {"allowFullyQualifiedExceptions": false, "ignoredNames": []}, "variant": "c3.p1"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/ignoredNamesInNamespace.php", "config": {"allowFullyQualifiedExceptions": true, "ignoredNames": ["LibXMLError", "LibXMLException"]}, "variant": "c3.p2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/ignoredNamesInNamespace.php", "config": {"allowFullyQualifiedExceptions": true}, "variant": "c4"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedGlobalClassesInNamespace.php", "config": {"allowFullyQualifiedGlobalClasses": true, "allowFullyQualifiedGlobalFunctions": false, "allowFullyQualifiedGlobalConstants": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedGlobalFunctionsInNamespace.php", "config": {"allowFullyQualifiedGlobalClasses": false, "allowFullyQualifiedGlobalFunctions": true, "allowFullyQualifiedGlobalConstants": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fullyQualifiedGlobalConstantsInNamespace.php", "config": {"allowFullyQualifiedGlobalClasses": false, "allowFullyQualifiedGlobalFunctions": false, "allowFullyQualifiedGlobalConstants": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fixableReferenceViaFullyQualifiedName.php", "config": {"allowFullyQualifiedExceptions": true, "allowFallbackGlobalFunctions": false, "allowFallbackGlobalConstants": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/notFixableReferenceViaFullyQualifiedName.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partlyFixableReferenceViaFullyQualifiedName.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fixableReferenceViaFullyQualifiedNameWithoutNamespace.php", "config": {"allowFullyQualifiedExceptions": false, "specialExceptionNames": ["BarErrorX"], "searchAnnotations": true}, "unstable": true},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameDifferentNamespaces.php", "config": {"allowFullyQualifiedNameForCollidingClasses": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameDifferentNamespaces.php", "config": {"allowFullyQualifiedNameForCollidingClasses": false}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameDifferentNamespacesMoreClasses.php", "config": {"allowFullyQualifiedNameForCollidingClasses": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameDifferentNamespacesMoreClasses.php", "config": {"allowFullyQualifiedNameForCollidingClasses": false}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameWithExistingAlias.php", "config": {"allowFullyQualifiedNameForCollidingClasses": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameWithExistingAliasInAnnotation.php", "config": {"searchAnnotations": true, "allowFullyQualifiedNameForCollidingClasses": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/fixableWhenCollidingClassNames.php", "config": {"searchAnnotations": true, "allowFullyQualifiedNameForCollidingClasses": true, "allowFullyQualifiedGlobalClasses": true, "allowFullyQualifiedGlobalFunctions": true, "allowFullyQualifiedGlobalConstants": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameExtends.php", "config": {"allowFullyQualifiedNameForCollidingClasses": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingClassNameExtends.php", "config": {"allowFullyQualifiedNameForCollidingClasses": false}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingFullyQualifiedFunctionNames.php", "config": {"allowFullyQualifiedNameForCollidingFunctions": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingFullyQualifiedFunctionNames.php", "config": {"allowFullyQualifiedNameForCollidingFunctions": false}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingFullyQualifiedConstantNames.php", "config": {"allowFullyQualifiedNameForCollidingConstants": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/collidingFullyQualifiedConstantNames.php", "config": {"allowFullyQualifiedNameForCollidingConstants": false}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referencingGlobalFunctionViaFallbackErrorsWithMoreComplexSettings.php", "config": {"allowFallbackGlobalFunctions": false, "allowFullyQualifiedNameForCollidingFunctions": true, "allowFullyQualifiedGlobalFunctions": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referencingGlobalFunctionViaFullyQualifiedWithMoreComplexSettings.php", "config": {"allowFallbackGlobalFunctions": false, "allowFullyQualifiedNameForCollidingFunctions": true, "allowFullyQualifiedGlobalFunctions": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatementSearchingInAnnotations.php", "config": {"searchAnnotations": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/shouldBeInUseStatementSearchingInAnnotations.php", "config": {"searchAnnotations": true, "allowPartialUses": false, "allowFullyQualifiedGlobalClasses": true, "allowFullyQualifiedNameForCollidingClasses": true, "allowFullyQualifiedExceptions": false, "namespacesRequiredToUse": ["Foo"]}, "variant": "c2", "unstable": true},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referencingGlobalTypesInGlobalNamespace.php", "config": {"allowFallbackGlobalFunctions": false, "allowFallbackGlobalConstants": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithFileComment.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithFileCommentAndDeclare.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithFileCommentBelowDeclare.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithInlineFileComment.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithClassComment.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithCollision.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithExistingAlias.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyInAttributes.php", "config": {"allowFallbackGlobalConstants": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithSubNamespaces.php", "config": {"searchAnnotations": true, "allowPartialUses": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithSubNamespacesRequiredPartial.php", "config": {"searchAnnotations": true, "allowPartialUses": false, "namespacesRequiredToUsePartially": ["Some\\SubNamespace as SubNamespace"]}, "unstable": true},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/partialUsesAllowedNamespaces.php", "config": {"allowPartialUses": false, "namespacesAllowedToUsePartially": ["Some\\SubNamespace as SubNamespace"], "namespacesRequiredToUsePartially": ["Some\\SubNamespace as SubNamespace"]}, "variant": "c3"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithSubNamespacesRequiredPartial.php", "config": {"searchAnnotations": true, "allowPartialUses": false, "namespacesRequiredToUsePartially": ["Other\\Namespace as OtherNamespace", "Some\\SubNamespace as SubNamespace"]}, "variant": "c2", "unstable": true},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithRequiredPartialExact.php", "config": {"allowPartialUses": false, "namespacesRequiredToUsePartially": ["Some\\SubNamespace"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyWithRequiredPartialAlias.php", "config": {"allowPartialUses": false, "namespacesRequiredToUsePartially": ["Some\\SubNamespace as SubNamespace"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesReservedWord.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\ReferenceUsedNamesOnlySniff", "file": "Namespaces/referenceUsedNamesOnlyDisabledWhenNoNamespace.php", "config": {"allowWhenNoNamespace": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUses.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesMultipleNamespaces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesNoNamespaceNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesInAnnotation.php", "config": {"searchAnnotations": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesInAnnotation.php", "config": {"searchAnnotations": true}, "variant": "c2"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/caseInsensitiveUse.php", "config": {"searchAnnotations": true, "ignoredAnnotationNames": ["@ignore"], "ignoredAnnotations": ["@group"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/usedTrait.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesAnnotationUnderscores.php", "config": {"searchAnnotations": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/matchingCaseOfUseAndClassConstant.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/matchingCaseOfUseAndPhpFunction.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/fixableUnusedUses.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/noUses.php", "config": {"searchAnnotations": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesUseAfterOpen.php", "config": {"searchAnnotations": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/usesInAttributes.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesNamespaceOperatorNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesPropertyHooks.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesTypedClassConstants.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesPropertyHookNamesInMethod.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseDoesNotStartWithBackslashSniff", "file": "Namespaces/useDoesNotStartWithBackslashNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseDoesNotStartWithBackslashSniff", "file": "Namespaces/useDoesNotStartWithBackslashErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseDoesNotStartWithBackslashSniff", "file": "Namespaces/fixableUseDoesNotStartWithBackslash.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseFromSameNamespaceSniff", "file": "Namespaces/useFromSameNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseFromSameNamespaceSniff", "file": "Namespaces/fixableUseFromSameNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseFromSameNamespaceSniff", "file": "Namespaces/useFromRootNamespaceWithoutNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingNoUse.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingOneUse.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithDefaultSettingsWithCommentsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithDefaultSettingsWithCommentsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithDefaultSettingsWithComments2Errors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithDefaultSettingsWithInlineCommentsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithDefaultSettingsWithInlineCommentsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingAfterOpenTagNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingAfterOpenTagErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithModifiedSettingsNoErrors.php", "config": {"linesCountBeforeFirstUse": 0, "linesCountBetweenUseTypes": 1, "linesCountAfterLastUse": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingWithModifiedSettingsErrors.php", "config": {"linesCountBeforeFirstUse": 0, "linesCountBetweenUseTypes": 1, "linesCountAfterLastUse": 2}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingMultipleUseTypesErrors.php", "config": {"linesCountBeforeFirstUse": 1, "linesCountBetweenUseTypes": 1, "linesCountAfterLastUse": 1}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingNoLineBeforeUse.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingNoLineAfterUse.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingNoCodeAfterUse.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingSameUseTypesErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UseSpacingSniff", "file": "Namespaces/useSpacingMoreNamespacesErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UselessAliasSniff", "file": "Namespaces/uselessAliasNoUses.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UselessAliasSniff", "file": "Namespaces/uselessAliasNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UselessAliasSniff", "file": "Namespaces/uselessAliasErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingWithDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingWithDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingWithModifiedSettingsNoErrors.php", "config": {"linesCountBefore": 0, "linesCountBeforeFirst": 1, "linesCountAfter": 0, "linesCountAfterLast": 3, "controlStructures": ["do", "while", "for", "foreach", "switch", "try"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingWithModifiedSettingsErrors.php", "config": {"linesCountBefore": 0, "linesCountBeforeFirst": 1, "linesCountAfter": 0, "linesCountAfterLast": 3, "controlStructures": ["do", "while", "for", "foreach", "switch", "try"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingSwitchErrors.php", "config": {"controlStructures": ["case", "default"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingIfWithoutCurlyBraces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingElseWithoutCurlyBraces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingIfWithAlternativeSyntax.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\BlockControlStructureSpacingSniff", "file": "ControlStructures/blockControlStructureSpacingAtTheEndOfFile.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsSpacingWithDefaultSettingsNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsSpacingWithDefaultSettingsErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsSpacingWithModifiedSettingsNoErrors.php", "config": {"linesCountBefore": 0, "linesCountBeforeFirst": 1, "linesCountAfter": 0, "linesCountAfterLast": 3, "jumpStatements": ["break", "continue", "return", "throw", "yield", "yield_from"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsSpacingWithModifiedSettingsErrors.php", "config": {"linesCountBefore": 0, "linesCountBeforeFirst": 1, "linesCountAfter": 0, "linesCountAfterLast": 3, "jumpStatements": ["break", "continue", "return", "throw", "yield", "yield_from"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsSpacingAtTheBeginningOfFile.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsSpacingAtTheEndOfFile.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsWhenInCaseOrDefaultNoErrors.php", "config": {"linesCountBeforeWhenFirstInCaseOrDefault": 0, "linesCountAfterWhenLastInCaseOrDefault": 1, "linesCountAfterWhenLastInLastCaseOrDefault": 0}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsWhenInCaseOrDefaultErrors.php", "config": {"linesCountBeforeWhenFirstInCaseOrDefault": 0, "linesCountAfterWhenLastInCaseOrDefault": 1, "linesCountAfterWhenLastInLastCaseOrDefault": 0}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\JumpStatementsSpacingSniff", "file": "ControlStructures/jumpStatementsThrowExpressionNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowContinueWithoutIntegerOperandInSwitchSniff", "file": "ControlStructures/disallowContinueWithoutIntegerOperandInSwitchNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowContinueWithoutIntegerOperandInSwitchSniff", "file": "ControlStructures/disallowContinueWithoutIntegerOperandInSwitchErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\LanguageConstructWithParenthesesSniff", "file": "ControlStructures/languageConstructWithParenthesesNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\LanguageConstructWithParenthesesSniff", "file": "ControlStructures/languageConstructWithParenthesesErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithParenthesesSniff", "file": "ControlStructures/newWithParenthesesNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithParenthesesSniff", "file": "ControlStructures/newWithParenthesesErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithoutParenthesesSniff", "file": "ControlStructures/newWithoutParenthesesNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\NewWithoutParenthesesSniff", "file": "ControlStructures/newWithoutParenthesesErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff", "file": "ControlStructures/disallowShortTernaryOperatorNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff", "file": "ControlStructures/disallowShortTernaryOperatorErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowShortTernaryOperatorSniff", "file": "ControlStructures/disallowShortTernaryOperatorErrorsFixableDisabled.php", "config": {"fixable": false}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff", "file": "ControlStructures/requireShortTernaryOperatorNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff", "file": "ControlStructures/requireShortTernaryOperatorErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireShortTernaryOperatorSniff", "file": "ControlStructures/requireShortTernaryOperatorCloseTag.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff", "file": "ControlStructures/uselessTernaryOperatorNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff", "file": "ControlStructures/uselessTernaryOperatorErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessTernaryOperatorSniff", "file": "ControlStructures/uselessTernaryOperatorErrorsWithAssumeAllConditionExpressionsAreAlreadyBooleanEnabled.php", "config": {"assumeAllConditionExpressionsAreAlreadyBoolean": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff", "file": "ControlStructures/requireTernaryOperatorNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff", "file": "ControlStructures/requireTernaryOperatorErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff", "file": "ControlStructures/requireTernaryOperatorWithIgnoredMultiLineNoErrors.php", "config": {"ignoreMultiLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff", "file": "ControlStructures/requireTernaryOperatorWithIgnoredMultiLineErrors.php", "config": {"ignoreMultiLine": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff", "file": "ControlStructures/requireTernaryOperatorIfWithoutCurlyBraces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireTernaryOperatorSniff", "file": "ControlStructures/requireTernaryOperatorElseWithoutCurlyBraces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowYodaComparisonSniff", "file": "ControlStructures/disallowYodaComparisonNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowYodaComparisonSniff", "file": "ControlStructures/disallowYodaComparisonErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\DisallowYodaComparisonSniff", "file": "ControlStructures/fixableDisallowYodaComparisons.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireYodaComparisonSniff", "file": "ControlStructures/requireYodaComparisonNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireYodaComparisonSniff", "file": "ControlStructures/requireYodaComparisonErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireYodaComparisonSniff", "file": "ControlStructures/fixableRequireYodaComparisons.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\RequireYodaComparisonSniff", "file": "ControlStructures/requireYodaComparisonsAlwaysVariableOnRightErrors.php", "config": {"alwaysVariableOnRight": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessIfConditionWithReturnSniff", "file": "ControlStructures/uselessIfConditionWithReturnNoErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessIfConditionWithReturnSniff", "file": "ControlStructures/uselessIfConditionWithReturnErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessIfConditionWithReturnSniff", "file": "ControlStructures/uselessIfConditionWithReturnIfWithoutCurlyBraces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessIfConditionWithReturnSniff", "file": "ControlStructures/uselessIfConditionWithReturnElseWithoutCurlyBraces.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\UselessIfConditionWithReturnSniff", "file": "ControlStructures/uselessIfConditionWithReturnErrorsWithAssumeAllConditionExpressionsAreAlreadyBooleanEnabled.php", "config": {"assumeAllConditionExpressionsAreAlreadyBoolean": true}}
 ]

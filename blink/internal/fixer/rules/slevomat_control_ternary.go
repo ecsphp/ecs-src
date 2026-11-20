@@ -168,14 +168,14 @@ func (r SlevomatUselessTernaryOperator) Fix(s *tokens.Stream) bool {
 		}
 		start := t.start(then)
 		condEnd := f.prevEffective(then - 1)
-		if !r.assumeBoolean && !f.slvConditionReturnsBoolean(start, condEnd) {
+		if !r.assumeBoolean && !f.slvCondReturnsBoolean(start, condEnd) {
 			return
 		}
 		elseEnd := t.end(then, elsePtr)
 		after := f.nextEffective(elseEnd+1, n)
 		f.beginChangeset()
 		if f.slvIsBoolLiteral(afterThen) && strings.EqualFold(f.toks[afterThen].orig, "false") {
-			f.change(start, condEnd, f.slvNegativeCondition(start, condEnd, false))
+			f.change(start, condEnd, f.slvCondNegative(start, condEnd, false))
 		}
 		if after >= 0 {
 			f.removeBetweenIncluding(condEnd+1, after-1)

@@ -1,85 +1,89 @@
 package rules
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 )
 
-// slvBooleanOperator tells PHP_CodeSniffer's Tokens::BOOLEAN_OPERATORS.
-func (f *slvFile) slvBooleanOperator(i int) bool {
-	return f.is(i, "&&") || f.is(i, "||") || f.isKeyword(i, "and") || f.isKeyword(i, "or") || f.isKeyword(i, "xor")
+// slevomat's ConditionHelper.
+
+var slvCondBooleanOps = map[string]bool{"&&": true, "||": true, "and": true, "or": true, "xor": true}
+
+func (f *slvFile) slvCondBoolOp(i int) string {
+	t := f.toks[i]
+	switch {
+	case t.kind == token.Punct && (t.orig == "&&" || t.orig == "||"):
+		return t.orig
+	case t.kind == token.Keyword && slvCondBooleanOps[strings.ToLower(t.orig)]:
+		return strings.ToLower(t.orig)
+	}
+	return ""
 }
 
-// slvEquality tells PHP_CodeSniffer's Tokens::EQUALITY_TOKENS.
-func (f *slvFile) slvEquality(i int) bool {
-	if i < 0 || i >= len(f.toks) || f.toks[i].kind != token.Punct {
-		return false
+// slvCondFindNext is TokenHelper::findNext: the first token in [start, end)
+// match accepts, or -1.
+func (f *slvFile) slvCondFindNext(start, end int, match func(i int) bool) int {
+	for i := max(start, 0); i < end && i < len(f.toks); i++ {
+		if match(i) {
+			return i
+		}
 	}
-	switch f.toks[i].orig {
-	case "==", "!=", "<>", "===", "!==", "<=", ">=":
+	return -1
+}
+
+var slvCondEquality = phpcsSet("==", "!=", "<>", "===", "!==", "<=", ">=")
+
+// slvCondReturnsBoolean is ConditionHelper::conditionReturnsBoolean.
+func (f *slvFile) slvCondReturnsBoolean(start, end int) bool {
+	switch strings.ToLower(strings.TrimSpace(f.content(start, end))) {
+	case "true", "false":
 		return true
 	}
-	return false
-}
-
-// slvIsTString tells a T_STRING: a plain name, not true/false/null/self/parent.
-func (f *slvFile) slvIsTString(i int) bool {
-	if i < 0 || i >= len(f.toks) || f.toks[i].kind != token.Ident {
-		return false
-	}
-	switch strings.ToLower(f.toks[i].orig) {
-	case "true", "false", "null", "self", "parent":
-		return false
-	}
-	return true
-}
-
-// slvConditionReturnsBoolean is ConditionHelper::conditionReturnsBoolean.
-func (f *slvFile) slvConditionReturnsBoolean(start, end int) bool {
-	content := strings.ToLower(strings.Trim(f.content(start, end), phpTrimChars))
-	if content == "false" || content == "true" {
-		return true
-	}
-	for i := start; i <= end && i < len(f.toks); i++ {
+	for i := start; ; {
+		i = f.slvCondFindNext(i, end+1, func(j int) bool {
+			return f.is(j, "(") || f.is(j, "<") || f.is(j, ">") || f.slvCondBoolOp(j) != "" ||
+				f.toks[j].kind == token.Punct && slvCondEquality[f.toks[j].orig]
+		})
+		if i < 0 {
+			return false
+		}
 		if f.is(i, "(") {
-			if f.toks[i].closer < 0 {
-				return false
-			}
 			i = f.toks[i].closer
 			continue
 		}
-		if f.is(i, "<") || f.is(i, ">") || f.slvBooleanOperator(i) || f.slvEquality(i) {
-			return true
-		}
+		return true
 	}
-	return false
 }
 
-// slvNegativeCondition is ConditionHelper::getNegativeCondition.
-func (f *slvFile) slvNegativeCondition(boundStart, boundEnd int, nested bool) string {
-	start := f.nextEffective(boundStart, len(f.toks))
-	end := f.prevEffective(boundEnd)
-	if f.is(start, "(") && f.toks[start].closer == end {
-		start = f.nextEffective(start+1, len(f.toks))
-		end = f.prevEffective(end - 1)
+// slvCondNegative is ConditionHelper::getNegativeCondition.
+func (f *slvFile) slvCondNegative(start, end int, nested bool) string {
+	condStart := f.nextEffective(start, len(f.toks))
+	condEnd := f.prevEffective(end)
+	if f.is(condStart, "(") && f.toks[condStart].closer == condEnd {
+		condStart = f.nextEffective(condStart+1, len(f.toks))
+		condEnd = f.prevEffective(condEnd - 1)
 	}
 	var b strings.Builder
-	if boundStart != start {
-		b.WriteString(f.content(boundStart, start-1))
+	if start != condStart {
+		b.WriteString(f.content(start, condStart-1))
 	}
-	b.WriteString(f.slvNegativeConditionPart(start, end, nested))
-	if boundEnd != end {
-		b.WriteString(f.content(end+1, boundEnd))
+	b.WriteString(f.slvCondNegativePart(condStart, condEnd, nested))
+	if end != condEnd {
+		b.WriteString(f.content(condEnd+1, end))
 	}
 	return b.String()
 }
 
-var slvBooleanNotPrefix = regexp.MustCompile(`^!\s*`)
+var slvCondBooleanNot = regexp.MustCompile(`^!\s*`)
 
-func (f *slvFile) slvNegativeConditionPart(start, end int, nested bool) string {
+var slvCondComparisonNegation = map[string]string{
+	"==": "!=", "!=": "==", "<>": "==", "===": "!==", "!==": "===",
+	">=": "<", "<=": ">", ">": "<=", "<": ">=",
+}
+
+func (f *slvFile) slvCondNegativePart(start, end int, nested bool) string {
 	condition := f.content(start, end)
 	switch strings.ToLower(condition) {
 	case "true":
@@ -87,19 +91,15 @@ func (f *slvFile) slvNegativeConditionPart(start, end int, nested bool) string {
 	case "false":
 		return "true"
 	}
+
 	first := f.nextEffective(start, len(f.toks))
-	hasBoolean := false
-	for i := start; i <= end; i++ {
-		if f.slvBooleanOperator(i) {
-			hasBoolean = true
-			break
-		}
-	}
+	hasBooleanOp := f.slvCondFindNext(start, end+1, func(i int) bool { return f.slvCondBoolOp(i) != "" }) >= 0
+
 	if f.is(first, "!") {
 		afterNot := f.nextEffective(first+1, len(f.toks))
-		if f.is(afterNot, "(") && f.toks[afterNot].closer >= 0 {
-			if nested && hasBoolean {
-				return slvBooleanNotPrefix.ReplaceAllString(condition, "")
+		if f.is(afterNot, "(") {
+			if nested && hasBooleanOp {
+				return slvCondBooleanNot.ReplaceAllString(condition, "")
 			}
 			closer := f.toks[afterNot].closer
 			after := f.nextEffective(closer+1, end+1)
@@ -108,102 +108,114 @@ func (f *slvFile) slvNegativeConditionPart(start, end int, nested bool) string {
 			}
 		}
 	}
-	if hasBoolean {
-		return f.slvNegativeLogicalCondition(start, end)
+
+	if hasBooleanOp {
+		return f.slvCondNegativeLogical(start, end)
 	}
+
 	if f.is(first, "!") {
-		return slvBooleanNotPrefix.ReplaceAllString(condition, "")
+		return slvCondBooleanNot.ReplaceAllString(condition, "")
 	}
-	for i := start; i <= end; i++ {
-		if f.isKeyword(i, "instanceof") || f.is(i, "&") || f.is(i, "??") || f.is(i, "?") {
-			return "!(" + condition + ")"
-		}
+
+	if f.slvCondFindNext(start, end+1, func(i int) bool {
+		return f.isKeyword(i, "instanceof") || f.is(i, "&") || f.is(i, "??") || f.is(i, "?")
+	}) >= 0 {
+		return "!(" + condition + ")"
 	}
-	if f.slvIsTString(first) {
-		next := f.nextEffective(first+1, len(f.toks))
-		if f.is(next, "(") && f.toks[next].closer == end {
+
+	ptr := first
+	if ptr >= 0 && f.lineCallIsPlainString(ptr) {
+		ptr = f.nextEffective(ptr+1, len(f.toks))
+		if f.is(ptr, "(") && f.toks[ptr].closer == end {
 			return "!" + condition
 		}
-		first = next
 	}
-	if f.isVariable(first) || f.isClassKeyword(first) {
-		if identEnd := f.identEnd(first); identEnd >= 0 {
-			after := f.nextEffective(identEnd+1, len(f.toks))
-			if f.is(after, "(") && f.toks[after].closer == end {
-				return "!" + condition
+
+	if ptr >= 0 && (f.isVariable(ptr) || f.isClassKeyword(ptr)) {
+		identEnd := f.identEnd(ptr)
+		// IdentificatorHelper::findEndPointer returns null here, and null + 1 is 1
+		from := identEnd + 1
+		if identEnd < 0 {
+			from = 1
+		}
+		after := f.nextEffective(from, len(f.toks))
+		if f.is(after, "(") && f.toks[after].closer == end {
+			return "!" + condition
+		}
+	}
+
+	isComparison := func(i int) bool {
+		t := f.toks[i]
+		_, ok := slvCondComparisonNegation[t.orig]
+		return t.kind == token.Punct && ok
+	}
+	if f.slvCondFindNext(start, end+1, isComparison) >= 0 {
+		var b strings.Builder
+		for i := start; i <= end; i++ {
+			if f.is(i, "(") {
+				b.WriteString(f.content(i, f.toks[i].closer))
+				i = f.toks[i].closer
+				continue
+			}
+			if isComparison(i) {
+				b.WriteString(slvCondComparisonNegation[f.toks[i].orig])
+			} else {
+				b.WriteString(f.toks[i].content)
 			}
 		}
+		return b.String()
 	}
-	replacements := map[string]string{
-		"==": "!=", "!=": "==", "<>": "==", "===": "!==", "!==": "===",
-		">=": "<", "<=": ">", ">": "<=", "<": ">=",
-	}
-	hasComparison := false
-	for i := start; i <= end; i++ {
-		if f.toks[i].kind == token.Punct {
-			if _, ok := replacements[f.toks[i].orig]; ok {
-				hasComparison = true
-				break
-			}
-		}
-	}
-	if !hasComparison {
-		return "!" + condition
-	}
-	var b strings.Builder
-	for i := start; i <= end; i++ {
-		if f.is(i, "(") && f.toks[i].closer >= 0 {
-			b.WriteString(f.content(i, f.toks[i].closer))
-			i = f.toks[i].closer
-			continue
-		}
-		if r, ok := replacements[f.toks[i].orig]; ok && f.toks[i].kind == token.Punct {
-			b.WriteString(r)
-			continue
-		}
-		b.WriteString(f.toks[i].content)
-	}
-	return b.String()
+
+	return "!" + condition
 }
 
-func (f *slvFile) slvNegativeLogicalCondition(start, end int) string {
-	for i := start; i < end; i++ {
-		if f.isKeyword(i, "xor") {
-			return "!(" + f.content(start, end) + ")"
-		}
+var slvCondLogicalNegation = map[string]string{"&&": "||", "||": "&&", "and": "or", "or": "and"}
+
+// slvCondNegativeLogical is ConditionHelper::getNegativeLogicalCondition.
+func (f *slvFile) slvCondNegativeLogical(start, end int) string {
+	if f.slvCondFindNext(start, end, func(i int) bool { return f.slvCondBoolOp(i) == "xor" }) >= 0 {
+		return "!(" + f.content(start, end) + ")"
 	}
-	replacements := map[string]string{"&&": "||", "||": "&&", "and": "or", "or": "and"}
+
 	var b strings.Builder
 	nestedStart := start
 	level := 0
-	levelOperator := ""
-	for i := start; i <= end; i++ {
-		switch {
-		case f.is(i, "("):
-			if f.slvIsTString(f.prevEffective(i-1)) && f.toks[i].closer >= 0 {
-				i = f.toks[i].closer
-			} else {
-				level++
+	levelOp := ""
+	for i := start; ; {
+		i = f.slvCondFindNext(i, end+1, func(j int) bool {
+			return f.is(j, "(") || f.is(j, ")") || f.slvCondBoolOp(j) != ""
+		})
+		if i < 0 {
+			break
+		}
+		if f.is(i, "(") {
+			if p := f.prevEffective(i - 1); p >= 0 && f.lineCallIsPlainString(p) {
+				i = f.toks[i].closer + 1
+				continue
 			}
+			level++
+			i++
 			continue
-		case f.is(i, ")"):
+		}
+		if f.is(i, ")") {
 			level--
-			continue
-		case !f.slvBooleanOperator(i):
+			i++
 			continue
 		}
 		if level != 0 {
+			i++
 			continue
 		}
-		op := strings.ToLower(f.toks[i].orig)
-		if levelOperator != "" && levelOperator != op {
-			return fmt.Sprintf("!(%s)", f.content(start, end))
+		op := f.slvCondBoolOp(i)
+		if levelOp != "" && levelOp != op {
+			return "!(" + f.content(start, end) + ")"
 		}
-		levelOperator = op
-		b.WriteString(f.slvNegativeCondition(nestedStart, i-1, true))
-		b.WriteString(replacements[op])
+		levelOp = op
+		b.WriteString(f.slvCondNegative(nestedStart, i-1, true))
+		b.WriteString(slvCondLogicalNegation[op])
 		nestedStart = i + 1
+		i++
 	}
-	b.WriteString(f.slvNegativeCondition(nestedStart, end, true))
+	b.WriteString(f.slvCondNegative(nestedStart, end, true))
 	return b.String()
 }
