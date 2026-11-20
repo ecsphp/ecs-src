@@ -190,6 +190,8 @@ var fixerPriority = map[string]int{
 	"ArrayAccessSniff":                            0,
 	"ArrayBracketSpacingSniff":                    0,
 	"ArrowFunctionDeclarationSniff":               0,
+	"BlockControlStructureSpacingSniff":           0,
+	"JumpStatementsSpacingSniff":                  0,
 	"AttributeAndTargetSpacingSniff":              0,
 	"AttributesOrderSniff":                        0,
 	"DisallowAttributesJoiningSniff":              0,

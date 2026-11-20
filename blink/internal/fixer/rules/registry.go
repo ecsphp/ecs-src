@@ -532,6 +532,8 @@ func ConstructFixers() []fixer.Fixer {
 		SlevomatUseFromSameNamespace{},
 		SlevomatUseSpacing{},
 		SlevomatUselessAlias{},
+		SlevomatBlockControlStructureSpacing{LinesCountBefore: 1, LinesCountAfter: 1},
+		SlevomatJumpStatementsSpacing{LinesCountBefore: 1, LinesCountAfter: 1, LinesCountBeforeWhenFirstInCaseOrDefault: -1, LinesCountAfterWhenLastInCaseOrDefault: -1, LinesCountAfterWhenLastInLastCaseOrDefault: -1, AllowSingleLineYieldStacking: true},
 		OperatorLinebreak{},
 		PhpdocSeparation{},
 		PhpdocToComment{},
