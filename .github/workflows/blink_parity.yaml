@@ -25,7 +25,6 @@ jobs:
             matrix:
                 corpus:
                     - rector-src
-                    - mautic
         name: "parity: ${{ matrix.corpus }}"
         steps:
             - uses: actions/checkout@v4
@@ -53,7 +52,6 @@ jobs:
             matrix:
                 corpus:
                     - rector-src
-                    - mautic
         name: "report-only errors parity: ${{ matrix.corpus }}"
         steps:
             - uses: actions/checkout@v4

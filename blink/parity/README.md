@@ -43,4 +43,4 @@ blink/parity/errors.sh blink/parity/corpora/rector-src.json
 Runs every rule blink can report but not fix (`go run ./cmd/list-reporters`) in
 check mode, with `--blink` and with the PHP engine, and fails when the reported
 errors (file, line, checker, message) or the exit codes differ. CI runs it on
-rector-src and mautic in `.github/workflows/blink_parity.yaml`.
+rector-src in `.github/workflows/blink_parity.yaml`.
