@@ -2501,8 +2501,7 @@ func pdDiff(old, new []*pdNode) []pdDiffElem {
 		}
 	}
 	var result []pdDiffElem
-	for d := len(trace) - 1; d >= 0; d-- {
-		v := trace[d]
+	for d, v := range slices.Backward(trace) {
 		k := x - y
 		prevK := k - 1
 		if k == -d || k != d && v[k-1] < v[k+1] {
@@ -2614,8 +2613,8 @@ var pdLastIndentRe = regexp.MustCompile(`\n([\t ]*)\*([\t ]*)$`)
 // detectLastChildIndent is the indentation around the asterisk on the line
 // where the last child of a doc comment starts.
 func (pr *pdPrinter) detectLastChildIndent(nodes []*pdNode) (string, string, bool) {
-	for i := len(nodes) - 1; i >= 0; i-- {
-		index := nodes[i].start - 1
+	for _, node := range slices.Backward(nodes) {
+		index := node.start - 1
 		lineStart := ""
 		for index >= 0 && index < len(pr.toks) && pr.toks[index].t == pdHorizontalWS {
 			lineStart = pr.toks[index].v + lineStart
