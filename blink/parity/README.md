@@ -33,3 +33,14 @@ Pick the checker with the highest count in the report, reproduce one of its file
 locally with `--keep`, fix the matching blink rule, and re-run. Verify the change
 against **every** corpus before lowering a threshold — a fix that helps one
 codebase can regress another.
+
+## Report-only errors
+
+```bash
+blink/parity/errors.sh blink/parity/corpora/rector-src.json
+```
+
+Runs every rule blink can report but not fix (`go run ./cmd/list-reporters`) in
+check mode, with `--blink` and with the PHP engine, and fails when the reported
+errors (file, line, checker, message) or the exit codes differ. CI runs it on
+rector-src and mautic in `.github/workflows/blink_parity.yaml`.

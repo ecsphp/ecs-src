@@ -84,9 +84,21 @@ func newPhpcsScope(f *slvFile) *phpcsScope {
 	n := len(f.toks)
 	sc := &phpcsScope{f: f, code: make([]string, n), cond: make([]int, n), opener: make([]int, n),
 		closer: make([]int, n), pCloser: make([]int, n), pOwner: make([]int, n), nested: make([]int, n)}
+	insideUseGroup := false
 	for i := range n {
 		sc.cond[i], sc.opener[i], sc.closer[i], sc.pCloser[i], sc.pOwner[i] = -1, -1, -1, -1, -1
 		sc.code[i] = sc.classify(i)
+		switch sc.code[i] {
+		case "open_use_group":
+			insideUseGroup = true
+		case "close_use_group":
+			insideUseGroup = false
+		case "function", "const":
+			// "use function" and "use const" import keywords are T_STRING
+			if insideUseGroup || f.isKeyword(f.prevEffective(i-1), "use") {
+				sc.code[i] = "string"
+			}
+		}
 	}
 	sc.inlineElses()
 	sc.parentheses()
