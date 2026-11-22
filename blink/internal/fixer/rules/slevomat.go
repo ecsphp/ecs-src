@@ -1005,7 +1005,7 @@ func (f *slvFile) scopeCloser(i int) int {
 				j = f.toks[j].closer
 			case f.is(j, "{"):
 				return f.toks[j].closer
-			case f.is(j, ";") || f.is(j, ":") && !f.isKeyword(i, "function"):
+			case f.is(j, ";") || f.is(j, ":") && !f.isKeyword(i, "function") && !f.isKeyword(i, "enum"):
 				return -1
 			}
 		}

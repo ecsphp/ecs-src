@@ -283,8 +283,7 @@ func (m *clFMembers) process(pointer int) int {
 		return nextFunction
 	}
 
-	// ClassHelper::getClassPointer: the innermost OO scope; slvFile.scopeCloser
-	// misses the body of a backed enum
+	// ClassHelper::getClassPointer: the innermost OO scope
 	closer := n
 	for _, c := range slices.Backward(m.conds[pointer]) {
 		if m.isOOScope(c.key) {

@@ -387,7 +387,7 @@ func (r SlevomatEmptyLinesAroundClassBraces) Fix(s *tokens.Stream) bool {
 	r = r.withDefaults()
 	return slvRun(s, func(f *slvFile) {
 		f.eachToken(func(i int) bool { return f.clDIsTraitUser(i) || f.isKeyword(i, "interface") }, func(cls int) int {
-			closer := f.clDScopeCloser(cls)
+			closer := f.scopeCloser(cls)
 			if closer < 0 || f.toks[closer].closer < 0 {
 				return 0
 			}
@@ -453,7 +453,7 @@ func (f *slvFile) clDIsTraitUser(i int) bool {
 
 // clDTraitUsePointers is ClassHelper::getTraitUsePointers.
 func (f *slvFile) clDTraitUsePointers(cls int) []int {
-	closer := f.clDScopeCloser(cls)
+	closer := f.scopeCloser(cls)
 	if closer < 0 || f.toks[closer].closer < 0 {
 		return nil
 	}
@@ -523,21 +523,4 @@ func (f *slvFile) clDDocOpener(closeTag int) int {
 		}
 	}
 	return closeTag
-}
-
-// clDScopeCloser is the scope_closer of a class-like keyword; unlike
-// scopeCloser it also finds the brace of a backed enum ("enum E: string {").
-func (f *slvFile) clDScopeCloser(cls int) int {
-	if !f.isKeyword(cls, "enum") {
-		return f.scopeCloser(cls)
-	}
-	for j := cls + 1; j < len(f.toks); j++ {
-		switch {
-		case f.is(j, "{"):
-			return f.toks[j].closer
-		case f.is(j, ";"):
-			return -1
-		}
-	}
-	return -1
 }

@@ -9,23 +9,6 @@ import (
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
 )
 
-// clgScopeCloser is scopeCloser, except that a backed enum's ":" does not end
-// the search for its "{".
-func (f *slvFile) clgScopeCloser(i int) int {
-	if !f.isKeyword(i, "enum") {
-		return f.scopeCloser(i)
-	}
-	for j := i + 1; j < len(f.toks); j++ {
-		switch {
-		case f.is(j, "{"):
-			return f.toks[j].closer
-		case f.is(j, ";") || f.is(j, "(") || f.is(j, "["):
-			return -1
-		}
-	}
-	return -1
-}
-
 // clgIsAnonClass tells a "class" PHP_CodeSniffer retokenizes to T_ANON_CLASS:
 // one with a scope followed by "(", "{", "extends" or "implements".
 func (f *slvFile) clgIsAnonClass(i int) bool {
@@ -41,7 +24,7 @@ func (f *slvFile) clgIsAnonClass(i int) bool {
 func (f *slvFile) clgClassPointers() []int {
 	var out []int
 	for i := range f.toks {
-		if f.isOOScopeOwner(i) && f.clgScopeCloser(i) >= 0 {
+		if f.isOOScopeOwner(i) && f.scopeCloser(i) >= 0 {
 			out = append(out, i)
 		}
 	}
@@ -50,13 +33,13 @@ func (f *slvFile) clgClassPointers() []int {
 
 // clgScopeOpener is the scope_opener of an OO keyword with a scope.
 func (f *slvFile) clgScopeOpener(i int) int {
-	return f.toks[f.clgScopeCloser(i)].closer
+	return f.toks[f.scopeCloser(i)].closer
 }
 
 // clgClassPointer is ClassHelper::getClassPointer, or -1.
 func (f *slvFile) clgClassPointer(pointers []int, i int) int {
 	for _, c := range slices.Backward(pointers) {
-		if f.clgScopeOpener(c) < i && f.clgScopeCloser(c) > i {
+		if f.clgScopeOpener(c) < i && f.scopeCloser(c) > i {
 			return c
 		}
 	}

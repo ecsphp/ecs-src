@@ -754,5 +754,7 @@
   {"sniff":"SlevomatCodingStandard\\Sniffs\\Commenting\\ForbiddenAnnotationsSniff","file":"Commenting/noForbiddenAnnotations.php","config":{"forbiddenAnnotations":["@see","@throws"]}},
   {"sniff":"SlevomatCodingStandard\\Sniffs\\Commenting\\ForbiddenAnnotationsSniff","file":"Commenting/forbiddenAnnotations.php","config":{"forbiddenAnnotations":["@see","@throws","@Route"]}},
   {"sniff":"SlevomatCodingStandard\\Sniffs\\Commenting\\ForbiddenCommentsSniff","file":"Commenting/noForbiddenComments.php","config":{"forbiddenCommentPatterns":["~Foo\\d+~","~Not comment\\.~"]}},
-  {"sniff":"SlevomatCodingStandard\\Sniffs\\Commenting\\ForbiddenCommentsSniff","file":"Commenting/forbiddenComments.php","config":{"forbiddenCommentPatterns":["~Created by PhpStorm\\.~","~(\\S+\\s+)?Constructor\\.~","~(blah){3}~"]}}
+  {"sniff":"SlevomatCodingStandard\\Sniffs\\Commenting\\ForbiddenCommentsSniff","file":"Commenting/forbiddenComments.php","config":{"forbiddenCommentPatterns":["~Created by PhpStorm\\.~","~(\\S+\\s+)?Constructor\\.~","~(blah){3}~"]}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\TypeHints\\ClassConstantTypeHintSniff", "file": "TypeHints/classConstantTypeHintBackedEnum.php", "config": {"enableNativeTypeHint": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesBackedEnum.php"}
 ]
