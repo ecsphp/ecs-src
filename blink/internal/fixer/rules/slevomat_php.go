@@ -309,7 +309,17 @@ func (f *slvFile) isExpressionScope(owner int) bool {
 	case f.isKeyword(owner, "function"):
 		return f.isClosure(owner)
 	case f.isKeyword(owner, "class"):
-		return f.isKeyword(f.prevEffective(owner-1), "new")
+		prev := f.prevEffective(owner - 1)
+		for prev >= 0 {
+			if f.isKeyword(prev, "readonly") {
+				prev = f.prevEffective(prev - 1)
+			} else if f.toks[prev].kind == token.AttributeEnd && f.toks[prev].closer >= 0 {
+				prev = f.prevEffective(f.toks[prev].closer - 1)
+			} else {
+				break
+			}
+		}
+		return f.isKeyword(prev, "new")
 	}
 	return false
 }
