@@ -526,7 +526,9 @@ func clFIsParent(c *slvcss, i int) bool {
 			return false
 		}
 	}
-	return !f.is(f.nextEffective(i+1, len(f.toks)), "(")
+	// the name of a typed constant, `const string PARENT = ...`
+	next := f.nextEffective(i+1, len(f.toks))
+	return !f.is(next, "(") && !f.is(next, "=")
 }
 
 // clFCheckLinesBefore is AbstractControlStructureSpacing::checkLinesBefore
