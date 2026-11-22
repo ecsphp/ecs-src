@@ -44,3 +44,18 @@ Runs every rule blink can report but not fix (`go run ./cmd/list-reporters`) in
 check mode, with `--blink` and with the PHP engine, and fails when the reported
 errors (file, line, checker, message) or the exit codes differ. CI runs it on
 rector-src in `.github/workflows/blink_parity.yaml`.
+
+## Slevomat sniffs
+
+```bash
+blink/parity/slevomat.sh blink/parity/corpora/rector-src.json '\\Classes\\'
+```
+
+Runs each fixable slevomat sniff (`blink/slevomat-fixable-sniffs.txt`, optionally
+filtered by a regex) alone over the corpus, with `--blink` and with the PHP
+engine, and fails when any file differs. slevomat is no ECS dependency, so the
+script fetches the pinned `SLEVOMAT_REF` checkout and autoloads it. A file that
+differs is rechecked with a fresh single-file ECS run, as PHP_CodeSniffer keeps
+fixer state between files; a recheck that ECS turns into invalid PHP is skipped,
+since blink's lint guard keeps the original. CI runs it per sniff category in
+`.github/workflows/blink_parity.yaml`.

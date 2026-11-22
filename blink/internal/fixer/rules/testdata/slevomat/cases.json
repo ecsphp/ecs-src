@@ -659,6 +659,7 @@
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Classes\\EnumCaseSpacingSniff", "file": "Classes/enumCaseSpacingErrors.php", "config": {"minLinesCountBeforeWithComment": 2, "maxLinesCountBeforeWithComment": 2, "maxLinesCountBeforeWithoutComment": 2}, "variant": "c2"},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Classes\\ParentCallSpacingSniff", "file": "Classes/parentCallSpacingNoErrors.php"},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Classes\\ParentCallSpacingSniff", "file": "Classes/parentCallSpacingErrors.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Classes\\ParentCallSpacingSniff", "file": "Classes/parentCallSpacingTypedConstant.php"},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Classes\\BackedEnumTypeSpacingSniff", "file": "Classes/backedEnumTypeSpacingNoErrors.php"},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Classes\\BackedEnumTypeSpacingSniff", "file": "Classes/backedEnumTypeSpacingErrors.php"},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\Classes\\BackedEnumTypeSpacingSniff", "file": "Classes/backedEnumTypeSpacingModifiedSettingsNoErrors.php", "config": {"spacesCountBeforeColon": 2, "spacesCountBeforeType": 0}},
