@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"strings"
+
 	"github.com/ecsphp/ecs-src/blink/internal/fixer"
 	"github.com/ecsphp/ecs-src/blink/internal/token"
 	"github.com/ecsphp/ecs-src/blink/internal/tokens"
@@ -303,9 +305,23 @@ func (f *slvFile) isCallOpen(i int) bool {
 // arrow function).
 func (f *slvFile) isFunctionToken(i int) bool {
 	if f.isKeyword(i, "function") {
-		return true
+		return !f.isUseImportKeyword(i)
 	}
 	return f.isKeyword(i, "fn") && f.functionParenOpen(i) >= 0
+}
+
+// isUseImportKeyword tells the "function" of "use function" or of a use group,
+// which PHPCS tokenizes as T_STRING.
+func (f *slvFile) isUseImportKeyword(i int) bool {
+	if f.isKeyword(f.prevEffective(i-1), "use") {
+		return true
+	}
+	open := f.enclosing(i)
+	if !f.is(open, "{") {
+		return false
+	}
+	p := f.prevEffective(open - 1)
+	return p >= 0 && strings.HasSuffix(f.toks[p].orig, "\\")
 }
 
 func (f *slvFile) isClosureToken(i int) bool {
