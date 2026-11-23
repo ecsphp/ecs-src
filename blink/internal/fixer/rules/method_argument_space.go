@@ -117,8 +117,7 @@ func (f MethodArgumentSpace) Fix(s *tokens.Stream) bool {
 		}
 		switch t.Value {
 		case "(":
-			// only a function/method call or declaration paren has its commas spaced;
-			// "array(...)" and grouping parens are left alone (marked "a")
+			// "array(...)", "if (...)" and the like are left alone (marked "a")
 			if isCommaSpacedParen(s, i) {
 				stack = append(stack, "(")
 			} else {
@@ -825,15 +824,24 @@ func isCallOrDeclParen(s *tokens.Stream, open int) bool {
 }
 
 // isCommaSpacedParen reports whether the "(" at open has its commas spaced on a
-// single line. This is every call/declaration paren plus list() destructuring;
-// list() gets comma spacing but is not reflown to fully multiline (php-cs-fixer
-// leaves a partially multiline list() alone).
+// single line. Like php-cs-fixer, that is every "(" but one after a keyword
+// other than list, function, fn, class and use, so grouping parentheses too.
 func isCommaSpacedParen(s *tokens.Stream, open int) bool {
-	if isCallOrDeclParen(s, open) {
-		return true
-	}
 	p := sigPrev(s, open)
-	return p >= 0 && s.At(p).Kind == token.Keyword && strings.ToLower(s.At(p).Value) == "list"
+	if p < 0 {
+		return false
+	}
+	switch t := s.At(p); t.Kind {
+	case token.Keyword:
+		switch strings.ToLower(t.Value) {
+		case "list", "function", "fn", "class", "use":
+			return true
+		}
+		return false
+	case token.Ident:
+		return !isLanguageConstructBareword(s, p)
+	}
+	return true
 }
 
 // lineIndentBefore returns the indentation of the line containing token idx.
