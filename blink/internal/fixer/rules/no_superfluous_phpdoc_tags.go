@@ -44,6 +44,10 @@ var (
 
 	nspSelfTypeRe   = regexp.MustCompile(`(?i)^\$(?:this|self|static)$`)
 	nspInheritDocRe = regexp.MustCompile(`(?i)^\{?@inheritdocs?\}?$`)
+
+	// PHP-CS-Fixer's Line::containsATag() and the first half of containsUsefulContent()
+	nspTagLineRe  = regexp.MustCompile(`\*\s*@`)
+	nspTextLineRe = regexp.MustCompile(`\*\s*\S`)
 )
 
 func (f NoSuperfluousPhpdocTags) WithConfig(config map[string]any) fixer.Fixer {
@@ -74,6 +78,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 	for i := 0; i < s.Len(); i++ {
 		if i == symbolEnd {
 			ctx.currentSymbol = ""
+			ctx.inTrait = false
 			symbolEnd = -1
 		}
 		t := s.At(i)
@@ -90,6 +95,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 			case "class", "interface", "trait", "enum":
 				if name, end := scanClassSymbol(s, i); name != "" {
 					ctx.currentSymbol = name
+					ctx.inTrait = strings.EqualFold(t.Value, "trait")
 					symbolEnd = end
 				}
 				continue
@@ -131,6 +137,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 type typeContext struct {
 	namespace     string
 	currentSymbol string
+	inTrait       bool // PHP-CS-Fixer's SYMBOL_KINDS leave traits out: "self" stays "self" in one
 	imports       map[string]string
 }
 
@@ -546,7 +553,7 @@ func (f NoSuperfluousPhpdocTags) filterSuperfluous(d *docblock, sig funcSig, ctx
 	for idx := 0; idx < len(d.inner); idx++ {
 		l := d.inner[idx]
 		content := strings.TrimLeft(l.content, " ")
-		if drop, ok := f.superfluousTag(content, sig, ctx); ok && drop && !hasContinuation(d.inner, idx) {
+		if drop, ok := f.superfluousTag(content, sig, ctx); ok && drop && !hasContinuation(d, idx) {
 			removed = true
 			continue
 		}
@@ -558,15 +565,29 @@ func (f NoSuperfluousPhpdocTags) filterSuperfluous(d *docblock, sig funcSig, ctx
 	return removed
 }
 
-// hasContinuation reports whether the tag line at idx is followed by a wrapped
-// description line (a non-blank, non-tag inner line), which means it carries a
-// description and must be kept.
-func hasContinuation(inner []docLine, idx int) bool {
-	if idx+1 >= len(inner) {
-		return false
+// hasContinuation reports whether the tag line at idx is followed by a
+// description, which keeps it: a non-tag text line, also after one blank line
+// or on the closing line, as in DocBlock::findAnnotationLength().
+func hasContinuation(d *docblock, idx int) bool {
+	line := func(i int) (string, bool) {
+		if i < len(d.inner) {
+			return d.inner[i].prefix + d.inner[i].content, true
+		}
+		return d.close, i == len(d.inner) && !d.single
 	}
-	next := strings.TrimSpace(inner[idx+1].content)
-	return next != "" && !strings.HasPrefix(next, "@")
+	next, ok := line(idx + 1)
+	if ok && !nspTagLineRe.MatchString(next) && !nspHasText(next) {
+		next, ok = line(idx + 2)
+	}
+	return ok && !nspTagLineRe.MatchString(next) && nspHasText(next)
+}
+
+// nspHasText mirrors PHP-CS-Fixer's Line::containsUsefulContent(): the line holds
+// more than "*", "/" and whitespace.
+func nspHasText(line string) bool {
+	return nspTextLineRe.MatchString(line) && strings.ContainsFunc(line, func(r rune) bool {
+		return !strings.ContainsRune("*/ \t\n\r\x00\x0b", r)
+	})
 }
 
 // superfluousTag reports whether a @param/@return line is redundant given sig.
@@ -635,7 +656,7 @@ func (f NoSuperfluousPhpdocTags) typeIsSuperfluous(phpType, native string, ctx t
 	if phpType == "" {
 		return true
 	}
-	if strings.ContainsAny(phpType, "<{(") {
+	if strings.ContainsAny(phpType, "<{(") || nspHasEmptyMember(phpType) {
 		return false
 	}
 	if native == "" {
@@ -643,6 +664,17 @@ func (f NoSuperfluousPhpdocTags) typeIsSuperfluous(phpType, native string, ctx t
 	}
 	want := ctx.normalize(native)
 	return ctx.normalize(phpType) == want || ctx.normalize(phpType+"|null") == want
+}
+
+// nspHasEmptyMember reports whether a union or intersection lacks a member, as
+// "string|" or "?" do: PHP-CS-Fixer reads no type there, only a description.
+func nspHasEmptyMember(t string) bool {
+	for m := range strings.SplitSeq(strings.ReplaceAll(strings.TrimPrefix(t, "?"), "&", "|"), "|") {
+		if m == "" {
+			return true
+		}
+	}
+	return false
 }
 
 // normalize canonicalizes a type for comparison: "?T" is expanded to "T|null",
@@ -676,11 +708,13 @@ func (ctx typeContext) normalize(t string) string {
 // class name is prefixed with the current namespace. Reserved/scalar types are
 // only lowercased, so they stay comparable as before.
 func (ctx typeContext) resolve(member string) string {
-	name := strings.ToLower(strings.TrimSpace(member))
+	member = strings.TrimSpace(member)
+	name := strings.ToLower(member)
 	if name == "" {
 		return ""
 	}
-	if name == "self" && ctx.currentSymbol != "" {
+	// PHP-CS-Fixer maps "self" to the class before lowercasing, so not "SELF"
+	if member == "self" && ctx.currentSymbol != "" && !ctx.inTrait {
 		name = ctx.currentSymbol
 	}
 	if fqcn, ok := ctx.imports[name]; ok {

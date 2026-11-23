@@ -204,3 +204,117 @@ func TestNoSuperfluousPhpdocTagsNullableType(t *testing.T) {
 			"    /**\n     * @param string $a\n     * @param null $b\n     * @param int|null $c\n     * @param string|null $d\n     */\n    public function f(string|null $a = null, string $b = null, &$c = null, string $d = \\null) {}\n"},
 	})
 }
+
+// A description goes on after one blank line and onto the closing line, as
+// DocBlock::findAnnotationLength() reads it; a second blank line or a tag ends it.
+func TestNoSuperfluousPhpdocTagsDescriptionBelowTag(t *testing.T) {
+	t.Parallel()
+	afterBlank := "    /**\n     * @return string\n     *\n     * the name\n     */\n    public function a(): ?string {}\n\n    /**\n     * @return string\n     *\n     * the name\n     */\n    public function b(): string {}\n\n    /**\n     * @return\n     *\n     * the name\n     */\n    public function c(): string {}\n\n    /**\n     * @param $x\n     *\n     * the value\n     * @param int $y\n     *\n     * the other\n     */\n    public function d(int $x, int $y) {}\n\n    /**\n     * @var int\n     *\n     * the id\n     */\n    private ?int $e = null;\n\n    /**\n     * @var int\n     *\n     * the id\n     */\n    private int $f = 0;\n"
+	onClosingLine := "    /**\n     * @return string\n     * the name */\n    public function a(): ?string {}\n\n    /**\n     * @return string\n     *\n     * the name */\n    public function b(): string {}\n"
+	assertNspCases(t, []nspCase{
+		{"description after a blank line", afterBlank, afterBlank},
+		{"description on the closing line", onClosingLine, onClosingLine},
+		{"no description below",
+			"    /**\n     * @return string\n     *\n     * @see other\n     */\n    public function a(): ?string {}\n\n    /**\n     * @return string\n     *\n     *\n     * the name\n     */\n    public function b(): string {}\n\n    /**\n     * @return string\n     *\n     */\n    public function c(): ?string {}\n\n    /**\n     * @return string\n     * ***\n     * the name\n     */\n    public function d(): string {}\n\n    /**\n     * @return string\n     * see *@other\n     */\n    public function e(): string {}\n",
+			"    /**\n     *\n     * @see other\n     */\n    public function a(): ?string {}\n\n    /**\n     *\n     *\n     * the name\n     */\n    public function b(): string {}\n\n    /**\n     *\n     */\n    public function c(): ?string {}\n\n    /**\n     * @return string\n     * ***\n     * the name\n     */\n    public function d(): string {}\n\n    /**\n     * see *@other\n     */\n    public function e(): string {}\n"},
+	})
+}
+
+// PHP-CS-Fixer reads a type with an empty member ("string|") as a description,
+// and maps only a lowercase "self" to the class.
+func TestNoSuperfluousPhpdocTagsEmptyMemberAndSelfCase(t *testing.T) {
+	t.Parallel()
+	emptyMember := "    /**\n     * @return string|\n     */\n    public function a(): ?string {}\n\n    /**\n     * @return string|\n     */\n    public function b(): string {}\n\n    /**\n     * @return |string\n     */\n    public function c(): string {}\n\n    /**\n     * @return string||int\n     */\n    public function d(): int|string {}\n\n    /**\n     * @param int& $x\n     */\n    public function e(int &$x) {}\n\n    /**\n     * @var int|\n     */\n    private ?int $f = null;\n\n    /**\n     * @var int|\n     */\n    private int $g = 0;\n\n    /**\n     * @return ?\n     */\n    public function h(): null {}\n\n    /**\n     * @return &int\n     */\n    public function i(): int {}\n"
+	assertNspCases(t, []nspCase{
+		{"type with an empty member", emptyMember, emptyMember},
+		{"self in another case",
+			"    /**\n     * @return SELF\n     */\n    public function a(): ?self {}\n\n    /**\n     * @return SELF\n     */\n    public function b(): self {}\n\n    /**\n     * @return self\n     */\n    public function c(): ?SELF {}\n\n    /**\n     * @return Foo\n     */\n    public function d(): SELF {}\n\n    /**\n     * @return Self\n     */\n    public function e(): Self {}\n\n    /**\n     * @return self\n     */\n    public function f(): ?self {}\n",
+			"    /**\n     * @return SELF\n     */\n    public function a(): ?self {}\n\n    /**\n     * @return SELF\n     */\n    public function b(): self {}\n\n    /**\n     * @return self\n     */\n    public function c(): ?SELF {}\n\n    /**\n     * @return Foo\n     */\n    public function d(): SELF {}\n\n    /**\n     */\n    public function e(): Self {}\n\n    /**\n     */\n    public function f(): ?self {}\n"},
+	})
+}
+
+// PHP-CS-Fixer tracks classes, interfaces and enums, not traits: in a trait
+// "self" stays "self" and the trait's name is a different type.
+func TestNoSuperfluousPhpdocTagsSelfInTrait(t *testing.T) {
+	t.Parallel()
+	assertFix(t, nspAsECS(t), `<?php
+
+namespace App;
+
+trait Greets
+{
+    use Other;
+
+    /**
+     * @return Greets
+     */
+    public function a(): ?self {}
+
+    /**
+     * @return Greets
+     */
+    public function b(): self {}
+
+    /**
+     * @return self
+     */
+    public function c(): Greets {}
+
+    /**
+     * @return self
+     */
+    public function d(): ?self {}
+
+    /**
+     * @return Other
+     */
+    public function e(): ?Other {}
+}
+
+final class Host
+{
+    /**
+     * @return Host
+     */
+    public function f(): ?self {}
+}
+`, `<?php
+
+namespace App;
+
+trait Greets
+{
+    use Other;
+
+    /**
+     * @return Greets
+     */
+    public function a(): ?self {}
+
+    /**
+     * @return Greets
+     */
+    public function b(): self {}
+
+    /**
+     * @return self
+     */
+    public function c(): Greets {}
+
+    /**
+     */
+    public function d(): ?self {}
+
+    /**
+     */
+    public function e(): ?Other {}
+}
+
+final class Host
+{
+    /**
+     */
+    public function f(): ?self {}
+}
+`, true)
+}
