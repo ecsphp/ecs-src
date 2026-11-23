@@ -36,12 +36,13 @@ func TestNoUnneededControlParentheses(t *testing.T) {
 	}
 	// echo, print, yield, break, continue, clone, case
 	cases := map[string]string{
-		"<?php echo ($y);":       "<?php echo $y;",
-		"<?php print ($y);":      "<?php print $y;",
-		"<?php yield ($y);":      "<?php yield $y;",
-		"<?php break (2);":       "<?php break 2;",
-		"<?php continue (1);":    "<?php continue 1;",
-		"<?php $b = clone ($o);": "<?php $b = clone $o;",
+		"<?php echo ($y);":        "<?php echo $y;",
+		"<?php print ($y);":       "<?php print $y;",
+		"<?php yield ($y);":       "<?php yield $y;",
+		"<?php break (2);":        "<?php break 2;",
+		"<?php continue (1);":     "<?php continue 1;",
+		"<?php $b = clone ($o);":  "<?php $b = clone $o;",
+		"<?php return ($a) + $b;": "<?php return $a + $b;",
 	}
 	for src, want := range cases {
 		if got, changed := apply(t, NoUnneededControlParentheses{}, src); !changed || got != want {
@@ -62,9 +63,8 @@ func TestNoUnneededControlParentheses(t *testing.T) {
 	if want := "<?php return $x;"; !changed || got != want {
 		t.Fatalf("no-space: changed=%v got=%q want=%q", changed, got, want)
 	}
-	// left alone: partial sub-expression, multiple args, member call, already clean
+	// left alone: multiple args, member call, already clean
 	for _, src := range []string{
-		"<?php return ($a) + $b;",
 		"<?php echo ($a), ($b);",
 		"<?php return $x;",
 		"<?php $r = Foo::case($x);",
