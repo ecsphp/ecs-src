@@ -36,11 +36,18 @@ func (NoSuperfluousPhpdocTags) SourceURL() string {
 }
 
 var (
-	nspParamRe  = regexp.MustCompile(`(?i)^@param\s+(\S+)\s+(&?\.{0,3}\$[A-Za-z_][A-Za-z0-9_]*)\s*(.*)$`)
-	nspReturnRe = regexp.MustCompile(`(?i)^@return\s+(\S+)\s*(.*)$`)
-	nspVarRe    = regexp.MustCompile(`(?i)^@var\s+(\S+)(?:\s+\$[A-Za-z_][A-Za-z0-9_]*)?\s*(.*)$`)
+	nspParamRe        = regexp.MustCompile(`(?i)^@param\s+(\S+)\s+(&?\.{0,3}\$[A-Za-z_][A-Za-z0-9_]*)\s*(.*)$`)
+	nspUntypedParamRe = regexp.MustCompile(`(?i)^@param(?:\s+(&?\.{0,3}\$[A-Za-z_][A-Za-z0-9_]*)(?:\s+(.*))?)?\s*$`)
+	nspReturnRe       = regexp.MustCompile(`(?i)^@return(?:\s+(\S+)\s*(.*))?\s*$`)
+	// a type never starts with "$", except the self references $this, $self and $static
+	nspVarRe = regexp.MustCompile(`(?i)^@var(?:\s+([^\s$]\S*|\$(?:this|self|static)\b\S*))?(?:\s+\$[A-Za-z_][A-Za-z0-9_]*)?(?:\s+(.*))?\s*$`)
 
+	nspSelfTypeRe   = regexp.MustCompile(`(?i)^\$(?:this|self|static)$`)
 	nspInheritDocRe = regexp.MustCompile(`(?i)^\{?@inheritdocs?\}?$`)
+
+	// PHP-CS-Fixer's Line::containsATag() and the first half of containsUsefulContent()
+	nspTagLineRe  = regexp.MustCompile(`\*\s*@`)
+	nspTextLineRe = regexp.MustCompile(`\*\s*\S`)
 )
 
 func (f NoSuperfluousPhpdocTags) WithConfig(config map[string]any) fixer.Fixer {
@@ -71,6 +78,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 	for i := 0; i < s.Len(); i++ {
 		if i == symbolEnd {
 			ctx.currentSymbol = ""
+			ctx.inTrait = false
 			symbolEnd = -1
 		}
 		t := s.At(i)
@@ -87,6 +95,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 			case "class", "interface", "trait", "enum":
 				if name, end := scanClassSymbol(s, i); name != "" {
 					ctx.currentSymbol = name
+					ctx.inTrait = strings.EqualFold(t.Value, "trait")
 					symbolEnd = end
 				}
 				continue
@@ -128,6 +137,7 @@ func (f NoSuperfluousPhpdocTags) Fix(s *tokens.Stream) bool {
 type typeContext struct {
 	namespace     string
 	currentSymbol string
+	inTrait       bool // PHP-CS-Fixer's SYMBOL_KINDS leave traits out: "self" stays "self" in one
 	imports       map[string]string
 }
 
@@ -364,7 +374,14 @@ func parseProperty(s *tokens.Stream, start int) (funcSig, bool) {
 			continue
 		case token.Variable:
 			return funcSig{hasVar: true, varType: strings.Join(typeToks, "")}, true
-		case token.Ident, token.Keyword:
+		case token.Ident:
+			typeToks = append(typeToks, t.Value)
+		case token.Keyword:
+			// PHP-CS-Fixer reads no other reserved word as a type, so the docblock
+			// before "return $x;" or a callable parameter documents nothing
+			if !strings.EqualFold(t.Value, "array") {
+				return funcSig{}, false
+			}
 			typeToks = append(typeToks, t.Value)
 		case token.Punct:
 			if t.Value == "?" || t.Value == "|" || t.Value == "&" || t.Value == `\` {
@@ -446,13 +463,21 @@ func parseParams(s *tokens.Stream, open, close int, sig *funcSig) {
 	var varName string
 	depth := 0
 	inDefault := false
+	nullDefault := false
 	flush := func() {
 		if varName != "" {
-			sig.params[varName] = strings.Join(typeToks, "")
+			native := strings.Join(typeToks, "")
+			// PHP-CS-Fixer reads a typed parameter defaulting to null as nullable,
+			// even when its type already holds null; a by-reference "&" is no type
+			if nullDefault && !strings.HasPrefix(native, "?") && strings.Trim(native, "&") != "" {
+				native += "|null"
+			}
+			sig.params[varName] = native
 		}
 		typeToks = nil
 		varName = ""
 		inDefault = false
+		nullDefault = false
 	}
 	for k := open + 1; k < close; k++ {
 		t := s.At(k)
@@ -484,6 +509,8 @@ func parseParams(s *tokens.Stream, open, close int, sig *funcSig) {
 			case "=":
 				if depth == 0 {
 					inDefault = true
+					d := nextMeaningfulIndex(s, k)
+					nullDefault = d >= 0 && s.At(d).Kind == token.Ident && strings.EqualFold(s.At(d).Value, "null")
 					continue
 				}
 			}
@@ -526,7 +553,7 @@ func (f NoSuperfluousPhpdocTags) filterSuperfluous(d *docblock, sig funcSig, ctx
 	for idx := 0; idx < len(d.inner); idx++ {
 		l := d.inner[idx]
 		content := strings.TrimLeft(l.content, " ")
-		if drop, ok := f.superfluousTag(content, sig, ctx); ok && drop && !hasContinuation(d.inner, idx) {
+		if drop, ok := f.superfluousTag(content, sig, ctx); ok && drop && !hasContinuation(d, idx) {
 			removed = true
 			continue
 		}
@@ -538,15 +565,29 @@ func (f NoSuperfluousPhpdocTags) filterSuperfluous(d *docblock, sig funcSig, ctx
 	return removed
 }
 
-// hasContinuation reports whether the tag line at idx is followed by a wrapped
-// description line (a non-blank, non-tag inner line), which means it carries a
-// description and must be kept.
-func hasContinuation(inner []docLine, idx int) bool {
-	if idx+1 >= len(inner) {
-		return false
+// hasContinuation reports whether the tag line at idx is followed by a
+// description, which keeps it: a non-tag text line, also after one blank line
+// or on the closing line, as in DocBlock::findAnnotationLength().
+func hasContinuation(d *docblock, idx int) bool {
+	line := func(i int) (string, bool) {
+		if i < len(d.inner) {
+			return d.inner[i].prefix + d.inner[i].content, true
+		}
+		return d.close, i == len(d.inner) && !d.single
 	}
-	next := strings.TrimSpace(inner[idx+1].content)
-	return next != "" && !strings.HasPrefix(next, "@")
+	next, ok := line(idx + 1)
+	if ok && !nspTagLineRe.MatchString(next) && !nspHasText(next) {
+		next, ok = line(idx + 2)
+	}
+	return ok && !nspTagLineRe.MatchString(next) && nspHasText(next)
+}
+
+// nspHasText mirrors PHP-CS-Fixer's Line::containsUsefulContent(): the line holds
+// more than "*", "/" and whitespace.
+func nspHasText(line string) bool {
+	return nspTextLineRe.MatchString(line) && strings.ContainsFunc(line, func(r rune) bool {
+		return !strings.ContainsRune("*/ \t\n\r\x00\x0b", r)
+	})
 }
 
 // superfluousTag reports whether a @param/@return line is redundant given sig.
@@ -563,10 +604,23 @@ func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig, ctx
 		}
 		return false, false
 	}
-	if m := nspParamRe.FindStringSubmatch(content); m != nil {
+	m := nspParamRe.FindStringSubmatch(content)
+	if m == nil {
+		if u := nspUntypedParamRe.FindStringSubmatch(content); u != nil {
+			m = []string{u[0], "", u[1], u[2]}
+			// PHP-CS-Fixer reads a lone "@param $self" as the type $self of $self
+			if nspSelfTypeRe.MatchString(u[1]) {
+				m[1] = u[1]
+			}
+		}
+	}
+	if m != nil {
 		phpType, name, desc := m[1], m[2], strings.TrimSpace(m[3])
 		if desc != "" {
 			return false, true
+		}
+		if name == "" {
+			return true, true // a bare @param, which documents nothing
 		}
 		varName := name[strings.IndexByte(name, '$')+1:]
 		native, ok := sig.params[varName]
@@ -593,22 +647,40 @@ func (f NoSuperfluousPhpdocTags) superfluousTag(content string, sig funcSig, ctx
 }
 
 // typeIsSuperfluous reports whether a phpdoc type adds nothing over the native
-// type: it normalizes to exactly the native type and is not more specific (no
-// generics/shapes/callable signatures). On an untyped element only a "mixed" tag
-// can be superfluous, and only when allow_mixed is off (mixedIsSuperfluous).
+// type: there is none, or it normalizes to the native type, also once null is
+// added to it (phpstan reads the null from the native type), and is not more
+// specific (no generics/shapes/callable signatures). On an untyped element only
+// a "mixed" tag can be superfluous, and only when allow_mixed is off
+// (mixedIsSuperfluous).
 func (f NoSuperfluousPhpdocTags) typeIsSuperfluous(phpType, native string, ctx typeContext) bool {
-	if strings.ContainsAny(phpType, "<{(") {
+	if phpType == "" {
+		return true
+	}
+	if strings.ContainsAny(phpType, "<{(") || nspHasEmptyMember(phpType) {
 		return false
 	}
 	if native == "" {
 		return f.mixedIsSuperfluous && ctx.normalize(phpType) == "mixed"
 	}
-	return ctx.normalize(phpType) == ctx.normalize(native)
+	want := ctx.normalize(native)
+	return ctx.normalize(phpType) == want || ctx.normalize(phpType+"|null") == want
 }
 
-// normalize canonicalizes a type for comparison: "?T" is expanded to the "null|T"
-// set, union/intersection members are each resolved to a comparable name
-// (namespace-aware for class types), then sorted and de-duplicated.
+// nspHasEmptyMember reports whether a union or intersection lacks a member, as
+// "string|" or "?" do: PHP-CS-Fixer reads no type there, only a description.
+func nspHasEmptyMember(t string) bool {
+	for m := range strings.SplitSeq(strings.ReplaceAll(strings.TrimPrefix(t, "?"), "&", "|"), "|") {
+		if m == "" {
+			return true
+		}
+	}
+	return false
+}
+
+// normalize canonicalizes a type for comparison: "?T" is expanded to "T|null",
+// union/intersection members are each resolved to a comparable name
+// (namespace-aware for class types), then sorted. Duplicates stay, as in
+// PHP-CS-Fixer, so "string|string" is not "string".
 func (ctx typeContext) normalize(t string) string {
 	t = strings.TrimSpace(t)
 	if t == "" {
@@ -617,19 +689,14 @@ func (ctx typeContext) normalize(t string) string {
 	nullable := strings.HasPrefix(t, "?")
 	t = strings.TrimPrefix(t, "?")
 	seps := func(r rune) bool { return r == '|' || r == '&' }
-	members := strings.FieldsFunc(t, seps)
-	set := map[string]struct{}{}
-	for _, m := range members {
+	var out []string
+	for _, m := range strings.FieldsFunc(t, seps) {
 		if r := ctx.resolve(m); r != "" {
-			set[r] = struct{}{}
+			out = append(out, r)
 		}
 	}
 	if nullable {
-		set["null"] = struct{}{}
-	}
-	out := make([]string, 0, len(set))
-	for m := range set {
-		out = append(out, m)
+		out = append(out, "null")
 	}
 	sort.Strings(out)
 	return strings.Join(out, "|")
@@ -641,11 +708,13 @@ func (ctx typeContext) normalize(t string) string {
 // class name is prefixed with the current namespace. Reserved/scalar types are
 // only lowercased, so they stay comparable as before.
 func (ctx typeContext) resolve(member string) string {
-	name := strings.ToLower(strings.TrimSpace(member))
+	member = strings.TrimSpace(member)
+	name := strings.ToLower(member)
 	if name == "" {
 		return ""
 	}
-	if name == "self" && ctx.currentSymbol != "" {
+	// PHP-CS-Fixer maps "self" to the class before lowercasing, so not "SELF"
+	if member == "self" && ctx.currentSymbol != "" && !ctx.inTrait {
 		name = ctx.currentSymbol
 	}
 	if fqcn, ok := ctx.imports[name]; ok {

@@ -1,6 +1,12 @@
 package rules
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ecsphp/ecs-src/blink/internal/fixer"
+	"github.com/ecsphp/ecs-src/blink/internal/lexer"
+	"github.com/ecsphp/ecs-src/blink/internal/tokens"
+)
 
 func TestPhpdocToComment(t *testing.T) {
 	t.Parallel()
@@ -58,4 +64,31 @@ func TestPhpdocToCommentKeepsDocblockBeforeAttributes(t *testing.T) {
 		}
 	}
 
+}
+
+// PhpdocToComment runs at PHP-CS-Fixer's priority 25, before the other docblock
+// fixers: a parameter's docblock turns into a comment before
+// NoSuperfluousPhpdocTags can empty it and NoEmptyPhpdoc remove it.
+func TestPhpdocToCommentRunsBeforeDocblockFixers(t *testing.T) {
+	t.Parallel()
+	var fixers []fixer.Fixer
+	for _, name := range []string{
+		`PhpCsFixer\Fixer\Phpdoc\NoEmptyPhpdocFixer`,
+		`PhpCsFixer\Fixer\Phpdoc\NoSuperfluousPhpdocTagsFixer`,
+		`PhpCsFixer\Fixer\Phpdoc\PhpdocToCommentFixer`,
+	} {
+		f, ok := ByName(name)
+		if !ok {
+			t.Fatalf("%s is not registered", name)
+		}
+		fixers = append(fixers, f)
+	}
+	CanonicalOrder(fixers)
+	s := tokens.New(lexer.Lex("<?php\n\nfunction f(\n    /** @var int */\n    int $a,\n    /** @var array */\n    ?array $b,\n) {}\n"))
+	for _, f := range fixers {
+		f.Fix(s)
+	}
+	if got, want := s.Render(), "<?php\n\nfunction f(\n    /* @var int */\n    int $a,\n    /* @var array */\n    ?array $b,\n) {}\n"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
 }
