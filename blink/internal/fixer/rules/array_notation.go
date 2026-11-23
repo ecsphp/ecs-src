@@ -517,13 +517,41 @@ func (f NoWhitespaceBeforeCommaInArray) WithConfig(config map[string]any) fixer.
 
 func (f NoWhitespaceBeforeCommaInArray) Fix(s *tokens.Stream) bool {
 	changed := false
+	// PHP-CS-Fixer fixes the commas its scan of an array reaches: it walks through
+	// a destructuring or index "[", a "(" right after the array's "[" and a "->{"
+	// or "${", and skips any other "(...)" or "{...}". "a(" marks an array(...),
+	// whose own commas blink does not fix yet.
+	kinds := bosSquareKinds(s)
 	var stack []string
+	inArray := func() bool {
+		return len(stack) > 0 && (stack[len(stack)-1] == "[" || stack[len(stack)-1] == "a(")
+	}
 	for i := 0; i < s.Len(); i++ {
 		t := s.At(i)
 		if t.Kind == token.Punct {
 			switch t.Value {
-			case "(", "[", "{":
-				stack = append(stack, t.Value)
+			case "[":
+				if kinds[i] == bosSquareArray || inArray() {
+					stack = append(stack, "[")
+				} else {
+					stack = append(stack, "d[")
+				}
+			case "(":
+				p := sigPrev(s, i)
+				switch {
+				case p >= 0 && kwIs(s.At(p), "array"):
+					stack = append(stack, "a(")
+				case isPunctVal(s, p, "[") && kinds[p] == bosSquareArray:
+					stack = append(stack, "[")
+				default:
+					stack = append(stack, "(")
+				}
+			case "{":
+				if inArray() && bosIsDynamicBraceOpen(s, i) {
+					stack = append(stack, "[")
+				} else {
+					stack = append(stack, "{")
+				}
 			case ")", "]", "}":
 				if len(stack) > 0 {
 					stack = stack[:len(stack)-1]
@@ -534,17 +562,15 @@ func (f NoWhitespaceBeforeCommaInArray) Fix(s *tokens.Stream) bool {
 					if f.SkipAfterHeredoc && i > 1 && arrayNotationIsHeredoc(s.At(i-2)) {
 						continue
 					}
-					// an empty element ("[, , $x]") keeps its space: the token before
-					// the whitespace is itself a comma, matching php-cs-fixer
-					if i > 1 && s.At(i-2).Kind == token.Punct && s.At(i-2).Value == "," {
-						continue
-					}
-					s.RemoveAt(i - 1)
-					i--
+					// cleared, not removed: kinds is indexed by position
+					clearTokenAt(s, i-1)
 					changed = true
 				}
 			}
 		}
+	}
+	if changed {
+		s.ClearEmptyTokens()
 	}
 	return changed
 }
