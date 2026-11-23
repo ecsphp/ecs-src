@@ -11,13 +11,11 @@ import (
 
 // PHP-CS-Fixer: https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/master/src/Fixer/ControlStructure/NoUnneededControlParenthesesFixer.php
 //
-// NoUnneededControlParentheses removes a redundant parenthesis pair wrapping the
-// whole operand of a control statement: "return ($x);" -> "return $x;". It fires
-// for return, echo, print, yield, break, continue and case, only when the "("
-// directly follows the keyword and its matching ")" sits right before the
-// statement terminator (";" or, for case, ":"). Nested pairs are peeled in one
-// pass. The conservative boundary check leaves anything else (multiple arguments,
-// a partial sub-expression) untouched. clone has its own rule, see unwrapClone.
+// NoUnneededControlParentheses removes redundant parentheses in one pass over
+// every "(", like PHP-CS-Fixer's applyFix, each kind only when its statement is
+// configured: "return ($x);", "foo(($x))", "($a) + 1", "(Foo::bar())->baz()".
+// Without configuration it uses PHP-CS-Fixer's default, without others,
+// negative_instanceof and yield_from.
 type NoUnneededControlParentheses struct {
 	// Statements limits the fixed statements; nil means the default set.
 	Statements []string
@@ -38,21 +36,13 @@ func (f NoUnneededControlParentheses) WithConfig(config map[string]any) fixer.Fi
 	return f
 }
 
+var nucpDefaultStatements = []string{"break", "clone", "continue", "echo_print", "return", "switch_case", "yield"}
+
 func (f NoUnneededControlParentheses) enabled(key string) bool {
 	if f.Statements == nil {
-		return true
+		return slices.Contains(nucpDefaultStatements, key)
 	}
 	return slices.Contains(f.Statements, key)
-}
-
-func nucpStatementKey(keyword string) string {
-	switch keyword {
-	case "echo", "print":
-		return "echo_print"
-	case "case":
-		return "switch_case"
-	}
-	return keyword
 }
 
 func (NoUnneededControlParentheses) Name() string {
@@ -65,117 +55,193 @@ func (NoUnneededControlParentheses) SourceURL() string {
 
 func (f NoUnneededControlParentheses) Fix(s *tokens.Stream) bool {
 	changed := false
-	for i := 0; i < s.Len(); i++ {
-		t := s.At(i)
-		if t.Kind != token.Keyword {
+	for open := 0; open < s.Len(); open++ {
+		if !csbIsPunct(s.At(open), "(") || nucpCastEnd(s, open) >= 0 {
 			continue
 		}
-		var term string
-		kw := strings.ToLower(t.Value)
-		switch kw {
-		case "clone":
-			if f.enabled("clone") && unwrapClone(s, i) {
-				changed = true
-			}
-			continue
-		case "return", "echo", "print", "yield", "break", "continue":
-			term = ";"
-		case "case":
-			term = ":"
-		default:
-			continue
-		}
-		if !f.enabled(nucpStatementKey(kw)) {
-			continue
-		}
-		// a keyword after "->"/"::" is a member name (Foo::case(...)), not a control
-		// statement
-		if memberPrev(s, i) {
-			continue
-		}
-		// peel redundant pairs: "return (($x));" -> "return $x;"
-		for {
-			j := nextSignificantIndex(s, i)
-			if j < 0 || s.At(j).Kind != token.Punct || s.At(j).Value != "(" {
-				break
-			}
-			k := s.MatchForward(j)
-			if k < 0 {
-				break
-			}
-			// the matching ")" must sit right before the terminator, and the pair
-			// must not be empty
-			nj := nextSignificantIndex(s, k)
-			if nj < 0 || s.At(nj).Kind != token.Punct || s.At(nj).Value != term {
-				break
-			}
-			if nextSignificantIndex(s, j) >= k {
-				break
-			}
-			s.RemoveAt(k)
-			if j == i+1 {
-				// "return($x)" -> keep a separator so the keyword stays a keyword
-				s.RemoveAt(j)
-				s.InsertAt(j, token.Token{Kind: token.Whitespace, Value: " "})
-			} else {
-				s.RemoveAt(j)
-			}
+		if f.fixPair(s, open) {
 			changed = true
+			// the "(" is gone or now a space: look at what took its place
+			open--
 		}
 	}
 	return changed
 }
 
-// unwrapClone removes the pairs wrapping the operand of the clone at index i, like
-// PHP-CS-Fixer's isWrappedCloneArgument: only where the clone stands alone in its
-// statement or sequence element, or around a plain variable after "?", and only around a
-// plain operand. The parentheses
-// around anything else are needed: "clone ($a ?: $b)" clones the result of the
-// ternary while "clone $a ?: $b" does not, and "clone ($a, [...])" and "clone(...)"
-// are a call.
-func unwrapClone(s *tokens.Stream, i int) bool {
-	changed := false
-	for {
-		open := nextMeaningfulIndex(s, i)
-		if open < 0 || !csbIsPunct(s.At(open), "(") {
-			return changed
-		}
-		closing := s.MatchForward(open)
-		if closing < 0 || nextMeaningfulIndex(s, open) == closing {
-			return changed
-		}
-		before := prevMeaningfulIndex(s, i)
-		after := nextMeaningfulIndex(s, closing)
-		if before < 0 || after < 0 || !cloneStandsAlone(s, open, closing, before, after) || cloneOperandHasOperation(s, open, closing) {
-			return changed
-		}
-		removeParenthesis(s, closing, needsSpaceAfterClone(s.At(after)))
-		removeParenthesis(s, open, true)
-		changed = true
+// fixPair applies applyFix's checks, in its order, to the pair opening at open.
+func (f NoUnneededControlParentheses) fixPair(s *tokens.Stream, open int) bool {
+	closing := s.MatchForward(open)
+	if closing < 0 {
+		return false
 	}
+	before, after := nucpPrev(s, open), nucpNext(s, closing)
+	if before < 0 || after < 0 {
+		return false
+	}
+	if nucpNext(s, open) == closing {
+		return nucpIsExit(s, before) && f.removePair(s, before, open, closing, after, "others")
+	}
+	if nucpKnownNegative(s, before) {
+		return false
+	}
+	if nucpUselessWrapped(s, before, after) {
+		return f.removePair(s, before, open, closing, after, nucpConfigType(s.At(before)))
+	}
+	if csbIsKeyword(s.At(before), "clone") {
+		return nucpWrappedCloneArgument(s, before, open, closing, after) && f.removePair(s, before, open, closing, after, "clone")
+	}
+	if instanceOf := nucpInstanceOfIndex(s, open, closing); instanceOf >= 0 {
+		if !nucpWrappedInstanceOf(s, instanceOf, before, open, closing, after) {
+			return false
+		}
+		key := "others"
+		if csbIsPunct(s.At(before), "!") {
+			key = "negative_instanceof"
+		}
+		return f.removePair(s, before, open, closing, after, key)
+	}
+	return nucpWrappedPartOfOperation(s, before, open, closing, after) && f.removePair(s, before, open, closing, after, nucpConfigType(s.At(before)))
 }
 
-func cloneStandsAlone(s *tokens.Stream, open, closing, before, after int) bool {
+// removePair is removeUselessParenthesisPair: a parenthesis becomes a space where
+// its removal would glue two tokens together.
+func (f NoUnneededControlParentheses) removePair(s *tokens.Stream, before, open, closing, after int, key string) bool {
+	if !f.enabled(key) {
+		return false
+	}
 	b, a := s.At(before), s.At(after)
-	switch {
-	case csbIsPunct(b, "?"):
+	spaceAfter := !nucpIsAccess(a) && !csbIsPunct(a, ",") && !endsStatement(a) && !nucpBlockEnd(s, after) &&
+		(!csbIsPunct(a, ":") || !csbIsKeyword(b, "case"))
+	spaceBefore := !nucpIsPreUnary(s, before) && !nucpIsPlainBraceClose(s, before) && !nucpIsExit(s, before) &&
+		(b.Kind != token.OpenTag || b.Value == "<?=") && !nucpBlockStart(s, before)
+	removeParenthesis(s, closing, spaceAfter)
+	removeParenthesis(s, open, spaceBefore)
+	return true
+}
+
+func nucpConfigType(t token.Token) string {
+	if t.Kind != token.Keyword {
+		return "others"
+	}
+	switch word := strings.ToLower(t.Value); word {
+	case "break", "continue", "return", "yield":
+		return word
+	case "case":
+		return "switch_case"
+	case "echo", "print":
+		return "echo_print"
+	default:
+		// yield from is one token that keeps its inner spacing and comments
+		if strings.HasPrefix(word, "yield") {
+			return "yield_from"
+		}
+	}
+	return "others"
+}
+
+// nucpPrev returns the index of the meaningful token before i, or -1. PHP lexes a
+// cast as one token, which its "(" stands for here.
+func nucpPrev(s *tokens.Stream, i int) int {
+	p := prevMeaningfulIndex(s, i)
+	if p >= 0 && csbIsPunct(s.At(p), ")") && isCastCloseParen(s, p) {
+		return s.MatchBackward(p)
+	}
+	return p
+}
+
+// nucpNext returns the index of the meaningful token after i, or -1, past the
+// whole cast when i is one.
+func nucpNext(s *tokens.Stream, i int) int {
+	if end := nucpCastEnd(s, i); end >= 0 {
+		i = end
+	}
+	return nextMeaningfulIndex(s, i)
+}
+
+// nucpCastEnd returns the ")" of the cast whose "(" is at open, or -1: what PHP's
+// scanner reads as one cast token, with only spaces or tabs inside.
+func nucpCastEnd(s *tokens.Stream, open int) int {
+	if !csbIsPunct(s.At(open), "(") {
+		return -1
+	}
+	j := open + 1
+	if j < s.Len() && isCastPadding(s.At(j)) {
+		j++
+	}
+	if j >= s.Len() || !isCastType(s.At(j)) {
+		return -1
+	}
+	j++
+	if j < s.Len() && isCastPadding(s.At(j)) {
+		j++
+	}
+	if j >= s.Len() || !csbIsPunct(s.At(j), ")") {
+		return -1
+	}
+	return j
+}
+
+// nucpKnownNegative mirrors KNOWN_NEGATIVE_PRE_TYPES: a "(" after these opens a
+// call, a declaration or a construct's own parentheses.
+func nucpKnownNegative(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	switch t.Kind {
+	case token.Ident:
+		// T_STRING, and T_EXIT, T_EVAL, T_HALT_COMPILER, CT::T_CLASS_CONSTANT
+		return true
+	case token.Variable:
+		return t.Value != "$"
+	case token.Keyword:
+		switch strings.ToLower(t.Value) {
+		case "array", "catch", "class", "declare", "elseif", "empty", "fn", "for", "foreach", "function", "if",
+			"include", "include_once", "isset", "list", "match", "require", "require_once", "static", "switch",
+			"unset", "use", "while":
+			return true
+		}
+	case token.Punct:
+		switch t.Value {
+		case "&":
+			// CT::T_RETURN_REF
+			p := prevMeaningfulIndex(s, i)
+			return p >= 0 && (csbIsKeyword(s.At(p), "function") || csbIsKeyword(s.At(p), "fn"))
+		case "}":
+			// CT::T_DYNAMIC_VAR_BRACE_CLOSE
+			open := s.MatchBackward(i)
+			return open >= 0 && nucpBraceKind(s, open) == nucpDynamicVarBrace
+		}
+	}
+	return false
+}
+
+func nucpUselessWrapped(s *tokens.Stream, before, after int) bool {
+	return nucpSingleStatement(s, before, after) || nucpWrappedFnBody(s, before, after) ||
+		nucpWrappedForElement(s, before, after) || nucpWrappedConstructArgument(s, before, after) ||
+		nucpWrappedSequenceElement(s, before, after)
+}
+
+func nucpWrappedCloneArgument(s *tokens.Stream, clone, open, closing, after int) bool {
+	before := nucpPrev(s, clone)
+	if before < 0 {
+		return false
+	}
+	if csbIsPunct(s.At(before), "?") {
 		// Only before ":" or around a plain variable. Anything else can then apply to
 		// another expression, where PHP-CS-Fixer unwraps anyway: "clone ($o->b)()" would
 		// call a method, and "clone (new Foo)->bar" and "clone (enum) and $b" become
 		// parse errors.
-		return csbIsPunct(a, ":") || cloneOperandIsVariable(s, open, closing)
-	case csbIsPunct(b, "=") && endsStatement(a):
-		return true
-	case isCloneStatementStart(s, before) && endsStatement(a):
-		return true
-	case csbIsKeyword(b, "case") && (csbIsPunct(a, ":") || csbIsPunct(a, ";")):
-		return true
-	case isFnBodyStart(s, before) && (endsStatement(a) || csbIsPunct(a, ",")):
-		return true
-	case isForElement(s, before, after):
-		return true
+		if !csbIsPunct(s.At(after), ":") && !cloneOperandIsVariable(s, open, closing) {
+			return false
+		}
+	} else if !nucpSimpleAssignment(s, before, after) && !nucpSingleStatement(s, before, after) &&
+		!nucpWrappedFnBody(s, before, after) && !nucpWrappedForElement(s, before, after) &&
+		!nucpWrappedSequenceElement(s, before, after) {
+		return false
 	}
-	return isSequenceElement(b, a)
+	// a leading new belongs to the operand
+	if first := nucpNext(s, open); first >= 0 && csbIsKeyword(s.At(first), "new") {
+		return !nucpContainsOperation(s, first, closing)
+	}
+	return !nucpContainsOperation(s, open, closing)
 }
 
 // cloneOperandIsVariable reports "($a)" or "(($a))" for the pair at open..closing.
@@ -195,37 +261,145 @@ func cloneOperandIsVariable(s *tokens.Stream, open, closing int) bool {
 	return true
 }
 
-func needsSpaceAfterClone(after token.Token) bool {
-	if endsStatement(after) {
+// nucpInstanceOfIndex returns the index of the only instanceof between open and
+// closing, nested ones included, or -1 when there are none or several.
+func nucpInstanceOfIndex(s *tokens.Stream, open, closing int) int {
+	found := -1
+	for j := open; j < closing; j++ {
+		if csbIsKeyword(s.At(j), "instanceof") {
+			if found >= 0 {
+				return -1
+			}
+			found = j
+		}
+	}
+	return found
+}
+
+func nucpWrappedInstanceOf(s *tokens.Stream, instanceOf, before, open, closing, after int) bool {
+	if nucpContainsOperation(s, open, instanceOf) || nucpContainsOperation(s, instanceOf, closing) {
 		return false
 	}
-	return after.Kind != token.Punct || !slices.Contains([]string{",", ")", "]", "}", "->", "?->", "["}, after.Value)
+	if csbIsPunct(s.At(before), "!") {
+		if before = nucpPrev(s, before); before < 0 {
+			return false
+		}
+	}
+	return nucpSimpleAssignment(s, before, after) || nucpSingleStatement(s, before, after) ||
+		nucpWrappedFnBody(s, before, after) || nucpWrappedForElement(s, before, after) ||
+		nucpWrappedSequenceElement(s, before, after)
+}
+
+// nucpWrappedPartOfOperation is isWrappedPartOfOperation: an operand without
+// operation, past its unary operators and access chain, between two operators
+// or an operator and a block, comma or statement edge.
+func nucpWrappedPartOfOperation(s *tokens.Stream, before, open, closing, after int) bool {
+	if nucpContainsOperation(s, open, closing) {
+		return false
+	}
+	moved := false
+	if nucpIsPreUnary(s, before) {
+		for {
+			if before = nucpPrev(s, before); before < 0 || !nucpIsPreUnary(s, before) {
+				break
+			}
+		}
+		moved = true
+	}
+	if nucpIsAccess(s.At(after)) {
+		after = nucpAfterAccess(s, after)
+		moved = true
+		if after >= 0 && unaryOperatorSpacesIsSuccessor(s, after) {
+			after = nucpNext(s, after)
+		}
+	}
+	if before < 0 || after < 0 {
+		return false
+	}
+	if moved {
+		if nucpKnownNegative(s, before) {
+			return false
+		}
+		if nucpUselessWrapped(s, before, after) {
+			return true
+		}
+	}
+	beforeIsBinary, afterIsBinary := bosIsBinaryOperator(s, before), bosIsBinaryOperator(s, after)
+	if beforeIsBinary && afterIsBinary {
+		return true
+	}
+	beforeIsBlockOpenOrComma := csbIsPunct(s.At(before), ",") || nucpBlockStart(s, before)
+	afterIsBlockEndOrComma := csbIsPunct(s.At(after), ",") || nucpBlockEnd(s, after)
+	if beforeIsBlockOpenOrComma && afterIsBinary || beforeIsBinary && afterIsBlockEndOrComma {
+		return true
+	}
+	beforeIsStatementOpen := nucpStatementOpen(s, before) || csbIsKeyword(s.At(before), "case")
+	return beforeIsStatementOpen && afterIsBinary || beforeIsBinary && endsStatement(s.At(after))
+}
+
+// nucpWrappedConstructArgument matches print, yield, yield from, require and
+// include (X) bounded like a sequence element.
+func nucpWrappedConstructArgument(s *tokens.Stream, before, after int) bool {
+	t := s.At(before)
+	if t.Kind != token.Keyword {
+		return false
+	}
+	switch word := strings.ToLower(t.Value); word {
+	case "print", "require", "require_once", "include", "include_once":
+	default:
+		if !strings.HasPrefix(word, "yield") {
+			return false
+		}
+	}
+	before = nucpPrev(s, before)
+	return before >= 0 && nucpWrappedSequenceElement(s, before, after)
+}
+
+// nucpSingleStatement matches a statement start or control keyword before the
+// pair and ";" or "?>" after it, or a case and its ":" or ";".
+func nucpSingleStatement(s *tokens.Stream, before, after int) bool {
+	if csbIsKeyword(s.At(before), "case") {
+		return csbIsPunct(s.At(after), ":") || csbIsPunct(s.At(after), ";")
+	}
+	return endsStatement(s.At(after)) && nucpStatementOpen(s, before)
+}
+
+func nucpSimpleAssignment(s *tokens.Stream, before, after int) bool {
+	return csbIsPunct(s.At(before), "=") && endsStatement(s.At(after))
 }
 
 func endsStatement(t token.Token) bool {
 	return csbIsPunct(t, ";") || t.Kind == token.CloseTag
 }
 
-func isCloneStatementStart(s *tokens.Stream, before int) bool {
-	b := s.At(before)
-	if b.Kind == token.OpenTag || csbIsPunct(b, ";") || csbIsPunct(b, "{") {
+// nucpStatementOpen is BEFORE_TYPES, with a "}" that does not close a dynamic
+// element.
+func nucpStatementOpen(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	switch t.Kind {
+	case token.OpenTag:
 		return true
-	}
-	if csbIsPunct(b, "}") {
-		return !closesDynamicElement(s, before)
-	}
-	if b.Kind != token.Keyword {
+	case token.Punct:
+		switch t.Value {
+		case ";":
+			return true
+		case "{":
+			return nucpBraceKind(s, i) == nucpPlainBrace
+		case "}":
+			return nucpIsPlainBraceClose(s, i) && !closesDynamicElement(s, i)
+		}
 		return false
+	case token.Keyword:
+		word := strings.ToLower(t.Value)
+		return strings.HasPrefix(word, "yield") || slices.Contains([]string{
+			"echo", "print", "return", "throw", "break", "continue", "require", "require_once", "include", "include_once",
+		}, word)
 	}
-	// yield from is one token that keeps its inner spacing and comments
-	word := strings.ToLower(b.Value)
-	return strings.HasPrefix(word, "yield") || slices.Contains([]string{
-		"echo", "print", "return", "throw", "break", "continue", "require", "require_once", "include", "include_once",
-	}, word)
+	return false
 }
 
 // closesDynamicElement follows PHP-CS-Fixer's closeCurlyBelongsToDynamicElement: a
-// "}" whose "{" follows a ":" with no case closer to it than a "?".
+// "}" whose "{" follows "::", or a ":" with no case closer to it than a "?".
 func closesDynamicElement(s *tokens.Stream, closing int) bool {
 	open := s.MatchBackward(closing)
 	if open < 0 {
@@ -234,6 +408,9 @@ func closesDynamicElement(s *tokens.Stream, closing int) bool {
 	prev := prevMeaningfulIndex(s, open)
 	if prev < 0 {
 		return false
+	}
+	if csbIsPunct(s.At(prev), "::") {
+		return true
 	}
 	if !csbIsPunct(s.At(prev), ":") {
 		return false
@@ -248,6 +425,12 @@ func closesDynamicElement(s *tokens.Stream, closing int) bool {
 	}
 	// PHP-CS-Fixer throws when it finds neither: keep the parentheses
 	return true
+}
+
+// nucpWrappedFnBody matches the body of an arrow function: "fn () => (X);".
+func nucpWrappedFnBody(s *tokens.Stream, before, after int) bool {
+	a := s.At(after)
+	return isFnBodyStart(s, before) && (endsStatement(a) || csbIsPunct(a, ","))
 }
 
 // isFnBodyStart reports whether the token at index i is the "=>" of an arrow
@@ -280,67 +463,180 @@ func isFnBodyStart(s *tokens.Stream, i int) bool {
 	return j >= 0 && csbIsKeyword(s.At(j), "fn")
 }
 
-// isForElement matches the first and last expressions of a for head; the middle
-// one is a statement start already: for (X; Y; Z).
-func isForElement(s *tokens.Stream, before, after int) bool {
+// nucpWrappedForElement matches the first and last expressions of a for head; the
+// middle one is a single statement already: for (X; Y; Z).
+func nucpWrappedForElement(s *tokens.Stream, before, after int) bool {
 	candidate := -1
 	switch {
-	case csbIsPunct(s.At(before), "(") && csbIsPunct(s.At(after), ";"):
-		candidate = prevMeaningfulIndex(s, before)
+	case csbIsPunct(s.At(before), "(") && nucpCastEnd(s, before) < 0 && csbIsPunct(s.At(after), ";"):
+		candidate = nucpPrev(s, before)
 	case csbIsPunct(s.At(after), ")") && csbIsPunct(s.At(before), ";"):
 		if open := s.MatchBackward(after); open >= 0 {
-			candidate = prevMeaningfulIndex(s, open)
+			candidate = nucpPrev(s, open)
 		}
 	}
 	return candidate >= 0 && csbIsKeyword(s.At(candidate), "for")
 }
 
-func isSequenceElement(before, after token.Token) bool {
-	beforeComma, afterComma := csbIsPunct(before, ","), csbIsPunct(after, ",")
-	beforeOpen := csbIsPunct(before, "(") || csbIsPunct(before, "[") || csbIsPunct(before, "{")
-	afterClose := csbIsPunct(after, ")") || csbIsPunct(after, "]") || csbIsPunct(after, "}")
-	return (beforeComma || beforeOpen) && (afterComma || afterClose)
+// nucpWrappedSequenceElement matches any of ",(X),", "[(X)]", "{(X)}" and "((X))".
+func nucpWrappedSequenceElement(s *tokens.Stream, start, end int) bool {
+	return (csbIsPunct(s.At(start), ",") || nucpBlockStart(s, start)) &&
+		(csbIsPunct(s.At(end), ",") || nucpBlockEnd(s, end))
 }
 
-// cloneOperandHasOperation scans the content of the pair at open..closing, a nested
-// block counting as one operand. A leading new belongs to the operand.
-func cloneOperandHasOperation(s *tokens.Stream, open, closing int) bool {
-	start := open
-	if first := nextMeaningfulIndex(s, open); first >= 0 && csbIsKeyword(s.At(first), "new") {
-		start = first
+// nucpIsPreUnary is isPreUnaryOperation: a unary prefix operator or a cast.
+func nucpIsPreUnary(s *tokens.Stream, i int) bool {
+	return s.At(i).Kind == token.Punct && unaryOperatorSpacesIsPredecessor(s, i) || nucpCastEnd(s, i) >= 0
+}
+
+func nucpIsAccess(t token.Token) bool {
+	return csbIsPunct(t, "[") || csbIsPunct(t, "->") || csbIsPunct(t, "?->")
+}
+
+// nucpAfterAccess is getAfterAccess: the first token past the access chain
+// starting at i, or -1.
+func nucpAfterAccess(s *tokens.Stream, i int) int {
+	for i >= 0 {
+		t := s.At(i)
+		switch {
+		case nucpBlockStart(s, i):
+			if i = s.MatchForward(i); i < 0 {
+				return -1
+			}
+		case csbIsPunct(t, "->"), csbIsPunct(t, "?->"), csbIsPunct(t, "::"), t.Kind == token.Variable:
+		case t.Kind == token.Ident && taIsTString(s, i) && !nucpIsClassConstant(s, i):
+		default:
+			return i
+		}
+		i = nucpNext(s, i)
 	}
-	for j := nextMeaningfulIndex(s, start); j >= 0 && j != closing; j = nextMeaningfulIndex(s, j) {
-		t := s.At(j)
-		if _, _, isCast := castAt(s, j); isCast {
-			return true
-		}
-		if prev := prevMeaningfulIndex(s, j); strings.EqualFold(t.Value, "class") && prev >= 0 && csbIsPunct(s.At(prev), "::") {
-			return true
-		}
-		if t.Kind == token.Ident {
-			if !isCloneOperandName(s, j) {
-				return true
+	return i
+}
+
+// nucpIsClassConstant reports the "class" of "Foo::class" (CT::T_CLASS_CONSTANT).
+func nucpIsClassConstant(s *tokens.Stream, i int) bool {
+	p := prevMeaningfulIndex(s, i)
+	return strings.EqualFold(s.At(i).Value, "class") && p >= 0 && csbIsPunct(s.At(p), "::")
+}
+
+func nucpIsExit(s *tokens.Stream, i int) bool {
+	return taIsConstruct(s, i, "exit") || taIsConstruct(s, i, "die")
+}
+
+// The kinds of "{" PHP-CS-Fixer's BraceTransformer tells apart that matter here.
+const (
+	nucpPlainBrace = iota
+	// "->{" and "${": blocks, but no plain "{"
+	nucpDynamicPropBrace
+	nucpDynamicVarBrace
+	// a group import, or a class constant fetch ended by ";", "?>" or "::": no blocks
+	nucpOtherBrace
+)
+
+func nucpBraceKind(s *tokens.Stream, open int) int {
+	if open > 0 && (csbIsPunct(s.At(open-1), "->") || csbIsPunct(s.At(open-1), "?->")) {
+		return nucpDynamicPropBrace
+	}
+	p := prevMeaningfulIndex(s, open)
+	if p < 0 {
+		return nucpPlainBrace
+	}
+	switch t := s.At(p); {
+	case t.Kind == token.Variable && t.Value == "$":
+		return nucpDynamicVarBrace
+	case csbIsPunct(t, `\`):
+		return nucpOtherBrace
+	case csbIsPunct(t, "::"):
+		if closing := s.MatchForward(open); closing >= 0 {
+			if n := nextMeaningfulIndex(s, closing); n >= 0 && (endsStatement(s.At(n)) || csbIsPunct(s.At(n), "::")) {
+				return nucpOtherBrace
 			}
-			continue
 		}
-		if csbIsPunct(t, "(") || csbIsPunct(t, "[") || csbIsPunct(t, "{") {
-			end := s.MatchForward(j)
-			if end < 0 {
-				return true
-			}
-			j = end
-			continue
-		}
-		if !isCloneOperandToken(t) {
-			return true
-		}
+	}
+	return nucpPlainBrace
+}
+
+func nucpIsPlainBraceClose(s *tokens.Stream, i int) bool {
+	if !csbIsPunct(s.At(i), "}") {
+		return false
+	}
+	open := s.MatchBackward(i)
+	return open >= 0 && nucpBraceKind(s, open) == nucpPlainBrace
+}
+
+// nucpBlockStart reports an opening edge of BLOCK_TYPES, not a cast,
+// "(new Foo)" parentheses, a group import nor a class constant fetch.
+func nucpBlockStart(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	if t.Kind != token.Punct {
+		return false
+	}
+	switch t.Value {
+	case "[":
+		return true
+	case "(":
+		return nucpCastEnd(s, i) < 0 && !nucpClassInstantiation(s, i)
+	case "{":
+		return nucpBraceKind(s, i) != nucpOtherBrace
 	}
 	return false
 }
 
-// isCloneOperandName rejects the names that are language constructs to PHP but plain
+func nucpBlockEnd(s *tokens.Stream, i int) bool {
+	t := s.At(i)
+	if t.Kind != token.Punct {
+		return false
+	}
+	switch t.Value {
+	case "]":
+		return true
+	case ")", "}":
+		open := s.MatchBackward(i)
+		return open >= 0 && nucpBlockStart(s, open)
+	}
+	return false
+}
+
+// nucpClassInstantiation reports the "(" of "(new Foo)" as PHP-CS-Fixer's
+// BraceClassInstantiationTransformer sees it.
+func nucpClassInstantiation(s *tokens.Stream, open int) bool {
+	if n := nextMeaningfulIndex(s, open); n < 0 || !csbIsKeyword(s.At(n), "new") {
+		return false
+	}
+	closing := s.MatchForward(open)
+	return closing >= 0 && isClassInstantiationCloseParen(s, closing)
+}
+
+// nucpContainsOperation is containsOperation: whether a token between start and
+// end, a nested block counting as one operand, is no plain operand part. Like
+// PHP-CS-Fixer it walks past end when end sits in a nested block.
+func nucpContainsOperation(s *tokens.Stream, start, end int) bool {
+	for {
+		start = nucpNext(s, start)
+		switch {
+		case start < 0:
+			return true
+		case start == end:
+			return false
+		case nucpCastEnd(s, start) >= 0:
+			return true
+		case csbIsPunct(s.At(start), "("), csbIsPunct(s.At(start), "["), csbIsPunct(s.At(start), "{"):
+			if start = s.MatchForward(start); start < 0 {
+				return true
+			}
+		case s.At(start).Kind == token.Ident:
+			if nucpIsClassConstant(s, start) || !nucpNoopName(s, start) {
+				return true
+			}
+		case !nucpNoopToken(s.At(start)):
+			return true
+		}
+	}
+}
+
+// nucpNoopName rejects the names that are language constructs to PHP but plain
 // names to the lexer, unless they are a member or a segment of a qualified name.
-func isCloneOperandName(s *tokens.Stream, i int) bool {
+func nucpNoopName(s *tokens.Stream, i int) bool {
 	word := strings.ToLower(s.At(i).Value)
 	if prev := prevMeaningfulIndex(s, i); prev >= 0 && s.At(prev).Kind == token.Punct {
 		switch s.At(prev).Value {
@@ -358,14 +654,15 @@ func isCloneOperandName(s *tokens.Stream, i int) bool {
 	return true
 }
 
-func isCloneOperandToken(t token.Token) bool {
+// nucpNoopToken is noopTypes for the tokens that are no names.
+func nucpNoopToken(t token.Token) bool {
 	switch t.Kind {
 	case token.Variable, token.Number:
 		return true
 	case token.String:
 		return t.IsLiteral() && !t.StartsHeredoc() && !t.IsShellExec()
 	case token.Punct:
-		return t.Value == "$" || t.Value == "::" || t.Value == `\` || t.Value == "->" || t.Value == "?->"
+		return t.Value == "::" || t.Value == `\` || t.Value == "->" || t.Value == "?->"
 	case token.Keyword:
 		return strings.EqualFold(t.Value, "static")
 	}
