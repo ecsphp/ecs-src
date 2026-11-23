@@ -65,7 +65,10 @@ func (f NoExtraBlankLines) Fix(s *tokens.Stream) bool {
 	if f.enabled("use_trait") && noExtraBlankLinesUse(s, true) {
 		changed = true
 	}
-	if f.enabled("curly_brace_block") && noExtraBlankLinesCurlyBraceBlock(s) {
+	if f.enabled("attribute") && noExtraBlankLinesAttribute(s) {
+		changed = true
+	}
+	if noExtraBlankLinesBlocks(s, f.enabled("curly_brace_block"), f.enabled("parenthesis_brace_block"), f.enabled("square_brace_block")) {
 		changed = true
 	}
 	if f.enabled("extra") && noExtraBlankLinesExtra(s) {
@@ -74,18 +77,44 @@ func (f NoExtraBlankLines) Fix(s *tokens.Stream) bool {
 	return changed
 }
 
-// noExtraBlankLinesCurlyBraceBlock strips blank lines after the opening "{" and
-// before the closing "}" of a multi-line block. Dynamic access braces and group
-// import braces are not plain "{" tokens in PHP-CS-Fixer, so they are skipped.
-func noExtraBlankLinesCurlyBraceBlock(s *tokens.Stream) bool {
+// noExtraBlankLinesAttribute strips blank lines after an attribute's last line.
+func noExtraBlankLinesAttribute(s *tokens.Stream) bool {
+	changed := false
+	for i := 0; i < s.Len(); i++ {
+		if s.At(i).Kind == token.AttributeEnd && noExtraBlankLinesFixAfter(s, i) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// noExtraBlankLinesBlocks strips blank lines after the opener and before the
+// closer of each "{", "(" or short array "[" of an enabled kind. Like
+// PHP-CS-Fixer, it skips dynamic access, group import and property hook braces,
+// "(new Foo)" and DNF type parentheses, and index and destructuring brackets.
+func noExtraBlankLinesBlocks(s *tokens.Stream, curly, parenthesis, square bool) bool {
+	if !curly && !parenthesis && !square {
+		return false
+	}
+	var squareKinds []uint8
+	if square {
+		squareKinds = bosSquareKinds(s)
+	}
 	changed := false
 	for index := s.Len() - 1; index > 0; index-- {
 		t := s.At(index)
-		if t.Kind != token.Punct || t.Value != "{" || noExtraBlankLinesIsSpecialBrace(s, index) {
+		if t.Kind != token.Punct {
+			continue
+		}
+		switch {
+		case curly && t.Value == "{" && bosIsPlainBrace(s, index):
+		case parenthesis && t.Value == "(" && !bosIsClassInstantiationParen(s, index):
+		case square && t.Value == "[" && squareKinds[index] == bosSquareArray:
+		default:
 			continue
 		}
 		end := s.MatchForward(index)
-		if end < 0 {
+		if end < 0 || (t.Value == "(" && noExtraBlankLinesIsDNFParen(s, index, end)) {
 			continue
 		}
 		for i := end - 1; i >= index; i-- {
@@ -103,19 +132,14 @@ func noExtraBlankLinesCurlyBraceBlock(s *tokens.Stream) bool {
 	return changed
 }
 
-func noExtraBlankLinesIsSpecialBrace(s *tokens.Stream, index int) bool {
-	if index > 0 && s.At(index-1).Value == "$" {
-		return true
-	}
-	prev, ok := prevSignificant(s, index)
-	if !ok {
+// noExtraBlankLinesIsDNFParen reports whether the parentheses at open and
+// closeIdx group a DNF type such as "(A&B)|null". PHP-CS-Fixer also needs that
+// "|" to belong to a type, so it cleans "(A & B) | C" where blink does not.
+func noExtraBlankLinesIsDNFParen(s *tokens.Stream, open, closeIdx int) bool {
+	if !isPunctVal(s, sigPrev(s, open), "|") && !isPunctVal(s, sigNext(s, closeIdx), "|") {
 		return false
 	}
-	switch prev.Value {
-	case "->", "?->", "::", "$":
-		return true
-	}
-	return strings.HasSuffix(prev.Value, "\\")
+	return ntdDNFGroupOpen(s, closeIdx) == open
 }
 
 // noExtraBlankLinesExtra collapses runs of blank lines to a single blank line.
@@ -211,7 +235,8 @@ func noExtraBlankLinesFixAfter(s *tokens.Stream, index int) bool {
 
 // noExtraBlankLinesRemoveAfter finds the whitespace that ends the line at index
 // (respecting parentheses) and collapses its leading blank lines to one newline,
-// keeping the trailing indentation.
+// keeping the trailing indentation. Like PHP-CS-Fixer, a line that ends at a
+// plain "}" or inside a multi-line token, such as a heredoc, is left alone.
 func noExtraBlankLinesRemoveAfter(s *tokens.Stream, index int) bool {
 	depth := 0
 	end := -1
@@ -228,14 +253,10 @@ func noExtraBlankLinesRemoveAfter(s *tokens.Stream, index int) bool {
 					return false
 				}
 				continue
-			case "}":
-				end = i
 			}
 		}
-		if end < 0 && t.Kind == token.Whitespace && hasNewline(t.Value) {
+		if strings.Contains(t.Value, "\n") || (t.Kind == token.Punct && t.Value == "}" && noExtraBlankLinesIsPlainClose(s, i)) {
 			end = i
-		}
-		if end >= 0 {
 			break
 		}
 	}
@@ -256,6 +277,11 @@ func noExtraBlankLinesRemoveAfter(s *tokens.Stream, index int) bool {
 		}
 	}
 	return changed
+}
+
+func noExtraBlankLinesIsPlainClose(s *tokens.Stream, i int) bool {
+	open := s.MatchBackward(i)
+	return open < 0 || bosIsPlainBrace(s, open)
 }
 
 // noExtraBlankLinesUse collapses blank lines between consecutive import (or, with
