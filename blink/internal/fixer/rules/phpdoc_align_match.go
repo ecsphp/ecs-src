@@ -107,7 +107,7 @@ func (f PhpdocAlign) parseTag(indent, line string, off int) *alignMatch {
 	return phpAlignParseNoNameTag(indent, tag, line, e)
 }
 
-// name tag: @tag \s+ (hint)? \s* (var=(?:&|\.{3})?\$\S+) (?:\s+ desc)? \h*$
+// name tag: @tag \s+ (hint=REGEX_TYPES)? \s* (var=(?:&|\.{3})?\$\S+) (?:\s+ desc)? \h*$
 func phpAlignParseNameTag(indent, tag, line string, pos int) *alignMatch {
 	// require \s+
 	p := pos
@@ -117,48 +117,12 @@ func phpAlignParseNameTag(indent, tag, line string, pos int) *alignMatch {
 	if p == pos {
 		return nil // needed \s+
 	}
-	// find the var: a '$' at bracket depth 0 whose token is separated from the
-	// hint by whitespace. A callable/Closure carries `$param` inside parentheses
-	// (depth > 0) and a union member like `Foo|$this` attaches with no space, so
-	// both stay in the hint; the documented variable follows a space.
-	dollar := -1
-	depth := 0
-	for k := p; k < len(line); k++ {
-		switch line[k] {
-		case '<', '[', '(', '{':
-			depth++
-		case '>', ']', ')', '}':
-			if depth > 0 {
-				depth--
-			}
-		case '$':
-			if depth == 0 {
-				ps := k
-				if k-1 >= p && line[k-1] == '&' {
-					ps = k - 1
-				} else if k-3 >= p && line[k-3:k] == "..." {
-					ps = k - 3
-				}
-				if ps == p || phpAlignIsWS(line[ps-1]) {
-					dollar = k
-				}
-			}
-		}
-		if dollar >= 0 {
-			break
-		}
-	}
-	if dollar < 0 {
+	hintEnd := phpAlignHintEnd(line, p, func(end int) bool { return phpAlignVarStart(line, end) >= 0 })
+	varStart := phpAlignVarStart(line, hintEnd)
+	if varStart < 0 {
 		return nil
 	}
-	varStart := dollar
-	if varStart-1 >= p && line[varStart-1] == '&' {
-		varStart--
-	} else if varStart-3 >= p && line[varStart-3:varStart] == "..." {
-		varStart -= 3
-	}
-	hint := strings.TrimRight(line[p:varStart], " \t")
-	hint = strings.TrimSpace(hint)
+	hint := line[p:hintEnd]
 	// var = \S+ from varStart
 	ve := varStart
 	for ve < len(line) && !phpAlignIsWS(line[ve]) {
@@ -177,7 +141,7 @@ func phpAlignParseNameTag(indent, tag, line string, pos int) *alignMatch {
 	return &alignMatch{indent: indent, tag: tag, isTag: true, hint: hint, varName: varName, desc: desc}
 }
 
-// no-name tag: @tag \s+ (hint=REGEX_TYPES)? (?:\s+ desc)? \h*$
+// no-name tag: @tag \s+ (hint=REGEX_TYPES)? \s+ desc \h*$, the line break counting as \s
 func phpAlignParseNoNameTag(indent, tag, line string, pos int) *alignMatch {
 	p := pos
 	for p < len(line) && phpAlignIsWS(line[p]) {
@@ -186,17 +150,13 @@ func phpAlignParseNoNameTag(indent, tag, line string, pos int) *alignMatch {
 	if p == pos {
 		return nil
 	}
-	hintEnd, balanced := phpAlignScanType(line, p)
-	if !balanced {
-		// REGEX_TYPES cannot match an unbalanced type, so the hint is empty and
-		// desc needs its own \s+; that only exists when 2+ leading spaces let the
-		// hint's \s+ give one back. A single space leaves no split -> no match.
-		if p-pos < 2 {
-			return nil
-		}
-		return &alignMatch{indent: indent, tag: tag, isTag: true, hint: "", varName: "", desc: line[p:]}
+	hintEnd := phpAlignHintEnd(line, p, func(end int) bool { return end == len(line) || phpAlignIsWS(line[end]) })
+	if hintEnd == p && p < len(line) && p-pos < 2 {
+		// with no hint, desc needs its own \s+; that only exists when 2+ leading
+		// spaces let the hint's \s+ give one back. A single space -> no match.
+		return nil
 	}
-	hint := strings.TrimSpace(line[p:hintEnd])
+	hint := line[p:hintEnd]
 	desc := ""
 	q := hintEnd
 	for q < len(line) && phpAlignIsWS(line[q]) {
@@ -206,6 +166,46 @@ func phpAlignParseNoNameTag(indent, tag, line string, pos int) *alignMatch {
 		desc = line[q:]
 	}
 	return &alignMatch{indent: indent, tag: tag, isTag: true, hint: hint, varName: "", desc: desc}
+}
+
+// phpAlignHintEnd returns where (?:REGEX_TYPES)? at p ends once PCRE settles
+// it, or p for no hint. Past the greedy match, PCRE backtracks into the first
+// type only (the glue loop is possessive), longest reading first, and only a
+// reading that a space follows can fit: "mixed <b>TRUE</b>" ends after mixed.
+func phpAlignHintEnd(line string, p int, follows func(end int) bool) int {
+	ts, ok := parsePHPTypes(line, p)
+	if !ok {
+		return p
+	}
+	if follows(ts.end) {
+		return ts.end
+	}
+	for end := ts.members[0].end - 1; end > p; end-- {
+		if !phpAlignIsWS(line[end]) || !follows(end) {
+			continue
+		}
+		if t, ok := parsePHPType(line[:end], p); ok && t.end == end {
+			return end
+		}
+	}
+	return p
+}
+
+// phpAlignVarStart returns where (?:&|\.{3})?\$\S+ starts after the spaces at i, or -1.
+func phpAlignVarStart(line string, i int) int {
+	for i < len(line) && phpAlignIsWS(line[i]) {
+		i++
+	}
+	d := i
+	if strings.HasPrefix(line[d:], "&") {
+		d++
+	} else if strings.HasPrefix(line[d:], "...") {
+		d += 3
+	}
+	if d+1 < len(line) && line[d] == '$' && !phpAlignIsWS(line[d+1]) {
+		return i
+	}
+	return -1
 }
 
 // method tag: @tag (\s+static)? \s+ (hint)? \s+ (signature=.+\)) — best effort
