@@ -1,0 +1,40 @@
+name: Blink Slevomat Parity
+
+# each fixable slevomat sniff alone: blink must fix like the PHP ECS engine
+# runs on main only, every 12 hours
+
+on:
+    schedule:
+        - cron: '0 */12 * * *'
+    workflow_dispatch: null
+
+jobs:
+    slevomat-parity:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                sniffs:
+                    - 'Classes'
+                    - 'ControlStructures'
+                    - 'TypeHints|Variables|Whitespaces'
+                    - 'Functions|Exceptions|Numbers'
+                    - 'Commenting|Arrays'
+                    - 'Namespaces|Attributes|Operators|PHP'
+        name: "slevomat parity: ${{ matrix.sniffs }}"
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26.11"
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.4"
+                  coverage: none
+
+            - uses: "ramsey/composer-install@v4"
+
+            - name: "Slevomat parity ${{ matrix.sniffs }}"
+              run: blink/parity/slevomat.sh blink/parity/corpora/rector-src.json '\\(${{ matrix.sniffs }})\\'
