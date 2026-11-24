@@ -22,6 +22,7 @@ jobs:
             - uses: actions/setup-go@v5
               with:
                   go-version: "1.26.11"
+                  cache-dependency-path: blink/go.mod
 
             - uses: shivammathur/setup-php@v2
               with:
