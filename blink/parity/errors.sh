@@ -13,6 +13,9 @@
 # Exit status: 0 when blink matches ECS, 1 when it differs, 2 on a setup error.
 set -euo pipefail
 
+# slevomat/coding-standard commit the slevomat ports follow, as in slevomat.sh
+SLEVOMAT_REF=606a440f66317d2fa6a9eab5864c0bea1ecde35f
+
 fail() { echo "errors parity: $*" >&2; exit 2; }
 
 CORPUS=""
@@ -48,6 +51,16 @@ blink_bin="$WORKDIR/blink"
 mapfile -t reporters < <(cd "$REPO_ROOT/blink" && go run ./cmd/list-reporters)
 [ "${#reporters[@]}" -gt 0 ] || fail "no report-only rules found"
 
+# slevomat is no ECS dependency, so ECS autoloads a pinned checkout
+slv="$WORKDIR/slevomat"
+if [ ! -d "$slv/vendor" ]; then
+    rm -rf "$slv"
+    git init -q "$slv"
+    git -C "$slv" fetch -q --depth 1 https://github.com/slevomat/coding-standard.git "$SLEVOMAT_REF" \
+        && git -C "$slv" checkout -q FETCH_HEAD || fail "slevomat fetch failed"
+    ( cd "$slv" && composer install -q --no-dev --no-plugins ) || fail "slevomat composer install failed"
+fi
+
 src="$WORKDIR/corpus"
 rm -rf "$src"
 git clone --depth 1 --branch "$ref" "$repo" "$src" >/dev/null 2>&1 \
@@ -65,6 +78,19 @@ ecs_php="$WORKDIR/ecs.php"
 {
     echo '<?php'
     echo 'declare(strict_types=1);'
+    cat <<PHP
+spl_autoload_register(static function (string \$class): void {
+    foreach (['SlevomatCodingStandard\\\\' => '$slv/SlevomatCodingStandard/', 'PHPStan\\\\PhpDocParser\\\\' => '$slv/vendor/phpstan/phpdoc-parser/src/'] as \$prefix => \$dir) {
+        if (str_starts_with(\$class, \$prefix)) {
+            \$file = \$dir . str_replace('\\\\', '/', substr(\$class, strlen(\$prefix))) . '.php';
+            if (is_file(\$file)) {
+                require \$file;
+            }
+            return;
+        }
+    }
+}, true, true);
+PHP
     echo 'use Symplify\EasyCodingStandard\Config\ECSConfig;'
     echo 'return ECSConfig::configure()'
     echo '    ->withRules(['
