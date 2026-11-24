@@ -213,3 +213,32 @@ func TestGen3ClassSepSourceURL(t *testing.T) {
 		t.Errorf("%s: SourceURL %q != SourceURLFor %q", f.Name(), got, want)
 	}
 }
+
+// goldens from PHP-CS-Fixer's ClassAttributesSeparationFixer
+func TestGen3ClassSepLastMemberToClosingBrace(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ src, want string }{
+		{"<?php\nclass A\n{\n    public function a()\n    {\n    }\n\n}\n", "<?php\nclass A\n{\n    public function a()\n    {\n    }\n}\n"},
+		{"<?php\nclass A\n{\n    public $a;\n\n\n}\n", "<?php\nclass A\n{\n    public $a;\n}\n"},
+		{"<?php\nclass A\n{\n    public $a; /* x */\n\n}\n", "<?php\nclass A\n{\n    public $a; /* x */\n}\n"},
+		{"<?php\nclass A\n{\n    public $a; // x\n\n}\n", "<?php\nclass A\n{\n    public $a; // x\n}\n"},
+		{"<?php\nclass A\n{\n    public $a;\n\n    // trailing\n\n}\n", "<?php\nclass A\n{\n    public $a;\n\n    // trailing\n\n}\n"},
+		{"<?php\nclass A\n{\n    public function __construct(private int $a)\n    {\n    }\n\n}\n", "<?php\nclass A\n{\n    public function __construct(private int $a)\n    {\n    }\n\n}\n"},
+		{"<?php\nclass A\n{\n    public function __construct(int $a)\n    {\n    }\n\n}\n", "<?php\nclass A\n{\n    public function __construct(int $a)\n    {\n    }\n}\n"},
+		{"<?php\nenum E\n{\n    case A;\n\n}\n", "<?php\nenum E\n{\n    case A;\n}\n"},
+		{"<?php\nclass A\n{\n    use T;\n\n}\n", "<?php\nclass A\n{\n    use T;\n}\n"},
+		{"<?php\ninterface I\n{\n    public function a();\n\n}\n", "<?php\ninterface I\n{\n    public function a();\n}\n"},
+		{"<?php\nclass A\n{\n    public int $a {\n        get => 1;\n    }\n\n}\n", "<?php\nclass A\n{\n    public int $a {\n        get => 1;\n    }\n}\n"},
+		{"<?php\n$x = new class {\n    public $a;\n\n};\n", "<?php\n$x = new class {\n    public $a;\n};\n"},
+		{"<?php\nclass A\n{\n    const X = 1;\n\n}\n", "<?php\nclass A\n{\n    const X = 1;\n}\n"},
+		{"<?php\nclass A\n{\r\n    public $a;\r\n\r\n}\r\n", "<?php\nclass A\n{\r\n    public $a;\r\n}\r\n"},
+	}
+	for _, c := range cases {
+		if got, _ := apply(t, ClassAttributesSeparation{}, c.src); got != c.want {
+			t.Errorf("src: %q\n got: %q\nwant: %q", c.src, got, c.want)
+		}
+		if got, changed := apply(t, ClassAttributesSeparation{}, c.want); changed || got != c.want {
+			t.Errorf("second run must be a no-op: %q", got)
+		}
+	}
+}
