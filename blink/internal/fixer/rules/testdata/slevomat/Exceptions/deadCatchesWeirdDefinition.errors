@@ -1,0 +1,2 @@
+13	SlevomatCodingStandard\Sniffs\Exceptions\DeadCatchSniff.CatchAfterThrowableCatch	Unreachable catch block.
+21	SlevomatCodingStandard\Sniffs\Exceptions\DeadCatchSniff.CatchAfterThrowableCatch	Unreachable catch block.

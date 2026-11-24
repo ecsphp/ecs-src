@@ -372,3 +372,58 @@ func (r SlevomatRequireNonCapturingCatch) Fix(s *tokens.Stream) bool {
 		}
 	})
 }
+
+// Slevomat: https://github.com/slevomat/coding-standard/blob/master/SlevomatCodingStandard/Sniffs/Exceptions/DeadCatchSniff.php
+//
+// SlevomatDeadCatch reports every catch that follows a catch of \Throwable. It
+// fixes nothing.
+type SlevomatDeadCatch struct{}
+
+func (SlevomatDeadCatch) Name() string {
+	return `SlevomatCodingStandard\Sniffs\Exceptions\DeadCatchSniff`
+}
+
+func (SlevomatDeadCatch) SourceURL() string {
+	return fixer.SourceURLFor(SlevomatDeadCatch{}.Name())
+}
+
+func (SlevomatDeadCatch) Fix(*tokens.Stream) bool { return false }
+
+func (r SlevomatDeadCatch) Errors(s *tokens.Stream) []fixer.CodingStandardError {
+	f := newSlvFile(s.Tokens())
+	uses := f.useStatements()
+	var errs []fixer.CodingStandardError
+	for i := range f.toks {
+		if !f.isKeyword(i, "catch") {
+			continue
+		}
+		open, closeIdx := f.excCatchParens(i)
+		if open < 0 {
+			continue
+		}
+		throwable := false
+		for _, p := range f.excCaughtNames(open, closeIdx) {
+			if uses.resolveName(f, f.content(p[0], p[1]), slvRefClass, open) == `\Throwable` {
+				throwable = true
+				break
+			}
+		}
+		if !throwable {
+			continue
+		}
+		_, closer := f.excCatchScope(i)
+		for closer >= 0 {
+			next := f.nextEffective(closer+1, len(f.toks))
+			if !f.isKeyword(next, "catch") {
+				break
+			}
+			errs = append(errs, fixer.CodingStandardError{
+				Line:    f.toks[next].line,
+				Message: "Unreachable catch block.",
+				Checker: r.Name() + ".CatchAfterThrowableCatch",
+			})
+			_, closer = f.excCatchScope(next)
+		}
+	}
+	return errs
+}

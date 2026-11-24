@@ -757,5 +757,15 @@
   {"sniff":"SlevomatCodingStandard\\Sniffs\\Commenting\\ForbiddenCommentsSniff","file":"Commenting/noForbiddenComments.php","config":{"forbiddenCommentPatterns":["~Foo\\d+~","~Not comment\\.~"]}},
   {"sniff":"SlevomatCodingStandard\\Sniffs\\Commenting\\ForbiddenCommentsSniff","file":"Commenting/forbiddenComments.php","config":{"forbiddenCommentPatterns":["~Created by PhpStorm\\.~","~(\\S+\\s+)?Constructor\\.~","~(blah){3}~"]}},
   {"sniff": "SlevomatCodingStandard\\Sniffs\\TypeHints\\ClassConstantTypeHintSniff", "file": "TypeHints/classConstantTypeHintBackedEnum.php", "config": {"enableNativeTypeHint": true}},
-  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesBackedEnum.php"}
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Namespaces\\UnusedUsesSniff", "file": "Namespaces/unusedUsesBackedEnum.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\AssignmentInConditionSniff", "file": "ControlStructures/noAssignmentsInConditions.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\AssignmentInConditionSniff", "file": "ControlStructures/allAssignmentsInConditions.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\AssignmentInConditionSniff", "file": "ControlStructures/noAssignmentsInConditionsIgnoreAssignmentsInsideFunctionCalls.php", "config": {"ignoreAssignmentsInsideFunctionCalls": true}},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\AssignmentInConditionSniff", "file": "ControlStructures/allAssignmentsInConditions.php", "config": {"ignoreAssignmentsInsideFunctionCalls": true}, "variant": "ignoreAssignmentsInsideFunctionCalls"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\ControlStructures\\AssignmentInConditionSniff", "file": "ControlStructures/assignmentsInConditionsLiveCoding.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Exceptions\\DeadCatchSniff", "file": "Exceptions/noDeadCatches.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Exceptions\\DeadCatchSniff", "file": "Exceptions/deadCatchesWithoutNamespace.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Exceptions\\DeadCatchSniff", "file": "Exceptions/deadCatches.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Exceptions\\DeadCatchSniff", "file": "Exceptions/deadUnionCatches.php"},
+  {"sniff": "SlevomatCodingStandard\\Sniffs\\Exceptions\\DeadCatchSniff", "file": "Exceptions/deadCatchesWeirdDefinition.php"}
 ]

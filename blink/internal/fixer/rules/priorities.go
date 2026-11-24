@@ -185,6 +185,7 @@ var fixerPriority = map[string]int{
 	"RequireNonCapturingCatchSniff":                      0,
 	"ReferenceThrowableOnlySniff":                        0,
 	"CatchExceptionsOrderSniff":                          0,
+	"DeadCatchSniff":                                     0,
 	"EmptyCommentSniff":                                  0,
 	"DisallowCommentAfterCodeSniff":                      0,
 	"ForbiddenAnnotationsSniff":                          0,
