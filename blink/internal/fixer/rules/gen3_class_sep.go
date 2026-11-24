@@ -102,8 +102,8 @@ func (ClassAttributesSeparation) SourceURL() string {
 //     is placed above that block, leaving the block attached.
 //
 // Gaps that glue members on one line, contain plain comments, or hold a detached
-// docblock are left untouched. The first member (after "{") and the last member's
-// gap to "}" are left to the blank-line-after-opening / brace fixers.
+// docblock are left untouched. The first member (after "{") is left to the
+// blank-line-after-opening fixer; the last member keeps one line break to "}".
 func (f ClassAttributesSeparation) Fix(s *tokens.Stream) bool {
 	changed := false
 	for i := 0; i < s.Len(); i++ {
@@ -114,6 +114,9 @@ func (f ClassAttributesSeparation) Fix(s *tokens.Stream) bool {
 			continue
 		}
 		starts := classMemberStarts(s, i)
+		if len(starts) > 0 && f.fixLastMemberGap(s, starts[len(starts)-1]) {
+			changed = true
+		}
 		// last member first, as PHP-CS-Fixer does: a newline inserted above a
 		// member only moves the members below it
 		for k, m := range slices.Backward(starts) {
@@ -231,6 +234,80 @@ func (f ClassAttributesSeparation) fixMemberGap(s *tokens.Stream, prevStart, nex
 		}
 	}
 	return setNewlineCount(s, ws0, 2)
+}
+
+// fixLastMemberGap leaves exactly one line break between the last member and the
+// class "}", as PHP-CS-Fixer's fixSpaceBelowClassElement does.
+func (f ClassAttributesSeparation) fixLastMemberGap(s *tokens.Stream, m int) bool {
+	end := memberSpanEnd(s, m)
+	if end < 0 {
+		return false
+	}
+	memberType := classSepMemberType(s, m)
+	if _, ok := f.classSepSpacingFor(memberType); !ok {
+		return false
+	}
+	// upstream's last element is then a promoted property, not targeted by default
+	if memberType == sepMethod && hasPromotedProperty(s, m, end) {
+		if _, ok := f.elements["promoted_property"]; !ok {
+			return false
+		}
+	}
+
+	singleLine := true
+	for x := m + 1; x < end; x++ {
+		if hasNewline(s.At(x).Value) {
+			singleLine = false
+			break
+		}
+	}
+	if singleLine {
+		// trailing same-line comments belong to the member
+		for end+1 < s.Len() {
+			t := s.At(end + 1)
+			if t.Kind != token.Whitespace && t.Kind != token.Comment || hasNewline(t.Value) {
+				break
+			}
+			end++
+		}
+		if s.At(end).Kind == token.Whitespace {
+			end--
+		}
+	}
+
+	// a class on one line is left alone: upstream also breaks its first member's
+	// line there, which this fixer does not do
+	ws := end + 1
+	if ws+1 >= s.Len() || s.At(ws).Kind != token.Whitespace || !hasNewline(s.At(ws).Value) || !isPunctVal(s, ws+1, "}") {
+		return false
+	}
+	return setNewlineCount(s, ws, 1)
+}
+
+// hasPromotedProperty reports whether the method at m is a "__construct" whose
+// parameter list promotes a property.
+func hasPromotedProperty(s *tokens.Stream, m, end int) bool {
+	for x := m; x < end; x++ {
+		t := s.At(x)
+		if t.Kind == token.Keyword && strings.EqualFold(t.Value, "function") {
+			name := skipWhitespace(s, x+1)
+			if name >= end || s.At(name).Value != "__construct" {
+				return false
+			}
+			open := skipWhitespace(s, name+1)
+			if !isPunctVal(s, open, "(") {
+				return false
+			}
+			closeIdx := s.MatchForward(open)
+			for p := open + 1; p < closeIdx; p++ {
+				if s.At(p).Kind == token.Keyword && memberModifiers[strings.ToLower(s.At(p).Value)] {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	return false
 }
 
 // requiredNewlines returns the number of newlines wanted in a plain whitespace
