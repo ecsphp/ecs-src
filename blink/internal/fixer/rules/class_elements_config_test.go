@@ -31,3 +31,11 @@ func TestSingleClassElementPerStatementTypedConst(t *testing.T) {
 		t.Fatalf("changed=%v\n got: %q\nwant: %q", changed, got, want)
 	}
 }
+
+func TestSingleClassElementPerStatementPropertyHookWithMatch(t *testing.T) {
+	t.Parallel()
+	src := "<?php\n\nfinal class Repro\n{\n    public int $kind = 1;\n\n    public int $value {\n        get {\n            return match ($this->kind) {\n                1, 2 => 10,\n                3 => 20,\n            };\n        }\n    }\n\n    public int $other = 0;\n}\n"
+	if got, changed := apply(t, SingleClassElementPerStatement{}, src); changed || got != src {
+		t.Fatalf("changed=%v\n got: %q", changed, got)
+	}
+}

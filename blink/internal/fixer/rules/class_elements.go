@@ -153,6 +153,10 @@ func (f SingleClassElementPerStatement) splitClassElement(s *tokens.Stream, m in
 			depth++
 		case ")", "]":
 			depth--
+		case "{":
+			if depth == 0 && len(commas) == 0 {
+				return false // property hook: semi belongs to a later member
+			}
 		case ",":
 			if depth == 0 {
 				commas = append(commas, x)
