@@ -524,6 +524,8 @@ func ConstructFixers() []fixer.Fixer {
 		SlevomatUselessParentheses{},
 		SlevomatUselessSemicolon{},
 		SlevomatCatchExceptionsOrder{},
+		SlevomatDeadCatch{},
+		SlevomatAssignmentInCondition{},
 		SlevomatClassConstantTypeHint{},
 		SlevomatDNFTypeHintFormat{},
 		SlevomatDeclareStrictTypes{},

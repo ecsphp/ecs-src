@@ -9,7 +9,8 @@ declare(strict_types=1);
 //   SLEVOMAT_DIR=/path/to/slevomat/coding-standard php blink/bin/slevomat-golden.php
 //
 // SLEVOMAT_DIR is a slevomat/coding-standard checkout with "composer install" run.
-// A fixture ECS leaves unchanged gets no .fixed.php.
+// A fixture ECS leaves unchanged gets no .fixed.php. The errors ECS reports and
+// cannot fix go to .errors, one "line<TAB>source<TAB>message" per error.
 
 $slevomatDir = getenv('SLEVOMAT_DIR') ?: '';
 if (! is_file($slevomatDir . '/SlevomatCodingStandard/Sniffs/TestCase.php')) {
@@ -53,12 +54,12 @@ foreach ($cases as $case) {
     ));
 
     $command = sprintf(
-        'php %s check --fix --no-blink --clear-cache --no-progress-bar --config %s',
+        'php %s check --fix --no-blink --clear-cache --no-progress-bar --output-format json --config %s',
         escapeshellarg($ecsBin),
         escapeshellarg($workDir . '/ecs.php'),
     );
     $processes[] = [$case, $workDir, $target, proc_open($command, [
-        1 => ['file', '/dev/null', 'w'],
+        1 => ['file', $workDir . '/report.json', 'w'],
         2 => ['pipe', 'w'],
     ], $pipes), $pipes];
 }
@@ -69,7 +70,8 @@ foreach ($processes as [$case, $workDir, $target, $process, $pipes]) {
     proc_close($process);
 
     $input = $dataDir . '/' . $case['file'];
-    $expected = preg_replace('~\.php$~', (isset($case['variant']) ? '.' . $case['variant'] : '') . '.fixed.php', $input);
+    $base = preg_replace('~\.php$~', isset($case['variant']) ? '.' . $case['variant'] : '', $input);
+    $expected = $base . '.fixed.php';
     $output = (string) file_get_contents($target);
     if ($stderr !== '' && $output === file_get_contents($input)) {
         fwrite(STDERR, $case['file'] . ': ' . $stderr . "\n");
@@ -80,6 +82,20 @@ foreach ($processes as [$case, $workDir, $target, $process, $pipes]) {
         @unlink($expected);
     } else {
         file_put_contents($expected, $output);
+    }
+
+    $report = json_decode((string) file_get_contents($workDir . '/report.json'), true) ?: [];
+    $rows = [];
+    foreach ($report['files'] ?? [] as $file) {
+        foreach ($file['errors'] ?? [] as $error) {
+            $rows[] = $error['line'] . "\t" . $error['source_class'] . "\t" . strtr($error['message'], ['\\' => '\\\\', "\n" => '\\n', "\t" => '\\t']);
+        }
+    }
+
+    if ($rows === []) {
+        @unlink($base . '.errors');
+    } else {
+        file_put_contents($base . '.errors', implode("\n", $rows) . "\n");
     }
 
     exec('rm -rf ' . escapeshellarg($workDir));

@@ -1,0 +1,7 @@
+3	SlevomatCodingStandard\Sniffs\ControlStructures\AssignmentInConditionSniff.AssignmentInCondition	Assignment in if condition is not allowed.
+4	SlevomatCodingStandard\Sniffs\ControlStructures\AssignmentInConditionSniff.AssignmentInCondition	Assignment in elseif condition is not allowed.
+5	SlevomatCodingStandard\Sniffs\ControlStructures\AssignmentInConditionSniff.AssignmentInCondition	Assignment in do-while condition is not allowed.
+6	SlevomatCodingStandard\Sniffs\ControlStructures\AssignmentInConditionSniff.AssignmentInCondition	Assignment in if condition is not allowed.
+7	SlevomatCodingStandard\Sniffs\ControlStructures\AssignmentInConditionSniff.AssignmentInCondition	Assignment in if condition is not allowed.
+8	SlevomatCodingStandard\Sniffs\ControlStructures\AssignmentInConditionSniff.AssignmentInCondition	Assignment in if condition is not allowed.
+8	SlevomatCodingStandard\Sniffs\ControlStructures\AssignmentInConditionSniff.AssignmentInCondition	Assignment in if condition is not allowed.
